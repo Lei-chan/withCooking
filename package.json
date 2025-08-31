@@ -1,0 +1,16 @@
+{
+  "name": "withcooking",
+  "version": "1.0.0",
+  "description": "Application where users can do all useful things about cooking",
+  "license": "ISC",
+  "author": "Lei-chan",
+  "type": "module",
+  "scripts": {
+    "start": "parcel index.html",
+    "build": "parcel build index.html --dist-dir ./dist"
+  },
+  "devDependencies": {
+    "@parcel/transformer-sass": "^2.15.4",
+    "parcel": "^2.15.4"
+  }
+}

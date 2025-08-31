@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>withCooking</title>
+    <link rel="stylesheet" href="./src/style/style.css" />
+  </head>
+  <body>
+    <div class="page--first hidden">
+      <div class="top_half">
+        <div class="login_signup">
+          <button class="btn--login">Login</button>
+          <button class="btn--signup">Sign up</button>
+        </div>
+        <div class="title_description">
+          <img class="title" src="./src/imgs/withCooking-title.gif"></img>
+          <p class="description">In this app, all necessary and useful tools for cooking are included.<br>Store recipes, search your recipes, set multiple timers with titles, check nutrients for your recipes, etc.<br>This simple but userful app will become your cooking buddy :) </p>
+        </div>
+        <div class="scroll">
+          <p>Scroll for more details</p>
+          <p>&darr;</p>
+        </div>
+      </div>
+      <div class="bottom_half">
+        <div class="container--details">
+          <h1>Manage your favorite recipes in one app</h1>
+          <div class="details details--right" data-details="0">
+            <h2>Create recipes</h2>
+            <img src="./src/imgs/grey-img.png">
+            <p>You can create recipes with simple steps. Nutritional information is automatically created for your recipes, so it's useful to manage your diet.<br>You can also automatically convert ingredients/temperature units to various types of units, so you don't need to look up for different units on the Internet anymore!</p>
+          </div>
+          <div class="details details--left" data-details="1">
+            <h2>Search recipes</h2>
+            <img src="./src/imgs/grey-img.png">
+              <p>You can search your recipes using keywords.</p>
+          </div>
+          <div class="details details--right" data-details="2">
+            <h2>Cook with recipes</h2>
+            <img src="./src/imgs/grey-img.png">
+            <p>You can edit and leave comments for recipes while cooking, so whenever you want to change your recipes, you can easily manage it.</p>
+          </div>
+          <div class="details details--left" data-details="3">
+            <h2>Set multiple timers</h2>
+            <img src="./src/imgs/grey-img.png">
+            <p>You can set multiple timers with titles. Even if you aren't good at doing multiple cooking process at the same time, this feature would become your helper!</p>
+          </div>
+        </div>
+        <h3>Let's start <span>withCooking</span> by signing up for free</h3>
+        <footer>
+          <a href="https://www.instagram.com/leichanweb?igsh=NzJmb3Axc3ZvNWN6&utm_source=qr">
+            <button class="btn--instagram"></button>
+          </a>
+          <a href="https://github.com/Lei-chan">
+            <button class="btn--github"></button>
+          </a>
+            <a href="">
+            <button class="btn--feedback"></button>
+          </a>
+          <p class="attribution">Designed by Freepik</p>
+          <p class="copyright">© 2025 Lei-chan</p>
+        </footer>
+      </div>
+      <div class="overlay--first hidden">
+        <div class="overlay--login hidden">
+          <p class="warning warning--login hidden">This account doens't exist. Please try again!</p>
+          <form class="form--login">
+            <button class="btn--x" type="button">&times;</button>
+            <h2>Login</h2>
+            <div class="input_wrapper">
+              <input id="input--login_username" type="email" placeholder="username">
+            </div>
+            <div class="input_wrapper">
+              <input id="input--login_password" type="password" placeholder="password">
+              <btn class="btn--eye" type="button"></btn>
+              <btn class="btn--eye_off" type="button"></btn>
+            </div>
+            <button class="btn--login" type="submit">Log in</button>
+          </form>
+        </div>
+        <div class="overlay--create_account hidden">
+          <p class="warning warning--create_account hidden">This email already exists. Please try again!</p>
+          <form class="form--create_account">
+            <button class="btn--x" type="button">&times;</button>
+            <h2>Sign-up</h2>
+            <h3>Please enter your email address</h3>
+            <div class="input_wrapper">
+              <input id="input--signup_username" type="email" placeholder="username">
+            </div>
+            <h3>Please enter password you want to use</h3>
+            <p class="requirements--password">Use 8 letters at minimum including at least<br>1 uppercase, 1 lowercase, and 1 digit</p>
+            <div class="input_wrapper">
+              <input id="input--signup_password" type="password" placeholder="password">
+              <btn class="btn--eye" type="button"></btn>
+              <btn class="btn--eye_off" type="button"></btn>
+            </div>
+            <button class="btn--signup" type="submit">Sign up</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="page--main">
+      <div class="container--cooking">
+        <div class="container--dropdown">
+          <button class="btn--dropdown" type="button"></button>
+          <ul class="dropdown_menu hidden">
+            <li>Recipes</li>
+            <li>Converter</li>
+            <li>Account</li>
+            <li>Logout</li>
+            <li>How to use</li>
+            <li>News</li>
+            <a href="">
+              <li>Feedback</li>
+            </a>
+          </ul>
+        </div>
+
+        <section class="section--recipe">
+          <div class="container--search_menu">
+            <button class="btn--search_menu" type="button"></button>
+            <div class="search_menu">
+              <form class="container--search">
+                <input id="input--search" type="search" placeholder="Search your recipe">
+                <button class="btn--search" type="submit">Search</button>
+              </form>
+              <ul class="search_results">
+                <li class="recipe_preview">
+                  <img class="img--main" src="./src/imgs/grey-img.png"> 
+                  <p class="title">mujadara</p>
+                  <img class="img--favorite" src="./src/imgs/star-on.png">
+                </li>
+                <li class="recipe_preview"> 
+                  <img class="img--main" src="./src/imgs/grey-img.png"> 
+                  <p class="title">mujadara</p>
+                </li>
+                <li class="recipe_preview">
+                  <img class="img--main" src="./src/imgs/grey-img.png"> 
+                  <p class="title">My special Focaccia!!!!!</p>
+                </li>
+                <li class="recipe_preview">
+                  <img class="img--main" src="./src/imgs/grey-img.png"> 
+                  <p class="title">My special Focaccia!!!!!!!!!!!</p>
+                  <img class="img--favorite" src="./src/imgs/star-on.png">
+                </li>
+                <li class="recipe_preview"></li>
+                <li class="recipe_preview"></li>
+              </ul>
+              <button class="btn--pagination btn--pagination_left" type="button">Page 1<br>&larr;</button>
+              <button class="btn--pagination btn--pagination_right" type="button">Page 3<br>&rarr; </button>
+            </div>
+          </div>
+          <div class="container--recipe">
+            <img class="img--main" src="./src/imgs/grey-img.png">
+            <div class="title_wrapper">
+              <h2 class="title">My Favorite Focaccia!!!!!!!!!!!!!!!!!!!!!!!!!!!!!</h2>
+            </div>
+            <div class="container--description_favorite">
+              <div class="container--description">
+                <div class="container--author_servings">
+                  <p>Author</p>
+                  <span class="author"> Lei-chan</span>
+                  <p>Servings</p>
+                  <input id="input--servings" type="number" min="1" max="500" value="4"></input>
+                  <span class="servings_unit">people</span>
+                </div>
+                <div class="container--ingredients_unit">
+                  <p>Ingredients Unit</p>
+                  <select id="input--ingredients_unit">
+                    <option value="metric">Metric</option>
+                    <option value="us">US</option>
+                    <option value="japan">Japan</option>
+                    <option value="australia">Australia</option>
+                    <option value="metriccup">Metric cup (1cup = 250ml)</option>
+                  </select>
+                </div>
+                <div class="container--temperature_unit">
+                  <p>Temperature</p>
+                  <span class="temperature">180/200/400/200</span>
+                  <select id="input--temperature_units">
+                    <option value="c">C</option>
+                    <option value="f">F</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn--favorite"></button>
+            </div>
+            <div class="container--ingredients">
+              <h3>~ Ingredients ~</h3>
+              <div class="ingredients">
+                <div class="ingredient_line">
+                  <input type="checkbox">
+                  <span>100 g flour</span>
+                </div>
+                <div class="ingredient_line">
+                  <input type="checkbox">
+                  <span>100 g flourrrrrrrrrrrrrrrrrrrrr</span>
+                </div>
+                <div class="ingredient_line">
+                  <input type="checkbox">
+                  <span>1000 g water</span>
+                </div>
+                 <div class="ingredient_line">
+                  <input type="checkbox">
+                  <span>1000 g water</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="container--steps">
+              <h2>~ Steps ~</h2>
+              <div class="step">
+                <h3>Step 1</h3>
+                <div class="container--step_step_img">
+                  <p>Mix the ingredients together in a learge bowl. Set aside for 5 minutes.</p>
+                  <img src="./src/imgs/grey-img.png">  
+                </div>
+              </div>
+              <div class="step">
+                <h3>Step 2</h3>
+                <div class="container--step_step_img">
+                  <p>Leave 3 large eggs in room temperature. Then beat them in a bowl. Add salt and pepper to it.</p>
+                </div>
+              </div>
+            </div>
+            <div class="container--recipe_description">
+              <h2>~ About this recipe ~</h2>
+              <p>This is our family recipe. My parents used to make this recipe on weekends :) This is very nostalgic for me. I wanted to share it because I want you guys to taste my family flavores. I hope you guys enjoy the recipe as much as our family does!</p>
+            </div>
+            <div class="container--slider">
+              <h2>~ Memories of the recipe ~</h2>
+              <div class="slider--imgs">
+                <img src="./src/imgs/grey-img.png">
+              </div>
+            </div>
+
+            <div class="container--comments">
+              <h2>~ Comments ~</h2>
+              <div class="comments_wrapper">
+                <div class="comments" contenteditable="true">You can use this space for leaving comments for the recipe or places you want to edit later :)</div>
+              </div>
+            </div>
+
+            <div class="container--nutrition_facts">
+              <div class="nutrition_facts">
+                <div class="container--h3_input">
+                  <h3>Nutrition Facts</h3>
+                  <input id="input--servings" type="number" min="1" max="500" value="1">
+                  <span>servings</span>
+                </div>
+                <table class="nutrients">
+                 <thead>
+                  <tr>
+                    <th scope="col">Type</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Recommended amount a day<br>(Adult Men/Adult Women)</th>
+                  </tr>
+                 </thead>
+                 <tbody>
+                  <tr>
+                    <th scope="row">Calories</th>
+                    <td scope="row">300kcal(1000jl)/30%</td>
+                    <td scope="row">15%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Carbs</th>
+                    <td scope="row">100g/30%</td>
+                    <td scope="row">20%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Protein</th>
+                    <td scope="row">10g/4%</td>
+                    <td scope="row">10%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Fat</th>
+                    <td scope="row">20g/10%</td>
+                    <td scope="row">70%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sugar</th>
+                    <td scope="row">20g/10%</td>
+                    <td scope="row">70%</td>
+                  </tr>
+                   <tr>
+                    <th scope="row">Sodium</th>
+                    <td scope="row">2g/0.5%</td>
+                    <td scope="row">10%/20%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Fibers</th>
+                    <td scope="row">2g/0.5%</td>
+                    <td scope="row">10%/20%</td>
+                  </tr>
+                 </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section--timers_note">
+          <section class="section--timers">
+            <h2>Timers</h2>
+            <div class="container--timers">
+              <!-- <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form>
+              <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form>
+              <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form>
+              <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form>
+              <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form>
+              <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form>
+              <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form> -->
+              <!-- <form class="timer" data-timer="0">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 1">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form> -->
+              <!-- <form class="timer" data-timer="1">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 2">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                 <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form> -->
+              <form class="timer" data-timer="2">
+                <button class="btn--x btn--x_timer" type="button">&times;</button>
+                <input class="input--timer_title" type="text" placeholder="Set title for timer" value="Timer 3">
+                <p>
+                  <input class="input--time input--timer_hours" type="number" placeholder="h" min="0" max="23"> : <input class="input--time input--timer_minutes" type="number" placeholder="min" min="0" max="59"> : <input class="input--time input--timer_seconds" type="number" placeholder="sec" min="0" max="59">
+                </p>
+                <div class="container--btns">
+                  <button class="btn--start" type="button">Start</button>
+                  <button class="btn--pause" type="button">Pause</button>
+                  <button class="btn--reset" type="reset">Reset</button>
+                </div>
+              </form>
+              <div class="container--btn_add">
+                <button class="btn--add">+<br>Add</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="section--note" contenteditable="true">
+            You can use this space for taking a note for cooking :)
+          </section>
+        </section>
+
+      </div>
+    </div>
+
+    <div class="page--recipes hidden">
+      <div class="container--search_btn">
+        <p class="search_result">0 recipes found</p>
+        <form class="container--search">
+          <input class="input--search" type="search" placeholder="Search your recipe">
+          <button class="btn--search" type="submit">Search</button>
+        </form>
+        <button class="btn--create" type="button">Create</button>
+      </div>
+      <div class="container--recipes">
+        <ul class="container--recipes_column">
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"> 
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!</p>
+          </li>
+          <!-- <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!!!!!!!</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"></li>
+          <li class="recipe_preview"></li> -->
+        </ul>
+        <!-- <ul class="container--recipes_column">
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"> 
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!!!!!!!</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"></li>
+          <li class="recipe_preview"></li>
+        </ul> -->
+        <!-- <ul class="container--recipes_column">
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"> 
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!!!!!!!</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"></li>
+          <li class="recipe_preview"></li>
+        </ul> -->
+         <!-- <ul class="container--recipes_column">
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"> 
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!!!!!!!</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"></li>
+          <li class="recipe_preview"></li>
+        </ul> -->
+         <!-- <ul class="container--recipes_column">
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"> 
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">mujadara</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!</p>
+          </li>
+          <li class="recipe_preview">
+            <img class="img--main" src="./src/imgs/grey-img.png"> 
+            <p class="title">My special Focaccia!!!!!!!!!!!</p>
+            <img class="img--favorite" src="./src/imgs/star-on.png">
+          </li>
+          <li class="recipe_preview"></li>
+          <li class="recipe_preview"></li>
+        </ul> -->
+      </div>
+      <div class="container--message hidden">
+        <!-- <p>No recipes created yet.<br>Let't start by creating a recipe :)</p> -->
+        <p>No recipes found.<br>Please try with a different keyword :)</p>
+      </div>
+      <button class="btn--pagination btn--pagination_left">Page 1<br>&larr;</button>
+      <button class="btn--pagination btn--pagination_right">Page 3<br>&rarr;</button>
+      <div class="overlay--recipes hidden">
+        <button class="btn--x" type="button">&times;
+        </button>
+        <div class="overlay--create_recipe hidden">
+          <form class="form--create_recipe">
+            <h2>Let's create a recipe!</h2>
+            <div class="container--input_line">
+              <span class="main_img">Main Image</span>
+              <input id="input--main_image" type="file" accept="image/*">
+            </div>
+            <div class="container--input_line">
+              <span class="title">Recipe Title</span>
+              <input id="input--title" type="text" placeholder="Your Recipe Title">
+            </div>
+            <div class="container--input_line">
+              <span class="author">Author</span>
+              <input id="input--author" type="text" placeholder="This recipe's author">
+            </div>
+            <p>Select a servings unit or type a custom unit</p>
+            <div class="container--input_line">
+              <span class="servings">Servings</span>
+              <input id="input--servings" type="number" 
+              min="1" max="500" placeholder="Servings">
+              <select id="select--servings_unit">
+                <option value="people">people</option>
+                <option value="slices">slices</option>
+                <option value="pieces">pieces</option>
+                <option value="cups">cups</option>
+                <option value="bowls">bowls</option>
+              </select>
+              <input id="input--servings_unit_other" placeholder="Other unit">
+            </div>
+            <p>Type temperatures the recipe uses and select the unit (e.g. Oven temperature)</p>
+            <div class="container--input_line">
+              <span class="temperature">Temperature (optional)</span>
+              <input 
+              class="input--temperature"
+              id="input--temperature1" type="number" 
+              placeholder="Temp 1">
+              <input 
+              class="input--temperature"
+              id="input--temperature2" type="number" 
+              placeholder="Temp 2">
+              <input 
+              class="input--temperature"
+              id="input--temperature3" type="number" 
+              placeholder="Temp 3">
+              <input 
+              class="input--temperature"
+              id="input--temperature4" type="number" 
+              placeholder="Temp 4">
+              <select id="select--temperature_unit">
+                <option value="F">F</option>
+                <option value="C">C</option>
+              </select>
+            </div>
+            <p>Select a unit or type a custom unit</p>
+            <div class="container--input_line">
+              <span class="ingredient">Ingredient 1</span>
+              <input 
+              class="input--ingredient" id="input--ingredient1" type="text" placeholder="Ingredient 1">
+              <input 
+              class="input--ingredient_amount" id="input--ingredient1_amount" type="text" placeholder="Amount">
+              <select 
+              class="select-ingredient_unit" id="select--ingredient1_unit">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="cupUS">cup (US)</option>
+                <option value="cupJapan">cup (Japan)</option>
+                <option value="cupImperial">cup (1cup = 250ml)</option>
+                <option value="riceCup">rice cup</option>
+                <option value="tsp">tsp</option>
+                <option value="Tbsp">Tbsp</option>
+                <option value="TbspAustralia">Tbsp (Australia)</option>
+                <option value="noUnit">No unit</option>
+              </select>
+              <input 
+              class="input--ingredient_other" id="input--ingredient1_other_unit" type="text" placeholder="Other unit">
+            </div>
+            <div class="container--input_line">
+              <span class="ingredient">Ingredient 2</span>
+              <input class="input--ingredient"
+              id="input--ingredient2" type="text" placeholder="Ingredient 2">
+              <input class="input--ingredient_amount" id="input--ingredient2_amount" type="text" placeholder="Amount">
+              <select class="select-ingredient_unit" id="select--ingredient2_unit">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="cupUS">cup (US)</option>
+                <option value="cupJapan">cup (Japan)</option>
+                <option value="cupImperial">cup (1cup = 250ml)</option>
+                <option value="riceCup">rice cup</option>
+                <option value="tsp">tsp</option>
+                <option value="Tbsp">Tbsp</option>
+                <option value="TbspAustralia">Tbsp (Australia)</option>
+                <option value="noUnit">No unit</option>
+              </select>
+              <input class="input--ingredient_other" id="input--ingredient2_other_unit" type="text" placeholder="Other unit">
+            </div>
+            <div class="container--input_line">
+              <span class="ingredient">Ingredient 3</span>
+              <input class="input--ingredient" id="input--ingredient3" type="text" placeholder="Ingredient 3">
+              <input class="input--ingredient_amount" id="input--ingredient3_amount" type="text" placeholder="Amount">
+              <select class="select-ingredient_unit" id="select--ingredient3_unit">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="cupUS">cup (US)</option>
+                <option value="cupJapan">cup (Japan)</option>
+                <option value="cupImperial">cup (1cup = 250ml)</option>
+                <option value="riceCup">rice cup</option>
+                <option value="tsp">tsp</option>
+                <option value="Tbsp">Tbsp</option>
+                <option value="TbspAustralia">Tbsp (Australia)</option>
+                <option value="noUnit">No unit</option>
+              </select>
+              <input class="input--ingredient_other" id="input--ingredient3_other_unit" type="text" placeholder="Other unit">
+            </div>
+            <div class="container--btn_add">
+              <button class="btn--add" type="button">+</button>
+            </div>
+            <p>Uploading images are optional</p>
+            <div class="container--input_line">
+              <span class="step">Step 1</span>
+              <textarea id="textarea--step1" placeholder="Description"></textarea>
+              <input id="input--step1_img" type="file" accept="image/*">
+            </div>
+            <div class="container--input_line">
+              <span class="step">Step 1</span>
+              <textarea id="textarea--step1" placeholder="Description"></textarea>
+              <input id="input--step1_img" type="file" accept="image/*">
+            </div>
+            <div class="container--input_line">
+              <span class="step">Step 1</span>
+              <textarea id="textarea--step1" placeholder="Description"></textarea>
+              <input id="input--step1_img" type="file" accept="image/*">
+            </div>
+            <div class="container--btn_add">
+              <button class="btn--add" type="button">+</button>
+            </div>
+            <div class="container--input_line container--input_line_recipe_description">
+              <span class="recipe_description">About This Recipe (optional)</span>
+              <textarea id="textarea--recipe_description" placeholder="Explanation of the recipe"></textarea>
+            </div>
+            <div class="container--input_line">
+              <span class="memory_imgs">Memories of the recipe (optional)</span>
+              <input id="input--memory_imgs" type="file" accept="image/*" multiple="true">
+            </div>
+            <div class="container--input_line container--input_line_comments">
+              <span class="comments">Comments (optional)</span>
+              <textarea id="textarea--comments" placeholder="Comments"></textarea>
+            </div>
+            <button class="btn--upload" type="submit">Upload</button>
+          </form>
+          <div class="container--example">
+            <h2>~ Example ~</h2>
+            <img class="img--example" alt="example image" src="./src/imgs/example.jpg">
+          </div>
+        </div>
+        <div class="overlay--edit_recipe">
+            <form class="form--create_recipe">
+            <h2>Let's edit the recipe!</h2>
+            <div class="container--input_line">
+              <span class="main_img">Main Image</span>
+              <p class="cur_info">Current Image: kkkk.png</p>
+              <input id="input--main_image" type="file" accept="image/*" value="./src/imgs/grey-img">
+            </div>
+            <div  class="container--input_line">
+              <span class="title">Recipe Title</span>
+              <input id="input--title" type="text" placeholder="Your Recipe Title" value="My favorite Focaccia">
+            </div>
+            <div class="container--input_line">
+              <span class="author">Author</span>
+              <input id="input--author" type="text" placeholder="This recipe's author" value="Lei-chan">
+            </div>
+            <p>Select a servings unit or type a custom unit</p>
+            <div class="container--input_line">
+              <span class="servings">Servings</span>
+              <input id="input--servings" type="number" 
+              min="1" max="500" placeholder="Servings" value="4">
+              <select id="select--servings_unit">
+                <option value="people" selected>people</option>
+                <option value="slices">slices</option>
+                <option value="pieces">pieces</option>
+                <option value="cups">cups</option>
+                <option value="bowls">bowls</option>
+              </select>
+              <input id="input--servings_unit_other" placeholder="Other unit">
+            </div>
+            <p>Type a main temperature the recipe uses and select the unit (e.g. Oven temperature)</p>
+            <div class="container--input_line">
+              <span class="temperature">Temperature (optional)</span>
+              <input 
+              class="input--temperature"
+              id="input--temperature1" type="number" 
+              placeholder="Temp 1" value="180">
+              <input 
+              class="input--temperature" 
+              id="input--temperature2" type="number" 
+              placeholder="Temp 2">
+              <input 
+              class="input--temperature"
+              id="input--temperature3" type="number" 
+              placeholder="Temp 3">
+              <input 
+              class="input--temperature"
+              id="input--temperature4" type="number" 
+              placeholder="Temp 4">
+              <select id="select--temperature_unit">
+                <option value="F">F</option>
+                <option value="C" selected>C</option>
+              </select>
+            </div>
+            <p>Select a unit or type a custom unit</p>
+            <div class="container--input_line">
+              <span class="ingredient">Ingredient 1</span>
+              <input 
+              class="input--ingredient" id="input--ingredient1" type="text" placeholder="Ingredient 1" value="tomatoes">
+              <input 
+              class="input--ingredient_amount" id="input--ingredient1_amount" type="text" placeholder="Amount" value="3">
+              <select 
+              class="select-ingredient_unit" id="select--ingredient1_unit">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="cupUS">cup (US)</option>
+                <option value="cupJapan">cup (Japan)</option>
+                <option value="cupImperial">cup (1cup = 250ml)</option>
+                <option value="riceCup">rice cup</option>
+                <option value="tsp">tsp</option>
+                <option value="Tbsp">Tbsp</option>
+                <option value="TbspAustralia">Tbsp (Australia)</option>
+                <option value="noUnit" selected>No unit</option>
+              </select>
+              <input 
+              class="input--ingredient_other" id="input--ingredient1_other_unit" type="text" placeholder="Other unit" value="">
+            </div>
+            <div class="container--input_line">
+              <span class="ingredient">Ingredient 2</span>
+              <input class="input--ingredient"
+              id="input--ingredient2" type="text" placeholder="Ingredient 2" value="flour">
+              <input class="input--ingredient_amount" id="input--ingredient2_amount" type="text" placeholder="Amount" value="1">
+              <select class="select-ingredient_unit" id="select--ingredient2_unit">
+                <option value="g">g</option>
+                <option value="kg" selected>kg</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="cupUS">cup (US)</option>
+                <option value="cupJapan">cup (Japan)</option>
+                <option value="cupImperial">cup (1cup = 250ml)</option>
+                <option value="riceCup">rice cup</option>
+                <option value="tsp">tsp</option>
+                <option value="Tbsp">Tbsp</option>
+                <option value="TbspAustralia">Tbsp (Australia)</option>
+                <option value="noUnit">No unit</option>
+              </select>
+              <input class="input--ingredient_other" id="input--ingredient2_other_unit" type="text" placeholder="Other unit" value="">
+            </div>
+            <div class="container--input_line">
+              <span class="ingredient">Ingredient 3</span>
+              <input class="input--ingredient" id="input--ingredient3" type="text" placeholder="Ingredient 3" value="olive oil">
+              <input class="input--ingredient_amount" id="input--ingredient3_amount" type="text" placeholder="Amount" value="a little bit">
+              <select class="select-ingredient_unit" id="select--ingredient3_unit">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="cupUS">cup (US)</option>
+                <option value="cupJapan">cup (Japan)</option>
+                <option value="cupImperial">cup (1cup = 250ml)</option>
+                <option value="riceCup">rice cup</option>
+                <option value="tsp">tsp</option>
+                <option value="Tbsp">Tbsp</option>
+                <option value="TbspAustralia">Tbsp (Australia)</option>
+                <option value="noUnit" selected>No unit</option>
+              </select>
+              <input class="input--ingredient_other" id="input--ingredient3_other_unit" type="text" placeholder="Other unit">
+            </div>
+            <div class="container--input_line">
+              <span class="ingredient">Ingredient 3</span>
+              <input class="input--ingredient" id="input--ingredient3" type="text" placeholder="Ingredient 3" value="olive oil">
+              <input class="input--ingredient_amount" id="input--ingredient3_amount" type="text" placeholder="Amount" value="a little bit">
+              <select class="select-ingredient_unit" id="select--ingredient3_unit">
+                <option value="g">g</option>
+                <option value="kg">kg</option>
+                <option value="lb">lb</option>
+                <option value="oz">oz</option>
+                <option value="ml">ml</option>
+                <option value="L">L</option>
+                <option value="cupUS">cup (US)</option>
+                <option value="cupJapan">cup (Japan)</option>
+                <option value="cupImperial">cup (1cup = 250ml)</option>
+                <option value="riceCup">rice cup</option>
+                <option value="tsp">tsp</option>
+                <option value="Tbsp">Tbsp</option>
+                <option value="TbspAustralia">Tbsp (Australia)</option>
+                <option value="noUnit" selected>No unit</option>
+              </select>
+              <input class="input--ingredient_other" id="input--ingredient3_other_unit" type="text" placeholder="Other unit">
+            </div>
+            <div class="container--btn_add">
+              <button class="btn--add" type="button">+</button>
+            </div>
+            <p>Uploading images are optional</p>
+            <div class="container--input_line">
+              <span class="step">Step 1</span>
+              <textarea id="textarea--step1" placeholder="Description">Put something in a small bowl.</textarea>
+              <div class="container--cur_img_choose_img">
+                <p class="cur_info">Current Image: kkkkkkk.png</p>
+                <input id="input--step1_img" type="file" accept="image/*">
+              </div>
+            </div>
+            <div class="container--input_line">
+              <span class="step">Step 2</span>
+              <textarea id="textarea--step2" placeholder="Description"></textarea>
+              <div class="container--cur_img_choose_img">
+                <p class="cur_info">Current Image: kkkkkkk.png</p>
+                <input id="input--step2_img" type="file" accept="image/*">
+              </div>
+            </div>
+            <div class="container--input_line">
+              <span class="step">Step 3</span>
+              <textarea id="textarea--step1" placeholder="Description"></textarea>
+              <div class="container--cur_img_choose_img">
+                <p class="cur_info">Current Image: kkkkkkk.png</p>
+                <input id="input--step1_img" type="file" accept="image/*">
+              </div>
+            </div>
+             <div class="container--input_line">
+              <span class="step">Step 4</span>
+              <textarea id="textarea--step4" placeholder="Description"></textarea>
+              <div class="container--cur_img_choose_img">
+                <p class="cur_info">Current Image: kkkkkkk.png</p>
+                <input id="input--step4_img" type="file" accept="image/*">
+              </div>
+            </div>
+            <div class="container--btn_add">
+              <button class="btn--add" type="button">+</button>
+            </div>
+            <div class="container--input_line container--input_line_recipe_description">
+              <span class="recipe_description">About This Recipe (optional)</span>
+              <textarea id="textarea--recipe_description" placeholder="Explanation of the recipe">This recipe is </textarea>
+            </div>
+            <div class="container--input_line">
+              <span class="memory_imgs">Memories of the recipe (optional)</span>
+              <div class="container--cur_img_choose_img">
+                <p class="cur_info">Current Image: kkkkkkk.png, kkkkkkk.jpeg, jjjjjjjj.jpg</p>
+                <input id="input--memory_imgs" type="file" accept="image/*" multiple="true">
+              </div>
+            </div>
+            <div class="container--input_line container--input_line_comments">
+              <span class="comments">Comments (optional)</span>
+              <textarea id="textarea--comments" placeholder="Comments">I will change the ingredients later!</textarea>
+            </div>
+            <button class="btn--upload" type="submit">Upload</button>
+          </form>
+          <div class="container--recipe_preview">
+            <h2>~ Preview ~</h2>
+            <section class="section--recipe">
+              <div class="container--recipe">
+                <img class="img--main" src="./src/imgs/grey-img.png">
+                <div class="title_wrapper">
+                  <h2 class="title">My Favorite Focaccia!!!!!!!!!!!!!!!!!!!!!!!!!!!!!</h2>
+                </div>
+                <div class="container--description_favorite">
+                  <div class="container--description">
+                    <div class="container--author_servings">
+                      <p>Author</p>
+                      <span class="author"> Lei-chan</span>
+                      <p>Servings</p>
+                      <input id="input--servings" type="number" min="1" max="500" value="4"></input>
+                      <span class="servings_unit">people</span>
+                    </div>
+                    <div class="container--units">
+                      <p>Ingredients Unit</p>
+                      <select id="input--ingredients_unit">
+                        <option value="metric">Metric</option>
+                        <option value="us">US</option>
+                        <option value="japan">Japan</option>
+                        <option value="australia">Australia</option>
+                        <option value="metriccup">Metric cup (1cup = 250ml)</option>
+                      </select>
+                      <p>Temperature</p>
+                      <span class="temperature">180</span>
+                      <select id="input--temperature_units">
+                        <option value="c">C</option>
+                        <option value="f">F</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button class="btn--favorite"></button>
+                </div>
+                <div class="container--ingredients">
+                  <h3>~ Ingredients ~</h3>
+                  <div class="ingredients">
+                    <div class="ingredient_line">
+                      <input type="checkbox">
+                      <span>100 g flour</span>
+                    </div>
+                    <div class="ingredient_line">
+                      <input type="checkbox">
+                      <span>100 g flourrrrrrrrrrrrrrrrrrrrr</span>
+                    </div>
+                    <div class="ingredient_line">
+                      <input type="checkbox">
+                      <span>1000 g water</span>
+                    </div>
+                    <div class="ingredient_line">
+                      <input type="checkbox">
+                      <span>1000 g water</span>
+                    </div>
+                    <div class="ingredient_line">
+                      <input type="checkbox">
+                      <span>1000 g water</span>
+                    </div>
+                  </div>
+                </div>
+  
+                <div class="container--steps">
+                  <h2>~ Steps ~</h2>
+                  <div class="step">
+                    <h3>Step 1</h3>
+                    <div class="container--step_step_img">
+                      <p>Mix the ingredients together in a learge bowl. Set aside for 5 minutes.</p>
+                      <img src="./src/imgs/grey-img.png">  
+                    </div>
+                  </div>
+                  <div class="step">
+                    <h3>Step 2</h3>
+                    <div class="container--step_step_img">
+                      <p>Leave 3 large eggs in room temperature. Then beat them in a bowl. Add salt and pepper to it.</p>
+                    </div>
+                  </div>
+                   <div class="step">
+                    <h3>Step 3</h3>
+                    <div class="container--step_step_img">
+                      <p>Leave 3 large eggs in room temperature. Then beat them in a bowl. Add salt and pepper to it.</p>
+                    </div>
+                  </div>
+                   <div class="step">
+                    <h3>Step 4</h3>
+                    <div class="container--step_step_img">
+                      <p>Leave 3 large eggs in room temperature. Then beat them in a bowl. Add salt and pepper to it.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="container--recipe_description">
+                  <h2>~ About this recipe ~</h2>
+                  <p>This is our family recipe. My parents used to make this recipe on weekends :) This is very nostalgic for me. I wanted to share it because I want you guys to taste my family flavores. I hope you guys enjoy the recipe as much as our family does!</p>
+                </div>
+                <div class="container--slider">
+                  <h2>~ Memories of the recipe ~</h2>
+                  <div class="slider--imgs">
+                    <img src="./src/imgs/grey-img.png">
+                  </div>
+                </div>
+                <div class="container--comments">
+                <h2>~ Comments ~</h2>
+                <div class="comments_wrapper">
+                  <div class="comments" contenteditable="true">You can use this space for leaving comments for the recipe or places you want to edit later :)</div>
+                </div>
+              </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay--upload hidden">
+      <img class="img--uploading hidden" src="./src/imgs/loading.png">
+      <p class="message--upload hidden">
+        Recipe uploaded successfully!
+      </p>
+    </div>
+    
+    <div class="page--news"></div>
+    <div class="page--account"></div>
+    <div class="page--feedback"></div>
+  </body>
+</html>
