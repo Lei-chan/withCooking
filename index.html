@@ -100,7 +100,7 @@
       </div>
     </div>
 
-    <div class="page--main">
+    <div class="page--main hidden">
       <div class="container--cooking">
         <div class="container--dropdown">
           <button class="btn--dropdown" type="button"></button>
@@ -1058,6 +1058,103 @@
       </p>
     </div>
     
+    <div class="page--converter">
+      <h1>Converter</h1>
+      <h3>Ingredient units</h3>
+      <div class="container--converter_ingredients">
+        <div class="container--converter">
+          <label for="input--ingredient_amount">From</label>
+          <input class="input--amount" id="input--ingredient_amount" type="number" placeholder="Amount">
+          <select class="select--ingredient_unit_from">
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+            <option value="oz">oz</option>
+            <option value="ml">ml</option>
+            <option value="L">L</option>
+            <option value="cupUS">cup (US)</option>
+            <option value="cupJapan">cup (Japan)</option>
+            <option value="cupImperial">cup (1cup = 250ml)</option>
+            <option value="riceCup">rice cup</option>
+            <option value="tsp">tsp</option>
+            <option value="Tbsp">Tbsp</option>
+            <option value="TbspAustralia">Tbsp (Australia)</option>
+          </select>
+          <label 
+          class="label--to"
+          for="select--ingredient_unit_to">To</label>
+          <select class="select--ingredient_unit_to">
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+            <option value="oz">oz</option>
+            <option value="ml">ml</option>
+            <option value="L">L</option>
+            <option value="cupUS">cup (US)</option>
+            <option value="cupJapan">cup (Japan)</option>
+            <option value="cupImperial">cup (1cup = 250ml)</option>
+            <option value="riceCup">rice cup</option>
+            <option value="tsp">tsp</option>
+            <option value="Tbsp">Tbsp</option>
+            <option value="TbspAustralia">Tbsp (Australia)</option>
+          </select>
+        </div>
+        <div class="container--output">
+          <p class="output">10</p><span class="unit">US cups</span>
+        </div>
+      </div>
+      <h3>Length units</h3>
+      <div class="container--converter_length">
+        <div class="container--converter">
+          <label for="input--length_amount">From</label>
+          <input class="input--amount" id="input--length_amount" type="number" placeholder="Length">
+          <select class="select--length_unit_from">
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="m">m</option>
+            <option value="inch">inch</option>
+            <option value="foot">foot</option>
+            <option value="yard">yard</option>
+          </select>
+          <label 
+          class="label--to"
+          for="select--length_unit_to">To</label>
+          <select class="select--length_unit_to">
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="m">m</option>
+            <option value="inch">inch</option>
+            <option value="foot">foot</option>
+            <option value="yard">yard</option>
+          </select>
+        </div>
+        <div class="container--output">
+          <p class="output">10</p><span class="unit">yard</span>
+        </div>
+      </div>
+      <h3>Tempareture units</h3>
+      <div class="container--converter_temperature">
+        <div class="container--converter">
+          <label for="input--temperature_amount">From</label>
+          <input class="input--amount" id="input--temperature_amount" type="number" placeholder="Temperature">
+          <select class="select--temperature_unit_from">
+            <option value="℃">℃</option>
+            <option value="℉">℉</option>
+          </select>
+          <label
+          class="label--to"
+          for="select--temperature_unit_to">To</label>
+          <select class="select--temperature_unit_to">
+            <option value="℃">℃</option>
+            <option value="℉">℉</option>
+          </select>
+        </div>
+        <div class="container--output">
+          <p class="output">10</p>
+          <span class="unit">℉</span>
+        </div>
+      </div>
+    </div>
     <div class="page--news"></div>
     <div class="page--account"></div>
     <div class="page--feedback"></div>

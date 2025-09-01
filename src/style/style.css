@@ -1667,6 +1667,96 @@ footer {
   }
 }
 
+.page--converter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(109, 219, 182);
+  gap: 2%;
+  padding: 1%;
+
+  h1 {
+    font-size: 2.6vw;
+    letter-spacing: 0.1vw;
+    margin-bottom: 1%;
+  }
+
+  h3 {
+    font-size: 1.5vw;
+    letter-spacing: 0.07vw;
+    word-spacing: 0.3vw;
+  }
+
+  .container--converter_ingredients,
+  .container--converter_length,
+  .container--converter_temperature {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 65%;
+    height: 20%;
+    background-color: antiquewhite;
+    gap: 3%;
+    border-radius: 1%/8%;
+
+    .container--converter {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      width: 75%;
+      height: fit-content;
+      gap: 1%;
+
+      label {
+        font-size: 1.5vw;
+      }
+
+      .label--to {
+        margin-left: 2%;
+      }
+
+      input {
+        text-align: center;
+        width: 25%;
+        font-size: 1.2vw;
+        letter-spacing: 0.07vw;
+        border-radius: 2%/7%;
+        border-color: rgba(0, 0, 0, 0.404);
+      }
+
+      input,
+      select {
+        aspect-ratio: 1/0.21;
+      }
+    }
+
+    .container--output {
+      width: 25%;
+      height: fit-content;
+      display: flex;
+      flex-direction: row;
+      gap: 5%;
+
+      .output {
+        background-color: rgb(255, 241, 164);
+        width: fit-content;
+        height: fit-content;
+        font-size: 3vw;
+        padding: 0 2% 1% 2%;
+      }
+
+      .unit {
+        font-size: 1.9vw;
+        margin: auto 3% 0 0;
+      }
+    }
+  }
+}
+
 .hidden {
   display: none !important;
 }
