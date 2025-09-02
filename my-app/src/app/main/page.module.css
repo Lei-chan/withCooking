@@ -1,0 +1,718 @@
+.page__main {
+  width: 100vw;
+  height: 100vh;
+}
+
+.container__cooking {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+}
+
+.container__dropdown {
+  position: absolute;
+  top: 1%;
+  right: 3%;
+  width: 19%;
+  aspect-ratio: 1 / 1.8;
+  z-index: 10;
+  pointer-events: none;
+
+  .btn__dropdown {
+    pointer-events: all;
+    width: 22%;
+    aspect-ratio: 1;
+    background: none;
+    border: none;
+    background-image: url("/dropdown.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+    margin-left: 82%;
+  }
+
+  ul {
+    width: 100%;
+    height: 100%;
+    list-style-type: none;
+    text-align: center;
+    border-radius: 1.8% / 1%;
+    overflow: hidden;
+
+    a {
+      text-decoration: none;
+    }
+
+    li {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background-image: linear-gradient(rgb(243, 195, 255), rgb(222, 151, 255));
+      height: calc(100% / 7);
+      font-size: 1.5vw;
+      letter-spacing: 0.1vw;
+
+      &:hover {
+        background-image: linear-gradient(
+          rgb(210, 134, 230),
+          rgb(210, 113, 255)
+        );
+      }
+    }
+  }
+}
+
+.container__search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 11%;
+  background-color: blueviolet;
+
+  input {
+    text-align: center;
+    border-color: rgb(255, 166, 0, 0.671);
+  }
+
+  button {
+    height: 50%;
+    border-radius: 39% / 50%;
+    border: none;
+    background-color: rgb(255, 231, 126);
+  }
+}
+
+.recipe_preview {
+  display: flex;
+  flex-direction: row;
+  text-align: center;
+  align-items: center;
+  width: 100%;
+  background-image: linear-gradient(rgb(255, 255, 232), rgb(255, 252, 205));
+
+  &:hover {
+    background-image: linear-gradient(rgb(233, 233, 194), rgb(226, 222, 177));
+  }
+
+  .img__main {
+    width: 19%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+
+  p {
+    width: 59%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .img__favorite {
+    width: 8%;
+    height: 35%;
+  }
+}
+
+.btn__pagination {
+  position: absolute;
+  background-image: linear-gradient(rgb(183, 0, 255), rgb(135, 0, 168));
+  color: aliceblue;
+  border: none;
+  line-height: 100%;
+}
+
+.section__recipe {
+  position: relative;
+  text-align: center;
+  background-image: linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179));
+  width: 50%;
+  height: 100%;
+  overflow-y: scroll;
+  scrollbar-color: rgb(255, 255, 232) rgb(253, 231, 157);
+
+  .container__recipe {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 3% 0;
+    z-index: 1;
+    color: rgb(60, 0, 116);
+
+    .img__main {
+      width: 75%;
+      aspect-ratio: 1 / 0.55;
+    }
+
+    .title_wrapper {
+      position: relative;
+      top: -6%;
+      width: 65%;
+      height: fit-content;
+    }
+
+    .title {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      background-image: linear-gradient(
+        150deg,
+        rgb(255, 230, 0) 10%,
+        rgb(255, 102, 0)
+      );
+      width: 100%;
+      height: fit-content;
+      font-size: 2vw;
+      letter-spacing: 0.1vw;
+      padding: 2% 3.5%;
+      transform: skewX(-17deg);
+    }
+
+    .container__description_favorite {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      top: -2%;
+      width: 90%;
+      height: fit-content;
+      gap: 3%;
+
+      .btn__favorite {
+        background: none;
+        background-image: url("/star-off.png");
+        width: 5%;
+        aspect-ratio: 1;
+        background-repeat: no-repeat;
+        background-size: 100%;
+        border: none;
+      }
+
+      .btn__favorite_on {
+        background-image: url("/star-on.png");
+      }
+
+      .container__description {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: start;
+        min-width: 80%;
+        width: fit-content;
+        max-width: 91%;
+        height: 95%;
+        white-space: nowrap;
+        padding: 3%;
+        background-color: rgb(255, 217, 0);
+        overflow: hidden;
+        border-radius: 1% / 7%;
+        gap: 8%;
+
+        .author {
+          padding-right: 5%;
+        }
+
+        .container__author_servings,
+        .container__ingredients_unit,
+        .container__temperature_unit {
+          width: 100%;
+          height: fit-content;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 5%;
+          letter-spacing: 0.05vw;
+
+          p {
+            background-color: rgba(206, 58, 0, 0.904);
+            width: fit-content;
+            height: fit-content;
+            padding: 0.5% 0.9%;
+            color: aliceblue;
+            font-size: 1vw;
+            border-radius: 5px;
+          }
+
+          span {
+            font-size: 1.2vw;
+          }
+
+          .author {
+            margin-right: 1%;
+          }
+
+          #input__servings {
+            width: 7%;
+            aspect-ratio: 1 / 0.8;
+            font-size: 1.3vw;
+            text-align: center;
+            border: none;
+          }
+
+          #input__ingredients_unit {
+            margin-right: 1%;
+          }
+        }
+      }
+    }
+
+    .container__ingredients {
+      position: relative;
+      top: 3%;
+      width: 90%;
+      height: fit-content;
+      background-color: rgb(255, 247, 177);
+      padding: 2%;
+      border-radius: 3px;
+
+      h3 {
+        font-size: 1.5vw;
+        letter-spacing: 0.05vw;
+      }
+
+      .ingredients {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        justify-items: left;
+        margin-top: 2%;
+        font-size: 1.3vw;
+        word-spacing: 0.1vw;
+        gap: 5%;
+        padding-left: 7%;
+
+        .ingredient_line {
+          width: 100%;
+          height: fit-content;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-align: left;
+        }
+      }
+    }
+
+    .container__steps {
+      position: relative;
+      top: 8%;
+      width: 80%;
+      height: fit-content;
+
+      h2 {
+        margin-bottom: 3.5%;
+        font-size: 1.6vw;
+      }
+
+      .step {
+        width: 100%;
+        height: fit-content;
+        border: thin solid rgb(255, 174, 0);
+        padding: 3%;
+        font-size: 1.2vw;
+        letter-spacing: 0.05vw;
+
+        h3 {
+          margin-bottom: 2%;
+          font-size: 1.4vw;
+        }
+
+        .container__step_step_img {
+          text-align: left;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 3%;
+
+          img {
+            width: 25%;
+            aspect-ratio: 1 / 0.8;
+          }
+        }
+      }
+    }
+
+    .container__recipe_description {
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      align-items: center;
+      width: 100%;
+      max-height: 30%;
+      margin-top: 20%;
+      flex-shrink: 0;
+
+      h2 {
+        font-size: 1.8vw;
+        margin-bottom: 2%;
+      }
+
+      p {
+        background-color: rgb(255, 247, 133);
+        overflow-y: auto;
+        width: 85%;
+        height: 100%;
+        padding: 1.3% 1.5%;
+        font-size: 1.2vw;
+        letter-spacing: 0.05vw;
+      }
+    }
+
+    .container__slider {
+      margin-top: 10%;
+      width: 60%;
+      height: 45%;
+
+      h2 {
+        font-size: 1.8vw;
+        margin-bottom: 3%;
+      }
+
+      .slider__imgs {
+        width: 100%;
+        height: 80%;
+
+        img {
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+
+    .container__comments {
+      margin-top: 8%;
+      width: 80%;
+      height: 40%;
+      flex-shrink: 0;
+
+      h2 {
+        font-size: 1.8vw;
+        margin-bottom: 3%;
+      }
+
+      .comments_wrapper {
+        width: 100%;
+        height: 90%;
+        border-radius: 1% / 3%;
+
+        .comments {
+          width: 100%;
+          height: 100%;
+          overflow-y: auto;
+          background-color: rgb(255, 253, 222);
+          font-size: 1.3vw;
+          letter-spacing: 0.05vw;
+          padding: 3%;
+          text-align: left;
+        }
+      }
+    }
+
+    .container__nutrition_facts {
+      width: 95%;
+      height: 58%;
+      margin-top: 14%;
+      padding-bottom: 3%;
+      flex-shrink: 0;
+      letter-spacing: 0.07vw;
+
+      .nutrition_facts {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        background-color: antiquewhite;
+        padding: 2%;
+
+        .container__h3_input {
+          display: flex;
+          flex-direction: row;
+          width: 100%;
+          height: fit-content;
+          align-items: center;
+          margin-bottom: 3%;
+          gap: 2%;
+
+          h3 {
+            font-size: 1.6vw;
+            margin-left: 35%;
+          }
+
+          #input__servings {
+            width: 8%;
+            height: 100%;
+            margin-left: 10%;
+            font-size: 1.2vw;
+            padding-left: 0.5%;
+          }
+
+          span {
+            font-size: 1.2vw;
+          }
+        }
+
+        .nutrients {
+          width: 95%;
+          height: fit-content;
+          border-spacing: 0;
+
+          th,
+          td {
+            border: thin solid rgb(116, 116, 255);
+            padding: 0.3%;
+          }
+
+          td {
+            font-size: 1.1vw;
+          }
+
+          thead {
+            background-color: rgb(200, 222, 255);
+            font-size: 1.2vw;
+          }
+
+          tbody > tr:nth-of-type(odd) {
+            background-color: azure;
+          }
+
+          tbody > tr:nth-of-type(even) {
+            background-color: rgb(215, 244, 255);
+          }
+        }
+      }
+    }
+  }
+}
+
+.container__search_menu {
+  position: absolute;
+  top: 0%;
+  width: 55%;
+  height: 100%;
+  z-index: 10;
+  transform: translateX(-100%);
+
+  .btn__search_menu {
+    position: absolute;
+    width: 15%;
+    aspect-ratio: 1;
+    background-color: rgb(255, 255, 232);
+    background-image: url("/dropdown.png");
+    background-repeat: no-repeat;
+    background-size: contain;
+    border: none;
+    top: 1%;
+    right: -15%;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.274);
+  }
+
+  .container__search {
+    gap: 2%;
+    width: 100%;
+    height: 11%;
+
+    input {
+      width: 75%;
+      height: 56%;
+      font-size: 1.3vw;
+      letter-spacing: 0.05vw;
+      border-radius: 8% / 50%;
+    }
+
+    button {
+      font-size: 1.1vw;
+      padding: 0% 1.5%;
+    }
+  }
+
+  .recipe_preview {
+    position: relative;
+    padding: 0 3%;
+    width: 100%;
+    height: 17%;
+    gap: 6%;
+    border-bottom: thin solid rgba(228, 149, 2, 0.76);
+    font-size: 1.35vw;
+    letter-spacing: 0.05vw;
+  }
+
+  .search_menu {
+    width: 100%;
+    height: 100%;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.24);
+    background-color: rgb(255, 245, 233);
+  }
+
+  .btn__pagination {
+    bottom: 0.6%;
+    width: 18%;
+    font-size: 1.05vw;
+    letter-spacing: 0.03vw;
+    padding: 1.3% 2% 1% 2%;
+    border-radius: 25% / 50%;
+  }
+
+  .search_results {
+    width: 100%;
+    height: 80%;
+    list-style: none;
+  }
+
+  .btn__pagination_left {
+    left: 2%;
+  }
+
+  .btn__pagination_right {
+    right: 2%;
+  }
+}
+
+.section__timers_note {
+  display: grid;
+  grid-template-rows: 65% 35%;
+  width: 50%;
+  height: 100%;
+
+  .section__timers {
+    position: relative;
+    background-image: linear-gradient(rgb(255, 217, 0), rgb(255, 166, 1));
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    scrollbar-color: rgb(255, 199, 125) rgb(212, 120, 0);
+    text-align: center;
+    padding: 3% 0 1% 0;
+
+    h2 {
+      font-size: 2vw;
+      letter-spacing: 0.1vw;
+      margin-bottom: 5%;
+    }
+
+    .container__timers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      justify-items: center;
+      width: 100%;
+      height: fit-content;
+
+      .timer,
+      .container__btn_add {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 80%;
+        aspect-ratio: 1 / 0.8;
+        border-radius: 2%;
+        margin-bottom: 5%;
+      }
+
+      .container__btn_add {
+        justify-content: center;
+
+        .btn__add {
+          width: fit-content;
+          aspect-ratio: 1/1;
+          font-size: 1.3vw;
+          letter-spacing: 0.05vw;
+          line-height: 105%;
+          padding: 4%;
+          background-image: linear-gradient(rgb(251, 255, 0), rgb(255, 217, 0));
+          border-radius: 50%;
+          border: none;
+        }
+      }
+
+      .timer {
+        position: relative;
+        background-color: rgb(255, 245, 199);
+        gap: 8%;
+
+        .btn__x {
+          position: absolute;
+          background-color: orange;
+          width: 7%;
+          aspect-ratio: 1/1;
+          border-radius: 50%;
+          border: none;
+          font-size: 1.2vw;
+          top: 2%;
+          right: 1%;
+        }
+
+        input {
+          text-align: center;
+        }
+
+        .input__timer_title {
+          width: 80%;
+          height: 16%;
+          margin-top: 8%;
+          font-size: 1.15vw;
+          border-radius: 2% / 18%;
+          border-color: orange;
+        }
+
+        p {
+          white-space: nowrap;
+        }
+
+        .input__time {
+          width: 30%;
+          aspect-ratio: 1 / 0.8;
+          font-size: 1.5vw;
+        }
+
+        .container__btns {
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          width: 100%;
+          height: fit-content;
+          gap: 6%;
+
+          button {
+            border: none;
+            width: 20%;
+            aspect-ratio: 1/1;
+            font-size: 1.2vw;
+            letter-spacing: 0.05vw;
+            border-radius: 50%;
+          }
+
+          .btn__start {
+            background-color: greenyellow;
+          }
+
+          .btn__pause {
+            background-color: rgb(255, 153, 0);
+          }
+
+          .btn__reset {
+            background-color: rgb(191, 52, 255);
+          }
+        }
+      }
+    }
+  }
+
+  .section__note {
+    background-image: linear-gradient(rgb(254, 255, 213), rgb(254, 255, 186));
+    width: 100%;
+    overflow-y: auto;
+    scrollbar-color: rgb(255, 250, 209) rgb(255, 231, 92);
+    font-size: 1.3vw;
+    letter-spacing: 0.05vw;
+    padding: 2% 2.8%;
+    z-index: 1;
+  }
+}
+
+.hidden {
+  display: none !important;
+}
