@@ -366,6 +366,8 @@
           position: absolute;
           width: 9%;
           aspect-ratio: 1;
+          background: none;
+          border: none;
           background-repeat: no-repeat;
           background-size: contain;
           right: 2%;
@@ -407,10 +409,10 @@
       .btn__login {
         font-size: 1.3vw;
         letter-spacing: 0.1vw;
-        padding: 1%;
+        padding: 1% 1.5% 1.2% 1.5%;
         background-image: linear-gradient(rgb(238, 57, 255), rgb(168, 1, 190));
         border: none;
-        border-radius: 10%;
+        border-radius: 5%/10%;
         color: aliceblue;
         margin-top: 2%;
         transition: all 0.3s;
@@ -457,6 +459,9 @@
       }
 
       .input_wrapper {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         margin: 4% auto 6% auto;
 
         input {
@@ -465,12 +470,12 @@
       }
 
       .btn__signup {
-        font-size: 1.2vw;
+        font-size: 1.3vw;
         letter-spacing: 0.1vw;
-        padding: 1%;
+        padding: 1% 1.5%;
         background-image: linear-gradient(rgb(255, 174, 0), rgb(255, 102, 0));
         border: none;
-        border-radius: 10%;
+        border-radius: 5%/10%;
         color: aliceblue;
         transition: all 0.3s;
 
