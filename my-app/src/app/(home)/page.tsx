@@ -150,38 +150,22 @@ const BottomHalf = function () {
 const OverlayLogin = function ({
   show,
   isPasswordVisible,
+  isWarningVisible,
+  warningMessage,
   onClickX,
   onClickOutside,
   onClickEye,
+  onSubmitLogin,
 }: {
   show: Boolean;
   isPasswordVisible: Boolean;
+  isWarningVisible: Boolean;
+  warningMessage: String;
   onClickX: () => void;
   onClickOutside: () => void;
   onClickEye: () => void;
+  onSubmitLogin: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
-  const [isWarningVisible, setIsWarningVisible] = useState(false);
-  const [warningMessage, setWarningMessage] = useState("");
-
-  const handleSubmit = function (e: any) {
-    try {
-      e.preventDefault();
-      const data = [...new FormData(e.currentTarget)];
-
-      data.forEach((arr) => {
-        if (!arr[1].trim()) throw new Error("Please fill the both fields.");
-      });
-
-      //send data to server
-    } catch (err: any) {
-      setIsWarningVisible(true);
-      return setWarningMessage(err.message);
-    }
-
-    //redirect to main
-    redirect("/main", RedirectType.replace);
-  };
-
   return (
     <div
       className={clsx(styles.overlay__login, !show && styles.hidden)}
@@ -199,7 +183,7 @@ const OverlayLogin = function ({
       >
         {warningMessage}
       </p>
-      <form className={styles.form__login} onSubmit={handleSubmit}>
+      <form className={styles.form__login} onSubmit={onSubmitLogin}>
         <button className={styles.btn__x} type="button" onClick={onClickX}>
           &times;
         </button>
@@ -247,15 +231,21 @@ const OverlayLogin = function ({
 const OverlayCreateAccount = function ({
   show,
   isPasswordVisible,
+  isWarningVisible,
+  warningMessage,
   onClickX,
   onClickOutside,
   onClickEye,
+  onSubmitCreateAcc,
 }: {
   show: Boolean;
   isPasswordVisible: Boolean;
+  isWarningVisible: Boolean;
+  warningMessage: String;
   onClickX: () => void;
   onClickOutside: () => void;
   onClickEye: () => void;
+  onSubmitCreateAcc: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
   return (
     <div
@@ -270,12 +260,15 @@ const OverlayCreateAccount = function ({
         className={clsx(
           styles.warning,
           styles.warning__create_account,
-          styles.hidden
+          !isWarningVisible && styles.hidden
         )}
       >
-        This email already exists. Please try again!
+        {warningMessage}
       </p>
-      <form className={styles.form__create_account}>
+      <form
+        className={styles.form__create_account}
+        onSubmit={onSubmitCreateAcc}
+      >
         <button className={styles.btn__x} type="button" onClick={onClickX}>
           &times;
         </button>
@@ -284,6 +277,7 @@ const OverlayCreateAccount = function ({
         <div className={styles.input_wrapper}>
           <input
             id={styles.input__signup_username}
+            name="username"
             type="email"
             placeholder="username"
           ></input>
@@ -296,6 +290,7 @@ const OverlayCreateAccount = function ({
         <div className={styles.input_wrapper}>
           <input
             id={styles.input__signup_password}
+            name="password"
             type={!isPasswordVisible ? "password" : "text"}
             placeholder="password"
           ></input>
@@ -328,6 +323,8 @@ export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
+  const [isWarningVisible, setIsWarningVisible] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
 
   const handleToggleLogin = function () {
     setShowLogin(!showLogin);
@@ -343,6 +340,7 @@ export default function Home() {
     setPasswordIsVisible(!isPasswordVisible);
   };
 
+  //Add escape key event listener
   useEffect(() => {
     const handleKeyDownEscape = function (e: any) {
       if (e.key !== "Escape" || (!showLogin && !showSignup)) return;
@@ -357,6 +355,28 @@ export default function Home() {
     };
   }, [showLogin, showSignup]);
 
+  const handleSubmit = function (e: React.FormEvent<HTMLFormElement>) {
+    try {
+      e.preventDefault();
+      const data = [...new FormData(e.currentTarget)];
+
+      data.forEach((arr) => {
+        if (!arr[1].toString().trim())
+          throw new Error("Please fill the both fields.");
+      });
+
+      //loading
+
+      //send data to server
+    } catch (err: any) {
+      setIsWarningVisible(true);
+      return setWarningMessage(err.message);
+    }
+
+    //redirect to main
+    redirect("/main", RedirectType.replace);
+  };
+
   return (
     <div className={clsx(styles.page__first)}>
       <TopHalf
@@ -369,16 +389,22 @@ export default function Home() {
           <OverlayLogin
             show={showLogin ? true : false}
             isPasswordVisible={isPasswordVisible}
+            isWarningVisible={isWarningVisible}
+            warningMessage={warningMessage}
             onClickX={handleToggleLogin}
             onClickOutside={handleToggleLogin}
             onClickEye={handleTogglePassword}
+            onSubmitLogin={handleSubmit}
           />
           <OverlayCreateAccount
             show={showSignup ? true : false}
             isPasswordVisible={isPasswordVisible}
+            isWarningVisible={isWarningVisible}
+            warningMessage={warningMessage}
             onClickX={handleToggleSignup}
             onClickOutside={handleToggleSignup}
             onClickEye={handleTogglePassword}
+            onSubmitCreateAcc={handleSubmit}
           />
         </div>
       )}
