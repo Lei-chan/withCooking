@@ -669,6 +669,11 @@
           gap: 3%;
           width: 80%;
           white-space: nowrap;
+
+          span {
+            font-size: 2.5vw;
+            letter-spacing: 0.07vw;
+          }
         }
 
         .input__time {

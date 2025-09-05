@@ -176,7 +176,7 @@ const Recipe = function () {
               type="number"
               min="1"
               max="500"
-              value="4"
+              defaultValue="4"
             ></input>
             <span className={styles.servings_unit}>people</span>
           </div>
@@ -280,7 +280,7 @@ const Recipe = function () {
               type="number"
               min="1"
               max="500"
-              value="1"
+              defaultValue="1"
             ></input>
             <span>servings</span>
           </div>
@@ -340,28 +340,50 @@ const Recipe = function () {
   );
 };
 
+/////There is a bug that I can't stop/pause/reset the 3rd timer!
 const Timers = function () {
   const MAX_TIMERS = 10;
+  const audioRef = useRef(null);
   const [numberOfTimers, setNumberOfTimers] = useState(1);
   const defaultArr = Array(numberOfTimers).fill("");
+  const defaultTime = { hours: "", minutes: "", seconds: "" };
   const [titleTimers, setTitleTimers] = useState(
     [...defaultArr].map((_, i) => `Timer ${i + 1}`)
   );
-  const [originalTimes, setOriginalTimes] = useState(defaultArr);
-  const [PausedTimes, setPausedTimes] = useState(defaultArr);
-  const [setIntervalIds, setSetIntervalIds] = useState(defaultArr);
+  const [originalTimes, setOriginalTimes] = useState(
+    [...defaultArr].map((_, i) => defaultTime)
+  );
+  let times = originalTimes; //For immediate update
+
+  const [PausedTimers, setPausedTimers] = useState<Boolean[]>(defaultArr);
+  const [resetedTimers, setResetedTimers] = useState<Boolean[]>(defaultArr);
+  const [intervalIds, setIntervalIds] = useState(defaultArr);
+
+  const getIndex = (e: any, option: "target" | "currentTarget") => {
+    const target =
+      option === "target" ? (e.target as HTMLElement) : e.currentTarget;
+    const index = +target.closest("form")?.dataset.timer;
+
+    return index >= 0 ? index : null;
+  };
 
   const handleDeleteTimers = function (e: React.MouseEvent<HTMLButtonElement>) {
     if (!numberOfTimers) return;
 
     setNumberOfTimers(numberOfTimers - 1);
-    const index = +e.currentTarget.closest("form").dataset.timer;
-    console.log(index);
+    const index = getIndex(e, "currentTarget");
+
+    if (!index) return console.error("No index!");
+
     setTitleTimers((prev) => {
       const newTitleTimers = [...prev];
       newTitleTimers.splice(index, 1);
       return newTitleTimers;
     });
+    times = [...times].splice(index, 1);
+    setOriginalTimes((prev) => [...prev].splice(index, 1));
+    setPausedTimers((prev) => [...prev].splice(index, 1));
+    setResetedTimers((prev) => [...prev].splice(index, 1));
   };
 
   const handleIncreaseTimers = function () {
@@ -372,6 +394,10 @@ const Timers = function () {
       const newTitleTimers = [...prev, `Timer ${prev.length + 1}`];
       return newTitleTimers;
     });
+    times = [...times, defaultTime];
+    setOriginalTimes((prev) => [...prev, defaultTime]);
+    setPausedTimers((prev) => [...prev, false]);
+    setResetedTimers((prev) => [...prev, false]);
   };
 
   //save change after 0.3 sec
@@ -380,9 +406,8 @@ const Timers = function () {
     if (id) clearTimeout(id);
 
     id = setTimeout(() => {
-      const target = e.target as HTMLElement;
-      const index = +target.closest("form")?.dataset.timer;
-      if (!index) return;
+      const index = getIndex(e, "target");
+      if (!index) return console.error("No index!");
 
       setTitleTimers((prev) => {
         const newTitleTimers = [...prev];
@@ -392,65 +417,351 @@ const Timers = function () {
     }, 500);
   };
 
+  const startTimer = (index: number) => {
+    const time = times[index];
+    if (!time.hours && !time.minutes && !time.seconds) return;
+
+    const id = setInterval(() => {
+      const time = times[index];
+      const numberHours = parseInt(time.hours);
+      const numberMinutes = parseInt(time.minutes);
+      const numberSeconds = parseInt(time.seconds);
+      if (!numberHours && !numberMinutes && !numberSeconds) {
+        audioRef.current.play();
+        clearInterval(id);
+        return;
+      }
+
+      const nextSeconds = !numberSeconds
+        ? "59"
+        : (numberSeconds - 1).toString().padStart(2, "0");
+
+      let nextMinutes: string;
+      if (nextSeconds === "59") {
+        if (!numberMinutes) nextMinutes = "59";
+        if (numberMinutes)
+          nextMinutes = (numberMinutes - 1).toString().padStart(2, "0");
+      } else {
+        nextMinutes = time.minutes;
+      }
+
+      let nextHours: string;
+      if (nextSeconds === "59" && nextMinutes === "59") {
+        if (!numberHours) nextHours = "00";
+        if (numberHours)
+          nextHours = (numberHours - 1).toString().padStart(2, "0");
+      } else {
+        nextHours = time.hours;
+      }
+
+      const nextTime = {
+        hours: nextHours,
+        minutes: nextMinutes,
+        seconds: nextSeconds,
+      };
+
+      //assign to times for immediate update
+      times = [...times].fill(nextTime, index, index + 1);
+      setOriginalTimes((prev) => {
+        const newTime = [...prev];
+        return newTime.fill(nextTime, index, index + 1);
+      });
+    }, 1000);
+
+    setIntervalIds((prev) => {
+      const newIds = [...prev];
+      return newIds.fill(id, index, index + 1);
+    });
+  };
+
+  const handleStart = function (e: React.MouseEvent<HTMLButtonElement>) {
+    if (e.currentTarget.value === "stop") return;
+
+    const MAX_HOURS = 23;
+    const MAX_MINUTES = 59;
+    const MAX_SECONDS = 59;
+
+    const convertTime = (hours: number, minutes: number, seconds: number) => {
+      if (hours > MAX_HOURS) return null;
+
+      // all fields within the allowed range
+      if (minutes <= MAX_MINUTES && seconds <= MAX_SECONDS)
+        return {
+          hours: hours.toString().padStart(2, "0"),
+          minutes: minutes.toString().padStart(2, "0"),
+          seconds: seconds.toString().padStart(2, "0"),
+        };
+
+      // minutes, seconds, or both are not within the allowd range => convert
+      const newSeconds = seconds % 60;
+      const min = +parseInt(seconds / 60 + "") + minutes;
+      const newMinutes = min % 60;
+      const newHours = +parseInt(min / 60 + "") + hours;
+
+      if (newHours > MAX_HOURS) return null;
+
+      return {
+        hours: newHours.toString().padStart(2, "0"),
+        minutes: newMinutes.toString().padStart(2, "0"),
+        seconds: newSeconds.toString().padStart(2, "0"),
+      };
+    };
+
+    const validateTime = (hours: number, minutes: number, seconds: number) => {
+      //if no input => false
+      if (!hours && !minutes && !seconds) return false;
+
+      //if input is lower than 0 => false
+      if (
+        (hours && hours < 0) ||
+        (minutes && minutes < 0) ||
+        (seconds && seconds < 0)
+      )
+        return false;
+
+      if (!convertTime(hours, minutes, seconds)) return false;
+
+      return true;
+    };
+
+    const form = e.currentTarget.closest("form");
+    const index = getIndex(e, "currentTarget");
+
+    if (!form) return console.error("No form!");
+    if (!index && index !== 0) return console.error("No index!");
+
+    const inputHours =
+      +(form.querySelector('input[name="hours"]') as HTMLInputElement).value ||
+      0;
+    const inputMinutes =
+      +(form.querySelector('input[name="minutes"]') as HTMLInputElement)
+        .value || 0;
+    const inputSeconds =
+      +(form.querySelector('input[name="seconds"]') as HTMLInputElement)
+        .value || 0;
+
+    if (!validateTime(inputHours, inputMinutes, inputSeconds)) return;
+
+    const newTime = convertTime(inputHours, inputMinutes, inputSeconds);
+    if (!newTime) return;
+
+    times = [...times].fill(newTime, index, index + 1);
+    setOriginalTimes((prev) => {
+      const newOriginalTimes = [...prev];
+      newOriginalTimes.fill(newTime, index, index + 1);
+      return newOriginalTimes;
+    });
+
+    startTimer(index);
+  };
+
+  const handleStop = function (e: React.MouseEvent<HTMLButtonElement>) {
+    if (e.currentTarget.value === "start") return;
+
+    const index = getIndex(e, "currentTarget");
+    if (!index && index !== 0) return console.error("No index!");
+
+    const time = originalTimes[index];
+    if (
+      parseInt(time.hours) ||
+      parseInt(time.minutes) ||
+      parseInt(time.seconds)
+    ) {
+      setPausedTimers((prev) => {
+        const newPausedTimers = [...prev];
+        newPausedTimers[index] = true;
+        return newPausedTimers;
+      });
+
+      const id = intervalIds[index];
+      clearInterval(id);
+      return;
+    }
+
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+
+    times = [...times].fill(defaultTime, index, index + 1);
+    setOriginalTimes((prev) => {
+      const newTime = [...prev];
+      return newTime.fill(defaultTime, index, index + 1);
+    });
+  };
+
+  const handlePause = function (
+    e: React.MouseEvent<HTMLButtonElement>,
+    index: number
+  ) {
+    if (e.currentTarget.value === "start") return;
+
+    const time = originalTimes[index];
+    if (time.hours === "" && time.minutes === "" && time.seconds === "") return;
+
+    setPausedTimers((prev) => {
+      const newPausedTimers = [...prev];
+      newPausedTimers[index] = true;
+      return newPausedTimers;
+    });
+
+    const id = intervalIds[index];
+    clearInterval(id);
+  };
+
+  const handleReStart = function (
+    e: React.MouseEvent<HTMLButtonElement>,
+    index: number
+  ) {
+    if (e.currentTarget.value === "pause") return;
+
+    setPausedTimers((prev) => {
+      const newPausedTimers = [...prev];
+      newPausedTimers[index] = false;
+      return newPausedTimers;
+    });
+
+    startTimer(index);
+  };
+
+  const handleReset = function (e: React.MouseEvent<HTMLButtonElement>) {
+    const index = getIndex(e, "currentTarget");
+    if (!index && index !== 0) return console.error("No index!");
+
+    const time = originalTimes[index];
+    if (time.hours === "" && time.minutes === "" && time.seconds === "") return;
+
+    const value = e.currentTarget.value;
+
+    setResetedTimers((prev) => {
+      const newResetedTimers = [...prev];
+      newResetedTimers[index] = value === "reset" ? true : false;
+      return newResetedTimers;
+    });
+
+    if (value === "delete")
+      setOriginalTimes((prev) => {
+        const newOriginalTimes = [...prev];
+        newOriginalTimes[index] = defaultTime;
+        return newOriginalTimes;
+      });
+  };
+
   const createMarkupTimers = function () {
     const arr = new Array(numberOfTimers).fill("");
 
-    const markupTimersArr = arr.map((_, i) => (
-      <form className={styles.timer} data-timer={i}>
-        <button
-          className={clsx(styles.btn__x, styles.btn__x_timer)}
-          type="button"
-          onClick={handleDeleteTimers}
-        >
-          &times;
-        </button>
-        <input
-          key={(Math.random() + Math.random()) * Math.random()}
-          className={styles.input__timer_title}
-          type="text"
-          placeholder="Set title for timer"
-          defaultValue={titleTimers[i]}
-          onChange={handleChangeTitle}
-        />
-        <div className={styles.container__input_time}>
-          <input
-            className={clsx(styles.input__time, styles.input__timer_hours)}
-            type="number"
-            placeholder="h"
-            min="0"
-            max="23"
-          />
-          <input
-            className={clsx(styles.input__time, styles.input__timer_minutes)}
-            type="number"
-            placeholder="min"
-            min="0"
-            max="59"
-          />
-          <input
-            className={clsx(styles.input__time, styles.input__timer_seconds)}
-            type="number"
-            placeholder="sec"
-            min="0"
-            max="59"
-          />
-        </div>
-        <div className={styles.container__btns}>
-          <button className={styles.btn__start} type="button">
-            Start
+    const markupTimersArr = arr.map((_, i) => {
+      const isTimerSet = () =>
+        !originalTimes[i].hours &&
+        !originalTimes[i].minutes &&
+        !originalTimes[i].seconds
+          ? false
+          : true;
+
+      return (
+        <form className={styles.timer} data-timer={i}>
+          <button
+            className={clsx(styles.btn__x, styles.btn__x_timer)}
+            type="button"
+            onClick={handleDeleteTimers}
+          >
+            &times;
           </button>
-          <button className={styles.btn__pause} type="button">
-            Pause
-          </button>
-          <button className={styles.btn__reset} type="reset">
-            Reset
-          </button>
-        </div>
-      </form>
-    ));
+          <input
+            key={Math.random() + Math.random() + Math.random()}
+            className={styles.input__timer_title}
+            type="text"
+            placeholder="Set title for timer"
+            defaultValue={titleTimers[i]}
+            onChange={handleChangeTitle}
+          />
+          <div className={styles.container__input_time}>
+            {!isTimerSet() || resetedTimers[i] ? (
+              <>
+                <input
+                  className={clsx(
+                    styles.input__time,
+                    styles.input__timer_hours
+                  )}
+                  name="hours"
+                  type="number"
+                  placeholder="h"
+                  min="0"
+                  max="23"
+                  defaultValue={originalTimes[i].hours}
+                />
+                <input
+                  className={clsx(
+                    styles.input__time,
+                    styles.input__timer_minutes
+                  )}
+                  name="minutes"
+                  type="number"
+                  placeholder="min"
+                  min="0"
+                  max="59"
+                  defaultValue={originalTimes[i].minutes}
+                />
+                <input
+                  className={clsx(
+                    styles.input__time,
+                    styles.input__timer_seconds
+                  )}
+                  name="seconds"
+                  type="number"
+                  placeholder="sec"
+                  min="0"
+                  max="59"
+                  defaultValue={originalTimes[i].seconds}
+                />
+              </>
+            ) : (
+              <>
+                <span>
+                  {originalTimes[i].hours} : {originalTimes[i].minutes} :{" "}
+                  {originalTimes[i].seconds}
+                </span>
+              </>
+            )}
+          </div>
+          <div className={styles.container__btns}>
+            <button
+              className={styles.btn__start}
+              type="button"
+              onClick={(e) => {
+                handleStart(e), handleStop(e);
+              }}
+              value={!isTimerSet() ? "start" : "stop"}
+            >
+              {!isTimerSet() ? "Start" : "Stop"}
+            </button>
+            <button
+              className={styles.btn__pause}
+              type="button"
+              onClick={(e) => {
+                const index = getIndex(e, "currentTarget");
+                if (!index && index !== 0) return console.error("No index!");
+                handlePause(e, index);
+                handleReStart(e, index);
+              }}
+              value={!PausedTimers[i] ? "pause" : "start"}
+            >
+              {!PausedTimers[i] ? "Pause" : "Start"}
+            </button>
+            <button
+              className={styles.btn__reset}
+              type="reset"
+              onClick={handleReset}
+              value={!resetedTimers[i] ? "reset" : "delete"}
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+      );
+    });
 
     return (
       <>
+        <audio ref={audioRef} src="/timerAlerm.mp3"></audio>
         {markupTimersArr}
         {numberOfTimers === 10 ? (
           ""
