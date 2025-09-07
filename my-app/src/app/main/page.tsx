@@ -6,6 +6,100 @@ import clsx from "clsx";
 import React, { useEffect, useRef, useState } from "react";
 import { create } from "domain";
 
+const createUniqueKey = () => {
+  return Math.random() + Math.random() + Math.random();
+};
+
+//for dev
+const recipes = [
+  {
+    id: createUniqueKey(),
+    mainImage: "",
+    title: "My Favorite Foccacia!",
+    author: "Lei-chan",
+    servings: { servings: "", unit: "people" },
+    temperatures: { temperatures: [], unit: "℃" },
+    ingredients: [
+      { ingredient: "olives", amount: "1", unit: "can" },
+      { ingredient: "flour", amount: "250", unit: "g" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    mainImage: "",
+    title: "Strawberry Pancakes",
+    author: "Lei-chan",
+    servings: { servings: "", unit: "people" },
+    temperatures: { temperatures: [], unit: "℃" },
+    ingredients: [
+      { ingredient: "strawberries", amount: "2", unit: "UScups" },
+      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "eggs", amount: "2 large", unit: "" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    mainImage: "",
+    title: "My Pizza!",
+    author: "Lei-chan",
+    servings: { servings: "8", unit: "people" },
+    temperatures: { temperatures: [300], unit: "℃" },
+    ingredients: [
+      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "water", amount: "1", unit: "L" },
+      { ingredient: "salt", amount: "2", unit: "teaspoons" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+];
+
+const getRecipes = (input: string) => {
+  const structuredInput = input.trim().toLowerCase();
+  const filteredRecipes = recipes.filter(
+    (recipe) =>
+      recipe.title.toLocaleLowerCase().includes(structuredInput) ||
+      recipe.ingredients.find((ing) =>
+        ing.ingredient.toLowerCase().includes(structuredInput)
+      )
+  );
+
+  return filteredRecipes;
+};
+
+const calcHowManyPages = (recipes: object[]) => {
+  const RECIPE_PER_PAGE = 6;
+  return Math.ceil(recipes.length / 6);
+};
+
 const DropdownMenu = function ({
   isDropdownVisible,
   onClickDropdown,
@@ -60,6 +154,22 @@ const Search = function ({
   searchRef: any;
   onClickSearch: () => void;
 }) {
+  const [recipes, setRecipes] = useState<object[] | null>(null);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
+    if (timeoutId) clearTimeout(timeoutId);
+
+    const value = e.currentTarget.value.trim().toLowerCase();
+    const id = setTimeout(() => {
+      if (!value) return;
+      const recipes = getRecipes(value);
+      setRecipes(recipes);
+    }, 500);
+
+    setTimeoutId(id);
+  };
+
   return (
     <div
       className={styles.container__search_menu}
@@ -78,13 +188,31 @@ const Search = function ({
             id={styles.input__search}
             type="search"
             placeholder="Search your recipe"
+            onChange={handleChangeInput}
           ></input>
           <button className={styles.btn__search} type="submit">
             Search
           </button>
         </form>
         <ul className={styles.search_results}>
-          <li className={styles.recipe_preview}>
+          {recipes?.map((recipe) => (
+            <li key={recipe.id} className={styles.recipe_preview}>
+              <img
+                className={styles.img__main}
+                src={recipe.mainImage || "/grey-img.png"}
+                alt="main image"
+              ></img>
+              <p className={styles.title}>{recipe.title}</p>
+              <Image
+                className={styles.img__favorite}
+                src="/star-on.png"
+                alt="favorite icon"
+                width={512}
+                height={512}
+              ></Image>
+            </li>
+          ))}
+          {/* <li className={styles.recipe_preview}>
             <img
               className={styles.img__main}
               src="/grey-img.png"
@@ -131,7 +259,7 @@ const Search = function ({
             ></Image>
           </li>
           <li className={styles.recipe_preview}></li>
-          <li className={styles.recipe_preview}></li>
+          <li className={styles.recipe_preview}></li> */}
         </ul>
         <button
           className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
@@ -340,98 +468,63 @@ const Recipe = function () {
   );
 };
 
-/////There is a bug that I can't stop/pause/reset the 3rd timer!
-const Timers = function () {
-  const MAX_TIMERS = 10;
-  const audioRef = useRef(null);
-  const [numberOfTimers, setNumberOfTimers] = useState(1);
-  const defaultArr = Array(numberOfTimers).fill("");
+const Timer = function ({
+  index,
+  audioRef,
+  onClickDelete,
+}: {
+  index: number;
+  audioRef: any;
+  onClickDelete: (i: number) => void;
+}) {
   const defaultTime = { hours: "", minutes: "", seconds: "" };
-  const [titleTimers, setTitleTimers] = useState(
-    [...defaultArr].map((_, i) => `Timer ${i + 1}`)
-  );
-  const [originalTimes, setOriginalTimes] = useState(
-    [...defaultArr].map((_, i) => defaultTime)
-  );
-  let times = originalTimes; //For immediate update
+  const [title, setTitle] = useState(`Timer ${index + 1}`);
+  const [time, setTime] = useState(defaultTime);
+  const [paused, setPaused] = useState(false);
+  const [reseted, setReseted] = useState(false);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  let immediateTime = time; //For immediate update
 
-  const [PausedTimers, setPausedTimers] = useState<Boolean[]>(defaultArr);
-  const [resetedTimers, setResetedTimers] = useState<Boolean[]>(defaultArr);
-  const [intervalIds, setIntervalIds] = useState(defaultArr);
-
-  const getIndex = (e: any, option: "target" | "currentTarget") => {
-    const target =
-      option === "target" ? (e.target as HTMLElement) : e.currentTarget;
-    const index = +target.closest("form")?.dataset.timer;
-
-    return index >= 0 ? index : null;
+  const changeTime = (newTime: {
+    hours: string;
+    minutes: string;
+    seconds: string;
+  }) => {
+    setTime(newTime);
+    immediateTime = newTime;
   };
 
-  const handleDeleteTimers = function (e: React.MouseEvent<HTMLButtonElement>) {
-    if (!numberOfTimers) return;
-
-    setNumberOfTimers(numberOfTimers - 1);
-    const index = getIndex(e, "currentTarget");
-
-    if (!index) return console.error("No index!");
-
-    setTitleTimers((prev) => {
-      const newTitleTimers = [...prev];
-      newTitleTimers.splice(index, 1);
-      return newTitleTimers;
-    });
-    times = [...times].splice(index, 1);
-    setOriginalTimes((prev) => [...prev].splice(index, 1));
-    setPausedTimers((prev) => [...prev].splice(index, 1));
-    setResetedTimers((prev) => [...prev].splice(index, 1));
-  };
-
-  const handleIncreaseTimers = function () {
-    if (numberOfTimers === MAX_TIMERS) return;
-
-    setNumberOfTimers((prev) => prev + 1);
-    setTitleTimers((prev) => {
-      const newTitleTimers = [...prev, `Timer ${prev.length + 1}`];
-      return newTitleTimers;
-    });
-    times = [...times, defaultTime];
-    setOriginalTimes((prev) => [...prev, defaultTime]);
-    setPausedTimers((prev) => [...prev, false]);
-    setResetedTimers((prev) => [...prev, false]);
+  const handleKeyDown = function (e: React.KeyboardEvent) {
+    e.preventDefault();
   };
 
   //save change after 0.3 sec
-  let id: any;
   const handleChangeTitle = function (e: React.ChangeEvent<HTMLInputElement>) {
-    if (id) clearTimeout(id);
+    if (timeoutId) clearTimeout(timeoutId);
 
-    id = setTimeout(() => {
-      const index = getIndex(e, "target");
-      if (!index) return console.error("No index!");
+    const newTimeoutId = setTimeout(() => setTitle(e.target.value), 500);
 
-      setTitleTimers((prev) => {
-        const newTitleTimers = [...prev];
-        newTitleTimers[index] = e.target.value;
-        return newTitleTimers;
-      });
-    }, 500);
+    setTimeoutId(newTimeoutId);
   };
 
-  const startTimer = (index: number) => {
-    const time = times[index];
-    if (!time.hours && !time.minutes && !time.seconds) return;
+  const startTimer = () => {
+    if (
+      !immediateTime.hours &&
+      !immediateTime.minutes &&
+      !immediateTime.seconds
+    )
+      return;
 
     const id = setInterval(() => {
-      const time = times[index];
-      const numberHours = parseInt(time.hours);
-      const numberMinutes = parseInt(time.minutes);
-      const numberSeconds = parseInt(time.seconds);
+      const numberHours = parseInt(immediateTime.hours);
+      const numberMinutes = parseInt(immediateTime.minutes);
+      const numberSeconds = parseInt(immediateTime.seconds);
       if (!numberHours && !numberMinutes && !numberSeconds) {
         audioRef.current.play();
         clearInterval(id);
         return;
       }
-
       const nextSeconds = !numberSeconds
         ? "59"
         : (numberSeconds - 1).toString().padStart(2, "0");
@@ -442,7 +535,7 @@ const Timers = function () {
         if (numberMinutes)
           nextMinutes = (numberMinutes - 1).toString().padStart(2, "0");
       } else {
-        nextMinutes = time.minutes;
+        nextMinutes = immediateTime.minutes;
       }
 
       let nextHours: string;
@@ -451,7 +544,7 @@ const Timers = function () {
         if (numberHours)
           nextHours = (numberHours - 1).toString().padStart(2, "0");
       } else {
-        nextHours = time.hours;
+        nextHours = immediateTime.hours;
       }
 
       const nextTime = {
@@ -461,17 +554,10 @@ const Timers = function () {
       };
 
       //assign to times for immediate update
-      times = [...times].fill(nextTime, index, index + 1);
-      setOriginalTimes((prev) => {
-        const newTime = [...prev];
-        return newTime.fill(nextTime, index, index + 1);
-      });
+      changeTime(nextTime);
     }, 1000);
 
-    setIntervalIds((prev) => {
-      const newIds = [...prev];
-      return newIds.fill(id, index, index + 1);
-    });
+    setIntervalId(id);
   };
 
   const handleStart = function (e: React.MouseEvent<HTMLButtonElement>) {
@@ -525,10 +611,7 @@ const Timers = function () {
     };
 
     const form = e.currentTarget.closest("form");
-    const index = getIndex(e, "currentTarget");
-
     if (!form) return console.error("No form!");
-    if (!index && index !== 0) return console.error("No index!");
 
     const inputHours =
       +(form.querySelector('input[name="hours"]') as HTMLInputElement).value ||
@@ -545,242 +628,222 @@ const Timers = function () {
     const newTime = convertTime(inputHours, inputMinutes, inputSeconds);
     if (!newTime) return;
 
-    times = [...times].fill(newTime, index, index + 1);
-    setOriginalTimes((prev) => {
-      const newOriginalTimes = [...prev];
-      newOriginalTimes.fill(newTime, index, index + 1);
-      return newOriginalTimes;
-    });
+    changeTime(newTime);
 
-    startTimer(index);
+    startTimer();
   };
 
   const handleStop = function (e: React.MouseEvent<HTMLButtonElement>) {
     if (e.currentTarget.value === "start") return;
 
-    const index = getIndex(e, "currentTarget");
-    if (!index && index !== 0) return console.error("No index!");
-
-    const time = originalTimes[index];
     if (
       parseInt(time.hours) ||
       parseInt(time.minutes) ||
       parseInt(time.seconds)
     ) {
-      setPausedTimers((prev) => {
-        const newPausedTimers = [...prev];
-        newPausedTimers[index] = true;
-        return newPausedTimers;
-      });
-
-      const id = intervalIds[index];
-      clearInterval(id);
+      setPaused(true);
+      intervalId && clearInterval(intervalId);
       return;
     }
 
     audioRef.current.pause();
     audioRef.current.currentTime = 0;
 
-    times = [...times].fill(defaultTime, index, index + 1);
-    setOriginalTimes((prev) => {
-      const newTime = [...prev];
-      return newTime.fill(defaultTime, index, index + 1);
-    });
+    changeTime(defaultTime);
   };
 
-  const handlePause = function (
-    e: React.MouseEvent<HTMLButtonElement>,
-    index: number
-  ) {
+  const togglePaused = () => {
+    setPaused(!paused);
+  };
+
+  const handlePause = function (e: React.MouseEvent<HTMLButtonElement>) {
     if (e.currentTarget.value === "start") return;
 
-    const time = originalTimes[index];
     if (time.hours === "" && time.minutes === "" && time.seconds === "") return;
 
-    setPausedTimers((prev) => {
-      const newPausedTimers = [...prev];
-      newPausedTimers[index] = true;
-      return newPausedTimers;
-    });
-
-    const id = intervalIds[index];
-    clearInterval(id);
+    togglePaused();
+    intervalId && clearInterval(intervalId);
   };
 
-  const handleReStart = function (
-    e: React.MouseEvent<HTMLButtonElement>,
-    index: number
-  ) {
+  const handleRestart = function (e: React.MouseEvent<HTMLButtonElement>) {
     if (e.currentTarget.value === "pause") return;
 
-    setPausedTimers((prev) => {
-      const newPausedTimers = [...prev];
-      newPausedTimers[index] = false;
-      return newPausedTimers;
-    });
-
-    startTimer(index);
+    togglePaused();
+    startTimer();
   };
 
   const handleReset = function (e: React.MouseEvent<HTMLButtonElement>) {
-    const index = getIndex(e, "currentTarget");
-    if (!index && index !== 0) return console.error("No index!");
-
-    const time = originalTimes[index];
     if (time.hours === "" && time.minutes === "" && time.seconds === "") return;
 
     const value = e.currentTarget.value;
 
-    setResetedTimers((prev) => {
-      const newResetedTimers = [...prev];
-      newResetedTimers[index] = value === "reset" ? true : false;
-      return newResetedTimers;
-    });
+    setReseted(value === "reset" ? true : false);
 
-    if (value === "delete")
-      setOriginalTimes((prev) => {
-        const newOriginalTimes = [...prev];
-        newOriginalTimes[index] = defaultTime;
-        return newOriginalTimes;
-      });
+    if (value === "delete") setTime(defaultTime);
   };
 
-  const createMarkupTimers = function () {
-    const arr = new Array(numberOfTimers).fill("");
+  const isTimerSet = () =>
+    !time.hours && !time.minutes && !time.seconds ? false : true;
+  return (
+    <form className={styles.timer} data-timer={index}>
+      <button
+        className={clsx(styles.btn__x, styles.btn__x_timer)}
+        type="button"
+        onClick={(e) => {
+          onClickDelete(index);
+          handleStop(e);
+        }}
+      >
+        &times;
+      </button>
+      <input
+        className={styles.input__timer_title}
+        type="text"
+        placeholder="Set title for timer"
+        defaultValue={title}
+        onKeyDown={handleKeyDown}
+        onChange={handleChangeTitle}
+      />
+      <div className={styles.container__input_time}>
+        {!isTimerSet() || reseted ? (
+          <>
+            <input
+              className={clsx(styles.input__time, styles.input__timer_hours)}
+              name="hours"
+              type="number"
+              placeholder="h"
+              min="0"
+              max="23"
+              defaultValue={time.hours}
+            />
+            <input
+              className={clsx(styles.input__time, styles.input__timer_minutes)}
+              name="minutes"
+              type="number"
+              placeholder="min"
+              min="0"
+              max="59"
+              defaultValue={time.minutes}
+            />
+            <input
+              className={clsx(styles.input__time, styles.input__timer_seconds)}
+              name="seconds"
+              type="number"
+              placeholder="sec"
+              min="0"
+              max="59"
+              defaultValue={time.seconds}
+            />
+          </>
+        ) : (
+          <>
+            <span>
+              {time.hours} : {time.minutes} : {time.seconds}
+            </span>
+          </>
+        )}
+      </div>
+      <div className={styles.container__btns}>
+        <button
+          className={styles.btn__start}
+          type="button"
+          onClick={(e) => {
+            handleStart(e), handleStop(e);
+          }}
+          value={!isTimerSet() ? "start" : "stop"}
+        >
+          {!isTimerSet() ? "Start" : "Stop"}
+        </button>
+        <button
+          className={styles.btn__pause}
+          type="button"
+          onClick={(e) => {
+            handlePause(e);
+            handleRestart(e);
+          }}
+          value={!paused ? "pause" : "start"}
+        >
+          {!paused ? "Pause" : "Start"}
+        </button>
+        <button
+          className={styles.btn__reset}
+          type="reset"
+          onClick={handleReset}
+          value={!reseted ? "reset" : "delete"}
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  );
+};
 
-    const markupTimersArr = arr.map((_, i) => {
-      const isTimerSet = () =>
-        !originalTimes[i].hours &&
-        !originalTimes[i].minutes &&
-        !originalTimes[i].seconds
-          ? false
-          : true;
+/////There is a bug when delete timer with fewer number they can not be deleted! Because I can't update index after spliced markupTimersArr I assume
+const Timers = function () {
+  const MAX_TIMERS = 10;
+  const audioRef = useRef(null);
+  const [numberOfTimers, setNumberOfTimers] = useState<number>(1);
+  const [deletedIndex, setDeletedIndex] = useState<number | null>(null);
 
-      return (
-        <form className={styles.timer} data-timer={i}>
-          <button
-            className={clsx(styles.btn__x, styles.btn__x_timer)}
-            type="button"
-            onClick={handleDeleteTimers}
-          >
-            &times;
-          </button>
-          <input
-            key={Math.random() + Math.random() + Math.random()}
-            className={styles.input__timer_title}
-            type="text"
-            placeholder="Set title for timer"
-            defaultValue={titleTimers[i]}
-            onChange={handleChangeTitle}
-          />
-          <div className={styles.container__input_time}>
-            {!isTimerSet() || resetedTimers[i] ? (
-              <>
-                <input
-                  className={clsx(
-                    styles.input__time,
-                    styles.input__timer_hours
-                  )}
-                  name="hours"
-                  type="number"
-                  placeholder="h"
-                  min="0"
-                  max="23"
-                  defaultValue={originalTimes[i].hours}
-                />
-                <input
-                  className={clsx(
-                    styles.input__time,
-                    styles.input__timer_minutes
-                  )}
-                  name="minutes"
-                  type="number"
-                  placeholder="min"
-                  min="0"
-                  max="59"
-                  defaultValue={originalTimes[i].minutes}
-                />
-                <input
-                  className={clsx(
-                    styles.input__time,
-                    styles.input__timer_seconds
-                  )}
-                  name="seconds"
-                  type="number"
-                  placeholder="sec"
-                  min="0"
-                  max="59"
-                  defaultValue={originalTimes[i].seconds}
-                />
-              </>
-            ) : (
-              <>
-                <span>
-                  {originalTimes[i].hours} : {originalTimes[i].minutes} :{" "}
-                  {originalTimes[i].seconds}
-                </span>
-              </>
-            )}
-          </div>
-          <div className={styles.container__btns}>
-            <button
-              className={styles.btn__start}
-              type="button"
-              onClick={(e) => {
-                handleStart(e), handleStop(e);
-              }}
-              value={!isTimerSet() ? "start" : "stop"}
-            >
-              {!isTimerSet() ? "Start" : "Stop"}
-            </button>
-            <button
-              className={styles.btn__pause}
-              type="button"
-              onClick={(e) => {
-                const index = getIndex(e, "currentTarget");
-                if (!index && index !== 0) return console.error("No index!");
-                handlePause(e, index);
-                handleReStart(e, index);
-              }}
-              value={!PausedTimers[i] ? "pause" : "start"}
-            >
-              {!PausedTimers[i] ? "Pause" : "Start"}
-            </button>
-            <button
-              className={styles.btn__reset}
-              type="reset"
-              onClick={handleReset}
-              value={!resetedTimers[i] ? "reset" : "delete"}
-            >
-              Reset
-            </button>
-          </div>
-        </form>
-      );
-    });
+  const handleDeleteTimers = function (i: number) {
+    if (!numberOfTimers) return;
+    setNumberOfTimers((prev) => (!prev ? prev : prev - 1));
+    setDeletedIndex(i);
+  };
 
-    return (
-      <>
+  const handleAddTimers = function () {
+    if (numberOfTimers === MAX_TIMERS) return;
+    setNumberOfTimers((prev) => prev + 1);
+  };
+
+  const markupTimer = (i: number) => (
+    <Timer
+      key={createUniqueKey()}
+      index={i}
+      audioRef={audioRef}
+      onClickDelete={handleDeleteTimers}
+    />
+  );
+
+  // const updatedIndex = markupTimersArr.findIndex(markup=> markup === markupPrev)
+
+  const [markupTimersArr, setMarkupTimersArr] = useState(
+    numberOfTimers
+      ? new Array(numberOfTimers).fill("").map((_, i) => markupTimer(i))
+      : []
+  );
+
+  ////update when numberOfTimers changes
+  useEffect(() => {
+    //when timer is added
+    if (markupTimersArr.length < numberOfTimers)
+      setMarkupTimersArr((prev) => [...prev, markupTimer(numberOfTimers - 1)]);
+
+    //when timer is deleted
+    if (markupTimersArr.length > numberOfTimers)
+      setMarkupTimersArr((prev) => {
+        console.log(deletedIndex, prev);
+        if (!deletedIndex && deletedIndex !== 0) return [...prev];
+
+        return [...prev].toSpliced(deletedIndex, 1);
+      });
+  }, [numberOfTimers]);
+
+  return (
+    <section className={styles.section__timers}>
+      <h2>Timers</h2>
+      <div className={styles.container__timers}>
         <audio ref={audioRef} src="/timerAlerm.mp3"></audio>
         {markupTimersArr}
-        {numberOfTimers === 10 ? (
-          ""
-        ) : (
+        {numberOfTimers === MAX_TIMERS || (
           <div className={styles.container__btn_add}>
-            <button className={styles.btn__add} onClick={handleIncreaseTimers}>
+            <button className={styles.btn__add} onClick={handleAddTimers}>
               +<br />
               Add
             </button>
           </div>
         )}
-      </>
-    );
-  };
-
-  return (
-    <section className={styles.section__timers}>
-      <h2>Timers</h2>
-      <div className={styles.container__timers}>{createMarkupTimers()}</div>
+      </div>
     </section>
   );
 };
