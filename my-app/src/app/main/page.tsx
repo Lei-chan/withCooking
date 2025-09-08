@@ -14,10 +14,11 @@ const createUniqueKey = () => {
 const recipes = [
   {
     id: createUniqueKey(),
+    favorite: true,
     mainImage: "",
     title: "My Favorite Foccacia!",
     author: "Lei-chan",
-    servings: { servings: "", unit: "people" },
+    servings: { servings: 8, unit: "people" },
     temperatures: { temperatures: [], unit: "℃" },
     ingredients: [
       { ingredient: "olives", amount: "1", unit: "can" },
@@ -36,10 +37,11 @@ const recipes = [
   },
   {
     id: createUniqueKey(),
+    favorite: false,
     mainImage: "",
     title: "Strawberry Pancakes",
     author: "Lei-chan",
-    servings: { servings: "", unit: "people" },
+    servings: { servings: 4, unit: "people" },
     temperatures: { temperatures: [], unit: "℃" },
     ingredients: [
       { ingredient: "strawberries", amount: "2", unit: "UScups" },
@@ -59,10 +61,11 @@ const recipes = [
   },
   {
     id: createUniqueKey(),
+    favorite: false,
     mainImage: "",
     title: "My Pizza!",
     author: "Lei-chan",
-    servings: { servings: "8", unit: "people" },
+    servings: { servings: 8, unit: "people" },
     temperatures: { temperatures: [300], unit: "℃" },
     ingredients: [
       { ingredient: "flour", amount: "250", unit: "g" },
@@ -80,25 +83,260 @@ const recipes = [
     memoryImages: ["", ""],
     comments: "",
   },
+  {
+    id: createUniqueKey(),
+    favorite: true,
+    mainImage: "",
+    title: "Delicious Granola!",
+    author: "Lei-chan",
+    servings: { servings: 12, unit: "people" },
+    temperatures: { temperatures: [190, 175], unit: "℃" },
+    ingredients: [
+      { ingredient: "granola", amount: "250", unit: "g" },
+      { ingredient: "water", amount: "1", unit: "L" },
+      { ingredient: "salt", amount: "2", unit: "teaspoons" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "hhh",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: true,
+    mainImage: "",
+    title: "Banana Bread!",
+    author: "Lei-chan",
+    servings: { servings: 12, unit: "people" },
+    temperatures: { temperatures: [200, 190], unit: "℃" },
+    ingredients: [
+      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "water", amount: "1", unit: "L" },
+      { ingredient: "salt", amount: "2", unit: "teaspoons" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: false,
+    mainImage: "",
+    title: "Chocolate Muffines!",
+    author: "Lei-chan",
+    servings: { servings: 20, unit: "cupcakes" },
+    temperatures: { temperatures: [370], unit: "℉" },
+    ingredients: [
+      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "water", amount: "1", unit: "L" },
+      { ingredient: "salt", amount: "2", unit: "teaspoons" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: true,
+    mainImage: "",
+    title: "Scones",
+    author: "Lei-chan",
+    servings: { servings: 8, unit: "people" },
+    temperatures: { temperatures: [300], unit: "℃" },
+    ingredients: [
+      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "sugar", amount: "1", unit: "Tbsp" },
+      { ingredient: "butter", amount: "50", unit: "g" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: true,
+    mainImage: "",
+    title: "Salad!",
+    author: "Lei-chan",
+    servings: { servings: 8, unit: "people" },
+    temperatures: { temperatures: [300], unit: "℃" },
+    ingredients: [
+      { ingredient: "Baby spinach", amount: "1", unit: "UScups" },
+      { ingredient: "olive oil", amount: "1/4", unit: "UScups" },
+      { ingredient: "salt", amount: "1", unit: "teaspoons" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: false,
+    mainImage: "",
+    title: "brawnies!",
+    author: "Lei-chan",
+    servings: { servings: 12, unit: "tiny pieces" },
+    temperatures: { temperatures: [375], unit: "℉" },
+    ingredients: [
+      { ingredient: "chocolate", amount: "250", unit: "g" },
+      { ingredient: "All-purpose flour", amount: "2.5", unit: "UScups" },
+      { ingredient: "salt", amount: "a pinch of", unit: "" },
+      { ingredient: "eggs", amount: "2 large", unit: "" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: false,
+    mainImage: "",
+    title: "Stir fry!",
+    author: "Lei-chan",
+    servings: { servings: 4, unit: "people" },
+    temperatures: { temperatures: [], unit: "℃" },
+    ingredients: [
+      { ingredient: "Cabbage", amount: "halve", unit: "" },
+      { ingredient: "water", amount: "30", unit: "ml" },
+      { ingredient: "soy sauce", amount: "2", unit: "teaspoons" },
+      { ingredient: "mirin", amount: "2", unit: "teaspoons" },
+      { ingredient: "sake", amount: "2", unit: "teaspoons" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: false,
+    mainImage: "",
+    title: "Coffee bagles!",
+    author: "Lei-chan",
+    servings: { servings: 8, unit: "pieces" },
+    temperatures: { temperatures: [220], unit: "℃" },
+    ingredients: [
+      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "water", amount: "180", unit: "g" },
+      { ingredient: "instant coffee", amount: "2", unit: "tablespoons" },
+      { ingredient: "salt", amount: "a pinch of", unit: "" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: false,
+    mainImage: "",
+    title: "loaf bread!",
+    author: "Lei-chan",
+    servings: { servings: 8, unit: "people" },
+    temperatures: { temperatures: [250, 230], unit: "℃" },
+    ingredients: [
+      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "water", amount: "200", unit: "g" },
+      { ingredient: "salt", amount: "5", unit: "g" },
+      { ingredient: "butter", amount: "10", unit: "g" },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
+  {
+    id: createUniqueKey(),
+    favorite: false,
+    mainImage: "",
+    title: "Best Egg Sandwiches!",
+    author: "Lei-chan",
+    servings: { servings: 4, unit: "people" },
+    temperatures: { temperatures: [], unit: "℃" },
+    ingredients: [
+      { ingredient: "cut bread", amount: "8", unit: "slices" },
+      { ingredient: "eggs", amount: "4", unit: "" },
+      { ingredient: "salt", amount: "a little", unit: "" },
+      { ingredient: "blackpepper", amount: "a little", unit: "" },
+      {
+        ingredient: "nutritional yeast",
+        amount: "as much as you want",
+        unit: "",
+      },
+    ],
+    instructions: [
+      {
+        instruction: "First put eggs in a bowl and mix with sugar.",
+        image: "",
+      },
+      { instruction: "Add soy milk and set it aside.", image: "" },
+    ],
+    description: "This is our family's favorite recipe!",
+    memoryImages: ["", ""],
+    comments: "",
+  },
 ];
-
-const getRecipes = (input: string) => {
-  const structuredInput = input.trim().toLowerCase();
-  const filteredRecipes = recipes.filter(
-    (recipe) =>
-      recipe.title.toLocaleLowerCase().includes(structuredInput) ||
-      recipe.ingredients.find((ing) =>
-        ing.ingredient.toLowerCase().includes(structuredInput)
-      )
-  );
-
-  return filteredRecipes;
-};
-
-const calcHowManyPages = (recipes: object[]) => {
-  const RECIPE_PER_PAGE = 6;
-  return Math.ceil(recipes.length / 6);
-};
 
 const DropdownMenu = function ({
   isDropdownVisible,
@@ -149,26 +387,96 @@ const Search = function ({
   isSearchVisible,
   searchRef,
   onClickSearch,
+  onClickPreview,
 }: {
   isSearchVisible: Boolean;
   searchRef: any;
   onClickSearch: () => void;
+  onClickPreview: (recipe: {
+    id: number; //for now
+    favorite: Boolean;
+    mainImage: string;
+    title: string;
+    author: string;
+    servings: { servings: number; unit: string };
+    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
+    ingredients: {
+      ingredient: string;
+      amount: number | string;
+      unit: string;
+    }[];
+    instructions: { instruction: string; image: string }[];
+    description: string;
+    memoryImages: string[];
+    comments: string;
+  }) => void;
 }) {
-  const [recipes, setRecipes] = useState<object[] | null>(null);
+  const RECIPE_PER_PAGE = 6;
+  const [input, setInput] = useState("");
+  const [curRecipes, setCurRecipes] = useState<object[]>([]);
+  const [numberOfPages, setNumberOfPages] = useState(0);
+  const [page, setPage] = useState(1);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  const updateNumberOfPages = (recipes: Object[]) => {
+    setNumberOfPages(Math.ceil(recipes.length / RECIPE_PER_PAGE));
+  };
+
+  const getRecipesPerPage = (value: string = input) => {
+    if (!recipes.length) return;
+
+    const structuredValue = value.trim().toLowerCase();
+    const filteredRecipes = recipes.filter(
+      (recipe) =>
+        recipe.title.toLocaleLowerCase().includes(structuredValue) ||
+        recipe.ingredients.find((ing) =>
+          ing.ingredient.toLowerCase().includes(structuredValue)
+        )
+    );
+
+    updateNumberOfPages(filteredRecipes);
+
+    const startIndex = (page - 1) * RECIPE_PER_PAGE;
+    const endIndex = startIndex + RECIPE_PER_PAGE;
+    const recipesPerPage = filteredRecipes.slice(startIndex, endIndex);
+
+    return recipesPerPage;
+  };
 
   const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
     if (timeoutId) clearTimeout(timeoutId);
 
     const value = e.currentTarget.value.trim().toLowerCase();
+
     const id = setTimeout(() => {
       if (!value) return;
-      const recipes = getRecipes(value);
-      setRecipes(recipes);
+      setInput(value);
+      setPage(1);
+
+      const nextRecipes = getRecipesPerPage(value);
+      nextRecipes && setCurRecipes(nextRecipes);
     }, 500);
 
     setTimeoutId(id);
   };
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+  }
+
+  //I'm gonna make it work for arrow keydown event later too!
+  function handlePagination(e: React.MouseEvent<HTMLButtonElement>) {
+    const target = e.currentTarget;
+
+    target.value === "decrease"
+      ? setPage((prev) => prev - 1)
+      : setPage((prev) => prev + 1);
+  }
+
+  useEffect(() => {
+    const nextRecipes = getRecipesPerPage();
+    nextRecipes && setCurRecipes(nextRecipes);
+  }, [page]);
 
   return (
     <div
@@ -183,7 +491,7 @@ const Search = function ({
         onClick={onClickSearch}
       ></button>
       <div className={styles.search_menu} ref={searchRef}>
-        <form className={styles.container__search}>
+        <form className={styles.container__search} onSubmit={handleSubmit}>
           <input
             id={styles.input__search}
             type="search"
@@ -195,275 +503,295 @@ const Search = function ({
           </button>
         </form>
         <ul className={styles.search_results}>
-          {recipes?.map((recipe) => (
-            <li key={recipe.id} className={styles.recipe_preview}>
-              <img
-                className={styles.img__main}
-                src={recipe.mainImage || "/grey-img.png"}
-                alt="main image"
-              ></img>
-              <p className={styles.title}>{recipe.title}</p>
-              <Image
-                className={styles.img__favorite}
-                src="/star-on.png"
-                alt="favorite icon"
-                width={512}
-                height={512}
-              ></Image>
-            </li>
-          ))}
-          {/* <li className={styles.recipe_preview}>
-            <img
-              className={styles.img__main}
-              src="/grey-img.png"
-              alt="main image"
-            ></img>
-            <p className={styles.title}>mujadara</p>
-            <Image
-              className={styles.img__favorite}
-              src="/star-on.png"
-              alt="favorite icon"
-              width={512}
-              height={512}
-            ></Image>
-          </li>
-          <li className={styles.recipe_preview}>
-            <img
-              className={styles.img__main}
-              src="/grey-img.png"
-              alt="main image"
-            ></img>
-            <p className={styles.title}>mujadara</p>
-          </li>
-          <li className={styles.recipe_preview}>
-            <img
-              className={styles.img__main}
-              src="/grey-img.png"
-              alt="main image"
-            ></img>
-            <p className={styles.title}>My special Focaccia!!!!!</p>
-          </li>
-          <li className={styles.recipe_preview}>
-            <img
-              className={styles.img__main}
-              src="/grey-img.png"
-              alt="main image"
-            ></img>
-            <p className={styles.title}>My special Focaccia!!!!!!!!!!!</p>
-            <Image
-              className={styles.img__favorite}
-              src="/star-on.png"
-              alt="favorite icon"
-              width={512}
-              height={512}
-            ></Image>
-          </li>
-          <li className={styles.recipe_preview}></li>
-          <li className={styles.recipe_preview}></li> */}
+          {!curRecipes.length ? (
+            <p className={styles.no_results}>0 search results</p>
+          ) : (
+            curRecipes.map((recipe) => (
+              <li
+                key={recipe.id}
+                className={styles.recipe_preview}
+                onClick={() => onClickPreview(recipe)}
+              >
+                <img
+                  className={styles.img__main}
+                  src={recipe.mainImage || "/grey-img.png"}
+                  alt="main image"
+                ></img>
+                <p className={styles.title}>{recipe.title}</p>
+                {recipe.favorite && (
+                  <Image
+                    className={styles.img__favorite}
+                    src="/star-on.png"
+                    alt="favorite icon"
+                    width={512}
+                    height={512}
+                  ></Image>
+                )}
+              </li>
+            ))
+          )}
         </ul>
-        <button
-          className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
-          type="button"
-        >
-          Page 1<br />
-          &larr;
-        </button>
-        <button
-          className={clsx(styles.btn__pagination, styles.btn__pagination_right)}
-          type="button"
-        >
-          Page 3<br />
-          &rarr;{" "}
-        </button>
+        {page > 1 && (
+          <button
+            className={clsx(
+              styles.btn__pagination,
+              styles.btn__pagination_left
+            )}
+            type="button"
+            value="decrease"
+            onClick={handlePagination}
+          >
+            Page {page - 1}
+            <br />
+            &larr;
+          </button>
+        )}
+        {page < numberOfPages && (
+          <button
+            className={clsx(
+              styles.btn__pagination,
+              styles.btn__pagination_right
+            )}
+            type="button"
+            value="increase"
+            onClick={handlePagination}
+          >
+            Page {page + 1}
+            <br />
+            &rarr;{" "}
+          </button>
+        )}
       </div>
     </div>
   );
 };
 
-const Recipe = function () {
+const Recipe = function ({
+  curRecipe,
+}: {
+  curRecipe: {
+    id: number; //for now
+    favorite: Boolean;
+    mainImage: string;
+    title: string;
+    author: string;
+    servings: { servings: number; unit: string };
+    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
+    ingredients: {
+      ingredient: string;
+      amount: number | string;
+      unit: string;
+    }[];
+    instructions: { instruction: string; image: string }[];
+    description: string;
+    memoryImages: string[];
+    comments: string;
+  } | null;
+}) {
+  const selectedOption = () => {
+    const selectedOption = curRecipe?.ingredients.reduce(
+      (acc: any, ing: any) => {
+        if (ing.unit === "cupUS") return "us";
+        if (ing.unit === "cupJapan") return "japan";
+        if (ing.unit === "cupImperial") return "metricCup";
+        if (ing.unit === "TbspAustralia") return "australia";
+
+        return "metric";
+      },
+      "metric"
+    );
+    return selectedOption;
+  };
+
+  ////input defaultvalue doesn't change when re-rendering!
   return (
     <div className={styles.container__recipe}>
-      <img
-        className={styles.img__main}
-        src="/grey-img.png"
-        alt="main image"
-      ></img>
-      <div className={styles.title_wrapper}>
-        <h2 className={styles.title}>
-          My Favorite Focaccia!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        </h2>
-      </div>
-      <div className={styles.container__description_favorite}>
-        <div className={styles.container__description}>
-          <div className={styles.container__author_servings}>
-            <p>Author</p>
-            <span className={styles.author}> Lei-chan</span>
-            <p>Servings</p>
-            <input
-              id={styles.input__servings}
-              type="number"
-              min="1"
-              max="500"
-              defaultValue="4"
-            ></input>
-            <span className={styles.servings_unit}>people</span>
+      {curRecipe ? (
+        <>
+          <img
+            className={styles.img__main}
+            src={curRecipe.mainImage || "/grey-img.png"}
+            alt="main image"
+          ></img>
+          <div className={styles.title_wrapper}>
+            <h2 className={styles.title}>{curRecipe.title}</h2>
           </div>
-          <div className={styles.container__ingredients_unit}>
-            <p>Ingredients Unit</p>
-            <select id={styles.input__ingredients_unit}>
-              <option value="metric">Metric</option>
-              <option value="us">US</option>
-              <option value="japan">Japan</option>
-              <option value="australia">Australia</option>
-              <option value="metriccup">Metric cup (1cup = 250ml)</option>
-            </select>
+          <div className={styles.container__description_favorite}>
+            <div className={styles.container__description}>
+              <div className={styles.container__author_servings}>
+                <p>Author</p>
+                <span className={styles.author}>{curRecipe.author}</span>
+                <p>Servings</p>
+                <input
+                  id={styles.input__servings}
+                  type="number"
+                  min="1"
+                  max="500"
+                  defaultValue={curRecipe.servings.servings}
+                />
+                <span className={styles.servings_unit}>
+                  {curRecipe.servings.unit}
+                </span>
+              </div>
+              <div className={styles.container__ingredients_unit}>
+                <p>Ingredients Unit</p>
+                <select
+                  id={styles.input__ingredients_unit}
+                  defaultValue={selectedOption()}
+                >
+                  <option value="metric">Metric</option>
+                  <option value="us">US</option>
+                  <option value="japan">Japan</option>
+                  <option value="australia">Australia</option>
+                  <option value="metricCup">Metric cup (1cup = 250ml)</option>
+                </select>
+              </div>
+              <div className={styles.container__temperature_unit}>
+                <p>Temperature</p>
+                <span className={styles.temperature}>
+                  {curRecipe.temperatures.temperatures.join("/")}
+                </span>
+                <select
+                  id={styles.input__temperature_units}
+                  defaultValue={curRecipe.temperatures.unit}
+                >
+                  <option value="℃">℃</option>
+                  <option value="℉">℉</option>
+                </select>
+              </div>
+            </div>
+            <button
+              className={clsx(
+                styles.btn__favorite,
+                curRecipe.favorite && styles.btn__favorite_on
+              )}
+            ></button>
           </div>
-          <div className={styles.container__temperature_unit}>
-            <p>Temperature</p>
-            <span className={styles.temperature}>180/200/400/200</span>
-            <select id={styles.input__temperature_units}>
-              <option value="c">C</option>
-              <option value="f">F</option>
-            </select>
+          <div className={styles.container__ingredients}>
+            <h3>~ Ingredients ~</h3>
+            <div className={styles.ingredients}>
+              {curRecipe.ingredients.map((ing) => (
+                <div className={styles.ingredient_line}>
+                  <input type="checkbox" />
+                  <span>
+                    {" "}
+                    {ing.amount} {ing.unit} of {ing.ingredient}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <button className={styles.btn__favorite}></button>
-      </div>
-      <div className={styles.container__ingredients}>
-        <h3>~ Ingredients ~</h3>
-        <div className={styles.ingredients}>
-          <div className={styles.ingredient_line}>
-            <input type="checkbox"></input>
-            <span>100 g flour</span>
-          </div>
-          <div className={styles.ingredient_line}>
-            <input type="checkbox"></input>
-            <span>100 g flourrrrrrrrrrrrrrrrrrrrr</span>
-          </div>
-          <div className={styles.ingredient_line}>
-            <input type="checkbox"></input>
-            <span>1000 g water</span>
-          </div>
-          <div className={styles.ingredient_line}>
-            <input type="checkbox"></input>
-            <span>1000 g water</span>
-          </div>
-        </div>
-      </div>
 
-      <div className={styles.container__steps}>
-        <h2>~ Steps ~</h2>
-        <div className={styles.step}>
-          <h3>Step 1</h3>
-          <div className={styles.container__step_step_img}>
-            <p>
-              Mix the ingredients together in a learge bowl. Set aside for 5
-              minutes.
-            </p>
-            <img src="/grey-img.png" alt="step 1 image"></img>
+          <div className={styles.container__instructions}>
+            <h2>~ Instructions ~</h2>
+            {curRecipe.instructions.map((step, i) => (
+              <div className={styles.step}>
+                <div className={styles.container__step_step_img}>
+                  <p>
+                    <span>{i + 1}</span> {step.instruction}
+                  </p>
+                  {step.image && (
+                    <img src={step.image} alt={`step ${i + 1} image`}></img>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-        <div className={styles.step}>
-          <h3>Step 2</h3>
-          <div className={styles.container__step_step_img}>
-            <p>
-              Leave 3 large eggs in room temperature. Then beat them in a bowl.
-              Add salt and pepper to it.
-            </p>
+          <div className={styles.container__recipe_description}>
+            <h2>~ About this recipe ~</h2>
+            <p>{curRecipe.description}</p>
           </div>
-        </div>
-      </div>
-      <div className={styles.container__recipe_description}>
-        <h2>~ About this recipe ~</h2>
-        <p>
-          This is our family recipe. My parents used to make this recipe on
-          weekends :) This is very nostalgic for me. I wanted to share it
-          because I want you guys to taste my family flavores. I hope you guys
-          enjoy the recipe as much as our family does!
-        </p>
-      </div>
-      <div className={styles.container__slider}>
-        <h2>~ Memories of the recipe ~</h2>
-        <div className={styles.slider__imgs}>
-          <img src="/grey-img.png" alt="memories images"></img>
-        </div>
-      </div>
+          <div className={styles.container__slider}>
+            <h2>~ Memories of the recipe ~</h2>
+            <div className={styles.slider__imgs}>
+              {curRecipe.memoryImages.map((img, i) => (
+                <img src={img} alt={`memory image${i + 1}`}></img>
+              ))}
+            </div>
+          </div>
 
-      <div className={styles.container__comments}>
-        <h2>~ Comments ~</h2>
-        <div className={styles.comments_wrapper}>
-          <div className={styles.comments} contentEditable="true">
-            You can use this space for leaving comments for the recipe or places
-            you want to edit later :)
+          <div className={styles.container__comments}>
+            <h2>~ Comments ~</h2>
+            <div className={styles.comments_wrapper}>
+              <div
+                className={styles.comments}
+                contentEditable="true"
+                defaultValue="Use this space for free :)"
+              >
+                {curRecipe.comments}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className={styles.container__nutrition_facts}>
-        <div className={styles.nutrition_facts}>
-          <div className={styles.container__h3_input}>
-            <h3>Nutrition Facts</h3>
-            <input
-              id={styles.input__servings}
-              type="number"
-              min="1"
-              max="500"
-              defaultValue="1"
-            ></input>
-            <span>servings</span>
+          <div className={styles.container__nutrition_facts}>
+            <div className={styles.nutrition_facts}>
+              <div className={styles.container__h3_input}>
+                <h3>Nutrition Facts</h3>
+                <input
+                  id={styles.input__servings}
+                  type="number"
+                  min="1"
+                  max="500"
+                  defaultValue="1"
+                ></input>
+                <span>servings</span>
+              </div>
+              <table className={styles.nutrients}>
+                <thead>
+                  <tr>
+                    <th scope="col">Type</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">
+                      Recommended amount a day
+                      <br />
+                      (Adult Men/Adult Women)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Calories</th>
+                    <td scope="row">300kcal(1000jl)/30%</td>
+                    <td scope="row">15%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Carbs</th>
+                    <td scope="row">100g/30%</td>
+                    <td scope="row">20%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Protein</th>
+                    <td scope="row">10g/4%</td>
+                    <td scope="row">10%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Fat</th>
+                    <td scope="row">20g/10%</td>
+                    <td scope="row">70%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sugar</th>
+                    <td scope="row">20g/10%</td>
+                    <td scope="row">70%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sodium</th>
+                    <td scope="row">2g/0.5%</td>
+                    <td scope="row">10%/20%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Fibers</th>
+                    <td scope="row">2g/0.5%</td>
+                    <td scope="row">10%/20%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <table className={styles.nutrients}>
-            <thead>
-              <tr>
-                <th scope="col">Type</th>
-                <th scope="col">Amount</th>
-                <th scope="col">
-                  Recommended amount a day
-                  <br />
-                  (Adult Men/Adult Women)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Calories</th>
-                <td scope="row">300kcal(1000jl)/30%</td>
-                <td scope="row">15%</td>
-              </tr>
-              <tr>
-                <th scope="row">Carbs</th>
-                <td scope="row">100g/30%</td>
-                <td scope="row">20%</td>
-              </tr>
-              <tr>
-                <th scope="row">Protein</th>
-                <td scope="row">10g/4%</td>
-                <td scope="row">10%</td>
-              </tr>
-              <tr>
-                <th scope="row">Fat</th>
-                <td scope="row">20g/10%</td>
-                <td scope="row">70%</td>
-              </tr>
-              <tr>
-                <th scope="row">Sugar</th>
-                <td scope="row">20g/10%</td>
-                <td scope="row">70%</td>
-              </tr>
-              <tr>
-                <th scope="row">Sodium</th>
-                <td scope="row">2g/0.5%</td>
-                <td scope="row">10%/20%</td>
-              </tr>
-              <tr>
-                <th scope="row">Fibers</th>
-                <td scope="row">2g/0.5%</td>
-                <td scope="row">10%/20%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        </>
+      ) : (
+        <p className={styles.no_recipe}>Let's start by selecting a recipe :)</p>
+      )}
     </div>
   );
 };
@@ -859,6 +1187,24 @@ const Note = function () {
 export default function MAIN() {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [curRecipe, setCurRecipe] = useState<{
+    id: number; //for now
+    favorite: Boolean;
+    mainImage: string;
+    title: string;
+    author: string;
+    servings: { servings: number; unit: string };
+    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
+    ingredients: {
+      ingredient: string;
+      amount: number | string;
+      unit: string;
+    }[];
+    instructions: { instruction: string; image: string }[];
+    description: string;
+    memoryImages: string[];
+    comments: string;
+  } | null>(null);
   const searchRef = useRef(null);
 
   const handleToggleDropdown = function () {
@@ -885,6 +1231,27 @@ export default function MAIN() {
     setIsSearchVisible(false);
   };
 
+  function handleClickPreview(recipe: {
+    id: number; //for now
+    favorite: Boolean;
+    mainImage: string;
+    title: string;
+    author: string;
+    servings: { servings: number; unit: string };
+    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
+    ingredients: {
+      ingredient: string;
+      amount: number | string;
+      unit: string;
+    }[];
+    instructions: { instruction: string; image: string }[];
+    description: string;
+    memoryImages: string[];
+    comments: string;
+  }) {
+    setCurRecipe(recipe);
+  }
+
   return (
     <div
       className={clsx(styles.page__main)}
@@ -899,10 +1266,11 @@ export default function MAIN() {
         <section className={styles.section__recipe}>
           <Search
             isSearchVisible={isSearchVisible}
-            onClickSearch={handleToggleSearch}
             searchRef={searchRef}
+            onClickSearch={handleToggleSearch}
+            onClickPreview={handleClickPreview}
           />
-          <Recipe />
+          <Recipe curRecipe={curRecipe} />
         </section>
 
         <section className={styles.section__timers_note}>
