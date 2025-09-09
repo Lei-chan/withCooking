@@ -5,15 +5,12 @@ import Link from "next/link";
 import clsx from "clsx";
 import React, { useEffect, useRef, useState } from "react";
 import { create } from "domain";
-
-const createUniqueKey = () => {
-  return Math.random() + Math.random() + Math.random();
-};
+import { nanoid } from "nanoid";
 
 //for dev
 const recipes = [
   {
-    id: createUniqueKey(),
+    id: nanoid(),
     favorite: true,
     mainImage: "",
     title: "My Favorite Foccacia!",
@@ -21,8 +18,8 @@ const recipes = [
     servings: { servings: 8, unit: "people" },
     temperatures: { temperatures: [], unit: "℃" },
     ingredients: [
-      { ingredient: "olives", amount: "1", unit: "can" },
-      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "olives", amount: "1", unit: "can", id: 9226 },
+      { ingredient: "flour", amount: "250", unit: "g", id: 9226 },
     ],
     instructions: [
       {
@@ -36,7 +33,7 @@ const recipes = [
     comments: "",
   },
   {
-    id: createUniqueKey(),
+    id: nanoid(),
     favorite: false,
     mainImage: "",
     title: "Strawberry Pancakes",
@@ -44,9 +41,9 @@ const recipes = [
     servings: { servings: 4, unit: "people" },
     temperatures: { temperatures: [], unit: "℃" },
     ingredients: [
-      { ingredient: "strawberries", amount: "2", unit: "UScups" },
-      { ingredient: "flour", amount: "250", unit: "g" },
-      { ingredient: "eggs", amount: "2 large", unit: "" },
+      { ingredient: "strawberries", amount: "2", unit: "UScups", id: 9226 },
+      { ingredient: "flour", amount: "250", unit: "oz", id: 9226 },
+      { ingredient: "eggs", amount: "2 large", unit: "", id: 9226 },
     ],
     instructions: [
       {
@@ -60,7 +57,7 @@ const recipes = [
     comments: "",
   },
   {
-    id: createUniqueKey(),
+    id: nanoid(),
     favorite: false,
     mainImage: "",
     title: "My Pizza!",
@@ -68,262 +65,9 @@ const recipes = [
     servings: { servings: 8, unit: "people" },
     temperatures: { temperatures: [300], unit: "℃" },
     ingredients: [
-      { ingredient: "flour", amount: "250", unit: "g" },
+      { ingredient: "flour", amount: "250", unit: "g", id: 9226 },
       { ingredient: "water", amount: "1", unit: "L" },
-      { ingredient: "salt", amount: "2", unit: "teaspoons" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: true,
-    mainImage: "",
-    title: "Delicious Granola!",
-    author: "Lei-chan",
-    servings: { servings: 12, unit: "people" },
-    temperatures: { temperatures: [190, 175], unit: "℃" },
-    ingredients: [
-      { ingredient: "granola", amount: "250", unit: "g" },
-      { ingredient: "water", amount: "1", unit: "L" },
-      { ingredient: "salt", amount: "2", unit: "teaspoons" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "hhh",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: true,
-    mainImage: "",
-    title: "Banana Bread!",
-    author: "Lei-chan",
-    servings: { servings: 12, unit: "people" },
-    temperatures: { temperatures: [200, 190], unit: "℃" },
-    ingredients: [
-      { ingredient: "flour", amount: "250", unit: "g" },
-      { ingredient: "water", amount: "1", unit: "L" },
-      { ingredient: "salt", amount: "2", unit: "teaspoons" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: false,
-    mainImage: "",
-    title: "Chocolate Muffines!",
-    author: "Lei-chan",
-    servings: { servings: 20, unit: "cupcakes" },
-    temperatures: { temperatures: [370], unit: "℉" },
-    ingredients: [
-      { ingredient: "flour", amount: "250", unit: "g" },
-      { ingredient: "water", amount: "1", unit: "L" },
-      { ingredient: "salt", amount: "2", unit: "teaspoons" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: true,
-    mainImage: "",
-    title: "Scones",
-    author: "Lei-chan",
-    servings: { servings: 8, unit: "people" },
-    temperatures: { temperatures: [300], unit: "℃" },
-    ingredients: [
-      { ingredient: "flour", amount: "250", unit: "g" },
-      { ingredient: "sugar", amount: "1", unit: "Tbsp" },
-      { ingredient: "butter", amount: "50", unit: "g" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: true,
-    mainImage: "",
-    title: "Salad!",
-    author: "Lei-chan",
-    servings: { servings: 8, unit: "people" },
-    temperatures: { temperatures: [300], unit: "℃" },
-    ingredients: [
-      { ingredient: "Baby spinach", amount: "1", unit: "UScups" },
-      { ingredient: "olive oil", amount: "1/4", unit: "UScups" },
-      { ingredient: "salt", amount: "1", unit: "teaspoons" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: false,
-    mainImage: "",
-    title: "brawnies!",
-    author: "Lei-chan",
-    servings: { servings: 12, unit: "tiny pieces" },
-    temperatures: { temperatures: [375], unit: "℉" },
-    ingredients: [
-      { ingredient: "chocolate", amount: "250", unit: "g" },
-      { ingredient: "All-purpose flour", amount: "2.5", unit: "UScups" },
-      { ingredient: "salt", amount: "a pinch of", unit: "" },
-      { ingredient: "eggs", amount: "2 large", unit: "" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: false,
-    mainImage: "",
-    title: "Stir fry!",
-    author: "Lei-chan",
-    servings: { servings: 4, unit: "people" },
-    temperatures: { temperatures: [], unit: "℃" },
-    ingredients: [
-      { ingredient: "Cabbage", amount: "halve", unit: "" },
-      { ingredient: "water", amount: "30", unit: "ml" },
-      { ingredient: "soy sauce", amount: "2", unit: "teaspoons" },
-      { ingredient: "mirin", amount: "2", unit: "teaspoons" },
-      { ingredient: "sake", amount: "2", unit: "teaspoons" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: false,
-    mainImage: "",
-    title: "Coffee bagles!",
-    author: "Lei-chan",
-    servings: { servings: 8, unit: "pieces" },
-    temperatures: { temperatures: [220], unit: "℃" },
-    ingredients: [
-      { ingredient: "flour", amount: "250", unit: "g" },
-      { ingredient: "water", amount: "180", unit: "g" },
-      { ingredient: "instant coffee", amount: "2", unit: "tablespoons" },
-      { ingredient: "salt", amount: "a pinch of", unit: "" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: false,
-    mainImage: "",
-    title: "loaf bread!",
-    author: "Lei-chan",
-    servings: { servings: 8, unit: "people" },
-    temperatures: { temperatures: [250, 230], unit: "℃" },
-    ingredients: [
-      { ingredient: "flour", amount: "250", unit: "g" },
-      { ingredient: "water", amount: "200", unit: "g" },
-      { ingredient: "salt", amount: "5", unit: "g" },
-      { ingredient: "butter", amount: "10", unit: "g" },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: createUniqueKey(),
-    favorite: false,
-    mainImage: "",
-    title: "Best Egg Sandwiches!",
-    author: "Lei-chan",
-    servings: { servings: 4, unit: "people" },
-    temperatures: { temperatures: [], unit: "℃" },
-    ingredients: [
-      { ingredient: "cut bread", amount: "8", unit: "slices" },
-      { ingredient: "eggs", amount: "4", unit: "" },
-      { ingredient: "salt", amount: "a little", unit: "" },
-      { ingredient: "blackpepper", amount: "a little", unit: "" },
-      {
-        ingredient: "nutritional yeast",
-        amount: "as much as you want",
-        unit: "",
-      },
+      { ingredient: "salt", amount: "2", unit: "tsp", id: 9226 },
     ],
     instructions: [
       {
@@ -342,7 +86,7 @@ const DropdownMenu = function ({
   isDropdownVisible,
   onClickDropdown,
 }: {
-  isDropdownVisible: Boolean;
+  isDropdownVisible: boolean;
   onClickDropdown: () => void;
 }) {
   return (
@@ -389,12 +133,12 @@ const Search = function ({
   onClickSearch,
   onClickPreview,
 }: {
-  isSearchVisible: Boolean;
+  isSearchVisible: boolean;
   searchRef: any;
   onClickSearch: () => void;
   onClickPreview: (recipe: {
     id: number; //for now
-    favorite: Boolean;
+    favorite: boolean;
     mainImage: string;
     title: string;
     author: string;
@@ -568,33 +312,21 @@ const Search = function ({
 
 const Recipe = function ({
   curRecipe,
+  updateRecipeFavorite,
 }: {
-  curRecipe: {
-    id: number; //for now
-    favorite: Boolean;
-    mainImage: string;
-    title: string;
-    author: string;
-    servings: { servings: number; unit: string };
-    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
-    ingredients: {
-      ingredient: string;
-      amount: number | string;
-      unit: string;
-    }[];
-    instructions: { instruction: string; image: string }[];
-    description: string;
-    memoryImages: string[];
-    comments: string;
-  } | null;
+  curRecipe: any;
+  updateRecipeFavorite: (newFavoriteStatus: boolean) => void;
 }) {
+  ////local units are more important to convert to different units later
   const selectedOption = () => {
     const selectedOption = curRecipe?.ingredients.reduce(
       (acc: any, ing: any) => {
-        if (ing.unit === "cupUS") return "us";
-        if (ing.unit === "cupJapan") return "japan";
-        if (ing.unit === "cupImperial") return "metricCup";
-        if (ing.unit === "TbspAustralia") return "australia";
+        if (ing.unit === "US cups") return "us";
+        if (ing.unit === "Japanese cups") return "japan";
+        if (ing.unit === "Imperial cups") return "metricCup";
+        if (ing.unit === "Australian Tbsp") return "australia";
+
+        if (acc !== "metric") return acc;
 
         return "metric";
       },
@@ -603,7 +335,81 @@ const Recipe = function ({
     return selectedOption;
   };
 
-  ////input defaultvalue doesn't change when re-rendering!
+  const [servingsValue, setServingsValue] = useState(
+    curRecipe?.servings.servings
+  );
+  const [temperatureUnit, setTemperatureUnit] = useState(
+    curRecipe?.temperatures.unit
+  );
+  const [ingredientsUnit, setIngredientsUnit] = useState(selectedOption());
+  const [favorite, setFavorite] = useState(curRecipe?.favorite);
+  const [curSlide, setCurSlide] = useState(0);
+  const [maxSlide, setMaxSlide] = useState(curRecipe?.memoryImages.length - 1);
+
+  useEffect(() => {
+    setServingsValue(curRecipe?.servings.servings);
+  }, [curRecipe?.servings.servings]);
+
+  useEffect(() => {
+    setTemperatureUnit(curRecipe?.temperatures.unit);
+  }, [curRecipe?.temperatures.unit]);
+
+  useEffect(() => {
+    setIngredientsUnit(selectedOption());
+  }, [selectedOption()]);
+
+  useEffect(() => {
+    setFavorite(curRecipe?.favorite);
+  }, [curRecipe?.favorite]);
+
+  useEffect(() => {
+    setMaxSlide(curRecipe?.memoryImages.length - 1);
+  }, [curRecipe?.memoryImages.length]);
+
+  useEffect(() => {
+    setCurSlide(0);
+  }, [curRecipe?.memoryImages]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCurSlide((prev) => (prev === maxSlide ? 0 : prev + 1));
+    }, 5000);
+
+    return () => {
+      clearInterval(id);
+    };
+  }, []);
+
+  function handleChangeInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const newValue = +e.currentTarget.value;
+    setServingsValue(newValue);
+  }
+
+  function handleChangeIngUnit(e: React.ChangeEvent<HTMLSelectElement>) {
+    const newValue = e.currentTarget.value;
+    setIngredientsUnit(newValue);
+  }
+
+  function handleChangeTempUnit(e: React.ChangeEvent<HTMLSelectElement>) {
+    const newValue = e.currentTarget.value;
+    setTemperatureUnit(newValue);
+  }
+
+  function handleClickFavorite() {
+    const newFavoriteStatus = !favorite;
+    setFavorite(newFavoriteStatus);
+    updateRecipeFavorite(newFavoriteStatus);
+  }
+
+  function handleClickDots(i: number) {
+    setCurSlide(i);
+  }
+
+  const calcTransitionXSlider = (index: number) => {
+    const translateX = (index - curSlide) * 100;
+    return `translateX(${translateX}%)`;
+  };
+
   return (
     <div className={styles.container__recipe}>
       {curRecipe ? (
@@ -627,7 +433,8 @@ const Recipe = function ({
                   type="number"
                   min="1"
                   max="500"
-                  defaultValue={curRecipe.servings.servings}
+                  value={servingsValue}
+                  onChange={handleChangeInput}
                 />
                 <span className={styles.servings_unit}>
                   {curRecipe.servings.unit}
@@ -637,7 +444,8 @@ const Recipe = function ({
                 <p>Ingredients Unit</p>
                 <select
                   id={styles.input__ingredients_unit}
-                  defaultValue={selectedOption()}
+                  value={ingredientsUnit}
+                  onChange={handleChangeIngUnit}
                 >
                   <option value="metric">Metric</option>
                   <option value="us">US</option>
@@ -653,7 +461,8 @@ const Recipe = function ({
                 </span>
                 <select
                   id={styles.input__temperature_units}
-                  defaultValue={curRecipe.temperatures.unit}
+                  value={temperatureUnit}
+                  onChange={handleChangeTempUnit}
                 >
                   <option value="℃">℃</option>
                   <option value="℉">℉</option>
@@ -663,15 +472,16 @@ const Recipe = function ({
             <button
               className={clsx(
                 styles.btn__favorite,
-                curRecipe.favorite && styles.btn__favorite_on
+                favorite && styles.btn__favorite_on
               )}
+              onClick={handleClickFavorite}
             ></button>
           </div>
           <div className={styles.container__ingredients}>
             <h3>~ Ingredients ~</h3>
             <div className={styles.ingredients}>
-              {curRecipe.ingredients.map((ing) => (
-                <div className={styles.ingredient_line}>
+              {curRecipe.ingredients.map((ing: any) => (
+                <div key={nanoid()} className={styles.ingredient_line}>
                   <input type="checkbox" />
                   <span>
                     {" "}
@@ -684,14 +494,17 @@ const Recipe = function ({
 
           <div className={styles.container__instructions}>
             <h2>~ Instructions ~</h2>
-            {curRecipe.instructions.map((step, i) => (
-              <div className={styles.step}>
+            {curRecipe.instructions.map((step: any, i: number) => (
+              <div key={nanoid()} className={styles.step}>
                 <div className={styles.container__step_step_img}>
                   <p>
                     <span>{i + 1}</span> {step.instruction}
                   </p>
                   {step.image && (
-                    <img src={step.image} alt={`step ${i + 1} image`}></img>
+                    <img
+                      src={step.image || "/grey-img.png"}
+                      alt={`step ${i + 1} image`}
+                    ></img>
                   )}
                 </div>
               </div>
@@ -701,14 +514,41 @@ const Recipe = function ({
             <h2>~ About this recipe ~</h2>
             <p>{curRecipe.description}</p>
           </div>
-          <div className={styles.container__slider}>
-            <h2>~ Memories of the recipe ~</h2>
-            <div className={styles.slider__imgs}>
-              {curRecipe.memoryImages.map((img, i) => (
-                <img src={img} alt={`memory image${i + 1}`}></img>
-              ))}
+          {curRecipe.memoryImages.length && (
+            <div className={styles.container__slider}>
+              <h2>~ Memories of the recipe ~</h2>
+              <div className={styles.slider__imgs}>
+                {curRecipe.memoryImages.map((img: string, i: number) => (
+                  <img
+                    src={img || "/grey-img.png"}
+                    alt={`memory image${i + 1}`}
+                    style={{
+                      transform: calcTransitionXSlider(i),
+                    }}
+                  ></img>
+                ))}
+                <div
+                  style={{
+                    position: "absolute",
+                    width: "70%",
+                    display: "flex",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: "1.7%",
+                    bottom: "5%",
+                  }}
+                >
+                  {curRecipe.memoryImages.map((_: any, i: number) => (
+                    <button
+                      className={styles.btn__dot}
+                      style={{ opacity: i === curSlide ? "0.6" : "0.3" }}
+                      onClick={() => handleClickDots(i)}
+                    ></button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className={styles.container__comments}>
             <h2>~ Comments ~</h2>
@@ -786,6 +626,10 @@ const Recipe = function ({
                   </tr>
                 </tbody>
               </table>
+              {/* <p style={{ color: "red", width: "95%", marginTop: "2%" }}>
+                ※ Couldn't find the information of aaaa, and aaa, so that is
+                excluded here.
+              </p> */}
             </div>
           </div>
         </>
@@ -1126,7 +970,7 @@ const Timers = function () {
 
   const markupTimer = (i: number) => (
     <Timer
-      key={createUniqueKey()}
+      key={nanoid()}
       index={i}
       audioRef={audioRef}
       onClickDelete={handleDeleteTimers}
@@ -1187,24 +1031,7 @@ const Note = function () {
 export default function MAIN() {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [curRecipe, setCurRecipe] = useState<{
-    id: number; //for now
-    favorite: Boolean;
-    mainImage: string;
-    title: string;
-    author: string;
-    servings: { servings: number; unit: string };
-    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
-    ingredients: {
-      ingredient: string;
-      amount: number | string;
-      unit: string;
-    }[];
-    instructions: { instruction: string; image: string }[];
-    description: string;
-    memoryImages: string[];
-    comments: string;
-  } | null>(null);
+  const [curRecipe, setCurRecipe] = useState<any>(null);
   const searchRef = useRef(null);
 
   const handleToggleDropdown = function () {
@@ -1231,25 +1058,19 @@ export default function MAIN() {
     setIsSearchVisible(false);
   };
 
-  function handleClickPreview(recipe: {
-    id: number; //for now
-    favorite: Boolean;
-    mainImage: string;
-    title: string;
-    author: string;
-    servings: { servings: number; unit: string };
-    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
-    ingredients: {
-      ingredient: string;
-      amount: number | string;
-      unit: string;
-    }[];
-    instructions: { instruction: string; image: string }[];
-    description: string;
-    memoryImages: string[];
-    comments: string;
-  }) {
+  function handleClickPreview(recipe: any) {
     setCurRecipe(recipe);
+  }
+
+  function updateRecipeFavorite(newFavoriteStatus: boolean) {
+    let recipe = recipes.find((recipe) => recipe.id === curRecipe?.id);
+    if (!recipe) return;
+    const newRecipe = { ...recipe };
+    newRecipe.favorite = newFavoriteStatus;
+    recipe = newRecipe;
+
+    setCurRecipe(recipe);
+    console.log(recipe);
   }
 
   return (
@@ -1270,7 +1091,10 @@ export default function MAIN() {
             onClickSearch={handleToggleSearch}
             onClickPreview={handleClickPreview}
           />
-          <Recipe curRecipe={curRecipe} />
+          <Recipe
+            curRecipe={curRecipe}
+            updateRecipeFavorite={updateRecipeFavorite}
+          />
         </section>
 
         <section className={styles.section__timers_note}>
