@@ -7,6 +7,180 @@ import React, { useEffect, useRef, useState } from "react";
 import { create } from "domain";
 import { nanoid } from "nanoid";
 
+//success!
+async function getNutritionData(
+  id: number,
+  amount: number | string,
+  unit: string
+) {
+  try {
+    const res = await fetch(
+      `https://api.spoonacular.com/food/ingredients/${id}/information?amount=${amount}&unit=${unit}&apiKey=${process.env.NEXT_PUBLIC_API_KEY}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const err = new Error(data.message);
+      err.statusCode = res.status;
+      throw err;
+    }
+
+    console.log(data);
+  } catch (err) {
+    console.error(err);
+  }
+}
+//success!!
+async function getSuggestion(foodName: string) {
+  try {
+    const res = await fetch(
+      `https://api.spoonacular.com/food/ingredients/autocomplete?query=${foodName}&number=20&language=en&metaInformation=true&apiKey=${process.env.NEXT_PUBLIC_API_KEY}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      const err = new Error(data.message);
+      err.statusCode = res.status;
+      throw err;
+    }
+
+    console.log(data);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+const convertTemperature = (
+  value: number,
+  optionFrom: "F" | "f" | "C" | "c"
+) => {
+  let result;
+
+  if (optionFrom.toLowerCase() === "f") result = (value - 32) * (5 / 9);
+
+  if (optionFrom.toLowerCase() === "c") result = value * (9 / 5) + 32;
+
+  return result?.toFixed(1);
+};
+
+////local units are more important to convert to different units later
+// const getLocation = (ingredient: object) => {
+//   if (
+//     ingredient.unit === "US cups" ||
+//     ingredient.unit === "oz" ||
+//     ingredient.unit === "lb"
+//   )
+//     return "us";
+//   if (ingredient.unit === "Japanese cups") return "japan";
+//   if (ingredient.unit === "Imperial cups") return "metricCup";
+//   if (ingredient.unit === "Australian Tbsp") return "australia";
+
+//   return "metric";
+// };
+
+// prettier-ignore
+const convertIngUnits = (
+  amount: number,
+  unit: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "cupUS" | "cupJapan" | "cupImperial" | "riceCup" | "tsp" | "Tbsp" | "TbspAustralia" | "noUnit"
+) => {
+  let metric;
+  let us;
+  let japan;
+  let australia;
+  let metricCup;
+
+  if (unit === "g") us = { amount: (amount / 28.3495).toFixed(1), unit: "oz" };
+
+  if (unit === "kg") us = { amount: (amount * 2.20462).toFixed(1), unit: "lb" };
+
+  if (unit === "ml") {
+    us = { amount: (amount / 240).toFixed(1), unit: "cupUs" };
+    japan = { amount: (amount / 200).toFixed(1), unit: "cupJapan" };
+    metricCup = { amount: (amount / 250).toFixed(1), unit: "cupImperial" };
+  }
+
+  if (unit === "L") {
+    us = { amount: (amount * 4.167).toFixed(1), unit: "cupUS" };
+    japan = { amount: (amount * 5).toFixed(1), unit: "cupJapan" };
+    metricCup = { amount: (amount * 4).toFixed(1), unit: "cupImperial" };
+  }
+
+  if (unit === "Tbsp")
+    australia = { amount: (amount * 0.75).toFixed(1), unit: "TbspAustralia" };
+
+  if (unit === "oz")
+    metric = { amount: (amount * 28.3495).toFixed(1), unit: "g" };
+
+  if (unit === "lb")
+    metric = { amount: (amount / 35.274).toFixed(1), unit: "kg" };
+
+  if (unit === "cupUS") {
+    japan = [
+      { amount: (amount * 1.2).toFixed(1), unit: "cupJapan" },
+      { amount: (amount * 1.3333).toFixed(1), unit: "riceCup" },
+    ];
+    metric = { amount: (amount * 240).toFixed(1), unit: "ml" };
+    metricCup = { amount: (amount * 0.96).toFixed(1), unit: "cupImperial" };
+    australia = metricCup;
+  }
+
+  if (unit === "cupJapan") {
+    us = { amount: (amount * 0.833).toFixed(1), unit: "cupUS" };
+    metricCup = { amount: (amount * 0.8).toFixed(1), unit: "metricCup" };
+    metric = { amount: (amount * 200).toFixed(1), unit: "ml" };
+  }
+
+  if (unit === "riceCup") {
+    us = { amount: (amount * 0.75).toFixed(1), unit: "cupUS" };
+    metricCup = { amount: (amount * 0.72).toFixed(1), unit: "cupImperial" };
+    metric = { amount: (amount * 180).toFixed(1), unit: "ml" };
+    japan = { amount: (amount * 0.9).toFixed(1), unit: "cupJapan" };
+  }
+
+  if (unit === "tsp") metric = { amount: (amount * 5).toFixed(1), unit: "ml" };
+
+  if (unit === "Tbsp") {
+    metric = { amount: (amount * 15).toFixed(1), unit: "ml" };
+    australia = { amount: (amount * 0.75).toFixed(1), unit: "TbspAustralia" };
+  }
+
+  if (unit === "TbspAustralia") {
+    us = { amount: (amount * 1.3333).toFixed(1), unit: "Tbsp" };
+    japan = us;
+    metric = { amount: (amount * 20).toFixed(1), unit: "ml" };
+  }
+
+  if (unit === "cupImperial") {
+    us = { amount: (amount * 1.041).toFixed(1), unit: "cupUS" };
+    japan = { amount: (amount * 1.25).toFixed(1), unit: "cupJapan" };
+    metric = { amount: (amount * 250).toFixed(1), unit: "ml" };
+  }
+
+  return {
+    metric: metric || "",
+    us: us || "",
+    japan: japan || "",
+    australia: australia || "",
+    metricCup: metricCup || "",
+  };
+};
+
+console.log(convertIngUnits(2, "cupUS"));
+
 //for dev
 const recipes = [
   {
