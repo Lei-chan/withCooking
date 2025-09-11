@@ -14,6 +14,9 @@ importers:
       fatsecret:
         specifier: ^1.0.2
         version: 1.0.2
+      fracty:
+        specifier: ^1.0.12
+        version: 1.0.12
       nanoid:
         specifier: ^5.1.5
         version: 5.1.5
@@ -959,6 +962,9 @@ packages:
   form-data@2.3.3:
     resolution: {integrity: sha512-1lLKB2Mu3aGP1Q/2eCOx0fNbRMe7XdwktwOruhfqqd0rIJWwN4Dh+E3hrPSlDCXnSR7UtZ1N38rVXm+6+MEhJQ==}
     engines: {node: '>= 0.12'}
+
+  fracty@1.0.12:
+    resolution: {integrity: sha512-TvMFIO9LX+D42eeRKqH+tEzXdelZsdYxn+cxtUwG5s2CsXjPfZr9HJ/5+OhMSZGj2m8BZyLEwDE8yDdqpQocYw==}
 
   function-bind@1.1.2:
     resolution: {integrity: sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==}
@@ -2758,6 +2764,8 @@ snapshots:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
+
+  fracty@1.0.12: {}
 
   function-bind@1.1.2: {}
 

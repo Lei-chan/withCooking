@@ -6,255 +6,13 @@ import clsx from "clsx";
 import React, { useEffect, useRef, useState } from "react";
 import { create } from "domain";
 import { nanoid } from "nanoid";
-
-//success!
-async function getNutritionData(
-  id: number,
-  amount: number | string,
-  unit: string
-) {
-  try {
-    const res = await fetch(
-      `https://api.spoonacular.com/food/ingredients/${id}/information?amount=${amount}&unit=${unit}&apiKey=${process.env.NEXT_PUBLIC_API_KEY}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      const err = new Error(data.message);
-      err.statusCode = res.status;
-      throw err;
-    }
-
-    console.log(data);
-  } catch (err) {
-    console.error(err);
-  }
-}
-//success!!
-async function getSuggestion(foodName: string) {
-  try {
-    const res = await fetch(
-      `https://api.spoonacular.com/food/ingredients/autocomplete?query=${foodName}&number=20&language=en&metaInformation=true&apiKey=${process.env.NEXT_PUBLIC_API_KEY}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      const err = new Error(data.message);
-      err.statusCode = res.status;
-      throw err;
-    }
-
-    console.log(data);
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-const convertTemperature = (
-  value: number,
-  optionFrom: "F" | "f" | "C" | "c"
-) => {
-  let result;
-
-  if (optionFrom.toLowerCase() === "f") result = (value - 32) * (5 / 9);
-
-  if (optionFrom.toLowerCase() === "c") result = value * (9 / 5) + 32;
-
-  return result?.toFixed(1);
-};
-
-////local units are more important to convert to different units later
-// const getLocation = (ingredient: object) => {
-//   if (
-//     ingredient.unit === "US cups" ||
-//     ingredient.unit === "oz" ||
-//     ingredient.unit === "lb"
-//   )
-//     return "us";
-//   if (ingredient.unit === "Japanese cups") return "japan";
-//   if (ingredient.unit === "Imperial cups") return "metricCup";
-//   if (ingredient.unit === "Australian Tbsp") return "australia";
-
-//   return "metric";
-// };
-
-// prettier-ignore
-const convertIngUnits = (
-  amount: number,
-  unit: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "cupUS" | "cupJapan" | "cupImperial" | "riceCup" | "tsp" | "Tbsp" | "TbspAustralia" | "noUnit"
-) => {
-  let metric;
-  let us;
-  let japan;
-  let australia;
-  let metricCup;
-
-  if (unit === "g") us = { amount: (amount / 28.3495).toFixed(1), unit: "oz" };
-
-  if (unit === "kg") us = { amount: (amount * 2.20462).toFixed(1), unit: "lb" };
-
-  if (unit === "ml") {
-    us = { amount: (amount / 240).toFixed(1), unit: "cupUs" };
-    japan = { amount: (amount / 200).toFixed(1), unit: "cupJapan" };
-    metricCup = { amount: (amount / 250).toFixed(1), unit: "cupImperial" };
-  }
-
-  if (unit === "L") {
-    us = { amount: (amount * 4.167).toFixed(1), unit: "cupUS" };
-    japan = { amount: (amount * 5).toFixed(1), unit: "cupJapan" };
-    metricCup = { amount: (amount * 4).toFixed(1), unit: "cupImperial" };
-  }
-
-  if (unit === "Tbsp")
-    australia = { amount: (amount * 0.75).toFixed(1), unit: "TbspAustralia" };
-
-  if (unit === "oz")
-    metric = { amount: (amount * 28.3495).toFixed(1), unit: "g" };
-
-  if (unit === "lb")
-    metric = { amount: (amount / 35.274).toFixed(1), unit: "kg" };
-
-  if (unit === "cupUS") {
-    japan = [
-      { amount: (amount * 1.2).toFixed(1), unit: "cupJapan" },
-      { amount: (amount * 1.3333).toFixed(1), unit: "riceCup" },
-    ];
-    metric = { amount: (amount * 240).toFixed(1), unit: "ml" };
-    metricCup = { amount: (amount * 0.96).toFixed(1), unit: "cupImperial" };
-    australia = metricCup;
-  }
-
-  if (unit === "cupJapan") {
-    us = { amount: (amount * 0.833).toFixed(1), unit: "cupUS" };
-    metricCup = { amount: (amount * 0.8).toFixed(1), unit: "metricCup" };
-    metric = { amount: (amount * 200).toFixed(1), unit: "ml" };
-  }
-
-  if (unit === "riceCup") {
-    us = { amount: (amount * 0.75).toFixed(1), unit: "cupUS" };
-    metricCup = { amount: (amount * 0.72).toFixed(1), unit: "cupImperial" };
-    metric = { amount: (amount * 180).toFixed(1), unit: "ml" };
-    japan = { amount: (amount * 0.9).toFixed(1), unit: "cupJapan" };
-  }
-
-  if (unit === "tsp") metric = { amount: (amount * 5).toFixed(1), unit: "ml" };
-
-  if (unit === "Tbsp") {
-    metric = { amount: (amount * 15).toFixed(1), unit: "ml" };
-    australia = { amount: (amount * 0.75).toFixed(1), unit: "TbspAustralia" };
-  }
-
-  if (unit === "TbspAustralia") {
-    us = { amount: (amount * 1.3333).toFixed(1), unit: "Tbsp" };
-    japan = us;
-    metric = { amount: (amount * 20).toFixed(1), unit: "ml" };
-  }
-
-  if (unit === "cupImperial") {
-    us = { amount: (amount * 1.041).toFixed(1), unit: "cupUS" };
-    japan = { amount: (amount * 1.25).toFixed(1), unit: "cupJapan" };
-    metric = { amount: (amount * 250).toFixed(1), unit: "ml" };
-  }
-
-  return {
-    metric: metric || "",
-    us: us || "",
-    japan: japan || "",
-    australia: australia || "",
-    metricCup: metricCup || "",
-  };
-};
-
-console.log(convertIngUnits(2, "cupUS"));
-
-//for dev
-const recipes = [
-  {
-    id: nanoid(),
-    favorite: true,
-    mainImage: "",
-    title: "My Favorite Foccacia!",
-    author: "Lei-chan",
-    servings: { servings: 8, unit: "people" },
-    temperatures: { temperatures: [], unit: "℃" },
-    ingredients: [
-      { ingredient: "olives", amount: "1", unit: "can", id: 9226 },
-      { ingredient: "flour", amount: "250", unit: "g", id: 9226 },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: nanoid(),
-    favorite: false,
-    mainImage: "",
-    title: "Strawberry Pancakes",
-    author: "Lei-chan",
-    servings: { servings: 4, unit: "people" },
-    temperatures: { temperatures: [], unit: "℃" },
-    ingredients: [
-      { ingredient: "strawberries", amount: "2", unit: "UScups", id: 9226 },
-      { ingredient: "flour", amount: "250", unit: "oz", id: 9226 },
-      { ingredient: "eggs", amount: "2 large", unit: "", id: 9226 },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-  {
-    id: nanoid(),
-    favorite: false,
-    mainImage: "",
-    title: "My Pizza!",
-    author: "Lei-chan",
-    servings: { servings: 8, unit: "people" },
-    temperatures: { temperatures: [300], unit: "℃" },
-    ingredients: [
-      { ingredient: "flour", amount: "250", unit: "g", id: 9226 },
-      { ingredient: "water", amount: "1", unit: "L" },
-      { ingredient: "salt", amount: "2", unit: "tsp", id: 9226 },
-    ],
-    instructions: [
-      {
-        instruction: "First put eggs in a bowl and mix with sugar.",
-        image: "",
-      },
-      { instruction: "Add soy milk and set it aside.", image: "" },
-    ],
-    description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
-    comments: "",
-  },
-];
+import fracty from "fracty";
+import {
+  convertTempUnits,
+  convertIngUnits,
+  recipes,
+  updateConvertion,
+} from "../helper";
 
 const DropdownMenu = function ({
   isDropdownVisible,
@@ -484,6 +242,7 @@ const Search = function ({
   );
 };
 
+//prettier ignore
 const Recipe = function ({
   curRecipe,
   updateRecipeFavorite,
@@ -495,9 +254,9 @@ const Recipe = function ({
   const selectedOption = () => {
     const selectedOption = curRecipe?.ingredients.reduce(
       (acc: any, ing: any) => {
-        if (ing.unit === "US cups") return "us";
-        if (ing.unit === "Japanese cups") return "japan";
-        if (ing.unit === "Imperial cups") return "metricCup";
+        if (ing.unit === "US cup") return "us";
+        if (ing.unit === "Japanese cup") return "japan";
+        if (ing.unit === "Imperial cup") return "metricCup";
         if (ing.unit === "Australian Tbsp") return "australia";
 
         if (acc !== "metric") return acc;
@@ -509,10 +268,13 @@ const Recipe = function ({
     return selectedOption;
   };
 
+  const [recipe, setRecipe] = useState(curRecipe);
+  console.log(recipe);
+
   const [servingsValue, setServingsValue] = useState(
     curRecipe?.servings.servings
   );
-  const [temperatureUnit, setTemperatureUnit] = useState(
+  const [temperatureUnit, setTemperatureUnit] = useState<"℉" | "℃">(
     curRecipe?.temperatures.unit
   );
   const [ingredientsUnit, setIngredientsUnit] = useState(selectedOption());
@@ -521,42 +283,59 @@ const Recipe = function ({
   const [maxSlide, setMaxSlide] = useState(curRecipe?.memoryImages.length - 1);
 
   useEffect(() => {
+    setRecipe(curRecipe);
     setServingsValue(curRecipe?.servings.servings);
-  }, [curRecipe?.servings.servings]);
-
-  useEffect(() => {
     setTemperatureUnit(curRecipe?.temperatures.unit);
-  }, [curRecipe?.temperatures.unit]);
-
-  useEffect(() => {
     setIngredientsUnit(selectedOption());
-  }, [selectedOption()]);
-
-  useEffect(() => {
     setFavorite(curRecipe?.favorite);
-  }, [curRecipe?.favorite]);
-
-  useEffect(() => {
-    setMaxSlide(curRecipe?.memoryImages.length - 1);
-  }, [curRecipe?.memoryImages.length]);
-
-  useEffect(() => {
     setCurSlide(0);
-  }, [curRecipe?.memoryImages]);
+    setMaxSlide(curRecipe?.memoryImages.length - 1);
+  }, [curRecipe]);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurSlide((prev) => (prev === maxSlide ? 0 : prev + 1));
-    }, 5000);
+  // useEffect(() => {
+  //   const id = setInterval(() => {
+  //     setCurSlide((prev) => (prev === maxSlide ? 0 : prev + 1));
+  //   }, 5000);
 
-    return () => {
-      clearInterval(id);
-    };
-  }, []);
+  //   return () => {
+  //     clearInterval(id);
+  //   };
+  // }, []);
 
-  function handleChangeInput(e: React.ChangeEvent<HTMLInputElement>) {
+  const updateIngsForServings = (servings: number) => {
+    const newIngs = curRecipe.ingredients.map(
+      (ing: {
+        ingredient: string;
+        amount: number | string;
+        unit: string;
+        id: number;
+      }) => {
+        ///calclate ing for one serivng first then multiply it by new servings
+        const newAmount =
+          typeof ing.amount === "string"
+            ? `${(1 / curRecipe.servings.servings) * servings} ${ing.amount}`
+            : +((ing.amount / curRecipe.servings.servings) * servings).toFixed(
+                1
+              );
+
+        const newIng = { ...ing };
+        newIng.amount = newAmount;
+        return newIng;
+      }
+    );
+
+    return newIngs; //array of updated ingredients for new servings
+  };
+
+  function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = +e.currentTarget.value;
     setServingsValue(newValue);
+    setRecipe((prev: any) => {
+      const newRecipe = { ...prev };
+      newRecipe.ingredients = updateIngsForServings(newValue);
+      //update convertion for updated ing amount
+      return updateConvertion(newRecipe);
+    });
   }
 
   function handleChangeIngUnit(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -565,8 +344,22 @@ const Recipe = function ({
   }
 
   function handleChangeTempUnit(e: React.ChangeEvent<HTMLSelectElement>) {
+    //if the value hasn't change => return;
     const newValue = e.currentTarget.value;
+    if ((newValue !== "℉" && newValue !== "℃") || newValue === temperatureUnit)
+      return;
+
+    //otherwise set new temperature unit
     setTemperatureUnit(newValue);
+    //and set converted temperature
+    setRecipe((prev: any) => {
+      const newRecipe = { ...prev };
+      const newTemp = prev.temperatures.temperatures.map((temp: number) =>
+        convertTempUnits(temp, newValue === "℃" ? "℉" : "℃")
+      );
+      newRecipe.temperatures = { temperatures: newTemp, unit: newValue };
+      return newRecipe;
+    });
   }
 
   function handleClickFavorite() {
@@ -586,21 +379,21 @@ const Recipe = function ({
 
   return (
     <div className={styles.container__recipe}>
-      {curRecipe ? (
+      {recipe ? (
         <>
           <img
             className={styles.img__main}
-            src={curRecipe.mainImage || "/grey-img.png"}
+            src={recipe.mainImage || "/grey-img.png"}
             alt="main image"
           ></img>
           <div className={styles.title_wrapper}>
-            <h2 className={styles.title}>{curRecipe.title}</h2>
+            <h2 className={styles.title}>{recipe.title}</h2>
           </div>
           <div className={styles.container__description_favorite}>
             <div className={styles.container__description}>
               <div className={styles.container__author_servings}>
                 <p>Author</p>
-                <span className={styles.author}>{curRecipe.author}</span>
+                <span className={styles.author}>{recipe.author}</span>
                 <p>Servings</p>
                 <input
                   id={styles.input__servings}
@@ -608,10 +401,10 @@ const Recipe = function ({
                   min="1"
                   max="500"
                   value={servingsValue}
-                  onChange={handleChangeInput}
+                  onChange={handleChangeServings}
                 />
                 <span className={styles.servings_unit}>
-                  {curRecipe.servings.unit}
+                  {recipe.servings.unit}
                 </span>
               </div>
               <div className={styles.container__ingredients_unit}>
@@ -631,7 +424,7 @@ const Recipe = function ({
               <div className={styles.container__temperature_unit}>
                 <p>Temperature</p>
                 <span className={styles.temperature}>
-                  {curRecipe.temperatures.temperatures.join("/")}
+                  {recipe.temperatures.temperatures.join("/")}
                 </span>
                 <select
                   id={styles.input__temperature_units}
@@ -654,21 +447,36 @@ const Recipe = function ({
           <div className={styles.container__ingredients}>
             <h3>~ Ingredients ~</h3>
             <div className={styles.ingredients}>
-              {curRecipe.ingredients.map((ing: any) => (
-                <div key={nanoid()} className={styles.ingredient_line}>
-                  <input type="checkbox" />
-                  <span>
-                    {" "}
-                    {ing.amount} {ing.unit} of {ing.ingredient}
-                  </span>
-                </div>
-              ))}
+              {recipe.ingredients.map((ing: any) => {
+                const newIng = ing.convertion[ingredientsUnit]
+                  ? ing.convertion[ingredientsUnit]
+                  : ing;
+
+                return (
+                  <div key={nanoid()} className={styles.ingredient_line}>
+                    <input type="checkbox" />
+                    <span>
+                      {" "}
+                      {typeof newIng.amount === "string" ||
+                      newIng.unit === "g" ||
+                      newIng.unit === "kg" ||
+                      newIng.unit === "oz" ||
+                      newIng.unit === "lb" ||
+                      newIng.unit === "ml" ||
+                      newIng.unit === "L"
+                        ? newIng.amount
+                        : fracty(newIng.amount)}{" "}
+                      {newIng.unit} of {ing.ingredient}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           <div className={styles.container__instructions}>
             <h2>~ Instructions ~</h2>
-            {curRecipe.instructions.map((step: any, i: number) => (
+            {recipe.instructions.map((step: any, i: number) => (
               <div key={nanoid()} className={styles.step}>
                 <div className={styles.container__step_step_img}>
                   <p>
@@ -686,14 +494,15 @@ const Recipe = function ({
           </div>
           <div className={styles.container__recipe_description}>
             <h2>~ About this recipe ~</h2>
-            <p>{curRecipe.description}</p>
+            <p>{recipe.description}</p>
           </div>
-          {curRecipe.memoryImages.length && (
+          {recipe.memoryImages.length && (
             <div className={styles.container__slider}>
               <h2>~ Memories of the recipe ~</h2>
               <div className={styles.slider__imgs}>
-                {curRecipe.memoryImages.map((img: string, i: number) => (
+                {recipe.memoryImages.map((img: string, i: number) => (
                   <img
+                    key={nanoid()}
                     src={img || "/grey-img.png"}
                     alt={`memory image${i + 1}`}
                     style={{
@@ -712,8 +521,9 @@ const Recipe = function ({
                     bottom: "5%",
                   }}
                 >
-                  {curRecipe.memoryImages.map((_: any, i: number) => (
+                  {recipe.memoryImages.map((_: any, i: number) => (
                     <button
+                      key={nanoid()}
                       className={styles.btn__dot}
                       style={{ opacity: i === curSlide ? "0.6" : "0.3" }}
                       onClick={() => handleClickDots(i)}
@@ -732,7 +542,7 @@ const Recipe = function ({
                 contentEditable="true"
                 defaultValue="Use this space for free :)"
               >
-                {curRecipe.comments}
+                {recipe.comments}
               </div>
             </div>
           </div>
@@ -1205,7 +1015,7 @@ const Note = function () {
 export default function MAIN() {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [curRecipe, setCurRecipe] = useState<any>(null);
+  const [curRecipe, setCurRecipe] = useState({});
   const searchRef = useRef(null);
 
   const handleToggleDropdown = function () {
@@ -1237,14 +1047,13 @@ export default function MAIN() {
   }
 
   function updateRecipeFavorite(newFavoriteStatus: boolean) {
-    let recipe = recipes.find((recipe) => recipe.id === curRecipe?.id);
+    let recipe = recipes.find((recipe: any) => recipe.id === curRecipe?.id);
     if (!recipe) return;
     const newRecipe = { ...recipe };
     newRecipe.favorite = newFavoriteStatus;
     recipe = newRecipe;
 
     setCurRecipe(recipe);
-    console.log(recipe);
   }
 
   return (
