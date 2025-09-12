@@ -76,12 +76,12 @@
         background-color: rgb(255, 241, 164);
         width: fit-content;
         height: fit-content;
-        font-size: 3vw;
+        font-size: 2.8vw;
         padding: 0 2% 1% 2%;
       }
 
       .unit {
-        font-size: 1.9vw;
+        font-size: 1.7vw;
         margin: auto 3% 0 0;
       }
     }

@@ -75,7 +75,7 @@ export const convertTempUnits = function (
 // prettier-ignore
 export const convertIngUnits = function(
   amount: number,
-  unit: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "US cup" | "Japanese cup" | "Imperial cup" | "rice cup" | "tsp" | "Tbsp" | "Australian Tbsp" | ""
+  unitFrom: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "USCup" | "JapaneseCup" | "ImperialCup" | "riceCup" | "tsp" | "Tbsp" | "AustralianTbsp" | ""
 ) {
   ///for main page toFixed(1)
   let metric;
@@ -99,8 +99,8 @@ export const convertIngUnits = function(
   let Tbsp;
   let AustralianTbsp;
 
-  if (unit === "g") {
-    metric = {amount, unit};
+  if (unitFrom === "g") {
+    metric = {amount, unitFrom};
     us = { amount: +(amount / 28.3495).toFixed(1), unit: "oz" };
     japan = metric;
     metricCup = metric;
@@ -109,118 +109,131 @@ export const convertIngUnits = function(
     oz = {amount: +(amount / 28.3495).toFixed(3), unit: "oz" };
 }
 
-  if (unit === "kg") {
-    metric = {amount, unit};
+  if (unitFrom === "kg") {
+    metric = {amount, unitFrom};
     us = { amount: +(amount * 2.20462).toFixed(1), unit: "lb" };
-    japan = {amount, unit};
-    metricCup = {amount, unit};
-    australia = {amount, unit};
-    g = {amount: amount * 1000, unit: 'g'};
+    japan = metric
+    metricCup = metric
+    australia = metric
+    g = {amount: +(amount * 1000).toFixed(3), unit: 'g'};
     oz = {amount: +(amount * 35.274).toFixed(3), unit: 'oz'};
 }
 
-///From here!
-  if (unit === "ml") {
-    metric = {amount, unit};
-    us = { amount: +(amount / 240).toFixed(1), unit: "US cup" };
-    japan = { amount: +(amount / 200).toFixed(1), unit: "Japanese cup" };
-    metricCup = { amount: +(amount / 250).toFixed(1), unit: "Imperial cup" };
-    australia = metricCup;
-  }
 
-  if (unit === "L") {
-    metric = {amount, unit};
-    us = { amount: +((amount * 4.167).toFixed(1)), unit: "US cup" };
-    japan = { amount: +((amount * 5).toFixed(1)), unit: "Japanese cup" };
-    metricCup = { amount: +((amount * 4).toFixed(1)), unit: "Imperial cup" };
-    australia = metricCup;
-  }
-
-  if (unit === "Tbsp"){
-    metric = {amount, unit};
-    us = {amount, unit};
-    japan = {amount, unit};
-    metricCup = {amount, unit};
-    australia = { amount: +((amount * 0.75).toFixed(1)), unit: "Australian cup" };
-}
-
-  if (unit === "oz"){
-    metric = { amount: +((amount * 28.3495).toFixed(1)), unit: "g" };
-    us = {amount, unit};
+  if (unitFrom === "oz"){
+    metric = { amount: +(amount * 28.3495).toFixed(1), unit: "g" };
+    us = {amount, unitFrom};
     japan = metric;
     metricCup = metric;
     australia = metric;
+    g = { amount: +(amount * 28.3495).toFixed(3), unit: "g" };
+    oz = us;
 }
 
-  if (unit === "lb"){
-    metric = { amount: +((amount / 35.274).toFixed(1)), unit: "kg" };
-    us = {amount, unit};
+  if (unitFrom === "lb"){
+    metric = { amount: +(amount / 35.274).toFixed(1), unit: "kg" };
+    us = {amount, unitFrom};
     japan = metric;
     metricCup = metric;
     australia = metric;
+    g = {amount: +(amount * 453.592).toFixed(3), unit: 'g'};
+    oz = {amount: +(amount * 16).toFixed(3), unit: 'oz'};
 }
 
-  if (unit === "US cup") {
-    metric = { amount: +((amount * 240).toFixed(1)), unit: "ml" };
-    us = {amount, unit};
+if (unitFrom === "ml") {
+  metric = {amount, unitFrom};
+  us = { amount: +(amount / 240).toFixed(1), unit: "US cup" };
+  japan = { amount: +(amount / 200).toFixed(1), unit: "Japanese cup" };
+  metricCup = { amount: +(amount / 250).toFixed(1), unit: "Imperial cup" };
+  australia = metricCup;
+  ml = {amount, unitFrom};
+  }
+
+  if (unitFrom === "L") {
+    metric = {amount, unitFrom};
+    us = { amount: +(amount * 4.167).toFixed(1), unit: "US cup" };
+    japan = { amount: +(amount * 5).toFixed(1), unit: "Japanese cup" };
+    metricCup = { amount: +(amount * 4).toFixed(1), unit: "Imperial cup" };
+    australia = metricCup;
+    ml = {amount: +(amount * 1000).toFixed(3), unit: 'ml'};
+  }
+
+  if (unitFrom === "USCup") {
+    metric = { amount: +(amount * 240).toFixed(1), unit: "ml" };
+    us = {amount, unitFrom};
     japan = {
-      cupJapan: { amount: +((amount * 1.2).toFixed(1)), unit: "Japanese cup" },
-      riceCup: { amount: +((amount * 1.3333).toFixed(1)), unit: "rice cup" }
+      cupJapan: { amount: +(amount * 1.2).toFixed(1), unit: "Japanese cup" },
+      riceCup: { amount: +(amount * 1.3333).toFixed(1), unit: "rice cup" }
     };
-    metricCup = { amount: +((amount * 0.96).toFixed(1)), unit: "Imperial cup" };
+    metricCup = { amount: +(amount * 0.96).toFixed(1), unit: "Imperial cup" };
     australia = metricCup;
+    ml = {amount: +(amount * 240).toFixed(3), unit: 'ml'};
   }
 
-  if (unit === "Japanese cup") {
-    metric = { amount: +((amount * 200).toFixed(1)), unit: "ml" };
-    us = { amount: +((amount * 0.833).toFixed(1)), unit: "US cup" };
-    japan = {amount, unit};
-    metricCup = { amount: +((amount * 0.8).toFixed(1)), unit: "Imperial cup" };
+  if (unitFrom === "JapaneseCup") {
+    metric = { amount: +(amount * 200).toFixed(1), unit: "ml" };
+    us = { amount: +(amount * 0.833).toFixed(1), unit: "US cup" };
+    japan = {amount, unitFrom};
+    metricCup = { amount: +(amount * 0.8).toFixed(1), unit: "Imperial cup" };
     australia = metricCup;
+    ml = {amount: +(amount * 200).toFixed(3), unit: 'ml'};
   }
 
-  if (unit === "Imperial cup") {
-    metric = { amount: +((amount * 250).toFixed(1)), unit: "ml" };
-    us = { amount: +((amount * 1.041).toFixed(1)), unit: "US cup" };
-    japan = { amount: +((amount * 1.25).toFixed(1)), unit: "Japanese cup" };
-    metricCup = {amount, unit};
+  if (unitFrom === "ImperialCup") {
+    metric = { amount: +(amount * 250).toFixed(1), unit: "ml" };
+    us = { amount: +(amount * 1.041).toFixed(1), unit: "US cup" };
+    japan = { amount: +(amount * 1.25).toFixed(1), unit: "Japanese cup" };
+    metricCup = {amount, unitFrom};
     australia = metricCup;
+    ml = {amount: +(amount * 250).toFixed(3), unit: 'ml'};
   }
 
-  if (unit === "rice cup") {
-    metric = { amount: +((amount * 180).toFixed(1)), unit: "ml" };
-    us = { amount: +((amount * 0.75).toFixed(1)), unit: "US cup" };
-    japan = { amount: +((amount * 0.9).toFixed(1)), unit: "Japanese cup" };
-    metricCup = { amount: +((amount * 0.72).toFixed(1)), unit: "Imperial cup" };
+  if (unitFrom === "riceCup") {
+    metric = { amount: +(amount * 180).toFixed(1), unit: "ml" };
+    us = { amount: +(amount * 0.75).toFixed(1), unit: "US cup" };
+    japan = { amount: +(amount * 0.9).toFixed(1), unit: "Japanese cup" };
+    metricCup = { amount: +(amount * 0.72).toFixed(1), unit: "Imperial cup" };
     australia = metricCup;
+    ml = {amount: +(amount * 180).toFixed(3), unit: 'ml'};
   }
 
-  if (unit === "tsp"){ 
-    metric = { amount: +((amount * 5).toFixed(1)), unit: "ml" };
-    us = {amount, unit};
+  if (unitFrom === "tsp"){ 
+    metric = { amount: +(amount * 5).toFixed(1), unit: "ml" };
+    us = {amount, unitFrom};
     japan = us;
     metricCup = us;
     australia = us;
+    ml = {amount: +(amount * 5).toFixed(3), unit: 'ml'};
 }
 
-  if (unit === "Tbsp") {
-    metric = { amount: +((amount * 15).toFixed(1)), unit: "ml" };
-    us = {amount, unit};
+  if (unitFrom === "Tbsp") {
+    metric = { amount: +(amount * 15).toFixed(1), unit: "ml" };
+    us = {amount, unitFrom};
     japan = us;
     metricCup = us;
-    australia = { amount: +((amount * 0.75).toFixed(1)), unit: "Australian Tbsp" };
+    australia = { amount: +(amount * 0.75).toFixed(1), unit: "Australian Tbsp" };
+    ml = {amount: +(amount * 15).toFixed(3), unit: 'ml'};
   }
 
-  if (unit === "Australian Tbsp") {
-    metric = { amount: +((amount * 20).toFixed(1)), unit: "ml" };
-    us = { amount: +((amount * 1.3333).toFixed(1)), unit: "Tbsp" };
+  if (unitFrom === "AustralianTbsp") {
+    metric = { amount: +(amount * 20).toFixed(1), unit: "ml" };
+    us = { amount: +(amount * 1.3333).toFixed(1), unit: "Tbsp" };
     japan = us;
     metricCup = us;
-    australia = {amount, unit};
+    australia = {amount, unitFrom};
+    ml = {amount: +(amount * 20).toFixed(3), unit: 'ml'};
   }
 
-  kg = g && {amount: g.amount / 1000, unit: 'kg'};
-  lb = oz && {amount: oz.amount / 16, unit: 'lb'};
+  kg = g && {amount: +(g.amount / 1000).toFixed(3), unit: 'kg'};
+  lb = oz && {amount: +(oz.amount / 16).toFixed(3), unit: 'lb'};
+  L = ml && {amount: +(ml.amount / 1000).toFixed(3), unit: 'L'};
+  USCup = ml &&  {amount: +(ml.amount / 240).toFixed(3), unit: 'US cup'};
+  JapaneseCup = ml && {amount: +(ml.amount / 200).toFixed(3), unit: 'Japanese cup'};
+  ImperialCup = ml && {amount: +(ml.amount / 250).toFixed(3), unit: 'Imperial cup'};
+  riceCup = ml && {amount: +(ml.amount / 180).toFixed(3), unit: 'rice cup'};
+  tsp = ml && {amount: +(ml.amount / 5).toFixed(3), unit: 'tsp'};
+  Tbsp = ml && {amount: +(ml.amount / 15).toFixed(3), unit: 'Tbsp'};
+  AustralianTbsp = ml && {amount: +(ml.amount / 20).toFixed(3), unit: 'Australian Tbsp'};
 
   return {
     metric: metric || "",
@@ -285,10 +298,10 @@ export const convertLengthUnits = function (
     inch = { length: length * 36, unit: "inch" };
   }
 
-  cm = { length: +(mm.length / 10).toFixed(3), unit: "cm" };
-  m = { length: +(cm.length / 100).toFixed(3), unit: "m" };
-  foot = { length: +(inch.length / 12).toFixed(3), unit: "foot" };
-  yard = { length: +(foot.length / 3).toFixed(3), unit: "yard" };
+  cm = mm && { length: +(mm.length / 10).toFixed(3), unit: "cm" };
+  m = cm && { length: +(cm.length / 100).toFixed(3), unit: "m" };
+  foot = inch && { length: +(inch.length / 12).toFixed(3), unit: "foot" };
+  yard = foot && { length: +(foot.length / 3).toFixed(3), unit: "yard" };
 
   return { mm, cm, m, inch, foot, yard };
 };

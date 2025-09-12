@@ -5,17 +5,58 @@ import {
   convertLengthUnits,
   convertTempUnits,
 } from "../helper";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Converter() {
+  const selectRefIng = useRef(null);
+  const selectRefLength = useRef(null);
   const [valueIng, setValueIng] = useState<number>();
-  const [unitIngFrom, setUnitIngFrom] = useState("g");
-  const [unitIngTo, setUnitIngTo] = useState("kg");
+  const [unitIngFrom, setUnitIngFrom] = useState<
+    | "g"
+    | "kg"
+    | "oz"
+    | "lb"
+    | "ml"
+    | "L"
+    | "USCup"
+    | "JapaneseCup"
+    | "ImperialCup"
+    | "riceCup"
+    | "tsp"
+    | "Tbsp"
+    | "AustralianTbsp"
+  >("g");
+  const [unitIngTo, setUnitIngTo] = useState<
+    | "g"
+    | "kg"
+    | "oz"
+    | "lb"
+    | "ml"
+    | "L"
+    | "USCup"
+    | "JapaneseCup"
+    | "ImperialCup"
+    | "riceCup"
+    | "tsp"
+    | "Tbsp"
+    | "AustralianTbsp"
+  >("kg");
+  const [isMass, setIsMass] = useState(true);
   const [valueTemp, setValueTemp] = useState<number>();
-  const [unitTempFrom, setUnitTempFrom] = useState("℉");
+  const [unitTempFrom, setUnitTempFrom] = useState<"℉" | "℃">("℉");
   const [valueLength, setValueLength] = useState<number>();
-  const [unitLengthFrom, setUnitLengthFrom] = useState("mm");
-  const [unitLengthTo, setUnitLengthTo] = useState("cm");
+  const [unitLengthFrom, setUnitLengthFrom] = useState<
+    "mm" | "cm" | "m" | "inch" | "foot" | "yard"
+  >("mm");
+  const [unitLengthTo, setUnitLengthTo] = useState<
+    "mm" | "cm" | "m" | "inch" | "foot" | "yard"
+  >("cm");
+
+  const calcIsMass = (value: string) => {
+    const massUnits = ["g", "kg", "oz", "lb"];
+
+    return massUnits.includes(value) ? true : false;
+  };
 
   function handleInputChangeIng(e: React.ChangeEvent<HTMLInputElement>) {
     const value = +e.currentTarget.value;
@@ -24,6 +65,7 @@ export default function Converter() {
 
   function handleSelectChangeIngFrom(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.currentTarget.value;
+    setIsMass(calcIsMass(value));
     setUnitIngFrom(value);
   }
 
@@ -33,11 +75,70 @@ export default function Converter() {
   }
 
   const findResultIng = () => {
-    const resultsObj = convertIngUnits(valueIng, unitIngFrom);
-    const resultsArr = Object.entries(resultsObj);
-    const result = resultsArr.find((result) => result[1].unit === unitIngTo);
-    return result ? result.amount : "";
+    const resultsObj = valueIng && convertIngUnits(valueIng, unitIngFrom);
+    const result = resultsObj && resultsObj[unitIngTo]?.amount;
+
+    return result ? result : "";
   };
+
+  function handleInputChangeTemp(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = +e.currentTarget.value;
+    setValueTemp(value);
+  }
+
+  function handleSelectChangeTempFrom(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.currentTarget.value;
+    (value === "℉" || value === "℃") && setUnitTempFrom(value);
+  }
+
+  function handleInputChangeLength(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = +e.currentTarget.value;
+    setValueLength(value);
+  }
+
+  function handleSelectChangeLengthFrom(
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) {
+    const value = e.currentTarget.value;
+    setUnitLengthFrom(value);
+  }
+
+  function handleSelectChangeLengthTo(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.currentTarget.value;
+    setUnitLengthTo(value);
+  }
+
+  const findResultLength = () => {
+    const resultObj =
+      valueLength && convertLengthUnits(valueLength, unitLengthFrom);
+    const result = resultObj && resultObj[unitLengthTo]?.length;
+    return result ? result : "";
+  };
+
+  //Manually reassign setUnitIngTo
+  //1. When the select ele 'From' is changed and unitIngTo was same unit as that
+  //2. When the select ele 'From' unit is changed to a mass or a not-mass unit
+  // Above cases the select element 'To' options are changed by the app, but state unitIngTo isn't reassigned because it's not something triggerd by change event
+  useEffect(() => {
+    const value = selectRefIng.current?.value;
+    if (!value) return;
+
+    if (
+      unitIngFrom === unitIngTo ||
+      (isMass && !calcIsMass(unitIngTo)) ||
+      (!isMass && calcIsMass(unitIngTo))
+    )
+      setUnitIngTo(value);
+  }, [unitIngFrom]);
+
+  //Manually reassign setUnitLengthTo
+  //When the select ele 'From' is changed and unitLengthTo was same unit as that, the select element 'To' options are changed by the app, but state unitLengthTo isn't reassigned because it's not somethLength triggerd by change event
+  useEffect(() => {
+    const value = selectRefLength.current?.value;
+    if (!value) return;
+
+    if (unitLengthFrom === unitLengthTo) setUnitLengthTo(value);
+  }, [unitLengthFrom]);
 
   return (
     <div className={styles.page__converter}>
@@ -60,17 +161,17 @@ export default function Converter() {
           >
             <option value="g">g</option>
             <option value="kg">kg</option>
-            <option value="lb">lb</option>
             <option value="oz">oz</option>
+            <option value="lb">lb</option>
             <option value="ml">ml</option>
             <option value="L">L</option>
-            <option value="US cup">cup (US)</option>
-            <option value="Japanese cup">cup (Japan)</option>
-            <option value="Imperial cup">cup (1cup = 250ml)</option>
-            <option value="rice cup">rice cup</option>
+            <option value="USCup">cup (US)</option>
+            <option value="JapaneseCup">cup (Japan)</option>
+            <option value="ImperialCup">cup (1cup = 250ml)</option>
+            <option value="riceCup">rice cup</option>
             <option value="tsp">tsp</option>
             <option value="Tbsp">Tbsp</option>
-            <option value="Australian Tbsp">Tbsp (Australia)</option>
+            <option value="AustralianTbsp">Tbsp (Australia)</option>
           </select>
           <label
             className={styles.label__to}
@@ -80,37 +181,50 @@ export default function Converter() {
           </label>
           <select
             className={styles.select__ingredient_unit_to}
+            ref={selectRefIng}
             value={unitIngTo}
             onChange={handleSelectChangeIngTo}
           >
-            {unitIngFrom !== "g" && <option value="g">g</option>}
-            {unitIngFrom !== "kg" && <option value="kg">kg</option>}
-            {unitIngFrom !== "oz" && <option value="oz">oz</option>}
-            {unitIngFrom !== "lb" && <option value="lb">lb</option>}
-            {unitIngFrom !== "ml" && <option value="ml">ml</option>}
-            {unitIngFrom !== "L" && <option value="L">L</option>}
-            {unitIngFrom !== "US cup" && (
-              <option value="US cup">cup (US)</option>
+            {isMass && unitIngFrom !== "g" && <option value="g">g</option>}
+            {isMass && unitIngFrom !== "kg" && <option value="kg">kg</option>}
+            {isMass && unitIngFrom !== "oz" && <option value="oz">oz</option>}
+            {isMass && unitIngFrom !== "lb" && <option value="lb">lb</option>}
+            {!isMass && unitIngFrom !== "ml" && <option value="ml">ml</option>}
+            {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
+            {!isMass && unitIngFrom !== "USCup" && (
+              <option value="USCup">cup (US)</option>
             )}
-            {unitIngFrom !== "Japanese cup" && (
-              <option value="Japanese cup">cup (Japan)</option>
+            {!isMass && unitIngFrom !== "JapaneseCup" && (
+              <option value="JapaneseCup">cup (Japan)</option>
             )}
-            {unitIngFrom !== "Imperial cup" && (
-              <option value="Imperial cup">cup (1cup = 250ml)</option>
+            {!isMass && unitIngFrom !== "ImperialCup" && (
+              <option value="ImperialCup">cup (1cup = 250ml)</option>
             )}
-            {unitIngFrom !== "rice cup" && (
-              <option value="rice cup">rice cup</option>
+            {!isMass && unitIngFrom !== "riceCup" && (
+              <option value="riceCup">rice cup</option>
             )}
-            {unitIngFrom !== "tsp" && <option value="tsp">tsp</option>}
-            {unitIngFrom !== "Tbsp" && <option value="Tbsp">Tbsp</option>}
-            {unitIngFrom !== "Australian Tbsp" && (
-              <option value="Australian Tbsp">Tbsp (Australia)</option>
+            {!isMass && unitIngFrom !== "tsp" && (
+              <option value="tsp">tsp</option>
+            )}
+            {!isMass && unitIngFrom !== "Tbsp" && (
+              <option value="Tbsp">Tbsp</option>
+            )}
+            {!isMass && unitIngFrom !== "AustralianTbsp" && (
+              <option value="AustralianTbsp">Tbsp (Australia)</option>
             )}
           </select>
         </div>
         <div className={styles.container__output}>
           <p className={styles.output}>{findResultIng()}</p>
-          <span className={styles.unit}>{unitIngTo}</span>
+          <span className={styles.unit}>
+            {(() => {
+              if (unitIngTo.includes("Cup"))
+                return unitIngTo.replace("Cup", " cup");
+              if (unitIngTo.includes("nTbsp"))
+                return unitIngTo.replace("nTbsp", "n Tbsp");
+              return unitIngTo;
+            })()}
+          </span>
         </div>
       </div>
       <h3>Tempareture units</h3>
@@ -122,8 +236,13 @@ export default function Converter() {
             id={styles.input__temperature_amount}
             type="number"
             placeholder="Temperature"
+            onChange={handleInputChangeTemp}
           />
-          <select className={styles.select__temperature_unit_from}>
+          <select
+            className={styles.select__temperature_unit_from}
+            value={unitTempFrom}
+            onChange={handleSelectChangeTempFrom}
+          >
             <option value="℃">℃</option>
             <option value="℉">℉</option>
           </select>
@@ -134,13 +253,17 @@ export default function Converter() {
             To
           </label>
           <select className={styles.select__temperature_unit_to}>
-            <option value="℃">℃</option>
-            <option value="℉">℉</option>
+            {unitTempFrom !== "℃" && <option value="℃">℃</option>}
+            {unitTempFrom !== "℉" && <option value="℉">℉</option>}
           </select>
         </div>
         <div className={styles.container__output}>
-          <p className={styles.output}></p>
-          <span className={styles.unit}>℉</span>
+          <p className={styles.output}>
+            {(valueTemp && convertTempUnits(valueTemp, unitTempFrom)) || ""}
+          </p>
+          <span className={styles.unit}>
+            {unitTempFrom === "℃" ? "℉" : "℃"}
+          </span>
         </div>
       </div>
       <h3>Length units</h3>
@@ -152,8 +275,13 @@ export default function Converter() {
             id={styles.input__length_amount}
             type="number"
             placeholder="Length"
+            onChange={handleInputChangeLength}
           />
-          <select className={styles.select__length_unit_from}>
+          <select
+            className={styles.select__length_unit_from}
+            value={unitLengthFrom}
+            onChange={handleSelectChangeLengthFrom}
+          >
             <option value="mm">mm</option>
             <option value="cm">cm</option>
             <option value="m">m</option>
@@ -164,18 +292,23 @@ export default function Converter() {
           <label className={styles.label__to} htmlFor="select__length_unit_to">
             To
           </label>
-          <select className={styles.select__length_unit_to}>
-            <option value="mm">mm</option>
-            <option value="cm">cm</option>
-            <option value="m">m</option>
-            <option value="inch">inch</option>
-            <option value="foot">foot</option>
-            <option value="yard">yard</option>
+          <select
+            className={styles.select__length_unit_to}
+            ref={selectRefLength}
+            value={unitLengthTo}
+            onChange={handleSelectChangeLengthTo}
+          >
+            {unitLengthFrom !== "mm" && <option value="mm">mm</option>}
+            {unitLengthFrom !== "cm" && <option value="cm">cm</option>}
+            {unitLengthFrom !== "m" && <option value="m">m</option>}
+            {unitLengthFrom !== "inch" && <option value="inch">inch</option>}
+            {unitLengthFrom !== "foot" && <option value="foot">foot</option>}
+            {unitLengthFrom !== "yard" && <option value="yard">yard</option>}
           </select>
         </div>
         <div className={styles.container__output}>
-          <p className={styles.output}></p>
-          <span className={styles.unit}>yard</span>
+          <p className={styles.output}>{findResultLength()}</p>
+          <span className={styles.unit}>{unitLengthTo}</span>
         </div>
       </div>
     </div>
