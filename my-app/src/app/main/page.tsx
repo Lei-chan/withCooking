@@ -8,13 +8,96 @@ import { create } from "domain";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
 import {
+  calcNumberOfPages,
+  getFilteredRecipes,
+  getRecipesPerPage,
   convertTempUnits,
   convertIngUnits,
   recipes,
   updateConvertion,
 } from "../helper";
+import { TYPE_RECIPE } from "../config";
 
-const DropdownMenu = function ({
+export default function MAIN() {
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
+  const searchRef = useRef(null);
+
+  const handleToggleDropdown = function () {
+    setIsDropdownVisible(!isDropdownVisible);
+  };
+
+  const handleToggleSearch = function () {
+    setIsSearchVisible(!isSearchVisible);
+  };
+
+  const handleCloseDropdownSearch = function (
+    e: React.MouseEvent<HTMLDivElement>
+  ) {
+    const target = e.target as HTMLElement;
+
+    if (
+      target.closest("ul") ||
+      target.closest("div") === searchRef.current ||
+      (!isDropdownVisible && !isSearchVisible)
+    )
+      return;
+
+    setIsDropdownVisible(false);
+    setIsSearchVisible(false);
+  };
+
+  function handleClickPreview(recipe: TYPE_RECIPE) {
+    setCurRecipe(recipe);
+  }
+
+  function updateRecipeFavorite(newFavoriteStatus: boolean) {
+    let recipe = recipes.find(
+      (recipe: TYPE_RECIPE) => recipe.id === curRecipe?.id
+    );
+    if (!recipe) return;
+    const newRecipe = { ...recipe };
+    newRecipe.favorite = newFavoriteStatus;
+    recipe = newRecipe;
+
+    setCurRecipe(recipe);
+  }
+
+  return (
+    <div
+      className={clsx(styles.page__main)}
+      onClick={handleCloseDropdownSearch}
+    >
+      <div className={styles.container__cooking}>
+        <DropdownMenu
+          isDropdownVisible={isDropdownVisible}
+          onClickDropdown={handleToggleDropdown}
+        />
+
+        <section className={styles.section__recipe}>
+          <Search
+            isSearchVisible={isSearchVisible}
+            searchRef={searchRef}
+            onClickSearch={handleToggleSearch}
+            onClickPreview={handleClickPreview}
+          />
+          <Recipe
+            curRecipe={curRecipe}
+            updateRecipeFavorite={updateRecipeFavorite}
+          />
+        </section>
+
+        <section className={styles.section__timers_note}>
+          <Timers />
+          <Note />
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function DropdownMenu({
   isDropdownVisible,
   onClickDropdown,
 }: {
@@ -57,9 +140,9 @@ const DropdownMenu = function ({
       </ul>
     </div>
   );
-};
+}
 
-const Search = function ({
+function Search({
   isSearchVisible,
   searchRef,
   onClickSearch,
@@ -68,55 +151,23 @@ const Search = function ({
   isSearchVisible: boolean;
   searchRef: any;
   onClickSearch: () => void;
-  onClickPreview: (recipe: {
-    id: number; //for now
-    favorite: boolean;
-    mainImage: string;
-    title: string;
-    author: string;
-    servings: { servings: number; unit: string };
-    temperatures: { temperatures: number[] | string[]; unit: "℃" | "℉" };
-    ingredients: {
-      ingredient: string;
-      amount: number | string;
-      unit: string;
-    }[];
-    instructions: { instruction: string; image: string }[];
-    description: string;
-    memoryImages: string[];
-    comments: string;
-  }) => void;
+  onClickPreview: (recipe: TYPE_RECIPE) => void;
 }) {
-  const RECIPE_PER_PAGE = 6;
+  const RECIPES_PER_PAGE = 6;
   const [input, setInput] = useState("");
-  const [curRecipes, setCurRecipes] = useState<object[]>([]);
+  const [curRecipes, setCurRecipes] = useState<TYPE_RECIPE[]>([]);
   const [numberOfPages, setNumberOfPages] = useState(0);
   const [page, setPage] = useState(1);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
-  const updateNumberOfPages = (recipes: Object[]) => {
-    setNumberOfPages(Math.ceil(recipes.length / RECIPE_PER_PAGE));
-  };
-
-  const getRecipesPerPage = (value: string = input) => {
+  const getRecipes = (value: string = input) => {
     if (!recipes.length) return;
 
-    const structuredValue = value.trim().toLowerCase();
-    const filteredRecipes = recipes.filter(
-      (recipe) =>
-        recipe.title.toLocaleLowerCase().includes(structuredValue) ||
-        recipe.ingredients.find((ing) =>
-          ing.ingredient.toLowerCase().includes(structuredValue)
-        )
-    );
+    const filteredRecipes = getFilteredRecipes(value);
 
-    updateNumberOfPages(filteredRecipes);
+    setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
 
-    const startIndex = (page - 1) * RECIPE_PER_PAGE;
-    const endIndex = startIndex + RECIPE_PER_PAGE;
-    const recipesPerPage = filteredRecipes.slice(startIndex, endIndex);
-
-    return recipesPerPage;
+    return getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, page);
   };
 
   const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
@@ -129,7 +180,7 @@ const Search = function ({
       setInput(value);
       setPage(1);
 
-      const nextRecipes = getRecipesPerPage(value);
+      const nextRecipes = getRecipes(value);
       nextRecipes && setCurRecipes(nextRecipes);
     }, 500);
 
@@ -150,7 +201,7 @@ const Search = function ({
   }
 
   useEffect(() => {
-    const nextRecipes = getRecipesPerPage();
+    const nextRecipes = getRecipes();
     nextRecipes && setCurRecipes(nextRecipes);
   }, [page]);
 
@@ -240,10 +291,10 @@ const Search = function ({
       </div>
     </div>
   );
-};
+}
 
 //prettier ignore
-const Recipe = function ({
+function Recipe({
   curRecipe,
   updateRecipeFavorite,
 }: {
@@ -622,9 +673,9 @@ const Recipe = function ({
       )}
     </div>
   );
-};
+}
 
-const Timer = function ({
+function Timer({
   index,
   audioRef,
   onClickDelete,
@@ -932,10 +983,10 @@ const Timer = function ({
       </div>
     </form>
   );
-};
+}
 
 /////There is a bug when delete timer with fewer number they can not be deleted! Because I can't update index after spliced markupTimersArr I assume
-const Timers = function () {
+function Timers() {
   const MAX_TIMERS = 10;
   const audioRef = useRef(null);
   const [numberOfTimers, setNumberOfTimers] = useState<number>(1);
@@ -1002,89 +1053,12 @@ const Timers = function () {
       </div>
     </section>
   );
-};
+}
 
-const Note = function () {
+function Note() {
   return (
     <section className={styles.section__note} contentEditable="true">
       You can use this space for taking a note for cooking :)
     </section>
-  );
-};
-
-export default function MAIN() {
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [curRecipe, setCurRecipe] = useState({});
-  const searchRef = useRef(null);
-
-  const handleToggleDropdown = function () {
-    setIsDropdownVisible(!isDropdownVisible);
-  };
-
-  const handleToggleSearch = function () {
-    setIsSearchVisible(!isSearchVisible);
-  };
-
-  const handleCloseDropdownSearch = function (
-    e: React.MouseEvent<HTMLDivElement>
-  ) {
-    const target = e.target as HTMLElement;
-
-    if (
-      target.closest("ul") ||
-      target.closest("div") === searchRef.current ||
-      (!isDropdownVisible && !isSearchVisible)
-    )
-      return;
-
-    setIsDropdownVisible(false);
-    setIsSearchVisible(false);
-  };
-
-  function handleClickPreview(recipe: any) {
-    setCurRecipe(recipe);
-  }
-
-  function updateRecipeFavorite(newFavoriteStatus: boolean) {
-    let recipe = recipes.find((recipe: any) => recipe.id === curRecipe?.id);
-    if (!recipe) return;
-    const newRecipe = { ...recipe };
-    newRecipe.favorite = newFavoriteStatus;
-    recipe = newRecipe;
-
-    setCurRecipe(recipe);
-  }
-
-  return (
-    <div
-      className={clsx(styles.page__main)}
-      onClick={handleCloseDropdownSearch}
-    >
-      <div className={styles.container__cooking}>
-        <DropdownMenu
-          isDropdownVisible={isDropdownVisible}
-          onClickDropdown={handleToggleDropdown}
-        />
-
-        <section className={styles.section__recipe}>
-          <Search
-            isSearchVisible={isSearchVisible}
-            searchRef={searchRef}
-            onClickSearch={handleToggleSearch}
-            onClickPreview={handleClickPreview}
-          />
-          <Recipe
-            curRecipe={curRecipe}
-            updateRecipeFavorite={updateRecipeFavorite}
-          />
-        </section>
-
-        <section className={styles.section__timers_note}>
-          <Timers />
-          <Note />
-        </section>
-      </div>
-    </div>
   );
 }
