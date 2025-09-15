@@ -1,18 +1,101 @@
 "use client";
-import Image from "next/image";
 import styles from "./page.module.css";
+import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
-import {
-  KeyboardEvent,
-  useActionState,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { redirect, RedirectType } from "next/navigation";
+import { useInView } from "react-intersection-observer";
+import {
+  APP_EXPLANATIONS,
+  PASSWORD_MIN_DIGIT,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MIN_LOWERCASE,
+  PASSWORD_MIN_UPPERCASE,
+} from "../config";
+import { error } from "console";
+import { validatePassword } from "../helper";
 
-const TopHalf = function ({
+export default function Home() {
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
+  const errorMsgEmpty = "※Please fill the field";
+
+  const handleToggleLogin = function () {
+    setShowLogin(!showLogin);
+  };
+
+  const handleToggleSignup = function () {
+    setShowSignup(!showSignup);
+  };
+
+  //Add escape key event listener
+  useEffect(() => {
+    const handleKeyDownEscape = function (e: any) {
+      if (e.key !== "Escape" || (!showLogin && !showSignup)) return;
+
+      showLogin ? handleToggleLogin() : handleToggleSignup();
+    };
+
+    window.addEventListener("keydown", handleKeyDownEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDownEscape);
+    };
+  }, [showLogin, showSignup]);
+
+  return (
+    <div className={clsx(styles.page__first)}>
+      <div className={styles.top_half}>
+        <Buttons
+          onLoginClick={handleToggleLogin}
+          onSignupClick={handleToggleSignup}
+        />
+        <div className={styles.title_description}>
+          <Image
+            className={styles.title}
+            src="/withCooking-title.gif"
+            alt="withCooking"
+            width={600}
+            height={200}
+          ></Image>
+          <p className={styles.description}>
+            In this app, all necessary and useful tools for cooking are
+            included.
+            <br />
+            Store recipes, search your recipes, set multiple timers with titles,
+            check nutrients for your recipes, etc.
+            <br />
+            This simple but userful app will become your cooking buddy :)
+          </p>
+        </div>
+        <div className={styles.scroll}>
+          <p>Scroll for more details</p>
+          <p>&darr;</p>
+        </div>
+      </div>
+      <BottomHalf />
+      {(showLogin || showSignup) && (
+        <div className={clsx(styles.overlay__first)}>
+          <OverlayLogin
+            show={showLogin ? true : false}
+            errorMsgEmpty={errorMsgEmpty}
+            onClickX={handleToggleLogin}
+            onClickOutside={handleToggleLogin}
+          />
+          <OverlayCreateAccount
+            show={showSignup ? true : false}
+            errorMsgEmpty={errorMsgEmpty}
+            onClickX={handleToggleSignup}
+            onClickOutside={handleToggleSignup}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Buttons({
   onLoginClick,
   onSignupClick,
 }: {
@@ -20,112 +103,25 @@ const TopHalf = function ({
   onSignupClick: () => void;
 }) {
   return (
-    <div className={styles.top_half}>
-      <div className={styles.login_signup}>
-        <button className={styles.btn__login} onClick={onLoginClick}>
-          Login
-        </button>
-        <button className={styles.btn__signup} onClick={onSignupClick}>
-          Sign up
-        </button>
-      </div>
-      <div className={styles.title_description}>
-        <Image
-          className={styles.title}
-          src="/withCooking-title.gif"
-          alt="withCooking"
-          width={600}
-          height={200}
-        ></Image>
-        <p className={styles.description}>
-          In this app, all necessary and useful tools for cooking are included.
-          <br />
-          Store recipes, search your recipes, set multiple timers with titles,
-          check nutrients for your recipes, etc.
-          <br />
-          This simple but userful app will become your cooking buddy :)
-        </p>
-      </div>
-      <div className={styles.scroll}>
-        <p>Scroll for more details</p>
-        <p>&darr;</p>
-      </div>
+    <div className={styles.login_signup}>
+      <button className={styles.btn__login} onClick={onLoginClick}>
+        Login
+      </button>
+      <button className={styles.btn__signup} onClick={onSignupClick}>
+        Sign up
+      </button>
     </div>
   );
-};
+}
 
-const BottomHalf = function () {
+function BottomHalf() {
   return (
     <div className={styles.bottom_half}>
       <div className={styles.container__details}>
         <h1>Manage your favorite recipes in one app</h1>
-        <div
-          className={clsx(styles.details, styles.details__right)}
-          data-details="0"
-        >
-          <h2>Create recipes</h2>
-          <Image
-            src="/grey-img.png"
-            alt="create recipe image"
-            width={604}
-            height={460}
-          ></Image>
-          <p>
-            You can create recipes with simple steps. Nutritional information is
-            automatically created for your recipes, so it's useful to manage
-            your diet.
-            <br />
-            You can also automatically convert ingredients/temperature units to
-            various types of units, so you don't need to look up for different
-            units on the Internet anymore!
-          </p>
-        </div>
-        <div
-          className={clsx(styles.details, styles.details__left)}
-          data-details="1"
-        >
-          <h2>Search recipes</h2>
-          <Image
-            src="/grey-img.png"
-            alt="search recipe image"
-            width={604}
-            height={460}
-          ></Image>
-          <p>You can search your recipes using keywords.</p>
-        </div>
-        <div
-          className={clsx(styles.details, styles.details__right)}
-          data-details="2"
-        >
-          <h2>Cook with recipes</h2>
-          <Image
-            src="/grey-img.png"
-            alt="recipe image"
-            width={604}
-            height={460}
-          ></Image>
-          <p>
-            You can edit and leave comments for recipes while cooking, so
-            whenever you want to change your recipes, you can easily manage it.
-          </p>
-        </div>
-        <div
-          className={clsx(styles.details, styles.details__left)}
-          data-details="3"
-        >
-          <h2>Set multiple timers</h2>
-          <Image
-            src="/grey-img.png"
-            alt="setting timers image"
-            width={604}
-            height={460}
-          ></Image>
-          <p>
-            You can set multiple timers with titles. Even if you aren't good at
-            doing multiple cooking process at the same time, this feature would
-            become your helper!
-          </p>
-        </div>
+        {APP_EXPLANATIONS.map((explanation, i) => (
+          <Explanation explanation={explanation} i={i} />
+        ))}
       </div>
       <h3>
         Let's start <span>withCooking</span> by signing up for free
@@ -145,27 +141,109 @@ const BottomHalf = function () {
       </footer>
     </div>
   );
-};
+}
 
-const OverlayLogin = function ({
+function Explanation({
+  explanation,
+  i,
+}: {
+  explanation: {
+    title: string;
+    image: string;
+    explanation: string;
+  };
+  i: number;
+}) {
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.02 });
+
+  const checkIsEven = () => (i % 2 === 0 ? true : false);
+  const isEven = checkIsEven();
+
+  ///even number details appear from right, odd number from left
+  return (
+    <div
+      ref={ref}
+      className={clsx(
+        styles.details,
+        !inView && isEven && styles.original_position__right,
+        !inView && !isEven && styles.original_position__left,
+        inView && isEven && styles.slide_in__right,
+        inView && !isEven && styles.slide_in__left
+      )}
+    >
+      <h2>{explanation.title}</h2>
+      <Image
+        src={explanation.image || "/grey-img.png"}
+        alt={`${explanation.title} image`}
+        width={604}
+        height={460}
+      ></Image>
+      <p>{explanation.explanation}</p>
+    </div>
+  );
+}
+
+function OverlayLogin({
   show,
-  isPasswordVisible,
-  isWarningVisible,
-  warningMessage,
+  errorMsgEmpty,
   onClickX,
   onClickOutside,
-  onClickEye,
-  onSubmitLogin,
 }: {
   show: Boolean;
-  isPasswordVisible: Boolean;
-  isWarningVisible: Boolean;
-  warningMessage: String;
+  errorMsgEmpty: string;
   onClickX: () => void;
   onClickOutside: () => void;
-  onClickEye: () => void;
-  onSubmitLogin: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
+  const [isPasswordVisible, setPasswordIsVisible] = useState(false);
+  // const [isWarningVisible, setIsWarningVisible] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string>();
+  const [errorFields, setErrorFields] = useState<
+    "email" | "password" | "both"
+  >();
+
+  const handleTogglePassword = function () {
+    setPasswordIsVisible(!isPasswordVisible);
+  };
+
+  const handleSubmit = function (e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const [[email, emailValue], [password, passwordValue]] = [
+      ...new FormData(e.currentTarget),
+    ];
+
+    console.log(emailValue, passwordValue);
+
+    const trimmedEmail = emailValue.toString().trim();
+    const trimmedPassword = passwordValue.toString().trim();
+
+    if (!trimmedEmail && !trimmedPassword) {
+      setErrorFields("both");
+      return setErrorMsg("※Please fill both fields");
+    }
+
+    if (!trimmedEmail) {
+      setErrorFields("email");
+      return setErrorMsg("※Please fill the field");
+    }
+
+    if (!trimmedPassword) {
+      setErrorFields("password");
+      return setErrorMsg("※Please fill the field");
+    }
+
+    if (!validatePassword(trimmedPassword)) {
+      setErrorFields("password");
+      return setErrorMsg("※Please set password that meets the requirements.");
+    }
+
+    //loading
+
+    //send data to server
+
+    //redirect to main
+    redirect("/main", RedirectType.replace);
+  };
+
   return (
     <div
       className={clsx(styles.overlay__login, !show && styles.hidden)}
@@ -178,12 +256,12 @@ const OverlayLogin = function ({
         className={clsx(
           styles.warning,
           styles.warning__login,
-          !isWarningVisible && styles.hidden
+          !errorMsg && styles.hidden
         )}
       >
-        {warningMessage}
+        {errorMsg}
       </p>
-      <form className={styles.form__login} onSubmit={onSubmitLogin}>
+      <form className={styles.form__login} onSubmit={handleSubmit}>
         <button className={styles.btn__x} type="button" onClick={onClickX}>
           &times;
         </button>
@@ -191,14 +269,26 @@ const OverlayLogin = function ({
         <div className={styles.input_wrapper}>
           <input
             id={styles.input__login_username}
-            name="username"
+            style={{
+              borderColor:
+                errorFields === "email" || errorFields === "both"
+                  ? "orangered"
+                  : " #0000004f",
+            }}
+            name="email"
             type="email"
-            placeholder="username"
+            placeholder="email"
           />
         </div>
         <div className={styles.input_wrapper}>
           <input
             id={styles.input__login_password}
+            style={{
+              borderColor:
+                errorFields === "password" || errorFields === "both"
+                  ? "orangered"
+                  : " #0000004f",
+            }}
             type={!isPasswordVisible ? "password" : "text"}
             name="password"
             placeholder="password"
@@ -209,7 +299,7 @@ const OverlayLogin = function ({
               isPasswordVisible && styles.hidden
             )}
             type="button"
-            onClick={onClickEye}
+            onClick={handleTogglePassword}
           ></button>
           <button
             className={clsx(
@@ -217,7 +307,7 @@ const OverlayLogin = function ({
               !isPasswordVisible && styles.hidden
             )}
             type="button"
-            onClick={onClickEye}
+            onClick={handleTogglePassword}
           ></button>
         </div>
         <button className={styles.btn__login} type="submit">
@@ -226,27 +316,62 @@ const OverlayLogin = function ({
       </form>
     </div>
   );
-};
+}
 
-const OverlayCreateAccount = function ({
+function OverlayCreateAccount({
   show,
-  isPasswordVisible,
-  isWarningVisible,
-  warningMessage,
+  errorMsgEmpty,
   onClickX,
   onClickOutside,
-  onClickEye,
-  onSubmitCreateAcc,
 }: {
   show: Boolean;
-  isPasswordVisible: Boolean;
-  isWarningVisible: Boolean;
-  warningMessage: String;
+  errorMsgEmpty: string;
   onClickX: () => void;
   onClickOutside: () => void;
-  onClickEye: () => void;
-  onSubmitCreateAcc: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
+  const [isPasswordVisible, setPasswordIsVisible] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string>();
+  const [errorFields, setErrorFields] = useState<
+    "email" | "password" | "both"
+  >();
+
+  const handleTogglePassword = function () {
+    setPasswordIsVisible(!isPasswordVisible);
+  };
+
+  const handleSubmit = function (e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const [[email, emailValue], [password, passwordValue]] = [
+      ...new FormData(e.currentTarget),
+    ];
+
+    const trimmedEmail = emailValue.toString().trim();
+    const trimmedPassword = passwordValue.toString().trim();
+
+    if (!trimmedEmail && !trimmedPassword) {
+      setErrorFields("both");
+      return setErrorMsg("※Please fill both fields");
+    }
+
+    if (!trimmedEmail) {
+      setErrorFields("email");
+      return setErrorMsg("※Please fill the field");
+    }
+
+    if (!trimmedPassword) {
+      setErrorFields("password");
+      return setErrorMsg("※Please fill the field");
+    }
+
+    if (!validatePassword(trimmedPassword)) {
+      setErrorFields("password");
+      return setErrorMsg("※Please set password that meets the requirements.");
+    }
+
+    redirect("/main", RedirectType.replace);
+  };
+
   return (
     <div
       className={clsx(styles.overlay__create_account, !show && styles.hidden)}
@@ -260,15 +385,12 @@ const OverlayCreateAccount = function ({
         className={clsx(
           styles.warning,
           styles.warning__create_account,
-          !isWarningVisible && styles.hidden
+          !errorMsg && styles.hidden
         )}
       >
-        {warningMessage}
+        {errorMsg}
       </p>
-      <form
-        className={styles.form__create_account}
-        onSubmit={onSubmitCreateAcc}
-      >
+      <form className={styles.form__create_account} onSubmit={handleSubmit}>
         <button className={styles.btn__x} type="button" onClick={onClickX}>
           &times;
         </button>
@@ -277,19 +399,33 @@ const OverlayCreateAccount = function ({
         <div className={styles.input_wrapper}>
           <input
             id={styles.input__signup_username}
-            name="username"
+            style={{
+              borderColor:
+                errorFields === "email" || errorFields === "both"
+                  ? "orangered"
+                  : " #0000004f",
+            }}
+            name="email"
             type="email"
-            placeholder="username"
+            placeholder="email"
           ></input>
         </div>
         <h3>Please enter password you want to use</h3>
         <p className={styles.requirements__password}>
-          Use 8 letters at minimum including at least
-          <br />1 uppercase, 1 lowercase, and 1 digit
+          Use {PASSWORD_MIN_LENGTH} letters at minimum, including at least
+          <br />
+          {PASSWORD_MIN_UPPERCASE} uppercase, {PASSWORD_MIN_LOWERCASE}{" "}
+          lowercase, and {PASSWORD_MIN_DIGIT} digit
         </p>
         <div className={styles.input_wrapper}>
           <input
             id={styles.input__signup_password}
+            style={{
+              borderColor:
+                errorFields === "password" || errorFields === "both"
+                  ? "orangered"
+                  : " #0000004f",
+            }}
             name="password"
             type={!isPasswordVisible ? "password" : "text"}
             placeholder="password"
@@ -300,7 +436,7 @@ const OverlayCreateAccount = function ({
               isPasswordVisible && styles.hidden
             )}
             type="button"
-            onClick={onClickEye}
+            onClick={handleTogglePassword}
           ></button>
           <button
             className={clsx(
@@ -308,106 +444,13 @@ const OverlayCreateAccount = function ({
               !isPasswordVisible && styles.hidden
             )}
             type="button"
-            onClick={onClickEye}
+            onClick={handleTogglePassword}
           ></button>
         </div>
         <button className={styles.btn__signup} type="submit">
           Sign up
         </button>
       </form>
-    </div>
-  );
-};
-
-export default function Home() {
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
-  const [isPasswordVisible, setPasswordIsVisible] = useState(false);
-  const [isWarningVisible, setIsWarningVisible] = useState(false);
-  const [warningMessage, setWarningMessage] = useState("");
-
-  const handleToggleLogin = function () {
-    setShowLogin(!showLogin);
-    setPasswordIsVisible(false);
-  };
-
-  const handleToggleSignup = function () {
-    setShowSignup(!showSignup);
-    setPasswordIsVisible(false);
-  };
-
-  const handleTogglePassword = function () {
-    setPasswordIsVisible(!isPasswordVisible);
-  };
-
-  //Add escape key event listener
-  useEffect(() => {
-    const handleKeyDownEscape = function (e: any) {
-      if (e.key !== "Escape" || (!showLogin && !showSignup)) return;
-
-      showLogin ? handleToggleLogin() : handleToggleSignup();
-    };
-
-    window.addEventListener("keydown", handleKeyDownEscape);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDownEscape);
-    };
-  }, [showLogin, showSignup]);
-
-  const handleSubmit = function (e: React.FormEvent<HTMLFormElement>) {
-    try {
-      e.preventDefault();
-      const data = [...new FormData(e.currentTarget)];
-
-      data.forEach((arr) => {
-        if (!arr[1].toString().trim())
-          throw new Error("Please fill the both fields.");
-      });
-
-      //loading
-
-      //send data to server
-    } catch (err: any) {
-      setIsWarningVisible(true);
-      return setWarningMessage(err.message);
-    }
-
-    //redirect to main
-    redirect("/main", RedirectType.replace);
-  };
-
-  return (
-    <div className={clsx(styles.page__first)}>
-      <TopHalf
-        onLoginClick={handleToggleLogin}
-        onSignupClick={handleToggleSignup}
-      />
-      <BottomHalf />
-      {(showLogin || showSignup) && (
-        <div className={clsx(styles.overlay__first)}>
-          <OverlayLogin
-            show={showLogin ? true : false}
-            isPasswordVisible={isPasswordVisible}
-            isWarningVisible={isWarningVisible}
-            warningMessage={warningMessage}
-            onClickX={handleToggleLogin}
-            onClickOutside={handleToggleLogin}
-            onClickEye={handleTogglePassword}
-            onSubmitLogin={handleSubmit}
-          />
-          <OverlayCreateAccount
-            show={showSignup ? true : false}
-            isPasswordVisible={isPasswordVisible}
-            isWarningVisible={isWarningVisible}
-            warningMessage={warningMessage}
-            onClickX={handleToggleSignup}
-            onClickOutside={handleToggleSignup}
-            onClickEye={handleTogglePassword}
-            onSubmitCreateAcc={handleSubmit}
-          />
-        </div>
-      )}
     </div>
   );
 }

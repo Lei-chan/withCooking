@@ -1,6 +1,12 @@
 import { nanoid } from "nanoid";
 import { TYPE_RECIPE } from "./config";
 
+export const validatePassword = (input: string) => {
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+  return passwordRegex.test(input);
+};
+
 export const calcNumberOfPages = (recipes: Object[], recipesPerPage: number) =>
   Math.ceil(recipes.length / recipesPerPage);
 
