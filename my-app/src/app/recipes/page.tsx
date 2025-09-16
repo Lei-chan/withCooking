@@ -112,9 +112,11 @@ function SearchSection({
           Search
         </button>
       </form>
-      <button className={styles.btn__create} type="button">
-        Create
-      </button>
+      <Link href={"http://localhost:3000/recipes/create"}>
+        <button className={styles.btn__create} type="button">
+          Create
+        </button>
+      </Link>
     </div>
   );
 }

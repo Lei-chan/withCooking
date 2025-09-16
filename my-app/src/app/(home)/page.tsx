@@ -15,6 +15,7 @@ import {
 } from "../config";
 import { error } from "console";
 import { validatePassword } from "../helper";
+import { nanoid } from "nanoid";
 
 export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
@@ -45,18 +46,45 @@ export default function Home() {
   }, [showLogin, showSignup]);
 
   return (
-    <div className={clsx(styles.page__first)}>
-      <div className={styles.top_half}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        textAlign: "center",
+        alignItems: "center",
+        zIndex: "auto",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          textAlign: "center",
+          alignItems: "center",
+        }}
+      >
         <Buttons
           onLoginClick={handleToggleLogin}
           onSignupClick={handleToggleSignup}
         />
-        <div className={styles.title_description}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            textAlign: "center",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "80%",
+            height: "90%",
+            letterSpacing: "0.05vw",
+          }}
+        >
           <Image
-            className={styles.title}
             src="/withCooking-title.gif"
             alt="withCooking"
-            width={600}
+            width={700}
             height={200}
           ></Image>
           <p className={styles.description}>
@@ -69,28 +97,35 @@ export default function Home() {
             This simple but userful app will become your cooking buddy :)
           </p>
         </div>
-        <div className={styles.scroll}>
+        <div
+          style={{
+            width: "100%",
+            height: "fit-content",
+            padding: "2%",
+            backgroundImage:
+              "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.185))",
+            color: " #ff8800ff",
+            fontSize: "1.4vw",
+            letterSpacing: "0.05vw",
+          }}
+        >
           <p>Scroll for more details</p>
           <p>&darr;</p>
         </div>
       </div>
       <BottomHalf />
-      {(showLogin || showSignup) && (
-        <div className={clsx(styles.overlay__first)}>
-          <OverlayLogin
-            show={showLogin ? true : false}
-            errorMsgEmpty={errorMsgEmpty}
-            onClickX={handleToggleLogin}
-            onClickOutside={handleToggleLogin}
-          />
-          <OverlayCreateAccount
-            show={showSignup ? true : false}
-            errorMsgEmpty={errorMsgEmpty}
-            onClickX={handleToggleSignup}
-            onClickOutside={handleToggleSignup}
-          />
-        </div>
-      )}
+      <OverlayLogin
+        show={showLogin ? true : false}
+        errorMsgEmpty={errorMsgEmpty}
+        onClickX={handleToggleLogin}
+        onClickOutside={handleToggleLogin}
+      />
+      <OverlayCreateAccount
+        show={showSignup ? true : false}
+        errorMsgEmpty={errorMsgEmpty}
+        onClickX={handleToggleSignup}
+        onClickOutside={handleToggleSignup}
+      />
     </div>
   );
 }
@@ -103,7 +138,19 @@ function Buttons({
   onSignupClick: () => void;
 }) {
   return (
-    <div className={styles.login_signup}>
+    <div
+      style={{
+        position: "absolute",
+        display: "flex",
+        flexDirection: "row",
+        textAlign: "center",
+        alignItems: "center",
+        justifyContent: "center",
+        right: "0%",
+        width: "20%",
+        aspectRatio: "1 / 0.25",
+      }}
+    >
       <button className={styles.btn__login} onClick={onLoginClick}>
         Login
       </button>
@@ -115,15 +162,23 @@ function Buttons({
 }
 
 function BottomHalf() {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.02,
+  });
+
   return (
-    <div className={styles.bottom_half}>
-      <div className={styles.container__details}>
-        <h1>Manage your favorite recipes in one app</h1>
-        {APP_EXPLANATIONS.map((explanation, i) => (
-          <Explanation explanation={explanation} i={i} />
-        ))}
-      </div>
-      <h3>
+    <div
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
+      <Details />
+      <h3
+        ref={ref}
+        className={clsx(
+          styles.last_comment,
+          inView && styles.appear_slow__comment
+        )}
+      >
         Let's start <span>withCooking</span> by signing up for free
       </h3>
       <footer className={styles.footer}>
@@ -139,6 +194,32 @@ function BottomHalf() {
         <p className={styles.attribution}>Designed by Freepik</p>
         <p className={styles.copyright}>© 2025 Lei-chan</p>
       </footer>
+    </div>
+  );
+}
+
+function Details() {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.02,
+  });
+
+  return (
+    <div className={styles.container__details}>
+      <h1
+        ref={ref}
+        className={styles.heading}
+        style={{
+          transform: !inView
+            ? "translateX(-100%) skewX(-17deg)"
+            : "translateX(0%) skewX(-17deg)",
+        }}
+      >
+        Manage your favorite recipes in one app
+      </h1>
+      {APP_EXPLANATIONS.map((explanation, i) => (
+        <Explanation key={nanoid()} explanation={explanation} i={i} />
+      ))}
     </div>
   );
 }
@@ -195,7 +276,6 @@ function OverlayLogin({
   onClickOutside: () => void;
 }) {
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
-  // const [isWarningVisible, setIsWarningVisible] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>();
   const [errorFields, setErrorFields] = useState<
     "email" | "password" | "both"
@@ -246,7 +326,11 @@ function OverlayLogin({
 
   return (
     <div
-      className={clsx(styles.overlay__login, !show && styles.hidden)}
+      className={styles.overlay__login}
+      style={{
+        opacity: !show ? "0" : "1",
+        pointerEvents: !show ? "none" : "all",
+      }}
       onClick={(e) => {
         const target = e.target as HTMLElement;
         if (e.currentTarget === target) onClickOutside();
@@ -310,7 +394,7 @@ function OverlayLogin({
             onClick={handleTogglePassword}
           ></button>
         </div>
-        <button className={styles.btn__login} type="submit">
+        <button className={styles.btn__submit_login} type="submit">
           Log in
         </button>
       </form>
@@ -374,7 +458,11 @@ function OverlayCreateAccount({
 
   return (
     <div
-      className={clsx(styles.overlay__create_account, !show && styles.hidden)}
+      className={styles.overlay__create_account}
+      style={{
+        opacity: !show ? "0" : "1",
+        pointerEvents: !show ? "none" : "all",
+      }}
       tabIndex={-1}
       onClick={(e) => {
         const target = e.target as HTMLElement;
