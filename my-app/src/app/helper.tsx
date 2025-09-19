@@ -34,6 +34,14 @@ export const getRecipesPerPage = (
   return recipesPerPage ? recipesPerPage : null;
 };
 
+export const calcTransitionXSlider = (index: number, curSlide: number) => {
+  const translateX = (index - curSlide) * 100;
+  return `translateX(${translateX}%)`;
+};
+
+export const getImageURL = (file: any) =>
+  file.name ? URL.createObjectURL(file) : "";
+
 //success!
 export const getNutritionData = async function (
   id: number,

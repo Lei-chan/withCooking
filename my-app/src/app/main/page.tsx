@@ -13,6 +13,7 @@ import {
   getRecipesPerPage,
   convertTempUnits,
   convertIngUnits,
+  calcTransitionXSlider,
   recipes,
   updateConvertion,
 } from "../helper";
@@ -125,7 +126,15 @@ function DropdownMenu({
           <li>Converter</li>
         </Link>
         <Link href="http://localhost:3000/account">
-          <li>Account</li>
+          <li>
+            <Image
+              src={"/account.svg"}
+              alt="account icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>Account</span>
+          </li>
         </Link>
         <li>Logout</li>
         <Link href="http://localhost:3000/how-to-use">
@@ -423,11 +432,6 @@ function Recipe({
     setCurSlide(i);
   }
 
-  const calcTransitionXSlider = (index: number) => {
-    const translateX = (index - curSlide) * 100;
-    return `translateX(${translateX}%)`;
-  };
-
   return (
     <div className={styles.container__recipe}>
       {recipe ? (
@@ -557,7 +561,7 @@ function Recipe({
                     src={img || "/grey-img.png"}
                     alt={`memory image${i + 1}`}
                     style={{
-                      transform: calcTransitionXSlider(i),
+                      transform: calcTransitionXSlider(i, curSlide),
                     }}
                   ></img>
                 ))}
@@ -1029,7 +1033,6 @@ function Timers() {
     //when timer is deleted
     if (markupTimersArr.length > numberOfTimers)
       setMarkupTimersArr((prev) => {
-        console.log(deletedIndex, prev);
         if (!deletedIndex && deletedIndex !== 0) return [...prev];
 
         return [...prev].toSpliced(deletedIndex, 1);

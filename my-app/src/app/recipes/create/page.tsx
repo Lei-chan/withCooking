@@ -5,8 +5,117 @@ import Link from "next/link";
 import clsx from "clsx";
 import React, { useEffect, useRef, useState } from "react";
 import { nanoid } from "nanoid";
+import { relative } from "path";
+import {
+  calcTransitionXSlider,
+  convertIngUnits,
+  getImageURL,
+  recipes,
+} from "@/app/helper";
 
+/////get rid of grey image and replace it with grey background
 export default function CreateRecipe() {
+  const [favorite, setFavorite] = useState(false);
+
+  function handleClickFavorite() {
+    setFavorite(!favorite);
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+
+    const data = {
+      ...Object.fromEntries(formData),
+      memoryImages: formData.getAll("memoryImages"),
+    };
+
+    const dataArr = Object.entries(data);
+
+    ///ingredients
+    const numberOfIngredients = dataArr.filter(
+      (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
+    ).length;
+
+    const ingredients = new Array(numberOfIngredients).fill("").map((_, i) => {
+      const nameArr = dataArr.find((arr) =>
+        arr[0].includes(`ingredient${i + 1}Name`)
+      );
+      const amountArr = dataArr.find((arr) =>
+        arr[0].includes(`ingredient${i + 1}Amount`)
+      );
+      const unitArr = dataArr.find((arr) =>
+        arr[0].includes(`ingredient${i + 1}Unit`)
+      );
+      const customUnitArr = dataArr.find((arr) =>
+        arr[0].includes(`ingredient${i + 1}CustomUnit`)
+      );
+      if (!nameArr || !amountArr || !unitArr || !customUnitArr) return;
+
+      return {
+        ingredient: nameArr && nameArr[1],
+        amount: amountArr && +amountArr[1],
+        unit: unitArr && unitArr[1],
+        cusomUnit: customUnitArr && customUnitArr[1],
+        id: "",
+        convertion: convertIngUnits(+amountArr[1], unitArr[1]),
+      };
+    });
+
+    ///instructions
+    const numberOfInstructions = dataArr.filter(
+      (arr) => arr[0].includes("instruction") && arr[0].includes("Image")
+    ).length;
+
+    const instructions = new Array(numberOfInstructions)
+      .fill("")
+      .map((_, i) => {
+        const instruction = dataArr.find(
+          (arr) =>
+            arr[0].includes(`instruction${i + 1}`) && !arr[0].includes("Image")
+        );
+        const image = dataArr.find(
+          (arr) =>
+            arr[0].includes(`instruction${i + 1}`) && arr[0].includes("Image")
+        );
+        if (!instruction || !image) return;
+
+        return { instruction: instruction[1], image: getImageURL(image[1]) };
+      });
+
+    console.log(data.memoryImages);
+
+    const newRecipe = {
+      id: nanoid(),
+      favorite,
+      mainImage: getImageURL(data.mainImage),
+      title: data.title,
+      author: data.author,
+      servings: {
+        servings: +data.servings,
+        unit: data.servingsUnit,
+        customUnit: data.servingsCustomUnit,
+      },
+      temperatures: {
+        temperatures: [
+          +data.temperature1,
+          +data.temperature2,
+          +data.temperature3,
+        ],
+        unit: data.temperatureUnit,
+      },
+      ingredients,
+      instructions,
+      description: data.description,
+      memoryImages: Array.from(data.memoryImages).map((file) =>
+        getImageURL(file)
+      ),
+      comments: data.comments,
+    };
+    console.log(newRecipe);
+  }
+
   return (
     <div
       style={{
@@ -21,7 +130,7 @@ export default function CreateRecipe() {
         padding: "2% 0",
       }}
     >
-      <div
+      <form
         style={{
           position: "relative",
           textAlign: "center",
@@ -37,9 +146,13 @@ export default function CreateRecipe() {
           boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
           borderRadius: "10px",
         }}
+        onSubmit={handleSubmit}
       >
         <ImageTitle />
-        <BriefExplanation />
+        <BriefExplanation
+          favorite={favorite}
+          onClickFavorite={handleClickFavorite}
+        />
         <Ingredients />
         <Instructions />
         <AboutThisRecipe />
@@ -118,12 +231,25 @@ export default function CreateRecipe() {
         <button className={styles.btn__upload_recipe} type="submit">
           Upload
         </button>
-      </div>
+      </form>
     </div>
   );
 }
 
 function ImageTitle() {
+  const [image, setImage] = useState("");
+
+  function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.currentTarget.files;
+    if (!files) return;
+
+    setImage(URL.createObjectURL(files[0]));
+  }
+
+  function handleDeleteImage() {
+    setImage("");
+  }
+
   return (
     <div
       style={{
@@ -132,8 +258,19 @@ function ImageTitle() {
         height: "300px",
       }}
     >
+      <button
+        className={clsx(styles.btn__img, styles.btn__trash_img)}
+        style={{
+          right: "-8%",
+          width: "7%",
+          height: "9%",
+          opacity: image ? 1 : 0,
+        }}
+        type="button"
+        onClick={handleDeleteImage}
+      ></button>
       <Image
-        src={"/grey-img.png"}
+        src={image || "/grey-img.png"}
         alt="main image"
         width={500}
         height={300}
@@ -145,10 +282,11 @@ function ImageTitle() {
           height: "13%",
           top: "-57%",
           left: "27%",
+          opacity: !image ? 1 : 0,
         }}
       >
         <button
-          className={styles.btn__upload_img}
+          className={clsx(styles.btn__img, styles.btn__upload_img)}
           style={{
             width: "100%",
             height: "100%",
@@ -158,6 +296,7 @@ function ImageTitle() {
             fontSize: "1.5vw",
             letterSpacing: "0.05vw",
           }}
+          type="button"
         >
           Upload image
         </button>
@@ -170,6 +309,8 @@ function ImageTitle() {
           }}
           type="file"
           accept="image/*"
+          name="mainImage"
+          onChange={handleChangeImage}
         />
       </div>
       <div
@@ -203,6 +344,7 @@ function ImageTitle() {
             fontSize: "2.1vw",
             textAlign: "center",
           }}
+          name="title"
           placeholder="Click here to set title"
         ></input>
       </div>
@@ -210,7 +352,37 @@ function ImageTitle() {
   );
 }
 
-function BriefExplanation() {
+function BriefExplanation({
+  favorite,
+  onClickFavorite,
+}: {
+  favorite: boolean;
+  onClickFavorite: () => void;
+}) {
+  const [mouseOver, setMouseOver] = useState([false, false, false, false]);
+
+  function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
+    const index = e.currentTarget.dataset.icon;
+    if (!index) return;
+
+    setMouseOver((prev) => {
+      const newMouseOver = [...prev];
+      newMouseOver[+index] = true;
+      return newMouseOver;
+    });
+  }
+
+  function handleMouseOut(e: React.MouseEvent<HTMLDivElement>) {
+    const index = e.currentTarget.dataset.icon;
+    if (!index) return;
+
+    setMouseOver((prev) => {
+      const newMouseOver = [...prev];
+      newMouseOver[+index] = false;
+      return newMouseOver;
+    });
+  }
+
   return (
     <div
       style={{
@@ -242,7 +414,26 @@ function BriefExplanation() {
         }}
       >
         <div className={styles.container__author_servings}>
-          <div className={styles.icons__brief_explanation}>
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="0"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "500%",
+                height: "300%",
+                top: "-330%",
+                left: "-360%",
+                opacity: !mouseOver[0] ? 0 : 1,
+              }}
+            >
+              <p className={styles.p__fukidashi}>
+                Name of the person who will make the recipe
+              </p>
+            </div>
             <Image
               src={"/person.svg"}
               alt="person icon"
@@ -253,12 +444,35 @@ function BriefExplanation() {
           <input
             className={styles.input__brief_explanation}
             style={{ width: "19%" }}
+            name="author"
             placeholder="Author"
           ></input>
-          {/* {<span style={{ paddingRight: "5%" }}>{}</span>} */}
-          <div className={styles.icons__brief_explanation}>
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="1"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "700%",
+                height: "420%",
+                top: "-450%",
+                left: "-545%",
+                opacity: !mouseOver[1] ? 0 : 1,
+              }}
+            >
+              <p
+                className={styles.p__fukidashi}
+                style={{ padding: "0 3% 48% 3%" }}
+              >
+                Number of servings. If there isn't a unit you want to use in the
+                selector, please select other and fill custom unit.
+              </p>
+            </div>
             <Image
-              src={"/champagne.png"}
+              src={"/servings.svg"}
               alt="servings icon"
               width={14}
               height={15}
@@ -270,13 +484,13 @@ function BriefExplanation() {
             type="number"
             min="1"
             max="500"
+            name="servings"
             placeholder="Servings"
-            // value={}
-            // onChange={}
           />
           <select
             className={styles.input__brief_explanation}
             style={{ width: "22%" }}
+            name="servingsUnit"
           >
             <option value="people">people</option>
             <option value="slices">slices</option>
@@ -288,14 +502,31 @@ function BriefExplanation() {
           <input
             className={styles.input__brief_explanation}
             style={{ width: "20%" }}
+            name="servingsCustomUnit"
             placeholder="Custom unit"
           />
-          {/* {<span className={styles.servings_unit}>{}</span>} */}
         </div>
         <div className={styles.container__units}>
-          <div className={styles.icons__brief_explanation}>
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="2"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "500%",
+                height: "330%",
+                top: "-350%",
+                left: "-360%",
+                opacity: !mouseOver[2] ? 0 : 1,
+              }}
+            >
+              <p className={styles.p__fukidashi}>Unit system you prefer</p>
+            </div>
             <Image
-              src={"/weight-scale.png"}
+              src={"/scale.svg"}
               alt="ingredient units icon"
               width={14}
               height={16}
@@ -304,8 +535,7 @@ function BriefExplanation() {
           <select
             className={styles.input__brief_explanation}
             style={{ width: "25%" }}
-            // value={}
-            // onChange={}
+            name="IngredientsUnit"
           >
             <option value="metric">Metric</option>
             <option value="us">US</option>
@@ -314,17 +544,36 @@ function BriefExplanation() {
             <option value="metricCup">Metric cup (1cup = 250ml)</option>
           </select>
 
-          <div className={styles.icons__brief_explanation}>
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="3"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "520%",
+                height: "360%",
+                top: "-380%",
+                left: "-390%",
+                opacity: !mouseOver[3] ? 0 : 1,
+              }}
+            >
+              <p
+                className={styles.p__fukidashi}
+                style={{ padding: "0 5% 57% 5%" }}
+              >
+                Temperatures you use in the recipe (e.g. oven temperatures)
+              </p>
+            </div>
             <Image
-              src={"/temperature.png"}
+              src={"/temperature.svg"}
               alt="ingredient units icon"
               width={17}
               height={17}
             ></Image>
           </div>
-          {/* <span className={styles.temperature}>
-            {recipe.temperatures.temperatures.join("/")} 
-          </span> */}
           {Array(3)
             .fill("")
             .map((_, i) => (
@@ -333,8 +582,7 @@ function BriefExplanation() {
           <select
             className={styles.input__brief_explanation}
             style={{ width: "8%" }}
-            // value={}
-            // onChange={}
+            name="temperatureUnit"
           >
             <option value="℃">℃</option>
             <option value="℉">℉</option>
@@ -344,14 +592,17 @@ function BriefExplanation() {
       <button
         style={{
           background: "none",
-          backgroundImage: 'url("/star-off.png")',
+          backgroundImage: !favorite
+            ? 'url("/star-off.png")'
+            : 'url("/star-on.png")',
           width: "4.5%",
           aspectRatio: "1",
           backgroundRepeat: "no-repeat",
           backgroundSize: "100%",
           border: "none",
         }}
-        // onClick={}
+        type="button"
+        onClick={onClickFavorite}
       ></button>
     </div>
   );
@@ -363,12 +614,48 @@ function InputTemp({ i }: { i: number }) {
       className={styles.input__brief_explanation}
       style={{ width: "14%", fontSize: "1.1vw" }}
       type="number"
+      name={`temperature${i + 1}`}
       placeholder={`Temp ${i + 1}`}
     ></input>
   );
 }
 
 function Ingredients() {
+  // const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
+  const [numberOfLines, setNumberOfLines] = useState(1);
+  const [lines, setLines] = useState<any[]>(
+    Array(numberOfLines)
+      .fill("")
+      .map(() => {
+        return { id: nanoid() };
+      })
+  );
+  const [deletedIndex, setDeletedIndex] = useState<number>();
+
+  function handleClickPlus() {
+    setNumberOfLines((prev) => prev + 1);
+  }
+
+  function handleClickDelete(i: number) {
+    setDeletedIndex(i);
+    setNumberOfLines((prev) => prev - 1);
+  }
+
+  ////Manually update lines to remain current state when users delete line
+  useEffect(() => {
+    ///when line is added
+    if (lines.length < numberOfLines)
+      setLines((prev) => [...prev, { id: nanoid() }]);
+
+    ///when line is deleted
+    if (lines.length > numberOfLines)
+      setLines((prev) => {
+        if (!deletedIndex && deletedIndex !== 0) return prev;
+
+        return [...prev].toSpliced(deletedIndex, 1);
+      });
+  }, [numberOfLines]);
+
   return (
     <div
       style={{
@@ -396,55 +683,11 @@ function Ingredients() {
           // paddingLeft: "7%",
         }}
       >
-        <div
-          className={styles.ingredients_line}
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "2%",
-          }}
-        >
-          <span style={{ fontSize: "1.5vw" }}>1. </span>
-          <input
-            className={styles.input__brief_explanation}
-            style={{ width: "30%" }}
-            placeholder="Name 1"
-          ></input>
-          <input
-            className={styles.input__brief_explanation}
-            style={{ width: "20%" }}
-            type="number"
-            placeholder="Amount"
-          ></input>
-          <select
-            className={styles.input__brief_explanation}
-            style={{ width: "20%" }}
-          >
-            <option value="g">g</option>
-            <option value="kg">kg</option>
-            <option value="lb">lb</option>
-            <option value="oz">oz</option>
-            <option value="ml">ml</option>
-            <option value="L">L</option>
-            <option value="cupUS">cup (US)</option>
-            <option value="cupJapan">cup (Japan)</option>
-            <option value="cupImperial">cup (1cup = 250ml)</option>
-            <option value="riceCup">rice cup</option>
-            <option value="tsp">tsp</option>
-            <option value="Tbsp">Tbsp</option>
-            <option value="TbspAustralia">Tbsp (Australia)</option>
-            <option value="other">Other</option>
-            <option value="noUnit">No unit</option>
-          </select>
-          <input
-            className={styles.input__brief_explanation}
-            style={{ width: "20%" }}
-            type="text"
-            placeholder="Custom unit"
-          />
-        </div>
+        {lines.map((line, i) => (
+          <IngLine key={line.id} i={i} onClickDelete={handleClickDelete} />
+        ))}
         <div className={styles.ingredients_line}>
-          <ButtonPlus />
+          <ButtonPlus onClickBtn={handleClickPlus} />
         </div>
 
         {/* {recipe.ingredients.map((ing: any) => {
@@ -481,7 +724,105 @@ function Ingredients() {
   );
 }
 
-function ButtonPlus() {
+function IngLine({
+  i,
+  onClickDelete,
+}: {
+  i: number;
+  onClickDelete: (i: number) => void;
+}) {
+  const [line, setLine] = useState({
+    name: "",
+    amount: 0,
+    unit: "",
+    customUnit: "",
+  });
+
+  function handleChangeInput(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const target = e.currentTarget;
+
+    setLine((prev) => {
+      const newLine = { ...prev };
+      if (target.name.includes("Name")) newLine.name = target.value;
+      if (target.name.includes("Amount")) newLine.amount = +target.value;
+      if (target.name.includes("Unit")) newLine.unit = target.value;
+      if (target.name.includes("CustomUnit")) newLine.customUnit = target.value;
+      return newLine;
+    });
+  }
+
+  return (
+    <div
+      className={styles.ingredients_line}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        gap: "2%",
+      }}
+    >
+      <button
+        className={clsx(styles.btn__img, styles.btn__trash_img)}
+        style={{ width: "3%", height: "80%", right: "-6%", top: "10%" }}
+        type="button"
+        onClick={() => onClickDelete(i)}
+      ></button>
+      <span style={{ fontSize: "1.5vw" }}>{i + 1}. </span>
+      <input
+        className={styles.input__brief_explanation}
+        style={{ width: "30%" }}
+        name={`ingredient${i + 1}Name`}
+        placeholder={`Name ${i + 1}`}
+        value={line.name}
+        onChange={handleChangeInput}
+      ></input>
+      <input
+        className={styles.input__brief_explanation}
+        style={{ width: "20%" }}
+        type="number"
+        name={`ingredient${i + 1}Amount`}
+        placeholder="Amount"
+        value={line.amount || ""}
+        onChange={handleChangeInput}
+      ></input>
+      <select
+        className={styles.input__brief_explanation}
+        style={{ width: "20%" }}
+        name={`ingredient${i + 1}Unit`}
+        value={line.unit || "g"}
+        onChange={handleChangeInput}
+      >
+        <option value="g">g</option>
+        <option value="kg">kg</option>
+        <option value="lb">lb</option>
+        <option value="oz">oz</option>
+        <option value="ml">ml</option>
+        <option value="L">L</option>
+        <option value="cupUS">cup (US)</option>
+        <option value="cupJapan">cup (Japan)</option>
+        <option value="cupImperial">cup (1cup = 250ml)</option>
+        <option value="riceCup">rice cup</option>
+        <option value="tsp">tsp</option>
+        <option value="Tbsp">Tbsp</option>
+        <option value="TbspAustralia">Tbsp (Australia)</option>
+        <option value="other">Other</option>
+        <option value="noUnit">No unit</option>
+      </select>
+      <input
+        className={styles.input__brief_explanation}
+        style={{ width: "20%" }}
+        type="text"
+        name={`ingredient${i + 1}CustomUnit`}
+        placeholder="Custom unit"
+        value={line.customUnit}
+        onChange={handleChangeInput}
+      />
+    </div>
+  );
+}
+
+function ButtonPlus({ onClickBtn }: { onClickBtn: () => void }) {
   return (
     <button
       style={{
@@ -494,6 +835,8 @@ function ButtonPlus() {
         borderRadius: "50%",
         border: "none",
       }}
+      type="button"
+      onClick={onClickBtn}
     >
       +
     </button>
@@ -501,6 +844,42 @@ function ButtonPlus() {
 }
 
 function Instructions() {
+  const [numberOfInstructions, setNumberOfInstructions] = useState(1);
+  //Store key so whenever user delete instruction, other instructions' info will remain the same
+  const [instructions, setInstructions] = useState(
+    Array(numberOfInstructions)
+      .fill("")
+      .map(() => {
+        return { id: nanoid() };
+      })
+  );
+  const [deletedIndex, setDeletedIndex] = useState<number>();
+
+  function handleClickPlus() {
+    setNumberOfInstructions((prev) => prev + 1);
+  }
+
+  function handleClickDelete(i: number) {
+    setDeletedIndex(i);
+    setNumberOfInstructions((prev) => prev - 1);
+  }
+
+  //manually add or splice key info to remain other instructions info
+  useEffect(() => {
+    //when user adds instruction
+    if (instructions.length < numberOfInstructions)
+      setInstructions((prev) => [...prev, { id: nanoid() }]);
+
+    //when user deletes instruction
+    if (instructions.length > numberOfInstructions)
+      setInstructions((prev) => {
+        if (!deletedIndex && deletedIndex !== 0) return prev;
+
+        const newInstructions = [...prev];
+        return newInstructions.toSpliced(deletedIndex, 1);
+      });
+  }, [numberOfInstructions]);
+
   return (
     <div
       style={{
@@ -513,71 +892,9 @@ function Instructions() {
       <h2 className={styles.header} style={{ marginBottom: "20px" }}>
         Instructions
       </h2>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          textAlign: "left",
-          alignItems: "center",
-          gap: "5%",
-          width: "100%",
-          height: "fit-content",
-          backgroundColor: "rgba(255, 255, 236, 0.91)",
-          padding: "4% 3%",
-          fontSize: "1.2vw",
-          letterSpacing: "0.05vw",
-        }}
-      >
-        <span
-          style={{
-            position: "relative",
-            top: "-35px",
-            textAlign: "center",
-            width: "25px",
-            aspectRatio: "1",
-            fontSize: "1.4vw",
-            borderRadius: "50%",
-            color: "white",
-            backgroundColor: " #ce3a00e7 ",
-          }}
-        >
-          1
-        </span>
-        <textarea
-          style={{
-            width: "55%",
-            height: "100px",
-            fontSize: "1.2vw",
-            letterSpacing: "0.03vw",
-            padding: "0.3% 1%",
-            resize: "none",
-          }}
-          placeholder="Instruction 1"
-        ></textarea>
-        <div style={{ position: "relative", width: "140px", height: "100px" }}>
-          <Image
-            src={"/grey-img.png"}
-            alt={`step 1 image`}
-            width={140}
-            height={100}
-          ></Image>
-          <button
-            className={styles.btn__upload_img}
-            style={{ width: "20%", height: "30%", top: "30%", left: "40%" }}
-          ></button>
-          <input
-            className={styles.input__file}
-            style={{
-              width: "20%",
-              height: "30%",
-              top: "30%",
-              left: "40%",
-            }}
-            type="file"
-            accept="image/*"
-          />
-        </div>
-      </div>
+      {instructions.map((inst, i) => (
+        <Instruction key={inst.id} i={i} onClickDelete={handleClickDelete} />
+      ))}
       <div
         style={{
           width: "100%",
@@ -586,7 +903,7 @@ function Instructions() {
           paddingBottom: "2%",
         }}
       >
-        <ButtonPlus />
+        <ButtonPlus onClickBtn={handleClickPlus} />
       </div>
 
       {/* {recipe.instructions.map((step: any, i: number) => (
@@ -619,6 +936,130 @@ function Instructions() {
                 </div>
               </div>
             ))} */}
+    </div>
+  );
+}
+
+function Instruction({
+  i,
+  onClickDelete,
+}: {
+  i: number;
+  onClickDelete: (i: number) => void;
+}) {
+  const [img, setImg] = useState<string>();
+
+  function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.currentTarget.files;
+    if (!files) return;
+
+    setImg(URL.createObjectURL(files[0]));
+  }
+
+  function handleDeleteImg() {
+    setImg("");
+  }
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        textAlign: "left",
+        alignItems: "center",
+        gap: "5%",
+        width: "100%",
+        height: "fit-content",
+        backgroundColor: "rgba(255, 255, 236, 0.91)",
+        padding: "4% 3%",
+        fontSize: "1.2vw",
+        letterSpacing: "0.05vw",
+      }}
+    >
+      <span
+        style={{
+          position: "relative",
+          top: "-35px",
+          textAlign: "center",
+          width: "25px",
+          aspectRatio: "1",
+          fontSize: "1.4vw",
+          borderRadius: "50%",
+          color: "white",
+          backgroundColor: " #ce3a00e7 ",
+        }}
+      >
+        {i + 1}
+      </span>
+      <textarea
+        style={{
+          width: "55%",
+          height: "100px",
+          fontSize: "1.2vw",
+          letterSpacing: "0.03vw",
+          padding: "0.3% 1%",
+          resize: "none",
+        }}
+        name={`instruction${i + 1}`}
+        placeholder={`Instruction ${i + 1}`}
+      ></textarea>
+      <div style={{ position: "relative", width: "140px", height: "100px" }}>
+        <button
+          className={clsx(
+            styles.btn__img,
+            styles.btn__trash_img,
+            !img && styles.hidden
+          )}
+          style={{
+            right: "0",
+            top: "101%",
+            width: "18%",
+            height: "18%",
+          }}
+          type="button"
+          onClick={handleDeleteImg}
+        ></button>
+        <Image
+          src={img ? img : "/grey-img.png"}
+          alt={`instruction ${i + 1} image`}
+          width={140}
+          height={100}
+        ></Image>
+        <button
+          className={clsx(
+            styles.btn__img,
+            styles.btn__upload_img,
+            img && styles.hidden
+          )}
+          style={{ width: "20%", height: "30%", top: "30%", left: "40%" }}
+          type="button"
+        ></button>
+        <input
+          className={clsx(styles.input__file, img && styles.hidden)}
+          style={{
+            width: "20%",
+            height: "30%",
+            top: "30%",
+            left: "40%",
+          }}
+          type="file"
+          accept="image/*"
+          name={`instruction${i + 1}Image`}
+          onChange={handleChangeImg}
+        />
+      </div>
+      <button
+        className={clsx(styles.btn__img, styles.btn__trash_img)}
+        style={{
+          right: "-20%",
+          top: "44%",
+          width: "18%",
+          height: "18%",
+        }}
+        type="button"
+        onClick={() => onClickDelete(i)}
+      ></button>
     </div>
   );
 }
@@ -659,6 +1100,7 @@ function AboutThisRecipe() {
             background: "none",
             border: "none",
           }}
+          name="description"
           placeholder="Click here to set an explanation for the recipe"
         ></textarea>
       </div>
@@ -667,6 +1109,31 @@ function AboutThisRecipe() {
 }
 
 function Memories() {
+  const [imgs, setImgs] = useState<string[]>([]);
+  //default is upload slide
+  const [curImg, setCurImg] = useState(0);
+
+  function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.currentTarget.files;
+    if (!files) return;
+
+    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
+    setImgs((prev) => [...prev, ...urls]);
+  }
+
+  function handleClickDot(i: number) {
+    setCurImg(i);
+  }
+
+  function handleDeleteImg(i: number) {
+    setImgs((prev) => {
+      const newImgs = [...prev];
+      return newImgs.toSpliced(i, 1);
+    });
+    //if deleted img was the last img and not the only img, set curImg as one before the img, otherwise, one after the img
+    setCurImg((prev) => (prev && imgs.length - 1 === prev ? prev - 1 : prev));
+  }
+
   return (
     <div
       style={{
@@ -684,45 +1151,65 @@ function Memories() {
           alignItems: "center",
           width: "100%",
           height: "80%",
-          overflow: "visible",
+          overflow: "hidden",
         }}
       >
-        <Image
+        {imgs.map((img, i) => (
+          <MemoryImg
+            key={nanoid()}
+            i={i}
+            img={img}
+            translateX={calcTransitionXSlider(i, curImg)}
+            onClickDelete={handleDeleteImg}
+          />
+        ))}
+        <div
           style={{
             position: "absolute",
+            width: "100%",
+            height: "100%",
+            transform: calcTransitionXSlider(imgs.length, curImg),
             transition: "all 0.4s",
           }}
-          src="/grey-img.png"
-          alt="memory image"
-          width={400}
-          height={200}
-        ></Image>
-        <button
-          className={styles.btn__upload_img}
-          style={{
-            width: "62%",
-            height: "18%",
-            top: "38%",
-            left: "25%",
-            fontSize: "1.5vw",
-            letterSpacing: "0.07vw",
-            color: "rgba(255, 168, 7, 1)",
-            fontWeight: "bold",
-          }}
         >
-          Upload images
-        </button>
-        <input
-          className={styles.input__file}
-          style={{
-            width: "62%",
-            height: "18%",
-            top: "38%",
-            left: "25%",
-          }}
-          type="file"
-          accept="image/*"
-        />
+          <Image
+            src="/grey-img.png"
+            alt="memory image"
+            width={400}
+            height={200}
+          ></Image>
+          <button
+            className={clsx(styles.btn__img, styles.btn__upload_img)}
+            style={{
+              width: "62%",
+              height: "18%",
+              top: "38%",
+              left: "25%",
+              fontSize: "1.5vw",
+              letterSpacing: "0.07vw",
+              color: "rgba(255, 168, 7, 1)",
+              fontWeight: "bold",
+            }}
+            type="button"
+          >
+            Upload images
+          </button>
+          <input
+            className={styles.input__file}
+            style={{
+              width: "62%",
+              height: "18%",
+              top: "38%",
+              left: "25%",
+            }}
+            type="file"
+            accept="image/*"
+            name="memoryImages"
+            multiple
+            onChange={handleChangeImg}
+          />
+        </div>
+
         {/* {recipe.memoryImages.map((img: string, i: number) => (
                   <img
                     key={nanoid()}
@@ -746,16 +1233,23 @@ function Memories() {
             bottom: "5%",
           }}
         >
-          <button
-            style={{
-              opacity: "0.6",
-              width: "2.5%",
-              aspectRatio: "1",
-              backgroundColor: "rgb(0, 0, 0)",
-              borderRadius: "50%",
-              border: "none",
-            }}
-          ></button>
+          {/* add one for upload slide */}
+          {[...imgs, ""].map((_, i) => (
+            <button
+              key={nanoid()}
+              style={{
+                opacity: "0.6",
+                width: "2.5%",
+                aspectRatio: "1",
+                backgroundColor:
+                  curImg === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
+                borderRadius: "50%",
+                border: "none",
+              }}
+              type="button"
+              onClick={() => handleClickDot(i)}
+            ></button>
+          ))}
           {/* {recipe.memoryImages.map((_: any, i: number) => (
                     <button
                       key={nanoid()}
@@ -766,6 +1260,48 @@ function Memories() {
                   ))} */}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MemoryImg({
+  i,
+  img,
+  translateX,
+  onClickDelete,
+}: {
+  i: number;
+  img: string;
+  translateX: string;
+  onClickDelete: (i: number) => void;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        transform: translateX,
+        transition: "all 0.4s",
+      }}
+    >
+      <button
+        className={clsx(styles.btn__img, styles.btn__trash_img)}
+        style={{
+          right: "0",
+          top: "80%",
+          width: "12%",
+          height: "12%",
+        }}
+        type="button"
+        onClick={() => onClickDelete(i)}
+      ></button>
+      <Image
+        src={img}
+        alt={`memory image ${i + 1}`}
+        width={400}
+        height={200}
+      ></Image>
     </div>
   );
 }
@@ -793,6 +1329,7 @@ function Comments() {
             letterSpacing: "0.05vw",
             padding: "3%",
           }}
+          name="comments"
           placeholder="Click here to set comments"
         ></textarea>
         {/* <div
