@@ -310,26 +310,7 @@ function Recipe({
   curRecipe: any;
   updateRecipeFavorite: (newFavoriteStatus: boolean) => void;
 }) {
-  ////local units are more important to convert to different units later
-  const selectedOption = () => {
-    const selectedOption = curRecipe?.ingredients.reduce(
-      (acc: any, ing: any) => {
-        if (ing.unit === "US cup") return "us";
-        if (ing.unit === "Japanese cup") return "japan";
-        if (ing.unit === "Imperial cup") return "metricCup";
-        if (ing.unit === "Australian Tbsp") return "australia";
-
-        if (acc !== "metric") return acc;
-
-        return "metric";
-      },
-      "metric"
-    );
-    return selectedOption;
-  };
-
   const [recipe, setRecipe] = useState(curRecipe);
-  console.log(recipe);
 
   const [servingsValue, setServingsValue] = useState(
     curRecipe?.servings.servings
@@ -337,7 +318,9 @@ function Recipe({
   const [temperatureUnit, setTemperatureUnit] = useState<"℉" | "℃">(
     curRecipe?.temperatures.unit
   );
-  const [ingredientsUnit, setIngredientsUnit] = useState(selectedOption());
+  const [ingredientsUnit, setIngredientsUnit] = useState(
+    curRecipe?.servings.unit
+  );
   const [favorite, setFavorite] = useState(curRecipe?.favorite);
   const [curSlide, setCurSlide] = useState(0);
   const [maxSlide, setMaxSlide] = useState(curRecipe?.memoryImages.length - 1);
@@ -346,7 +329,7 @@ function Recipe({
     setRecipe(curRecipe);
     setServingsValue(curRecipe?.servings.servings);
     setTemperatureUnit(curRecipe?.temperatures.unit);
-    setIngredientsUnit(selectedOption());
+    setIngredientsUnit(curRecipe.servings.unit);
     setFavorite(curRecipe?.favorite);
     setCurSlide(0);
     setMaxSlide(curRecipe?.memoryImages.length - 1);
@@ -740,7 +723,7 @@ function Timer({
         ? "59"
         : (numberSeconds - 1).toString().padStart(2, "0");
 
-      let nextMinutes: string;
+      let nextMinutes: string = '0';
       if (nextSeconds === "59") {
         if (!numberMinutes) nextMinutes = "59";
         if (numberMinutes)
@@ -749,7 +732,7 @@ function Timer({
         nextMinutes = immediateTime.minutes;
       }
 
-      let nextHours: string;
+      let nextHours: string = '0'; 
       if (nextSeconds === "59" && nextMinutes === "59") {
         if (!numberHours) nextHours = "00";
         if (numberHours)

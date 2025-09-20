@@ -2,6 +2,7 @@ export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MIN_UPPERCASE = 1;
 export const PASSWORD_MIN_LOWERCASE = 1;
 export const PASSWORD_MIN_DIGIT = 1;
+export const NUMBER_OF_TEMPERATURES = 4;
 
 export const APP_EXPLANATIONS = [
   {
@@ -32,15 +33,17 @@ export const APP_EXPLANATIONS = [
 export type TYPE_RECIPE = {
   id: string;
   favorite: boolean;
+  region: string;
   mainImage: string;
   title: string;
   author: string;
-  servings: { servings: number; unit: string };
+  servings: { servings: number; unit: string; customUnit: string };
   temperatures: { temperatures: number[]; unit: string };
   ingredients: {
     ingredient: string;
-    amount: number | string;
+    amount: number;
     unit: string;
+    customUnit: string;
     id: number;
     convertion: object;
   }[];

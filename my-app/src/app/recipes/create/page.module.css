@@ -17,6 +17,15 @@
   background-image: url("/upload.svg");
 }
 
+.grey_background {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: grey;
+}
+
 .input__file {
   position: absolute;
   opacity: 0;

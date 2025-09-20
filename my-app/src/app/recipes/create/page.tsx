@@ -2,6 +2,7 @@
 import styles from "./page.module.css";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
 import React, { useEffect, useRef, useState } from "react";
 import { nanoid } from "nanoid";
@@ -10,6 +11,7 @@ import {
   calcTransitionXSlider,
   convertIngUnits,
   getImageURL,
+  getRegion,
   recipes,
 } from "@/app/helper";
 
@@ -29,7 +31,7 @@ export default function CreateRecipe() {
     const data = {
       ...Object.fromEntries(formData),
       memoryImages: formData.getAll("memoryImages"),
-    };
+    } as any;
 
     const dataArr = Object.entries(data);
 
@@ -52,14 +54,38 @@ export default function CreateRecipe() {
         arr[0].includes(`ingredient${i + 1}CustomUnit`)
       );
       if (!nameArr || !amountArr || !unitArr || !customUnitArr) return;
+      if (
+        typeof nameArr[1] !== "string" ||
+        typeof customUnitArr[1] !== "string"
+      )
+        return;
+      if (
+        unitArr[1] !== "" &&
+        unitArr[1] !== "g" &&
+        unitArr[1] !== "kg" &&
+        unitArr[1] !== "oz" &&
+        unitArr[1] !== "lb" &&
+        unitArr[1] !== "ml" &&
+        unitArr[1] !== "L" &&
+        unitArr[1] !== "USCup" &&
+        unitArr[1] !== "JapaneseCup" &&
+        unitArr[1] !== "ImperialCup" &&
+        unitArr[1] !== "riceCup" &&
+        unitArr[1] !== "tsp" &&
+        unitArr[1] !== "Tbsp" &&
+        unitArr[1] !== "AustralianTbsp"
+      )
+        return;
+
+      const amount = !amountArr[1] ? 0 : +amountArr[1];
 
       return {
-        ingredient: nameArr && nameArr[1],
-        amount: amountArr && +amountArr[1],
-        unit: unitArr && unitArr[1],
-        cusomUnit: customUnitArr && customUnitArr[1],
+        ingredient: nameArr[1].trim(),
+        amount,
+        unit: unitArr[1],
+        cusomUnit: customUnitArr[1].trim(),
         id: "",
-        convertion: convertIngUnits(+amountArr[1], unitArr[1]),
+        convertion: convertIngUnits(amount, unitArr[1]),
       };
     });
 
@@ -80,40 +106,47 @@ export default function CreateRecipe() {
             arr[0].includes(`instruction${i + 1}`) && arr[0].includes("Image")
         );
         if (!instruction || !image) return;
+        if (typeof instruction[1] !== "string") return;
 
-        return { instruction: instruction[1], image: getImageURL(image[1]) };
+        return {
+          instruction: instruction[1].trim(),
+          image: getImageURL(image[1]),
+        };
       });
-
-    console.log(data.memoryImages);
 
     const newRecipe = {
       id: nanoid(),
       favorite,
       mainImage: getImageURL(data.mainImage),
-      title: data.title,
-      author: data.author,
+      title: data.title.trim(),
+      author: data.author.trim(),
+      region: getRegion(ingredients),
       servings: {
         servings: +data.servings,
         unit: data.servingsUnit,
-        customUnit: data.servingsCustomUnit,
+        customUnit: data.servingsCustomUnit.trim(),
       },
       temperatures: {
         temperatures: [
           +data.temperature1,
           +data.temperature2,
           +data.temperature3,
+          +data.temperature4,
         ],
         unit: data.temperatureUnit,
       },
       ingredients,
       instructions,
-      description: data.description,
+      description: data.description.trim(),
       memoryImages: Array.from(data.memoryImages).map((file) =>
         getImageURL(file)
       ),
-      comments: data.comments,
+      comments: data.comments.trim(),
     };
     console.log(newRecipe);
+
+    //redirect to loading page
+    // redirect("/loading", RedirectType.replace);
   }
 
   return (
@@ -269,50 +302,52 @@ function ImageTitle() {
         type="button"
         onClick={handleDeleteImage}
       ></button>
-      <Image
-        src={image || "/grey-img.png"}
-        alt="main image"
-        width={500}
-        height={300}
-      ></Image>
-      <div
-        style={{
-          position: "relative",
-          width: "50%",
-          height: "13%",
-          top: "-57%",
-          left: "27%",
-          opacity: !image ? 1 : 0,
-        }}
-      >
-        <button
-          className={clsx(styles.btn__img, styles.btn__upload_img)}
-          style={{
-            width: "100%",
-            height: "100%",
-            left: "0",
-            color: "rgba(255, 168, 7, 1)",
-            fontWeight: "bold",
-            fontSize: "1.5vw",
-            letterSpacing: "0.05vw",
-          }}
-          type="button"
+      {!image ? (
+        <div
+          className={styles.grey_background}
+          style={{ width: "500px", height: "300px" }}
         >
-          Upload image
-        </button>
-        <input
-          className={styles.input__file}
-          style={{
-            width: "100%",
-            height: "100%",
-            left: "0",
-          }}
-          type="file"
-          accept="image/*"
-          name="mainImage"
-          onChange={handleChangeImage}
-        />
-      </div>
+          <div
+            style={{
+              position: "relative",
+              width: "50%",
+              height: "13%",
+              left: "4%",
+              bottom: "3%",
+            }}
+          >
+            <button
+              className={clsx(styles.btn__img, styles.btn__upload_img)}
+              style={{
+                width: "100%",
+                height: "100%",
+                left: "0",
+                color: "rgba(255, 168, 7, 1)",
+                fontWeight: "bold",
+                fontSize: "1.5vw",
+                letterSpacing: "0.05vw",
+              }}
+              type="button"
+            >
+              Upload image
+            </button>
+            <input
+              className={styles.input__file}
+              style={{
+                width: "100%",
+                height: "100%",
+                left: "0",
+              }}
+              type="file"
+              accept="image/*"
+              name="mainImage"
+              onChange={handleChangeImage}
+            />
+          </div>
+        </div>
+      ) : (
+        <Image src={image} alt="main image" width={500} height={300}></Image>
+      )}
       <div
         style={{
           position: "relative",
@@ -359,7 +394,7 @@ function BriefExplanation({
   favorite: boolean;
   onClickFavorite: () => void;
 }) {
-  const [mouseOver, setMouseOver] = useState([false, false, false, false]);
+  const [mouseOver, setMouseOver] = useState([false, false, false]);
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     const index = e.currentTarget.dataset.icon;
@@ -507,7 +542,7 @@ function BriefExplanation({
           />
         </div>
         <div className={styles.container__units}>
-          <div
+          {/* <div
             className={styles.icons__brief_explanation}
             data-icon="2"
             onMouseOver={handleMouseOver}
@@ -542,11 +577,11 @@ function BriefExplanation({
             <option value="japan">Japan</option>
             <option value="australia">Australia</option>
             <option value="metricCup">Metric cup (1cup = 250ml)</option>
-          </select>
+          </select> */}
 
           <div
             className={styles.icons__brief_explanation}
-            data-icon="3"
+            data-icon="2"
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
           >
@@ -557,7 +592,7 @@ function BriefExplanation({
                 height: "360%",
                 top: "-380%",
                 left: "-390%",
-                opacity: !mouseOver[3] ? 0 : 1,
+                opacity: !mouseOver[2] ? 0 : 1,
               }}
             >
               <p
@@ -574,7 +609,7 @@ function BriefExplanation({
               height={17}
             ></Image>
           </div>
-          {Array(3)
+          {Array(4)
             .fill("")
             .map((_, i) => (
               <InputTemp key={nanoid()} i={i} />
@@ -1005,49 +1040,51 @@ function Instruction({
         placeholder={`Instruction ${i + 1}`}
       ></textarea>
       <div style={{ position: "relative", width: "140px", height: "100px" }}>
-        <button
-          className={clsx(
-            styles.btn__img,
-            styles.btn__trash_img,
-            !img && styles.hidden
-          )}
-          style={{
-            right: "0",
-            top: "101%",
-            width: "18%",
-            height: "18%",
-          }}
-          type="button"
-          onClick={handleDeleteImg}
-        ></button>
-        <Image
-          src={img ? img : "/grey-img.png"}
-          alt={`instruction ${i + 1} image`}
-          width={140}
-          height={100}
-        ></Image>
-        <button
-          className={clsx(
-            styles.btn__img,
-            styles.btn__upload_img,
-            img && styles.hidden
-          )}
-          style={{ width: "20%", height: "30%", top: "30%", left: "40%" }}
-          type="button"
-        ></button>
-        <input
-          className={clsx(styles.input__file, img && styles.hidden)}
-          style={{
-            width: "20%",
-            height: "30%",
-            top: "30%",
-            left: "40%",
-          }}
-          type="file"
-          accept="image/*"
-          name={`instruction${i + 1}Image`}
-          onChange={handleChangeImg}
-        />
+        {!img ? (
+          <div
+            className={styles.grey_background}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <button
+              className={clsx(styles.btn__img, styles.btn__upload_img)}
+              style={{ width: "20%", height: "30%", top: "30%", left: "40%" }}
+              type="button"
+            ></button>
+            <input
+              className={clsx(styles.input__file)}
+              style={{
+                width: "20%",
+                height: "30%",
+                top: "30%",
+                left: "40%",
+              }}
+              type="file"
+              accept="image/*"
+              name={`instruction${i + 1}Image`}
+              onChange={handleChangeImg}
+            />
+          </div>
+        ) : (
+          <>
+            <Image
+              src={img}
+              alt={`instruction ${i + 1} image`}
+              width={140}
+              height={100}
+            ></Image>
+            <button
+              className={clsx(styles.btn__img, styles.btn__trash_img)}
+              style={{
+                right: "0",
+                top: "101%",
+                width: "18%",
+                height: "18%",
+              }}
+              type="button"
+              onClick={handleDeleteImg}
+            ></button>
+          </>
+        )}
       </div>
       <button
         className={clsx(styles.btn__img, styles.btn__trash_img)}
@@ -1172,42 +1209,41 @@ function Memories() {
             transition: "all 0.4s",
           }}
         >
-          <Image
-            src="/grey-img.png"
-            alt="memory image"
-            width={400}
-            height={200}
-          ></Image>
-          <button
-            className={clsx(styles.btn__img, styles.btn__upload_img)}
-            style={{
-              width: "62%",
-              height: "18%",
-              top: "38%",
-              left: "25%",
-              fontSize: "1.5vw",
-              letterSpacing: "0.07vw",
-              color: "rgba(255, 168, 7, 1)",
-              fontWeight: "bold",
-            }}
-            type="button"
+          <div
+            className={styles.grey_background}
+            style={{ width: "100%", height: "100%" }}
           >
-            Upload images
-          </button>
-          <input
-            className={styles.input__file}
-            style={{
-              width: "62%",
-              height: "18%",
-              top: "38%",
-              left: "25%",
-            }}
-            type="file"
-            accept="image/*"
-            name="memoryImages"
-            multiple
-            onChange={handleChangeImg}
-          />
+            <button
+              className={clsx(styles.btn__img, styles.btn__upload_img)}
+              style={{
+                width: "62%",
+                height: "18%",
+                top: "38%",
+                left: "25%",
+                fontSize: "1.5vw",
+                letterSpacing: "0.07vw",
+                color: "rgba(255, 168, 7, 1)",
+                fontWeight: "bold",
+              }}
+              type="button"
+            >
+              Upload images
+            </button>
+            <input
+              className={styles.input__file}
+              style={{
+                width: "62%",
+                height: "18%",
+                top: "38%",
+                left: "25%",
+              }}
+              type="file"
+              accept="image/*"
+              name="memoryImages"
+              multiple
+              onChange={handleChangeImg}
+            />
+          </div>
         </div>
 
         {/* {recipe.memoryImages.map((img: string, i: number) => (

@@ -291,8 +291,6 @@ function OverlayLogin({
       ...new FormData(e.currentTarget),
     ];
 
-    console.log(emailValue, passwordValue);
-
     const trimmedEmail = emailValue.toString().trim();
     const trimmedPassword = passwordValue.toString().trim();
 

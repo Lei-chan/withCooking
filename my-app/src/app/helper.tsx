@@ -42,6 +42,36 @@ export const calcTransitionXSlider = (index: number, curSlide: number) => {
 export const getImageURL = (file: any) =>
   file.name ? URL.createObjectURL(file) : "";
 
+////local units are more important to convert to different units later
+export const getRegion = (ingredients: any) => {
+  const servingsUnit = ingredients.reduce((acc: any, ing: any) => {
+    if (ing.unit === "US cup") return "us";
+    if (ing.unit === "Japanese cup") return "japan";
+    if (ing.unit === "Imperial cup") return "metricCup";
+    if (ing.unit === "Australian Tbsp") return "australia";
+
+    if (acc !== "metric") return acc;
+
+    return "metric";
+  }, "metric");
+  return servingsUnit;
+};
+
+export const getReadableIngUnit = (unit: string, customUnit: string = "") => {
+  let readableUnit;
+  if (unit === "cupUS") readableUnit = "US cup";
+  else if (unit === "cupJapan") readableUnit = "Japanese cup";
+  else if (unit === "cupImperial") readableUnit = "Imperial cup";
+  else if (unit === "riceCup") readableUnit = "rice cup";
+  else if (unit === "TbspAustralia") readableUnit = "Australian Tbsp";
+  else if (unit === "other") readableUnit = customUnit;
+  else if (unit === "noUnit") readableUnit = "";
+  else readableUnit = unit;
+
+  console.log(readableUnit);
+  return readableUnit;
+};
+
 //success!
 export const getNutritionData = async function (
   id: number,
@@ -2567,4 +2597,7 @@ export const recipes = [...originalRecipes]
 
     return 0;
   })
-  .map((recipe) => updateConvertion(recipe));
+  .map((recipe: any) => updateConvertion(recipe))
+  .map((recipe) => {
+    return { ...recipe, region: getRegion(recipe.ingredients) };
+  });
