@@ -72,6 +72,32 @@ export const getReadableIngUnit = (unit: string, customUnit: string = "") => {
   return readableUnit;
 };
 
+export const updateIngsForServings = (
+  servings: number,
+  recipe: TYPE_RECIPE
+) => {
+  const newIngs = recipe.ingredients.map(
+    (ing: {
+      ingredient: string;
+      amount: number | string;
+      unit: string;
+      id: number;
+    }) => {
+      ///calclate ing for one serivng first then multiply it by new servings
+      const newAmount =
+        typeof ing.amount === "string"
+          ? `${(1 / recipe.servings.servings) * servings} ${ing.amount}`
+          : +((ing.amount / recipe.servings.servings) * servings).toFixed(1);
+
+      const newIng = { ...ing };
+      newIng.amount = newAmount;
+      return newIng;
+    }
+  );
+
+  return newIngs; //array of updated ingredients for new servings
+};
+
 //success!
 export const getNutritionData = async function (
   id: number,
@@ -141,13 +167,13 @@ export const convertTempUnits = function (
   if (optionFrom === "℃" || optionFrom.toLowerCase() === "c")
     result = value * (9 / 5) + 32;
 
-  return result && +result.toFixed(1);
+  return result ? +result.toFixed(1) : 0;
 };
 
 // prettier-ignore
 export const convertIngUnits = function(
   amount: number,
-  unitFrom: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "USCup" | "JapaneseCup" | "ImperialCup" | "riceCup" | "tsp" | "Tbsp" | "AustralianTbsp" | ""
+  unitFrom: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "USCup" | "JapaneseCup" | "ImperialCup" | "riceCup" | "tsp" | "Tbsp" | "AustralianTbsp" | "other"
 ) {
   ///for main page toFixed(1)
   let metric;
@@ -172,7 +198,7 @@ export const convertIngUnits = function(
   let AustralianTbsp;
 
   if (unitFrom === "g") {
-    metric = {amount, unitFrom};
+    metric = {amount, unit: unitFrom};
     us = { amount: +(amount / 28.3495).toFixed(1), unit: "oz" };
     japan = metric;
     metricCup = metric;
@@ -182,7 +208,7 @@ export const convertIngUnits = function(
 }
 
   if (unitFrom === "kg") {
-    metric = {amount, unitFrom};
+    metric = {amount, unit: unitFrom};
     us = { amount: +(amount * 2.20462).toFixed(1), unit: "lb" };
     japan = metric
     metricCup = metric
@@ -194,7 +220,7 @@ export const convertIngUnits = function(
 
   if (unitFrom === "oz"){
     metric = { amount: +(amount * 28.3495).toFixed(1), unit: "g" };
-    us = {amount, unitFrom};
+    us = {amount, unit: unitFrom};
     japan = metric;
     metricCup = metric;
     australia = metric;
@@ -204,7 +230,7 @@ export const convertIngUnits = function(
 
   if (unitFrom === "lb"){
     metric = { amount: +(amount / 35.274).toFixed(1), unit: "kg" };
-    us = {amount, unitFrom};
+    us = {amount, unit: unitFrom};
     japan = metric;
     metricCup = metric;
     australia = metric;
@@ -213,16 +239,16 @@ export const convertIngUnits = function(
 }
 
 if (unitFrom === "ml") {
-  metric = {amount, unitFrom};
+  metric = {amount, unit: unitFrom};
   us = { amount: +(amount / 240).toFixed(1), unit: "US cup" };
   japan = { amount: +(amount / 200).toFixed(1), unit: "Japanese cup" };
   metricCup = { amount: +(amount / 250).toFixed(1), unit: "Imperial cup" };
   australia = metricCup;
-  ml = {amount, unitFrom};
+  ml = {amount, unit: unitFrom};
   }
 
   if (unitFrom === "L") {
-    metric = {amount, unitFrom};
+    metric = {amount, unit: unitFrom};
     us = { amount: +(amount * 4.167).toFixed(1), unit: "US cup" };
     japan = { amount: +(amount * 5).toFixed(1), unit: "Japanese cup" };
     metricCup = { amount: +(amount * 4).toFixed(1), unit: "Imperial cup" };
@@ -232,7 +258,7 @@ if (unitFrom === "ml") {
 
   if (unitFrom === "USCup") {
     metric = { amount: +(amount * 240).toFixed(1), unit: "ml" };
-    us = {amount, unitFrom};
+    us = {amount, unit: 'US cup'};
     japan = {
       cupJapan: { amount: +(amount * 1.2).toFixed(1), unit: "Japanese cup" },
       riceCup: { amount: +(amount * 1.3333).toFixed(1), unit: "rice cup" }
@@ -245,7 +271,7 @@ if (unitFrom === "ml") {
   if (unitFrom === "JapaneseCup") {
     metric = { amount: +(amount * 200).toFixed(1), unit: "ml" };
     us = { amount: +(amount * 0.833).toFixed(1), unit: "US cup" };
-    japan = {amount, unitFrom};
+    japan = {amount, unit: 'Japanese cup'};
     metricCup = { amount: +(amount * 0.8).toFixed(1), unit: "Imperial cup" };
     australia = metricCup;
     ml = {amount: +(amount * 200).toFixed(3), unit: 'ml'};
@@ -255,7 +281,7 @@ if (unitFrom === "ml") {
     metric = { amount: +(amount * 250).toFixed(1), unit: "ml" };
     us = { amount: +(amount * 1.041).toFixed(1), unit: "US cup" };
     japan = { amount: +(amount * 1.25).toFixed(1), unit: "Japanese cup" };
-    metricCup = {amount, unitFrom};
+    metricCup = {amount, unit: 'Imperial cup'};
     australia = metricCup;
     ml = {amount: +(amount * 250).toFixed(3), unit: 'ml'};
   }
@@ -271,7 +297,7 @@ if (unitFrom === "ml") {
 
   if (unitFrom === "tsp"){ 
     metric = { amount: +(amount * 5).toFixed(1), unit: "ml" };
-    us = {amount, unitFrom};
+    us = {amount, unit: unitFrom};
     japan = us;
     metricCup = us;
     australia = us;
@@ -280,7 +306,7 @@ if (unitFrom === "ml") {
 
   if (unitFrom === "Tbsp") {
     metric = { amount: +(amount * 15).toFixed(1), unit: "ml" };
-    us = {amount, unitFrom};
+    us = {amount, unit: unitFrom};
     japan = us;
     metricCup = us;
     australia = { amount: +(amount * 0.75).toFixed(1), unit: "Australian Tbsp" };
@@ -292,7 +318,7 @@ if (unitFrom === "ml") {
     us = { amount: +(amount * 1.3333).toFixed(1), unit: "Tbsp" };
     japan = us;
     metricCup = us;
-    australia = {amount, unitFrom};
+    australia = {amount, unit: 'Australian Tbsp'};
     ml = {amount: +(amount * 20).toFixed(3), unit: 'ml'};
   }
 
@@ -496,19 +522,19 @@ const originalRecipes = [
     title: "Amazing Donuts!",
     author: "Lei-chan",
     servings: { servings: 8, unit: "pieces" },
-    temperatures: { temperatures: [], unit: "℃" },
+    temperatures: { temperatures: [190, 180], unit: "℃" },
     ingredients: [
       {
         ingredient: "Rice flour",
         amount: 2,
-        unit: "Japanese cup",
+        unit: "JapaneseCup",
         id: 9226,
         convertion: {},
       },
       {
         ingredient: "Soy milk",
         amount: 1,
-        unit: "Japanese cup",
+        unit: "JapaneseCup",
         id: 3949,
         convertion: {},
       },
@@ -528,7 +554,7 @@ const originalRecipes = [
       { instruction: "Add soy milk and set it aside.", image: "" },
     ],
     description: "This is our family's favorite recipe!",
-    memoryImages: ["", ""],
+    memoryImages: [],
     comments: "",
   },
   {

@@ -41,11 +41,30 @@ export type TYPE_RECIPE = {
   temperatures: { temperatures: number[]; unit: string };
   ingredients: {
     ingredient: string;
-    amount: number;
+    amount: number | string;
     unit: string;
     customUnit: string;
     id: number;
-    convertion: object;
+    convertion: {
+      metric: { amount: number; unit: string } | "";
+      us: { amount: number; unit: string } | "";
+      japan: { amount: number; unit: string } | "";
+      australia: { amount: number; unit: string } | "";
+      metricCup: { amount: number; unit: string } | "";
+      g: { amount: number; unit: string } | "";
+      kg: { amount: number; unit: string } | "";
+      oz: { amount: number; unit: string } | "";
+      lb: { amount: number; unit: string } | "";
+      ml: { amount: number; unit: string } | "";
+      L: { amount: number; unit: string } | "";
+      USCup: { amount: number; unit: string } | "";
+      JapaneseCup: { amount: number; unit: string } | "";
+      ImperialCup: { amount: number; unit: string } | "";
+      riceCup: { amount: number; unit: string } | "";
+      tsp: { amount: number; unit: string } | "";
+      Tbsp: { amount: number; unit: string } | "";
+      AustralianTbsp: { amount: number; unit: string } | "";
+    };
   }[];
   instructions: {
     instruction: string;
@@ -54,6 +73,36 @@ export type TYPE_RECIPE = {
   description: string;
   memoryImages: string[] | [];
   comments: string;
+};
+
+export type TYPE_INGREDIENTS = TYPE_INGREDIENT[];
+
+export type TYPE_INGREDIENT = {
+  ingredient: string;
+  amount: number | string;
+  unit: string;
+  customUnit: string;
+  id: number;
+  convertion: {
+    metric: { amount: number; unit: string } | "";
+    us: { amount: number; unit: string } | "";
+    japan: { amount: number; unit: string } | "";
+    australia: { amount: number; unit: string } | "";
+    metricCup: { amount: number; unit: string } | "";
+    g: { amount: number; unit: string } | "";
+    kg: { amount: number; unit: string } | "";
+    oz: { amount: number; unit: string } | "";
+    lb: { amount: number; unit: string } | "";
+    ml: { amount: number; unit: string } | "";
+    L: { amount: number; unit: string } | "";
+    USCup: { amount: number; unit: string } | "";
+    JapaneseCup: { amount: number; unit: string } | "";
+    ImperialCup: { amount: number; unit: string } | "";
+    riceCup: { amount: number; unit: string } | "";
+    tsp: { amount: number; unit: string } | "";
+    Tbsp: { amount: number; unit: string } | "";
+    AustralianTbsp: { amount: number; unit: string } | "";
+  };
 };
 
 //for dev

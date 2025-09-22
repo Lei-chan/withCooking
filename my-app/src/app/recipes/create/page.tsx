@@ -354,7 +354,7 @@ function ImageTitle() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          top: "-25%",
+          top: "-10%",
           left: "7%",
           width: "85%",
           minHeight: "60px",

@@ -16,6 +16,7 @@ import {
   calcTransitionXSlider,
   recipes,
   updateConvertion,
+  updateIngsForServings,
 } from "../helper";
 import { TYPE_RECIPE } from "../config";
 
@@ -345,37 +346,37 @@ function Recipe({
   //   };
   // }, []);
 
-  const updateIngsForServings = (servings: number) => {
-    const newIngs = curRecipe.ingredients.map(
-      (ing: {
-        ingredient: string;
-        amount: number | string;
-        unit: string;
-        id: number;
-      }) => {
-        ///calclate ing for one serivng first then multiply it by new servings
-        const newAmount =
-          typeof ing.amount === "string"
-            ? `${(1 / curRecipe.servings.servings) * servings} ${ing.amount}`
-            : +((ing.amount / curRecipe.servings.servings) * servings).toFixed(
-                1
-              );
+  // const updateIngsForServings = (servings: number) => {
+  //   const newIngs = curRecipe.ingredients.map(
+  //     (ing: {
+  //       ingredient: string;
+  //       amount: number | string;
+  //       unit: string;
+  //       id: number;
+  //     }) => {
+  //       ///calclate ing for one serivng first then multiply it by new servings
+  //       const newAmount =
+  //         typeof ing.amount === "string"
+  //           ? `${(1 / curRecipe.servings.servings) * servings} ${ing.amount}`
+  //           : +((ing.amount / curRecipe.servings.servings) * servings).toFixed(
+  //               1
+  //             );
 
-        const newIng = { ...ing };
-        newIng.amount = newAmount;
-        return newIng;
-      }
-    );
+  //       const newIng = { ...ing };
+  //       newIng.amount = newAmount;
+  //       return newIng;
+  //     }
+  //   );
 
-    return newIngs; //array of updated ingredients for new servings
-  };
+  //   return newIngs; //array of updated ingredients for new servings
+  // };
 
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = +e.currentTarget.value;
     setServingsValue(newValue);
     setRecipe((prev: any) => {
       const newRecipe = { ...prev };
-      newRecipe.ingredients = updateIngsForServings(newValue);
+      newRecipe.ingredients = updateIngsForServings(newValue, curRecipe);
       //update convertion for updated ing amount
       return updateConvertion(newRecipe);
     });
@@ -723,7 +724,7 @@ function Timer({
         ? "59"
         : (numberSeconds - 1).toString().padStart(2, "0");
 
-      let nextMinutes: string = '0';
+      let nextMinutes: string = "0";
       if (nextSeconds === "59") {
         if (!numberMinutes) nextMinutes = "59";
         if (numberMinutes)
@@ -732,7 +733,7 @@ function Timer({
         nextMinutes = immediateTime.minutes;
       }
 
-      let nextHours: string = '0'; 
+      let nextHours: string = "0";
       if (nextSeconds === "59" && nextMinutes === "59") {
         if (!numberHours) nextHours = "00";
         if (numberHours)

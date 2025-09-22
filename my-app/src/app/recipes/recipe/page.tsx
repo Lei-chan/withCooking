@@ -9,20 +9,82 @@ import {
   recipes,
   getImageURL,
   convertIngUnits,
+  convertTempUnits,
   getReadableIngUnit,
   calcTransitionXSlider,
+  updateIngsForServings,
+  updateConvertion,
 } from "@/app/helper";
-import { NUMBER_OF_TEMPERATURES, TYPE_RECIPE } from "@/app/config";
+import {
+  NUMBER_OF_TEMPERATURES,
+  TYPE_INGREDIENT,
+  TYPE_INGREDIENTS,
+  TYPE_RECIPE,
+} from "@/app/config";
 import { nanoid } from "nanoid";
+import fracty from "fracty";
 
 export default function Recipe() {
-  const recipe = recipes[0]; //for dev
-
+  //recipe[0] for dev
+  const [recipe, setRecipe] = useState(recipes[0]);
   const [favorite, setFavorite] = useState(recipe.favorite);
   const [edit, setEdit] = useState(false);
+  //Use when edit is
+  const [servingsValue, setServingsValue] = useState(recipe.servings.servings);
+  const [ingredientsUnit, setIngredientsUnit] = useState(recipe.region);
+
+  function handleToggleEdit() {
+    setEdit(!edit);
+  }
 
   function handleClickFavorite() {
     setFavorite(!favorite);
+  }
+
+  // const updateIngsForServings = (servings: number, recipe: TYPE_RECIPE) => {
+  //     const newIngs = recipe.ingredients.map(
+  //       (ing: {
+  //         ingredient: string;
+  //         amount: number | string;
+  //         unit: string;
+  //         id: number;
+  //       }) => {
+  //         ///calclate ing for one serivng first then multiply it by new servings
+  //         const newAmount =
+  //           typeof ing.amount === "string"
+  //             ? `${(1 / recipe.servings.servings) * servings} ${ing.amount}`
+  //             : +((ing.amount / recipe.servings.servings) * servings).toFixed(
+  //                 1
+  //               );
+
+  //         const newIng = { ...ing };
+  //         newIng.amount = newAmount;
+  //         return newIng;
+  //       }
+  //     );
+
+  //     return newIngs; //array of updated ingredients for new servings
+  //   };
+
+  //only when edit is false
+  function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
+    const newValue = +e.currentTarget.value;
+    setServingsValue(newValue);
+
+    if (edit) return;
+    setRecipe((prev: any) => {
+      const newRecipe = { ...prev };
+      newRecipe.ingredients = updateIngsForServings(newValue, recipes[0]);
+      //update convertion for updated ing amount
+      return updateConvertion(newRecipe);
+    });
+  }
+
+  function handleChangeIngredientsUnit(
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) {
+    const value = e.currentTarget.value;
+    setIngredientsUnit(value);
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -64,7 +126,7 @@ export default function Recipe() {
       )
         return;
       if (
-        unitArr[1] !== "" &&
+        unitArr[1] !== "other" &&
         unitArr[1] !== "g" &&
         unitArr[1] !== "kg" &&
         unitArr[1] !== "oz" &&
@@ -153,6 +215,7 @@ export default function Recipe() {
   return (
     <div
       style={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -164,6 +227,34 @@ export default function Recipe() {
         padding: "2% 0",
       }}
     >
+      {!edit ? (
+        <button
+          className={clsx(styles.btn__img, styles.btn__edit)}
+          style={{
+            color: "blueviolet",
+            backgroundImage: "url(/pencile.svg)",
+            width: "8%",
+            right: "10%",
+          }}
+          type="button"
+          onClick={handleToggleEdit}
+        >
+          Edit
+        </button>
+      ) : (
+        <button
+          className={clsx(styles.btn__img, styles.btn__edit)}
+          style={{
+            color: "blueviolet",
+            backgroundImage: "url(/recipes.svg)",
+            width: "12%",
+            right: "7%",
+          }}
+          onClick={handleToggleEdit}
+        >
+          Recipe
+        </button>
+      )}
       <form
         style={{
           position: "relative",
@@ -186,10 +277,18 @@ export default function Recipe() {
         <BriefExplanation
           edit={edit}
           recipe={recipe}
+          servingsValue={servingsValue}
+          ingredientsUnit={ingredientsUnit}
           favorite={favorite}
+          onChangeServings={handleChangeServings}
+          onChangeIngredientsUnit={handleChangeIngredientsUnit}
           onClickFavorite={handleClickFavorite}
         />
-        <Ingredients edit={edit} recipe={recipe} />
+        <Ingredients
+          edit={edit}
+          ingredients={recipe.ingredients}
+          ingredientsUnit={ingredientsUnit}
+        />
         <Instructions edit={edit} recipe={recipe} />
         <AboutThisRecipe edit={edit} recipe={recipe} />
         <Memories edit={edit} recipe={recipe} />
@@ -370,7 +469,8 @@ function ImageTitle({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          top: "-25%",
+          top: "-10%",
+
           left: "7%",
           width: "85%",
           minHeight: "60px",
@@ -421,22 +521,34 @@ function ImageTitle({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
 function BriefExplanation({
   edit,
   recipe,
+  servingsValue,
+  ingredientsUnit,
   favorite,
+  onChangeServings,
+  onChangeIngredientsUnit,
   onClickFavorite,
 }: {
   edit: boolean;
   recipe: TYPE_RECIPE;
+  servingsValue: number;
+  ingredientsUnit: string;
   favorite: boolean;
+  onChangeServings: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChangeIngredientsUnit: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onClickFavorite: () => void;
 }) {
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
   const [author, setAuthour] = useState(recipe.author);
-  const [servings, setServings] = useState(recipe.servings.servings);
+  //use when edit is true
+  // const [servings, setServings] = useState(recipe.servings.servings);
   const [servingsUnit, setServingsUnit] = useState(recipe.servings.unit);
   const [servingsCustomUnit, setServingsCustomUnit] = useState(
     recipe.servings.customUnit
   );
-  const [region, setRegion] = useState(recipe.region);
+  // const [region, setRegion] = useState(recipe.region);
+  const [temperatures, setTemperatures] = useState<[] | number[]>(
+    recipe.temperatures.temperatures
+  );
   const [temperatureUnit, setTemperatureUnit] = useState(
     recipe.temperatures.unit
   );
@@ -470,11 +582,26 @@ function BriefExplanation({
     const value = target.value;
 
     if (target.name === "author") setAuthour(value);
-    if (target.name === "servings") setServings(+value);
     if (target.name === "servingsUnit") setServingsUnit(value);
     if (target.name === "servingsCustomUnit") setServingsCustomUnit(value);
-    if (target.name === "region") setRegion(value);
-    if (target.name === "temperatureUnit") setTemperatureUnit(value);
+    // if (target.name === "region") setRegion(value);
+    if (target.name === "temperatureUnit") {
+      (value === "℉" || value === "℃") && handleChangeTempUnit(value);
+    }
+  }
+
+  function handleChangeTempUnit(value: "℉" | "℃") {
+    setTemperatureUnit(value);
+
+    if (!temperatures.length) return;
+
+    //set converted temperatures
+    setTemperatures((prev: number[]) => {
+      const newTemps = prev.map((temp) =>
+        convertTempUnits(temp, value === "℃" ? "℉" : "℃")
+      );
+      return newTemps;
+    });
   }
 
   return (
@@ -505,6 +632,7 @@ function BriefExplanation({
           backgroundColor: "rgb(255, 217, 0)",
           borderRadius: "1% / 7%",
           gap: "20%",
+          boxShadow: "rgba(0, 0, 0, 0.27) 3px 3px 5px",
         }}
       >
         <div className={styles.container__author_servings}>
@@ -517,15 +645,18 @@ function BriefExplanation({
             <div
               className={styles.container__fukidashi}
               style={{
-                width: "500%",
-                height: "300%",
-                top: "-330%",
-                left: "-360%",
+                width: edit ? "530%" : "380%",
+                height: edit ? "340%" : "220%",
+                top: edit ? "-350%" : "-230%",
+                left: edit ? "-460%" : "-280%",
+                paddingLeft: "10%",
                 opacity: !mouseOver[0] ? 0 : 1,
               }}
             >
               <p className={styles.p__fukidashi}>
-                Name of the person who will make the recipe
+                {edit
+                  ? "Name of the person who will make the recipe"
+                  : "Author of the recipe"}
               </p>
             </div>
             <Image
@@ -556,10 +687,11 @@ function BriefExplanation({
             <div
               className={styles.container__fukidashi}
               style={{
-                width: "700%",
-                height: "420%",
-                top: "-450%",
-                left: "-545%",
+                width: edit ? "700%" : "500%",
+                height: edit ? "420%" : "280%",
+                top: edit ? "-450%" : "-280%",
+                left: edit ? "-545%" : "-380%",
+                padding: "0 0 10% 10%",
                 opacity: !mouseOver[1] ? 0 : 1,
               }}
             >
@@ -567,8 +699,9 @@ function BriefExplanation({
                 className={styles.p__fukidashi}
                 style={{ padding: "0 3% 48% 3%" }}
               >
-                Number of servings. If there isn't a unit you want to use in the
-                selector, please select other and fill custom unit.
+                {edit
+                  ? "Number of servings. If there isn't a unit you want to use in the selector, please select other and fill custom unit."
+                  : "Number of servings of the recipe"}
               </p>
             </div>
             <Image
@@ -578,87 +711,92 @@ function BriefExplanation({
               height={15}
             ></Image>
           </div>
-          {edit ? (
-            <input
-              className={styles.input__brief_explanation}
-              style={{ width: "17%" }}
-              type="number"
-              min="1"
-              max="500"
-              name="servings"
-              placeholder="Servings"
-              value={servings}
-              onChange={handleChangeInput}
-            />
-          ) : (
-            <span style={{ width: "17%" }}>{servings}</span>
-          )}
-          <select
+          <input
             className={styles.input__brief_explanation}
-            style={{ width: "22%" }}
-            name="servingsUnit"
-            value={servingsUnit}
-            onChange={handleChangeInput}
-          >
-            <option value="people">people</option>
-            <option value="slices">slices</option>
-            <option value="pieces">pieces</option>
-            <option value="cups">cups</option>
-            <option value="bowls">bowls</option>
-            <option value="other">other</option>
-          </select>
+            style={{ width: "17%" }}
+            type="number"
+            min="1"
+            max="500"
+            name="servings"
+            placeholder="Servings"
+            value={servingsValue}
+            onChange={onChangeServings}
+          />
           {edit ? (
-            <input
-              className={styles.input__brief_explanation}
-              style={{ width: "20%" }}
-              name="servingsCustomUnit"
-              placeholder="Custom unit"
-              value={servingsCustomUnit}
-              onChange={handleChangeInput}
-            />
+            <>
+              <select
+                className={styles.input__brief_explanation}
+                style={{ width: "22%" }}
+                name="servingsUnit"
+                value={servingsUnit}
+                onChange={handleChangeInput}
+              >
+                <option value="people">people</option>
+                <option value="slices">slices</option>
+                <option value="pieces">pieces</option>
+                <option value="cups">cups</option>
+                <option value="bowls">bowls</option>
+                <option value="other">other</option>
+              </select>
+              <input
+                className={styles.input__brief_explanation}
+                style={{ width: "20%" }}
+                name="servingsCustomUnit"
+                placeholder="Custom unit"
+                value={servingsCustomUnit}
+                onChange={handleChangeInput}
+              />
+            </>
           ) : (
-            <span style={{ width: "20%" }}>{servingsCustomUnit}</span>
+            <span style={{ width: "20%" }}>
+              {servingsUnit !== "other" ? servingsUnit : servingsCustomUnit}
+            </span>
           )}
         </div>
         <div className={styles.container__units}>
-          <div
-            className={styles.icons__brief_explanation}
-            data-icon="2"
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "500%",
-                height: "330%",
-                top: "-350%",
-                left: "-360%",
-                opacity: !mouseOver[2] ? 0 : 1,
-              }}
-            >
-              <p className={styles.p__fukidashi}>Unit system you prefer</p>
-            </div>
-            <Image
-              src={"/scale.svg"}
-              alt="ingredient units icon"
-              width={14}
-              height={16}
-            ></Image>
-          </div>
-          <select
-            className={styles.input__brief_explanation}
-            style={{ width: "25%" }}
-            name="region"
-            value={region}
-            onChange={handleChangeInput}
-          >
-            <option value="metric">Metric</option>
-            <option value="us">US</option>
-            <option value="japan">Japan</option>
-            <option value="australia">Australia</option>
-            <option value="metricCup">Metric cup (1cup = 250ml)</option>
-          </select>
+          {!edit && (
+            <>
+              <div
+                className={styles.icons__brief_explanation}
+                data-icon="2"
+                onMouseOver={handleMouseOver}
+                onMouseOut={handleMouseOut}
+              >
+                <div
+                  className={styles.container__fukidashi}
+                  style={{
+                    width: "400%",
+                    height: "250%",
+                    top: "-260%",
+                    left: "-300%",
+                    paddingLeft: "10%",
+                    opacity: !mouseOver[2] ? 0 : 1,
+                  }}
+                >
+                  <p className={styles.p__fukidashi}>Unit system you prefer</p>
+                </div>
+                <Image
+                  src={"/scale.svg"}
+                  alt="ingredient units icon"
+                  width={14}
+                  height={16}
+                ></Image>
+              </div>
+              <select
+                className={styles.input__brief_explanation}
+                style={{ width: "25%" }}
+                name="region"
+                value={ingredientsUnit}
+                onChange={onChangeIngredientsUnit}
+              >
+                <option value="metric">Metric</option>
+                <option value="us">US</option>
+                <option value="japan">Japan</option>
+                <option value="australia">Australia</option>
+                <option value="metricCup">Metric cup (1cup = 250ml)</option>
+              </select>
+            </>
+          )}
 
           <div
             className={styles.icons__brief_explanation}
@@ -669,10 +807,11 @@ function BriefExplanation({
             <div
               className={styles.container__fukidashi}
               style={{
-                width: "520%",
-                height: "360%",
-                top: "-380%",
-                left: "-390%",
+                width: edit ? "520%" : "490%",
+                height: edit ? "360%" : "300%",
+                top: edit ? "-380%" : "-300%",
+                left: edit ? "-390%" : "-370%",
+                paddingTop: "20%",
                 opacity: !mouseOver[3] ? 0 : 1,
               }}
             >
@@ -680,7 +819,9 @@ function BriefExplanation({
                 className={styles.p__fukidashi}
                 style={{ padding: "0 5% 57% 5%" }}
               >
-                Temperatures you use in the recipe (e.g. oven temperatures)
+                {edit
+                  ? "Temperatures you use in the recipe (e.g. oven temperatures)"
+                  : "Temperatures used in the recipe"}
               </p>
             </div>
             <Image
@@ -701,7 +842,7 @@ function BriefExplanation({
                 />
               ))
           ) : (
-            <span>{recipe.temperatures.temperatures.join(" / ")}</span>
+            <span>{temperatures.join(" / ")}</span>
           )}
           <select
             className={styles.input__brief_explanation}
@@ -755,8 +896,16 @@ function InputTemp({ temperature, i }: { temperature: number; i: number }) {
   );
 }
 
-function Ingredients({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
-  const [numberOfLines, setNumberOfLines] = useState(recipe.ingredients.length);
+function Ingredients({
+  edit,
+  ingredients,
+  ingredientsUnit,
+}: {
+  edit: boolean;
+  ingredients: TYPE_INGREDIENTS;
+  ingredientsUnit: "metric" | "us" | "japan" | "australia" | "metricCup";
+}) {
+  const [numberOfLines, setNumberOfLines] = useState(ingredients.length);
   const [lines, setLines] = useState<any[]>(
     Array(numberOfLines)
       .fill("")
@@ -799,6 +948,7 @@ function Ingredients({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
         backgroundColor: "rgb(255, 247, 177)",
         padding: "2%",
         borderRadius: "3px",
+        overflowX: "auto",
       }}
     >
       <h2 className={styles.header}>Ingredients</h2>
@@ -812,7 +962,7 @@ function Ingredients({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
           fontSize: "1.3vw",
           wordSpacing: "0.1vw",
           columnGap: "5%",
-          rowGap: "15px",
+          rowGap: edit ? "15px" : "0px",
           paddingLeft: edit ? "7%" : "0",
         }}
       >
@@ -820,14 +970,17 @@ function Ingredients({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
           <IngLine
             key={line.id}
             edit={edit}
-            ingredient={recipe.ingredients[i]}
+            ingredient={ingredients[i]}
+            ingredientsUnit={ingredientsUnit}
             i={i}
             onClickDelete={handleClickDelete}
           />
         ))}
-        <div className={styles.ingredients_line}>
-          <ButtonPlus onClickBtn={handleClickPlus} />
-        </div>
+        {edit && (
+          <div className={styles.ingredients_line}>
+            <ButtonPlus onClickBtn={handleClickPlus} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -836,16 +989,13 @@ function Ingredients({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
 function IngLine({
   edit,
   ingredient,
+  ingredientsUnit,
   i,
   onClickDelete,
 }: {
-  ingredient: {
-    ingredient: string;
-    amount: number;
-    unit: string;
-    customUnit: string;
-  };
   edit: boolean;
+  ingredient: TYPE_INGREDIENT;
+  ingredientsUnit: "metric" | "us" | "japan" | "australia" | "metricCup";
   i: number;
   onClickDelete: (i: number) => void;
 }) {
@@ -866,84 +1016,102 @@ function IngLine({
     });
   }
 
+  //amount is string or no applicable converted ingredients unit => ingrediet otherwise converted ingredient
+  const getNewIng = () =>
+    typeof ingredient.amount === "string" ||
+    !ingredient.convertion[ingredientsUnit]
+      ? ingredient
+      : ingredient.convertion[ingredientsUnit];
+
   return (
     <div
       className={styles.ingredients_line}
       style={{
         display: "flex",
         flexDirection: "row",
-        gap: "2%",
+        gap: edit ? "2%" : "4%",
+        whiteSpace: "nowrap",
       }}
     >
-      <button
-        className={clsx(styles.btn__img, styles.btn__trash_img)}
-        style={{ width: "3%", height: "80%", right: "-6%", top: "10%" }}
-        type="button"
-        onClick={() => onClickDelete(i)}
-      ></button>
-      <span style={{ fontSize: "1.5vw" }}>{i + 1}. </span>
       {edit ? (
-        <input
-          className={styles.input__brief_explanation}
-          style={{ width: "30%" }}
-          name={`ingredient${i + 1}Name`}
-          placeholder={`Name ${i + 1}`}
-          value={line.ingredient}
-          onChange={handleChangeInput}
-        ></input>
+        <>
+          <button
+            className={clsx(styles.btn__img, styles.btn__trash_img)}
+            style={{ width: "3%", height: "80%", right: "-6%", top: "10%" }}
+            type="button"
+            onClick={() => onClickDelete(i)}
+          ></button>
+          <span style={{ fontSize: "1.5vw" }}>{i + 1}. </span>
+          <input
+            className={styles.input__brief_explanation}
+            style={{ width: "30%" }}
+            name={`ingredient${i + 1}Name`}
+            placeholder={`Name ${i + 1}`}
+            value={line.ingredient}
+            onChange={handleChangeInput}
+          ></input>
+          <input
+            className={styles.input__brief_explanation}
+            style={{ width: "20%" }}
+            type="number"
+            name={`ingredient${i + 1}Amount`}
+            placeholder="Amount"
+            value={line.amount || ""}
+            onChange={handleChangeInput}
+          ></input>
+          <select
+            className={styles.input__brief_explanation}
+            style={{ width: "20%" }}
+            name={`ingredient${i + 1}Unit`}
+            value={line.unit}
+            onChange={handleChangeInput}
+          >
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+            <option value="oz">oz</option>
+            <option value="ml">ml</option>
+            <option value="L">L</option>
+            <option value="cupUS">cup (US)</option>
+            <option value="cupJapan">cup (Japan)</option>
+            <option value="cupImperial">cup (1cup = 250ml)</option>
+            <option value="riceCup">rice cup</option>
+            <option value="tsp">tsp</option>
+            <option value="Tbsp">Tbsp</option>
+            <option value="TbspAustralia">Tbsp (Australia)</option>
+            <option value="other">Other</option>
+            <option value="noUnit">No unit</option>
+          </select>
+          <input
+            className={styles.input__brief_explanation}
+            style={{ width: "20%" }}
+            type="text"
+            name={`ingredient${i + 1}CustomUnit`}
+            placeholder="Custom unit"
+            value={line.customUnit}
+            onChange={handleChangeInput}
+          />
+        </>
       ) : (
-        <span>{line.ingredient}</span>
-      )}
-      {edit ? (
-        <input
-          className={styles.input__brief_explanation}
-          style={{ width: "20%" }}
-          type="number"
-          name={`ingredient${i + 1}Amount`}
-          placeholder="Amount"
-          value={line.amount || ""}
-          onChange={handleChangeInput}
-        ></input>
-      ) : (
-        <span>{line.amount}</span>
-      )}
-      {edit ? (
-        <select
-          className={styles.input__brief_explanation}
-          style={{ width: "20%" }}
-          name={`ingredient${i + 1}Unit`}
-          value={line.unit}
-          onChange={handleChangeInput}
-        >
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-          <option value="lb">lb</option>
-          <option value="oz">oz</option>
-          <option value="ml">ml</option>
-          <option value="L">L</option>
-          <option value="cupUS">cup (US)</option>
-          <option value="cupJapan">cup (Japan)</option>
-          <option value="cupImperial">cup (1cup = 250ml)</option>
-          <option value="riceCup">rice cup</option>
-          <option value="tsp">tsp</option>
-          <option value="Tbsp">Tbsp</option>
-          <option value="TbspAustralia">Tbsp (Australia)</option>
-          <option value="other">Other</option>
-          <option value="noUnit">No unit</option>
-        </select>
-      ) : (
-        <span>{getReadableIngUnit(line.unit, line.customUnit)}</span>
-      )}
-      {edit && (
-        <input
-          className={styles.input__brief_explanation}
-          style={{ width: "20%" }}
-          type="text"
-          name={`ingredient${i + 1}CustomUnit`}
-          placeholder="Custom unit"
-          value={line.customUnit}
-          onChange={handleChangeInput}
-        />
+        <>
+          <input
+            style={{ width: "1.3vw", marginLeft: "2%" }}
+            type="checkbox"
+          ></input>
+          <span>
+            {typeof getNewIng().amount === "string" ||
+            getNewIng().unit === "g" ||
+            getNewIng().unit === "kg" ||
+            getNewIng().unit === "oz" ||
+            getNewIng().unit === "lb" ||
+            getNewIng().unit === "ml" ||
+            getNewIng().unit === "L"
+              ? getNewIng().amount
+              : fracty(getNewIng().amount)}
+          </span>
+          <span>{`${getNewIng().unit} of`}</span>
+          <span>{ingredient.ingredient}</span>
+        </>
       )}
     </div>
   );
@@ -1036,16 +1204,18 @@ function Instructions({
           onClickDelete={handleClickDelete}
         />
       ))}
-      <div
-        style={{
-          width: "100%",
-          height: "fit-content",
-          backgroundColor: "rgba(255, 255, 236, 0.91)",
-          paddingBottom: "2%",
-        }}
-      >
-        <ButtonPlus onClickBtn={handleClickPlus} />
-      </div>
+      {edit && (
+        <div
+          style={{
+            width: "100%",
+            height: "fit-content",
+            backgroundColor: "rgba(255, 255, 236, 0.91)",
+            paddingBottom: "2%",
+          }}
+        >
+          <ButtonPlus onClickBtn={handleClickPlus} />
+        </div>
+      )}
     </div>
   );
 }
@@ -1130,64 +1300,80 @@ function Instruction({
           onChange={handleChangeInstruction}
         ></textarea>
       ) : (
-        <p>{instructionText}</p>
+        <p
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            width: image ? "55%" : "100%",
+            height: "100px",
+            fontSize: "1.2vw",
+            letterSpacing: "0.03vw",
+            padding: image ? "0 1%" : "0 0 0 3%",
+            // backgroundColor: "blue",
+          }}
+        >
+          {instructionText}
+        </p>
       )}
-      <div style={{ position: "relative", width: "140px", height: "100px" }}>
-        {!image ? (
-          <div
-            className={styles.grey_background}
-            style={{ width: "100%", height: "100%" }}
-          >
-            {edit && (
-              <>
-                <button
-                  className={clsx(styles.btn__img, styles.btn__upload_img)}
-                  style={{
-                    width: "20%",
-                    height: "30%",
-                    top: "30%",
-                    left: "40%",
-                  }}
-                  type="button"
-                ></button>
-                <input
-                  className={clsx(styles.input__file)}
-                  style={{
-                    width: "20%",
-                    height: "30%",
-                    top: "30%",
-                    left: "40%",
-                  }}
-                  type="file"
-                  accept="image/*"
-                  name={`instruction${i + 1}Image`}
-                  onChange={handleChangeImg}
-                />
-              </>
-            )}
-          </div>
-        ) : (
+      <div
+        style={{
+          position: "relative",
+          width: image ? "140px" : "0",
+          height: "100px",
+        }}
+      >
+        {edit && !image && (
           <>
-            <Image
-              src={image}
-              alt={`instruction ${i + 1} image`}
-              width={140}
-              height={100}
-            ></Image>
-            {edit && (
-              <button
-                className={clsx(styles.btn__img, styles.btn__trash_img)}
-                style={{
-                  right: "0",
-                  top: "101%",
-                  width: "18%",
-                  height: "18%",
-                }}
-                type="button"
-                onClick={handleDeleteImg}
-              ></button>
-            )}
+            <div
+              className={styles.grey_background}
+              style={{ width: "100%", height: "100%" }}
+            ></div>
+            <button
+              className={clsx(styles.btn__img, styles.btn__upload_img)}
+              style={{
+                width: "20%",
+                height: "30%",
+                top: "30%",
+                left: "40%",
+              }}
+              type="button"
+            ></button>
+            <input
+              className={clsx(styles.input__file)}
+              style={{
+                width: "20%",
+                height: "30%",
+                top: "30%",
+                left: "40%",
+              }}
+              type="file"
+              accept="image/*"
+              name={`instruction${i + 1}Image`}
+              onChange={handleChangeImg}
+            />
           </>
+        )}
+        {image && (
+          <Image
+            src={image}
+            alt={`instruction ${i + 1} image`}
+            width={140}
+            height={100}
+          ></Image>
+        )}
+        {edit && image && (
+          <button
+            className={clsx(styles.btn__img, styles.btn__trash_img)}
+            style={{
+              right: "0",
+              top: "101%",
+              width: "18%",
+              height: "18%",
+            }}
+            type="button"
+            onClick={handleDeleteImg}
+          ></button>
         )}
       </div>
       {edit && (
@@ -1268,7 +1454,7 @@ function AboutThisRecipe({
             style={{
               width: "100%",
               height: "100%",
-              fontSize: "1.2vw",
+              fontSize: "1.3vw",
               letterSpacing: "0.05vw",
               padding: "1.2% 1.5%",
             }}
@@ -1313,129 +1499,133 @@ function Memories({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
       style={{
         marginTop: "40px",
         width: "60%",
-        height: "250px",
+        height: edit || images.length ? "250px" : "150px",
       }}
     >
       <h2 className={styles.header}>Memories of the recipe</h2>
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          height: "80%",
-          overflow: "hidden",
-        }}
-      >
-        {images.map((img, i) => (
-          <MemoryImg
-            key={nanoid()}
-            edit={edit}
-            i={i}
-            image={img}
-            translateX={calcTransitionXSlider(i, curImage)}
-            onClickDelete={handleDeleteImg}
-          />
-        ))}
+      {images.length ? (
         <div
           style={{
-            position: "absolute",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
             width: "100%",
-            height: "100%",
-            transform: calcTransitionXSlider(images.length, curImage),
-            transition: "all 0.4s",
+            height: "80%",
+            overflow: "hidden",
           }}
         >
+          {images.map((img, i) => (
+            <MemoryImg
+              key={nanoid()}
+              edit={edit}
+              i={i}
+              image={img}
+              translateX={calcTransitionXSlider(i, curImage)}
+              onClickDelete={handleDeleteImg}
+            />
+          ))}
           <div
-            className={styles.grey_background}
-            style={{ width: "100%", height: "100%" }}
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              transform: calcTransitionXSlider(images.length, curImage),
+              transition: "all 0.4s",
+            }}
           >
-            {edit && (
-              <>
-                <button
-                  className={clsx(styles.btn__img, styles.btn__upload_img)}
-                  style={{
-                    width: "62%",
-                    height: "18%",
-                    top: "38%",
-                    left: "25%",
-                    fontSize: "1.5vw",
-                    letterSpacing: "0.07vw",
-                    color: "rgba(255, 168, 7, 1)",
-                    fontWeight: "bold",
-                  }}
-                  type="button"
-                >
-                  Upload images
-                </button>
-                <input
-                  className={styles.input__file}
-                  style={{
-                    width: "62%",
-                    height: "18%",
-                    top: "38%",
-                    left: "25%",
-                  }}
-                  type="file"
-                  accept="image/*"
-                  name="memoryImages"
-                  multiple
-                  onChange={handleChangeImg}
-                />
-              </>
-            )}
+            <div
+              className={styles.grey_background}
+              style={{ width: "100%", height: "100%" }}
+            >
+              {edit && (
+                <>
+                  <button
+                    className={clsx(styles.btn__img, styles.btn__upload_img)}
+                    style={{
+                      width: "62%",
+                      height: "18%",
+                      top: "38%",
+                      left: "25%",
+                      fontSize: "1.5vw",
+                      letterSpacing: "0.07vw",
+                      color: "rgba(255, 168, 7, 1)",
+                      fontWeight: "bold",
+                    }}
+                    type="button"
+                  >
+                    Upload images
+                  </button>
+                  <input
+                    className={styles.input__file}
+                    style={{
+                      width: "62%",
+                      height: "18%",
+                      top: "38%",
+                      left: "25%",
+                    }}
+                    type="file"
+                    accept="image/*"
+                    name="memoryImages"
+                    multiple
+                    onChange={handleChangeImg}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+          <div
+            style={{
+              position: "absolute",
+              width: "70%",
+              height: "5%",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "1.7%",
+              bottom: "5%",
+            }}
+          >
+            {/* add one for upload slide for edit */}
+            {edit
+              ? [...images, ""].map((_, i) => (
+                  <button
+                    key={nanoid()}
+                    style={{
+                      opacity: "0.6",
+                      width: "2.5%",
+                      aspectRatio: "1",
+                      backgroundColor:
+                        curImage === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
+                      borderRadius: "50%",
+                      border: "none",
+                    }}
+                    type="button"
+                    onClick={() => handleClickDot(i)}
+                  ></button>
+                ))
+              : images.map((_, i) => (
+                  <button
+                    key={nanoid()}
+                    style={{
+                      opacity: "0.6",
+                      width: "2.5%",
+                      aspectRatio: "1",
+                      backgroundColor:
+                        curImage === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
+                      borderRadius: "50%",
+                      border: "none",
+                    }}
+                    type="button"
+                    onClick={() => handleClickDot(i)}
+                  ></button>
+                ))}
           </div>
         </div>
-        <div
-          style={{
-            position: "absolute",
-            width: "70%",
-            height: "5%",
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "1.7%",
-            bottom: "5%",
-          }}
-        >
-          {/* add one for upload slide for edit */}
-          {edit
-            ? [...images, ""].map((_, i) => (
-                <button
-                  key={nanoid()}
-                  style={{
-                    opacity: "0.6",
-                    width: "2.5%",
-                    aspectRatio: "1",
-                    backgroundColor:
-                      curImage === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
-                    borderRadius: "50%",
-                    border: "none",
-                  }}
-                  type="button"
-                  onClick={() => handleClickDot(i)}
-                ></button>
-              ))
-            : images.map((_, i) => (
-                <button
-                  key={nanoid()}
-                  style={{
-                    opacity: "0.6",
-                    width: "2.5%",
-                    aspectRatio: "1",
-                    backgroundColor:
-                      curImage === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
-                    borderRadius: "50%",
-                    border: "none",
-                  }}
-                  type="button"
-                  onClick={() => handleClickDot(i)}
-                ></button>
-              ))}
-        </div>
-      </div>
+      ) : (
+        <p className={styles.no_content}>There're no memory images</p>
+      )}
     </div>
   );
 }
@@ -1497,14 +1687,20 @@ function Comments({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
   }
 
   return (
-    <div style={{ marginTop: "30px", width: "70%", height: "200px" }}>
+    <div
+      style={{
+        marginTop: "30px",
+        width: "70%",
+        height: comments ? "200px" : "150px",
+      }}
+    >
       <h2 className={styles.header}> Comments</h2>
       <div
         style={{
           width: "100%",
           height: "70%",
           borderRadius: "1% / 3%",
-          backgroundColor: "rgb(255, 253, 222)",
+          backgroundColor: edit || comments ? "rgb(255, 253, 222)" : "none",
         }}
       >
         {edit ? (
@@ -1526,17 +1722,18 @@ function Comments({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
           ></textarea>
         ) : (
           <p
+            className={comments || styles.no_content}
             style={{
               width: "100%",
               height: "100%",
-              fontSize: "1.3vw",
-              letterSpacing: "0.05vw",
-              padding: "3%",
+              fontSize: comments ? "1.3vw" : "1.4vw",
+              letterSpacing: comments ? "0.05vw" : "0.03vw",
+              padding: comments ? "3%" : "0",
               overflowY: "auto",
-              textAlign: "left",
+              textAlign: comments ? "left" : "center",
             }}
           >
-            {comments}
+            {comments ? comments : "There're no comments"}
           </p>
         )}
       </div>
