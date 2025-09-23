@@ -516,7 +516,7 @@ const originalRecipes = [
     comments: "",
   },
   {
-    id: nanoid(),
+    id: "jsjksjsieo388",
     favorite: true,
     mainImage: "",
     title: "Amazing Donuts!",

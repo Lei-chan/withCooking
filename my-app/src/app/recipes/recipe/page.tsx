@@ -26,12 +26,26 @@ import fracty from "fracty";
 
 export default function Recipe() {
   //recipe[0] for dev
-  const [recipe, setRecipe] = useState(recipes[0]);
-  const [favorite, setFavorite] = useState(recipe.favorite);
+  const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
+  const [favorite, setFavorite] = useState<boolean>();
   const [edit, setEdit] = useState(false);
   //Use when edit is
-  const [servingsValue, setServingsValue] = useState(recipe.servings.servings);
-  const [ingredientsUnit, setIngredientsUnit] = useState(recipe.region);
+  const [servingsValue, setServingsValue] = useState<number>();
+  const [ingredientsUnit, setIngredientsUnit] = useState<
+    "metric" | "us" | "japan" | "australia" | "metricCup"
+  >();
+
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    console.log(id);
+    const recipe = recipes.find((recipe) => recipe.id === id);
+    if (!recipe) return console.error("No recipe found!");
+
+    setCurRecipe(recipe);
+    setFavorite(recipe.favorite);
+    setServingsValue(recipe.servings.servings);
+    setIngredientsUnit(recipe.region);
+  }, []);
 
   function handleToggleEdit() {
     setEdit(!edit);
@@ -72,7 +86,7 @@ export default function Recipe() {
     setServingsValue(newValue);
 
     if (edit) return;
-    setRecipe((prev: any) => {
+    setCurRecipe((prev: any) => {
       const newRecipe = { ...prev };
       newRecipe.ingredients = updateIngsForServings(newValue, recipes[0]);
       //update convertion for updated ing amount
@@ -84,13 +98,22 @@ export default function Recipe() {
     e: React.ChangeEvent<HTMLSelectElement>
   ) {
     const value = e.currentTarget.value;
+    if (
+      value !== "metric" &&
+      value !== "us" &&
+      value !== "japan" &&
+      value !== "australia" &&
+      value !== "metricCup"
+    )
+      return;
+
     setIngredientsUnit(value);
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (!edit) return;
+    if (!edit || !curRecipe) return;
 
     const formData = new FormData(e.currentTarget);
 
@@ -181,7 +204,7 @@ export default function Recipe() {
       });
 
     const editedRecipe = {
-      id: recipe.id,
+      id: curRecipe.id,
       favorite,
       mainImage: getImageURL(data.mainImage),
       title: data.title.trim(),
@@ -213,88 +236,92 @@ export default function Recipe() {
     redirect("/loading", RedirectType.replace);
   }
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        textAlign: "center",
-        backgroundImage:
-          "linear-gradient(rgba(255, 253, 117, 1), rgba(225, 255, 117, 1))",
-        width: "100%",
-        height: "100%",
-        padding: "2% 0",
-      }}
-    >
-      {!edit ? (
-        <button
-          className={clsx(styles.btn__img, styles.btn__edit)}
-          style={{
-            color: "blueviolet",
-            backgroundImage: "url(/pencile.svg)",
-            width: "8%",
-            right: "10%",
-          }}
-          type="button"
-          onClick={handleToggleEdit}
-        >
-          Edit
-        </button>
-      ) : (
-        <button
-          className={clsx(styles.btn__img, styles.btn__edit)}
-          style={{
-            color: "blueviolet",
-            backgroundImage: "url(/recipes.svg)",
-            width: "12%",
-            right: "7%",
-          }}
-          onClick={handleToggleEdit}
-        >
-          Recipe
-        </button>
-      )}
-      <form
+    curRecipe &&
+    favorite !== undefined &&
+    servingsValue &&
+    ingredientsUnit && (
+      <div
         style={{
           position: "relative",
-          textAlign: "center",
-          backgroundImage:
-            "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-          width: "50%",
-          height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "3% 0",
-          color: "rgb(60, 0, 116)",
-          boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
-          borderRadius: "10px",
+          textAlign: "center",
+          backgroundImage:
+            "linear-gradient(rgba(255, 253, 117, 1), rgba(225, 255, 117, 1))",
+          width: "100%",
+          height: "100%",
+          padding: "2% 0",
         }}
-        onSubmit={handleSubmit}
       >
-        <ImageTitle edit={edit} recipe={recipe} />
-        <BriefExplanation
-          edit={edit}
-          recipe={recipe}
-          servingsValue={servingsValue}
-          ingredientsUnit={ingredientsUnit}
-          favorite={favorite}
-          onChangeServings={handleChangeServings}
-          onChangeIngredientsUnit={handleChangeIngredientsUnit}
-          onClickFavorite={handleClickFavorite}
-        />
-        <Ingredients
-          edit={edit}
-          ingredients={recipe.ingredients}
-          ingredientsUnit={ingredientsUnit}
-        />
-        <Instructions edit={edit} recipe={recipe} />
-        <AboutThisRecipe edit={edit} recipe={recipe} />
-        <Memories edit={edit} recipe={recipe} />
-        <Comments edit={edit} recipe={recipe} />
+        {!edit ? (
+          <button
+            className={clsx(styles.btn__img, styles.btn__edit)}
+            style={{
+              color: "blueviolet",
+              backgroundImage: "url(/pencile.svg)",
+              width: "8%",
+              right: "10%",
+            }}
+            type="button"
+            onClick={handleToggleEdit}
+          >
+            Edit
+          </button>
+        ) : (
+          <button
+            className={clsx(styles.btn__img, styles.btn__edit)}
+            style={{
+              color: "blueviolet",
+              backgroundImage: "url(/recipes.svg)",
+              width: "12%",
+              right: "7%",
+            }}
+            onClick={handleToggleEdit}
+          >
+            Recipe
+          </button>
+        )}
+        <form
+          style={{
+            position: "relative",
+            textAlign: "center",
+            backgroundImage:
+              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+            width: "50%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "3% 0",
+            color: "rgb(60, 0, 116)",
+            boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
+            borderRadius: "10px",
+          }}
+          onSubmit={handleSubmit}
+        >
+          <ImageTitle edit={edit} curRecipe={curRecipe} />
+          <BriefExplanation
+            edit={edit}
+            curRecipe={curRecipe}
+            servingsValue={servingsValue}
+            ingredientsUnit={ingredientsUnit}
+            favorite={favorite}
+            onChangeServings={handleChangeServings}
+            onChangeIngredientsUnit={handleChangeIngredientsUnit}
+            onClickFavorite={handleClickFavorite}
+          />
+          <Ingredients
+            edit={edit}
+            ingredients={curRecipe.ingredients}
+            ingredientsUnit={ingredientsUnit}
+          />
+          <Instructions edit={edit} curRecipe={curRecipe} />
+          <AboutThisRecipe edit={edit} curRecipe={curRecipe} />
+          <Memories edit={edit} curRecipe={curRecipe} />
+          <Comments edit={edit} curRecipe={curRecipe} />
 
-        {/* <div className={styles.container__nutrition_facts}>
+          {/* <div className={styles.container__nutrition_facts}>
           <div className={styles.nutrition_facts}>
             <div className={styles.container__h3_input}>
               <h3>Nutrition Facts</h3>
@@ -363,19 +390,26 @@ export default function Recipe() {
               </p> 
           </div>
         </div> */}
-        {edit && (
-          <button className={styles.btn__upload_recipe} type="submit">
-            Upload
-          </button>
-        )}
-      </form>
-    </div>
+          {edit && (
+            <button className={styles.btn__upload_recipe} type="submit">
+              Upload
+            </button>
+          )}
+        </form>
+      </div>
+    )
   );
 }
 
-function ImageTitle({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
-  const [image, setImage] = useState(recipe.mainImage);
-  const [title, setTitle] = useState(recipe.title);
+function ImageTitle({
+  edit,
+  curRecipe,
+}: {
+  edit: boolean;
+  curRecipe: TYPE_RECIPE;
+}) {
+  const [image, setImage] = useState(curRecipe.mainImage);
+  const [title, setTitle] = useState(curRecipe.title);
 
   function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.currentTarget.files;
@@ -520,7 +554,7 @@ function ImageTitle({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
 
 function BriefExplanation({
   edit,
-  recipe,
+  curRecipe,
   servingsValue,
   ingredientsUnit,
   favorite,
@@ -529,7 +563,7 @@ function BriefExplanation({
   onClickFavorite,
 }: {
   edit: boolean;
-  recipe: TYPE_RECIPE;
+  curRecipe: TYPE_RECIPE;
   servingsValue: number;
   ingredientsUnit: string;
   favorite: boolean;
@@ -538,19 +572,19 @@ function BriefExplanation({
   onClickFavorite: () => void;
 }) {
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
-  const [author, setAuthour] = useState(recipe.author);
+  const [author, setAuthour] = useState(curRecipe.author);
   //use when edit is true
-  // const [servings, setServings] = useState(recipe.servings.servings);
-  const [servingsUnit, setServingsUnit] = useState(recipe.servings.unit);
+  // const [servings, setServings] = useState(curRecipe.servings.servings);
+  const [servingsUnit, setServingsUnit] = useState(curRecipe.servings.unit);
   const [servingsCustomUnit, setServingsCustomUnit] = useState(
-    recipe.servings.customUnit
+    curRecipe.servings.customUnit
   );
-  // const [region, setRegion] = useState(recipe.region);
+  // const [region, setRegion] = useState(curRecipe.region);
   const [temperatures, setTemperatures] = useState<[] | number[]>(
-    recipe.temperatures.temperatures
+    curRecipe.temperatures.temperatures
   );
   const [temperatureUnit, setTemperatureUnit] = useState(
-    recipe.temperatures.unit
+    curRecipe.temperatures.unit
   );
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
@@ -576,7 +610,8 @@ function BriefExplanation({
   }
 
   function handleChangeInput(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    i: number
   ) {
     const target = e.currentTarget;
     const value = target.value;
@@ -585,6 +620,15 @@ function BriefExplanation({
     if (target.name === "servingsUnit") setServingsUnit(value);
     if (target.name === "servingsCustomUnit") setServingsCustomUnit(value);
     // if (target.name === "region") setRegion(value);
+
+    ///////local temp in inputtemp was no delay!!!! This provokes rendering when each letter is changed and can't keep typing smoothly
+    if (target.name === `temperature${i + 1}`) {
+      setTemperatures((prev) => {
+        const newTemperatures = [...prev];
+        return newTemperatures.fill(+value, i, i + 1);
+      });
+    }
+
     if (target.name === "temperatureUnit") {
       (value === "℉" || value === "℃") && handleChangeTempUnit(value);
     }
@@ -673,7 +717,7 @@ function BriefExplanation({
               name="author"
               placeholder="Author"
               value={author}
-              onChange={handleChangeInput}
+              onChange={(e) => handleChangeInput(e, 0)}
             ></input>
           ) : (
             <span style={{ width: "19%" }}>{author}</span>
@@ -729,7 +773,7 @@ function BriefExplanation({
                 style={{ width: "22%" }}
                 name="servingsUnit"
                 value={servingsUnit}
-                onChange={handleChangeInput}
+                onChange={(e) => handleChangeInput(e, 0)}
               >
                 <option value="people">people</option>
                 <option value="slices">slices</option>
@@ -744,7 +788,7 @@ function BriefExplanation({
                 name="servingsCustomUnit"
                 placeholder="Custom unit"
                 value={servingsCustomUnit}
-                onChange={handleChangeInput}
+                onChange={(e) => handleChangeInput(e, 0)}
               />
             </>
           ) : (
@@ -837,8 +881,9 @@ function BriefExplanation({
               .map((_, i) => (
                 <InputTemp
                   key={nanoid()}
-                  temperature={recipe.temperatures.temperatures[i]}
+                  temperature={temperatures[i]}
                   i={i}
+                  onChangeTemperature={handleChangeInput}
                 />
               ))
           ) : (
@@ -849,7 +894,7 @@ function BriefExplanation({
             style={{ width: "8%" }}
             name="temperatureUnit"
             value={temperatureUnit}
-            onChange={handleChangeInput}
+            onChange={(e) => handleChangeInput(e, 0)}
           >
             <option value="℃">℃</option>
             <option value="℉">℉</option>
@@ -875,13 +920,24 @@ function BriefExplanation({
   );
 }
 
-function InputTemp({ temperature, i }: { temperature: number; i: number }) {
-  const [temp, setTemp] = useState(temperature);
+function InputTemp({
+  temperature,
+  i,
+  onChangeTemperature,
+}: {
+  temperature: number;
+  i: number;
+  onChangeTemperature: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    i: number
+  ) => void;
+}) {
+  // const [temp, setTemp] = useState(temperature);
 
-  function handleChangeTemp(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = +e.currentTarget.value;
-    setTemp(value);
-  }
+  // function handleChangeTemp(e: React.ChangeEvent<HTMLInputElement>) {
+  //   const value = +e.currentTarget.value;
+  //   setTemp(value);
+  // }
 
   return (
     <input
@@ -890,8 +946,8 @@ function InputTemp({ temperature, i }: { temperature: number; i: number }) {
       type="number"
       name={`temperature${i + 1}`}
       placeholder={`Temp ${i + 1}`}
-      value={temp}
-      onChange={handleChangeTemp}
+      value={temperature}
+      onChange={(e) => onChangeTemperature(e, i)}
     ></input>
   );
 }
@@ -917,6 +973,7 @@ function Ingredients({
 
   function handleClickPlus() {
     setNumberOfLines((prev) => prev + 1);
+    setLines((prev) => [...prev, { id: nanoid() }]);
   }
 
   function handleClickDelete(i: number) {
@@ -948,7 +1005,7 @@ function Ingredients({
         backgroundColor: "rgb(255, 247, 177)",
         padding: "2%",
         borderRadius: "3px",
-        overflowX: "auto",
+        overflowX: !edit ? "auto" : "visible",
       }}
     >
       <h2 className={styles.header}>Ingredients</h2>
@@ -963,14 +1020,23 @@ function Ingredients({
           wordSpacing: "0.1vw",
           columnGap: "5%",
           rowGap: edit ? "15px" : "0px",
-          paddingLeft: edit ? "7%" : "0",
+          paddingLeft: "0",
         }}
       >
         {lines.map((line, i) => (
           <IngLine
             key={line.id}
             edit={edit}
-            ingredient={ingredients[i]}
+            ingredient={
+              ingredients[i] || {
+                ingredient: "",
+                amount: "",
+                unit: "",
+                customUnit: "",
+                id: "",
+                convertion: "",
+              }
+            }
             ingredientsUnit={ingredientsUnit}
             i={i}
             onClickDelete={handleClickDelete}
@@ -1140,13 +1206,13 @@ function ButtonPlus({ onClickBtn }: { onClickBtn: () => void }) {
 
 function Instructions({
   edit,
-  recipe,
+  curRecipe,
 }: {
   edit: boolean;
-  recipe: TYPE_RECIPE;
+  curRecipe: TYPE_RECIPE;
 }) {
   const [numberOfInstructions, setNumberOfInstructions] = useState(
-    recipe.instructions.length
+    curRecipe.instructions.length
   );
   //Store key so whenever user delete instruction, other instructions' info will remain the same
   const [instructions, setInstructions] = useState(
@@ -1160,6 +1226,7 @@ function Instructions({
 
   function handleClickPlus() {
     setNumberOfInstructions((prev) => prev + 1);
+    setInstructions((prev) => [...prev, { id: nanoid() }]);
   }
 
   function handleClickDelete(i: number) {
@@ -1199,7 +1266,12 @@ function Instructions({
         <Instruction
           key={inst.id}
           edit={edit}
-          instruction={recipe.instructions[i]}
+          instruction={
+            curRecipe.instructions[i] || {
+              instruction: "",
+              image: "",
+            }
+          }
           i={i}
           onClickDelete={handleClickDelete}
         />
@@ -1251,6 +1323,8 @@ function Instruction({
     const value = e.currentTarget.value;
     setInstructionText(value);
   }
+
+  console.log(edit, !image);
 
   return (
     <div
@@ -1319,16 +1393,15 @@ function Instruction({
       <div
         style={{
           position: "relative",
-          width: image ? "140px" : "0",
+          width: image || edit ? "140px" : "0",
           height: "100px",
         }}
       >
         {edit && !image && (
-          <>
-            <div
-              className={styles.grey_background}
-              style={{ width: "100%", height: "100%" }}
-            ></div>
+          <div
+            className={styles.grey_background}
+            style={{ width: "100%", height: "100%" }}
+          >
             <button
               className={clsx(styles.btn__img, styles.btn__upload_img)}
               style={{
@@ -1352,7 +1425,7 @@ function Instruction({
               name={`instruction${i + 1}Image`}
               onChange={handleChangeImg}
             />
-          </>
+          </div>
         )}
         {image && (
           <Image
@@ -1395,12 +1468,12 @@ function Instruction({
 
 function AboutThisRecipe({
   edit,
-  recipe,
+  curRecipe,
 }: {
   edit: boolean;
-  recipe: TYPE_RECIPE;
+  curRecipe: TYPE_RECIPE;
 }) {
-  const [description, setDescription] = useState(recipe.description);
+  const [description, setDescription] = useState(curRecipe.description);
 
   function handleChangeDescription(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = e.currentTarget.value;
@@ -1424,12 +1497,13 @@ function AboutThisRecipe({
       <div
         style={{
           backgroundColor: "rgb(255, 247, 133)",
-          overflowY: "auto",
           width: "85%",
           height: "130px",
           fontSize: "1.2vw",
           letterSpacing: "0.05vw",
           padding: "1.2% 1.5%",
+          overflowY: "auto",
+          scrollbarColor: "rgb(255, 247, 133) rgba(255, 209, 2, 1)",
         }}
       >
         {edit ? (
@@ -1467,8 +1541,14 @@ function AboutThisRecipe({
   );
 }
 
-function Memories({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
-  const [images, setImages] = useState<string[]>(recipe.memoryImages);
+function Memories({
+  edit,
+  curRecipe,
+}: {
+  edit: boolean;
+  curRecipe: TYPE_RECIPE;
+}) {
+  const [images, setImages] = useState<string[]>(curRecipe.memoryImages);
   const [curImage, setCurImage] = useState(0);
 
   function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1503,19 +1583,19 @@ function Memories({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
       }}
     >
       <h2 className={styles.header}>Memories of the recipe</h2>
-      {images.length ? (
-        <div
-          style={{
-            position: "relative",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            width: "100%",
-            height: "80%",
-            overflow: "hidden",
-          }}
-        >
-          {images.map((img, i) => (
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          height: "80%",
+          overflow: "hidden",
+        }}
+      >
+        {images.length ? (
+          images.map((img, i) => (
             <MemoryImg
               key={nanoid()}
               edit={edit}
@@ -1524,7 +1604,11 @@ function Memories({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
               translateX={calcTransitionXSlider(i, curImage)}
               onClickDelete={handleDeleteImg}
             />
-          ))}
+          ))
+        ) : (
+          <></>
+        )}
+        {edit && (
           <div
             style={{
               position: "absolute",
@@ -1538,42 +1622,40 @@ function Memories({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
               className={styles.grey_background}
               style={{ width: "100%", height: "100%" }}
             >
-              {edit && (
-                <>
-                  <button
-                    className={clsx(styles.btn__img, styles.btn__upload_img)}
-                    style={{
-                      width: "62%",
-                      height: "18%",
-                      top: "38%",
-                      left: "25%",
-                      fontSize: "1.5vw",
-                      letterSpacing: "0.07vw",
-                      color: "rgba(255, 168, 7, 1)",
-                      fontWeight: "bold",
-                    }}
-                    type="button"
-                  >
-                    Upload images
-                  </button>
-                  <input
-                    className={styles.input__file}
-                    style={{
-                      width: "62%",
-                      height: "18%",
-                      top: "38%",
-                      left: "25%",
-                    }}
-                    type="file"
-                    accept="image/*"
-                    name="memoryImages"
-                    multiple
-                    onChange={handleChangeImg}
-                  />
-                </>
-              )}
+              <button
+                className={clsx(styles.btn__img, styles.btn__upload_img)}
+                style={{
+                  width: "62%",
+                  height: "18%",
+                  top: "38%",
+                  left: "25%",
+                  fontSize: "1.5vw",
+                  letterSpacing: "0.07vw",
+                  color: "rgba(255, 168, 7, 1)",
+                  fontWeight: "bold",
+                }}
+                type="button"
+              >
+                Upload images
+              </button>
+              <input
+                className={styles.input__file}
+                style={{
+                  width: "62%",
+                  height: "18%",
+                  top: "38%",
+                  left: "25%",
+                }}
+                type="file"
+                accept="image/*"
+                name="memoryImages"
+                multiple
+                onChange={handleChangeImg}
+              />
             </div>
           </div>
+        )}
+        {edit || images.length ? (
           <div
             style={{
               position: "absolute",
@@ -1622,10 +1704,14 @@ function Memories({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
                   ></button>
                 ))}
           </div>
-        </div>
-      ) : (
-        <p className={styles.no_content}>There're no memory images</p>
-      )}
+        ) : (
+          <></>
+        )}
+
+        {!edit && !images.length && (
+          <p className={styles.no_content}>There're no memory images</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -1678,8 +1764,14 @@ function MemoryImg({
   );
 }
 
-function Comments({ edit, recipe }: { edit: boolean; recipe: TYPE_RECIPE }) {
-  const [comments, setComments] = useState(recipe.comments);
+function Comments({
+  edit,
+  curRecipe,
+}: {
+  edit: boolean;
+  curRecipe: TYPE_RECIPE;
+}) {
+  const [comments, setComments] = useState(curRecipe.comments);
 
   function handleChangeComments(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = e.currentTarget.value;

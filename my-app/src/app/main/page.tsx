@@ -19,12 +19,42 @@ import {
   updateIngsForServings,
 } from "../helper";
 import { TYPE_RECIPE } from "../config";
+import DropdownMenu from "./(dropdown)/page";
 
 export default function MAIN() {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
   const searchRef = useRef(null);
+  const [isDraggingX, setIsDraggingX] = useState(false);
+  const [isDraggingY, setIsDraggingY] = useState(false);
+  const [recipeWidth, setRecipeWidth] = useState("50%");
+  const [timerHeight, setTimerHeight] = useState("65%");
+
+  function handleMouseDownX() {
+    setIsDraggingX(true);
+  }
+
+  function handleMouseDownY() {
+    setIsDraggingY(true);
+  }
+
+  function handleMouseUp() {
+    setIsDraggingX(false);
+    setIsDraggingY(false);
+  }
+
+  function handleMouseMoveRecipe(e: React.MouseEvent<HTMLDivElement>) {
+    if (isDraggingX) {
+      const positioX = e.clientX;
+      setRecipeWidth(`${positioX}px`);
+    }
+
+    if (isDraggingY) {
+      const positionY = e.clientY;
+      setTimerHeight(`${positionY}px`);
+    }
+  }
 
   const handleToggleDropdown = function () {
     setIsDropdownVisible(!isDropdownVisible);
@@ -70,14 +100,42 @@ export default function MAIN() {
     <div
       className={clsx(styles.page__main)}
       onClick={handleCloseDropdownSearch}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMoveRecipe}
     >
       <div className={styles.container__cooking}>
+        <div
+          style={{
+            position: "absolute",
+            top: "0",
+            left: `calc(${recipeWidth} - 1.5%)`,
+            //for dev
+            // backgroundColor: "blue",
+            // opacity: "0.5",
+            width: "2%",
+            height: "100%",
+            cursor: "ew-resize",
+            zIndex: "5",
+          }}
+          onMouseDown={handleMouseDownX}
+        ></div>
         <DropdownMenu
           isDropdownVisible={isDropdownVisible}
           onClickDropdown={handleToggleDropdown}
         />
 
-        <section className={styles.section__recipe}>
+        <section
+          style={{
+            position: "relative",
+            textAlign: "center",
+            backgroundImage:
+              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+            width: recipeWidth,
+            height: "100%",
+            overflowY: "scroll",
+            scrollbarColor: "rgb(255, 255, 232) rgb(253, 231, 157)",
+          }}
+        >
           <Search
             isSearchVisible={isSearchVisible}
             searchRef={searchRef}
@@ -90,64 +148,33 @@ export default function MAIN() {
           />
         </section>
 
-        <section className={styles.section__timers_note}>
+        <section
+          style={{
+            display: "grid",
+            gridTemplateRows: `${timerHeight} calc(100% - ${timerHeight})`,
+            width: `calc(100% - ${recipeWidth})`,
+            height: "100%",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: `calc(${timerHeight} - 2%)`,
+              right: "0",
+              //for dev
+              // backgroundColor: "blue",
+              // opacity: "0.5",
+              width: `calc(100% - ${recipeWidth})`,
+              height: "2%",
+              cursor: "ns-resize",
+              zIndex: "5",
+            }}
+            onMouseDown={handleMouseDownY}
+          ></div>
           <Timers />
           <Note />
         </section>
       </div>
-    </div>
-  );
-}
-
-function DropdownMenu({
-  isDropdownVisible,
-  onClickDropdown,
-}: {
-  isDropdownVisible: boolean;
-  onClickDropdown: () => void;
-}) {
-  return (
-    <div
-      className={styles.container__dropdown}
-      style={{ pointerEvents: !isDropdownVisible ? "none" : "all" }}
-    >
-      <button
-        className={styles.btn__dropdown}
-        type="button"
-        onClick={onClickDropdown}
-      ></button>
-      <ul
-        className={clsx(styles.dropdown_menu)}
-        style={{ opacity: !isDropdownVisible ? 0 : 1 }}
-      >
-        <Link href="http://localhost:3000/recipes">
-          <li>Recipes</li>
-        </Link>
-        <Link href="http://localhost:3000/converter">
-          <li>Converter</li>
-        </Link>
-        <Link href="http://localhost:3000/account">
-          <li>
-            <Image
-              src={"/account.svg"}
-              alt="account icon"
-              width={25}
-              height={25}
-            ></Image>
-            <span>Account</span>
-          </li>
-        </Link>
-        <li>Logout</li>
-        <Link href="http://localhost:3000/how-to-use">
-          <li>How to use</li>
-        </Link>
-        <Link href="http://localhost:3000/news">
-          <li>News</li>
-        </Link>
-        <Link href="">
-          <li>Feedback</li>
-        </Link>
-      </ul>
     </div>
   );
 }
@@ -330,7 +357,7 @@ function Recipe({
     setRecipe(curRecipe);
     setServingsValue(curRecipe?.servings.servings);
     setTemperatureUnit(curRecipe?.temperatures.unit);
-    setIngredientsUnit(curRecipe.servings.unit);
+    setIngredientsUnit(curRecipe?.servings.unit);
     setFavorite(curRecipe?.favorite);
     setCurSlide(0);
     setMaxSlide(curRecipe?.memoryImages.length - 1);

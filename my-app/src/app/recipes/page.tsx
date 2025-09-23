@@ -2,6 +2,7 @@
 import styles from "./page.module.css";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
 import {
   calcNumberOfPages,
@@ -10,7 +11,7 @@ import {
   getTotalNumberOfRecipes,
   recipes,
 } from "../helper";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { nanoid } from "nanoid";
 import { TYPE_RECIPE } from "../config";
 
@@ -69,7 +70,17 @@ export default function Recipes() {
   }, [curPage]);
 
   return (
-    <div className={styles.page__recipes}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: " rgb(179, 248, 219)",
+        paddingTop: "1%",
+      }}
+    >
       <SearchSection
         numberOfFilteredRecipes={filteredRecipes.length}
         numberOfCurRecipes={curRecipes.length}
@@ -98,11 +109,41 @@ function SearchSection({
   // onChangeInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className={styles.container__search_btn}>
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        paddingLeft: "3%",
+        width: "100%",
+        height: "15%",
+        gap: "4%",
+      }}
+    >
       <p
-        className={styles.search_result}
+        style={{
+          position: "absolute",
+          width: "17%",
+          height: "fit-content",
+          left: "0",
+          fontSize: "1.3vw",
+          letterSpacing: "0.05vw",
+          color: "rgb(172, 112, 0)",
+          textAlign: "center",
+        }}
       >{`${numberOfCurRecipes} / ${numberOfFilteredRecipes} results`}</p>
-      <form className={styles.container__search} onSubmit={onSubmitSearch}>
+      <form
+        className={styles.container__search}
+        style={{
+          width: "60%",
+          height: "68%",
+          borderRadius: "1% / 10%",
+          gap: "3%",
+        }}
+        onSubmit={onSubmitSearch}
+      >
         <input
           className={styles.input__search}
           type="search"
@@ -136,12 +177,22 @@ function RecipeContainer({ curRecipes }: { curRecipes: TYPE_RECIPE[] }) {
   const recipesPerColumn = getRecipesPerColumn();
 
   return (
-    <div className={styles.container__recipes}>
+    <div
+      style={{
+        position: "relative",
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
+        width: "90%",
+        height: "73%",
+        paddingTop: "3%",
+        justifyItems: "center",
+      }}
+    >
       {recipesPerColumn.map((recipes) => {
         if (!recipes) return;
 
         return (
-          <ul key={nanoid()} className={styles.container__recipes_column}>
+          <ul key={nanoid()} style={{ width: "85%", height: "100%" }}>
             {recipes.map((_, i) => {
               return <RecipePreview key={nanoid()} recipe={recipes[i]} />;
             })}
@@ -154,8 +205,14 @@ function RecipeContainer({ curRecipes }: { curRecipes: TYPE_RECIPE[] }) {
 }
 
 function RecipePreview({ recipe }: { recipe: TYPE_RECIPE }) {
+  function handleClickPreview() {
+    const id = recipe.id;
+
+    redirect(`/recipes/recipe#${id}`, RedirectType.replace);
+  }
+
   return (
-    <li className={styles.recipe_preview}>
+    <li className={styles.recipe_preview} onClick={handleClickPreview}>
       <img
         className={styles.img__main}
         src={recipe.mainImage || "/grey-img.png"}
@@ -164,11 +221,10 @@ function RecipePreview({ recipe }: { recipe: TYPE_RECIPE }) {
       <p className={styles.title}>{recipe.title}</p>
       {recipe.favorite && (
         <Image
-          className={styles.img__favorite}
           src="/star-on.png"
           alt="favorite icon"
-          width={512}
-          height={512}
+          width={18}
+          height={18}
         ></Image>
       )}
     </li>
@@ -178,10 +234,20 @@ function RecipePreview({ recipe }: { recipe: TYPE_RECIPE }) {
 function MessageContainer({ numberOfRecipes }: { numberOfRecipes: number }) {
   return (
     <div
-      className={clsx(
-        styles.container__message,
-        numberOfRecipes && styles.hidden
-      )}
+      style={{
+        position: "absolute",
+        display: numberOfRecipes ? "none" : "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        padding: "3% 5% 0 5%",
+        textAlign: "center",
+        justifyContent: "center",
+        fontSize: "2.1vw",
+        letterSpacing: "0.1vw",
+        wordSpacing: "0.3vw",
+        color: "rgb(190, 124, 0)",
+      }}
     >
       {!getTotalNumberOfRecipes() ? (
         <p>
@@ -210,7 +276,7 @@ function PaginationButtons({
   onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
-    <div className={clsx(styles.container__pagination)}>
+    <div className={styles.container__pagination}>
       {curPage > 1 && (
         <button
           className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
