@@ -38,10 +38,11 @@ export type TYPE_RECIPE = {
   title: string;
   author: string;
   servings: { servings: number; unit: string; customUnit: string };
-  temperatures: { temperatures: number[]; unit: string };
+  temperatures: { temperatures: number[]; unit: "℉" | "℃" };
   ingredients: {
     ingredient: string;
-    amount: number | string;
+    // amount: number | string;
+    amount: number;
     unit: string;
     customUnit: string;
     id: number;

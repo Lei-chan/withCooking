@@ -22,6 +22,15 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "src/app/models/User.tsx",
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/app/models/Recipes.js",
+    "src/app/lib/auth.js",
+    "src/app/lib/bycrypt.js"
+  ],
   "exclude": ["node_modules"]
 }

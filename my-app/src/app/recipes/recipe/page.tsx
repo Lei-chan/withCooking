@@ -37,7 +37,6 @@ export default function Recipe() {
 
   useEffect(() => {
     const id = window.location.hash.slice(1);
-    console.log(id);
     const recipe = recipes.find((recipe) => recipe.id === id);
     if (!recipe) return console.error("No recipe found!");
 
@@ -219,6 +218,7 @@ export default function Recipe() {
           +data.temperature1 || "",
           +data.temperature2 || "",
           +data.temperature3 || "",
+          +data.temperature4 || "",
         ],
         unit: data.temperatureUnit,
       },
@@ -573,17 +573,18 @@ function BriefExplanation({
 }) {
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
   const [author, setAuthour] = useState(curRecipe.author);
-  //use when edit is true
-  // const [servings, setServings] = useState(curRecipe.servings.servings);
   const [servingsUnit, setServingsUnit] = useState(curRecipe.servings.unit);
   const [servingsCustomUnit, setServingsCustomUnit] = useState(
     curRecipe.servings.customUnit
   );
-  // const [region, setRegion] = useState(curRecipe.region);
-  const [temperatures, setTemperatures] = useState<[] | number[]>(
-    curRecipe.temperatures.temperatures
+  const [temperatureKeys, setTemperatureKeys] = useState(
+    Array(NUMBER_OF_TEMPERATURES)
+      .fill("")
+      .map((str) => {
+        return { id: nanoid() };
+      })
   );
-  const [temperatureUnit, setTemperatureUnit] = useState(
+  const [temperatureUnit, setTemperatureUnit] = useState<"℉" | "℃">(
     curRecipe.temperatures.unit
   );
 
@@ -619,16 +620,6 @@ function BriefExplanation({
     if (target.name === "author") setAuthour(value);
     if (target.name === "servingsUnit") setServingsUnit(value);
     if (target.name === "servingsCustomUnit") setServingsCustomUnit(value);
-    // if (target.name === "region") setRegion(value);
-
-    ///////local temp in inputtemp was no delay!!!! This provokes rendering when each letter is changed and can't keep typing smoothly
-    if (target.name === `temperature${i + 1}`) {
-      setTemperatures((prev) => {
-        const newTemperatures = [...prev];
-        return newTemperatures.fill(+value, i, i + 1);
-      });
-    }
-
     if (target.name === "temperatureUnit") {
       (value === "℉" || value === "℃") && handleChangeTempUnit(value);
     }
@@ -636,17 +627,19 @@ function BriefExplanation({
 
   function handleChangeTempUnit(value: "℉" | "℃") {
     setTemperatureUnit(value);
-
-    if (!temperatures.length) return;
-
-    //set converted temperatures
-    setTemperatures((prev: number[]) => {
-      const newTemps = prev.map((temp) =>
-        convertTempUnits(temp, value === "℃" ? "℉" : "℃")
-      );
-      return newTemps;
-    });
   }
+
+  const getNewTemps = () => {
+    const temperatures = curRecipe.temperatures.temperatures;
+    const unit = curRecipe.temperatures.unit;
+
+    const newTemps =
+      temperatureUnit === unit
+        ? temperatures
+        : temperatures.map((temp) => convertTempUnits(temp, unit));
+
+    return newTemps.join(" / ");
+  };
 
   return (
     <div
@@ -876,18 +869,17 @@ function BriefExplanation({
             ></Image>
           </div>
           {edit ? (
-            Array(NUMBER_OF_TEMPERATURES)
-              .fill("")
-              .map((_, i) => (
-                <InputTemp
-                  key={nanoid()}
-                  temperature={temperatures[i]}
-                  i={i}
-                  onChangeTemperature={handleChangeInput}
-                />
-              ))
+            temperatureKeys.map((idObj, i) => (
+              <InputTemp
+                key={idObj.id}
+                edit={edit}
+                temperature={curRecipe.temperatures.temperatures[i]}
+                temperatureUnit={temperatureUnit}
+                i={i}
+              />
+            ))
           ) : (
-            <span>{temperatures.join(" / ")}</span>
+            <span>{getNewTemps()}</span>
           )}
           <select
             className={styles.input__brief_explanation}
@@ -921,23 +913,29 @@ function BriefExplanation({
 }
 
 function InputTemp({
+  edit,
   temperature,
+  temperatureUnit,
   i,
-  onChangeTemperature,
 }: {
+  edit: boolean;
   temperature: number;
+  temperatureUnit: "℉" | "℃";
   i: number;
-  onChangeTemperature: (
-    e: React.ChangeEvent<HTMLInputElement>,
-    i: number
-  ) => void;
 }) {
-  // const [temp, setTemp] = useState(temperature);
+  const [temp, setTemp] = useState<number>(temperature);
 
-  // function handleChangeTemp(e: React.ChangeEvent<HTMLInputElement>) {
-  //   const value = +e.currentTarget.value;
-  //   setTemp(value);
-  // }
+  function handleChangeTemp(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = +e.currentTarget.value;
+    setTemp(value);
+  }
+
+  ///when temperature unit changes and user is not editing, convert temp
+  useEffect(() => {
+    if (edit || !temp) return;
+
+    setTemp(convertTempUnits(temp, temperatureUnit === "℃" ? "℉" : "℃"));
+  }, [temperatureUnit]);
 
   return (
     <input
@@ -946,8 +944,8 @@ function InputTemp({
       type="number"
       name={`temperature${i + 1}`}
       placeholder={`Temp ${i + 1}`}
-      value={temperature}
-      onChange={(e) => onChangeTemperature(e, i)}
+      value={temp}
+      onChange={handleChangeTemp}
     ></input>
   );
 }
@@ -1084,6 +1082,7 @@ function IngLine({
 
   //amount is string or no applicable converted ingredients unit => ingrediet otherwise converted ingredient
   const getNewIng = () =>
+    edit ||
     typeof ingredient.amount === "string" ||
     !ingredient.convertion[ingredientsUnit]
       ? ingredient
@@ -1323,8 +1322,6 @@ function Instruction({
     const value = e.currentTarget.value;
     setInstructionText(value);
   }
-
-  console.log(edit, !image);
 
   return (
     <div

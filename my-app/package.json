@@ -13,6 +13,8 @@
     "clsx": "^2.1.1",
     "fatsecret": "^1.0.2",
     "fracty": "^1.0.12",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.2",
     "nanoid": "^5.1.5",
     "next": "15.5.2",
     "react": "19.1.0",

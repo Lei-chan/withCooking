@@ -39,8 +39,10 @@ export const calcTransitionXSlider = (index: number, curSlide: number) => {
   return `translateX(${translateX}%)`;
 };
 
-export const getImageURL = (file: any) =>
-  file.name ? URL.createObjectURL(file) : "";
+export const getImageURL = (file: any) => {
+  console.log(file);
+  return file?.name ? URL.createObjectURL(file) : "";
+};
 
 ////local units are more important to convert to different units later
 export const getRegion = (ingredients: any) => {
@@ -540,8 +542,8 @@ const originalRecipes = [
       },
       {
         ingredient: "salt",
-        amount: "a pinch",
-        unit: "",
+        amount: "",
+        unit: "a pinch",
         id: 9226,
         convertion: {},
       },

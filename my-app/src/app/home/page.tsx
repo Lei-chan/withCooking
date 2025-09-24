@@ -16,6 +16,8 @@ import {
 import { error } from "console";
 import { validatePassword } from "../helper";
 import { nanoid } from "nanoid";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
+import Error from "./error";
 
 export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
@@ -114,6 +116,7 @@ export default function Home() {
         </div>
       </div>
       <BottomHalf />
+      {/* <ErrorBoundary fallback={<Error />}> */}
       <OverlayLogin
         show={showLogin ? true : false}
         errorMsgEmpty={errorMsgEmpty}
@@ -126,6 +129,7 @@ export default function Home() {
         onClickX={handleToggleSignup}
         onClickOutside={handleToggleSignup}
       />
+      {/* </ErrorBoundary> */}
     </div>
   );
 }
