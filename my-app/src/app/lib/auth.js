@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User";
+import bcrypt from "bcryptjs";
 
 export function generateAccessToken(userId) {
   return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -44,6 +44,16 @@ export async function authenticateToken(req) {
     const decoded = verifyAccessToken(token);
 
     return decoded?.userId;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function hashPassword(password) {
+  try {
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+    return hashedPassword;
   } catch (err) {
     throw err;
   }

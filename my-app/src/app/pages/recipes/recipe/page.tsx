@@ -16,6 +16,7 @@ import {
   updateConvertion,
 } from "@/app/helper";
 import {
+  MAX_SERVINGS,
   NUMBER_OF_TEMPERATURES,
   TYPE_INGREDIENT,
   TYPE_INGREDIENTS,
@@ -753,7 +754,7 @@ function BriefExplanation({
             style={{ width: "17%" }}
             type="number"
             min="1"
-            max="500"
+            max={MAX_SERVINGS}
             name="servings"
             placeholder="Servings"
             value={servingsValue}

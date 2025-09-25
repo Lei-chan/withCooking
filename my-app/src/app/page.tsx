@@ -12,12 +12,13 @@ import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
-} from "../config";
+} from "./config";
 import { error } from "console";
-import { validatePassword } from "../helper";
+import { validatePassword, getData } from "./helper";
 import { nanoid } from "nanoid";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import Error from "./error";
+import { create } from "domain";
 
 export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
@@ -425,38 +426,65 @@ function OverlayCreateAccount({
     setPasswordIsVisible(!isPasswordVisible);
   };
 
-  const handleSubmit = function (e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const handleSubmit = async function (e: React.FormEvent<HTMLFormElement>) {
+    try {
+      e.preventDefault();
 
-    const [[email, emailValue], [password, passwordValue]] = [
-      ...new FormData(e.currentTarget),
-    ];
+      const [[email, emailValue], [password, passwordValue]] = [
+        ...new FormData(e.currentTarget),
+      ];
 
-    const trimmedEmail = emailValue.toString().trim();
-    const trimmedPassword = passwordValue.toString().trim();
+      const trimmedEmail = emailValue.toString().trim();
+      const trimmedPassword = passwordValue.toString().trim();
 
-    if (!trimmedEmail && !trimmedPassword) {
-      setErrorFields("both");
-      return setErrorMsg("※Please fill both fields");
-    }
+      if (!trimmedEmail && !trimmedPassword) {
+        setErrorFields("both");
+        return setErrorMsg("※Please fill both fields");
+      }
 
-    if (!trimmedEmail) {
-      setErrorFields("email");
-      return setErrorMsg("※Please fill the field");
-    }
+      if (!trimmedEmail) {
+        setErrorFields("email");
+        return setErrorMsg("※Please fill the field");
+      }
 
-    if (!trimmedPassword) {
-      setErrorFields("password");
-      return setErrorMsg("※Please fill the field");
-    }
+      if (!trimmedPassword) {
+        setErrorFields("password");
+        return setErrorMsg("※Please fill the field");
+      }
 
-    if (!validatePassword(trimmedPassword)) {
-      setErrorFields("password");
-      return setErrorMsg("※Please set password that meets the requirements.");
+      if (!validatePassword(trimmedPassword)) {
+        setErrorFields("password");
+        return setErrorMsg("※Please set password that meets the requirements.");
+      }
+
+      await createAccount({ email: trimmedEmail, password: trimmedPassword });
+    } catch (err: any) {
+      return console.error(
+        "error while creating account",
+        err.message,
+        err.statusCode
+      );
     }
 
     redirect("/main", RedirectType.replace);
   };
+
+  async function createAccount(accountInfo: {
+    email: string;
+    password: string;
+  }) {
+    try {
+      const data = await getData("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(accountInfo),
+      });
+
+      console.log(data);
+    } catch (err: any) {
+      throw err;
+    }
+  }
 
   return (
     <div

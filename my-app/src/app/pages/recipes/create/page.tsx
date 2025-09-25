@@ -14,6 +14,7 @@ import {
   getRegion,
   recipes,
 } from "@/app/helper";
+import { MAX_SERVINGS } from "@/app/config";
 
 /////get rid of grey image and replace it with grey background
 export default function CreateRecipe() {
@@ -60,7 +61,7 @@ export default function CreateRecipe() {
       )
         return;
       if (
-        unitArr[1] !== "" &&
+        unitArr[1] !== "other" &&
         unitArr[1] !== "g" &&
         unitArr[1] !== "kg" &&
         unitArr[1] !== "oz" &&
@@ -518,7 +519,7 @@ function BriefExplanation({
             style={{ width: "17%" }}
             type="number"
             min="1"
-            max="500"
+            max={MAX_SERVINGS}
             name="servings"
             placeholder="Servings"
           />

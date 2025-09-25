@@ -23,14 +23,16 @@
     }
   },
   "include": [
-    "src/app/models/User.tsx",
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/app/models/Recipes.js",
+    "next-env.d.ts",
+    "src/app/.next/types/**/*.ts",
     "src/app/lib/auth.js",
-    "src/app/lib/bycrypt.js"
+    "src/app/lib/bycrypt.js",
+    "src/app/models/Recipes.js",
+    "src/app/models/User.tsx",
+    ".next/types/**/*.ts",
+    "src/app/api/users/route.js"
   ],
   "exclude": ["node_modules"]
 }

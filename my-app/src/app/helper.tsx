@@ -1,8 +1,25 @@
 import { nanoid } from "nanoid";
-import { TYPE_RECIPE } from "./config";
+import { TYPE_RECIPE, PASSWORD_REGEX } from "./config";
+
+export const getData = async (path: string, option: object) => {
+  try {
+    const res = await fetch(path, option);
+    const data = await res.json();
+
+    if (!res.ok) {
+      const err: any = new Error(data.error);
+      err.statusCode = res.status;
+      throw err;
+    }
+
+    return data;
+  } catch (err) {
+    throw err;
+  }
+};
 
 export const validatePassword = (input: string) => {
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  const passwordRegex = PASSWORD_REGEX;
 
   return passwordRegex.test(input);
 };
