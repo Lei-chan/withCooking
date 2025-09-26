@@ -7,18 +7,33 @@ import {
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_DIGIT,
 } from "../config";
-import { validatePassword } from "../helper";
-import { useState } from "react";
+import { getData, validatePassword } from "../helper";
+import { useEffect, useState } from "react";
 
 export default function Account() {
-  const errorMsgEmpty = "※Please fill the field";
+  const [data, setData] = useState<{ email: string; createdAt: string }>();
+
+  console.log(data);
+  async function getUser() {
+    try {
+      const data = await getData("/api/users", { method: "GET" });
+
+      setData(data.data);
+    } catch (err: any) {
+      console.error(err.message);
+    }
+  }
+
+  useEffect(() => {
+    (async () => await getUser())();
+  }, []);
 
   return (
     <div
       style={{
         backgroundColor: "#b3f8dbff",
         width: "100%",
-        height: "fit-content",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
@@ -37,29 +52,44 @@ export default function Account() {
       >
         Account Information
       </h1>
-      <div
-        style={{
-          backgroundImage: "linear-gradient(#fffedbff, #fffdcdff)",
-          width: "40%",
-          height: "fit-content",
-          marginTop: "1.8%",
-          borderRadius: "1.1%/1.4%",
-          boxShadow: "#0000007c 3px 3px 10px",
-          padding: "1% 0",
-        }}
-      >
-        <Email errorMsgEmpty={errorMsgEmpty} />
-        <Password errorMsgEmpty={errorMsgEmpty} />
-        <Since />
-        <CloseAccount />
-      </div>
+      {!data && (
+        <div
+          className={styles.loading}
+          style={{
+            backgroundColor: "#fffdcdff",
+            width: "40%",
+            minHeight: "500px",
+            marginTop: "1.8%",
+            borderRadius: "1.1%/1.4%",
+          }}
+        ></div>
+      )}
+      {data && (
+        <div
+          style={{
+            backgroundImage: "linear-gradient(#fffedbff, #fffdcdff)",
+            width: "40%",
+            minHeight: "500px",
+            height: "fit-content",
+            marginTop: "1.8%",
+            borderRadius: "1.1%/1.4%",
+            boxShadow: "#0000007c 3px 3px 10px",
+            padding: "1% 0",
+          }}
+        >
+          <Email email={data.email} />
+          <Password />
+          <Since since={data.createdAt} />
+          <CloseAccount />
+        </div>
+      )}
     </div>
   );
 }
 
-function Email({ errorMsgEmpty }: { errorMsgEmpty: string }) {
+function Email({ email }: { email: string }) {
   const [change, setChange] = useState(false);
-  const [value, setValue] = useState(accountInfo.email);
+  const [value, setValue] = useState(email);
   const [error, setError] = useState<string>();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -70,7 +100,7 @@ function Email({ errorMsgEmpty }: { errorMsgEmpty: string }) {
     const [[name, value]] = [...new FormData(e.currentTarget)];
 
     const trimmedValue = typeof value === "string" && value.trim();
-    if (!trimmedValue) return setError(errorMsgEmpty);
+    if (!trimmedValue) return setError("※ Please fill the field");
 
     if (trimmedValue === accountInfo.email)
       return setError(
@@ -105,7 +135,7 @@ function Email({ errorMsgEmpty }: { errorMsgEmpty: string }) {
           <p className={styles.error}>{error}</p>
         </>
       ) : (
-        <p className={styles.content}>{accountInfo.email}</p>
+        <p className={styles.content}>{email}</p>
       )}
       <button className={styles.btn__change} type="submit">
         {change ? "Submit" : "Change"}
@@ -114,7 +144,7 @@ function Email({ errorMsgEmpty }: { errorMsgEmpty: string }) {
   );
 }
 
-function Password({ errorMsgEmpty }: { errorMsgEmpty: string }) {
+function Password() {
   const [change, setChange] = useState(false);
   const [errorField, setErrorField] = useState<"current" | "new" | "both">();
   const [error, setError] = useState<string>();
@@ -132,35 +162,23 @@ function Password({ errorMsgEmpty }: { errorMsgEmpty: string }) {
 
     if (!curPassword && !newPassword) {
       setErrorField("both");
-      return setError(errorMsgEmpty);
+      return setError("※ Please fill the field");
     }
 
     if (!curPassword) {
       setErrorField("current");
-      return setError(errorMsgEmpty);
+      return setError("※ Please fill the field");
     }
 
     if (!newPassword) {
       setErrorField("new");
-      return setError(errorMsgEmpty);
+      return setError("※ Please fill the field");
     }
 
     if (curPassword === newPassword) {
       setErrorField("both");
       return setError(
         "※Same values were entered. Please enter different values."
-      );
-    }
-
-    if (!validatePassword(curPassword)) {
-      setErrorField("current");
-      return setError("※Wrong password was entered. Please try again.");
-    }
-
-    if (!validatePassword(newPassword)) {
-      setErrorField("new");
-      return setError(
-        "※Please set password that meets the requirements above."
       );
     }
 
@@ -235,11 +253,13 @@ function PasswordInput({
   );
 }
 
-function Since() {
+function Since({ since }: { since: string }) {
   return (
     <div className={styles.box}>
       <h3 className={styles.titles}>Using withCooking Since</h3>
-      <p className={styles.content}>{accountInfo.since}</p>
+      <p className={styles.content}>
+        {new Intl.DateTimeFormat(navigator.language).format(new Date(since))}
+      </p>
     </div>
   );
 }

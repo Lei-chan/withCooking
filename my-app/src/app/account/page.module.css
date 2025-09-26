@@ -11,6 +11,19 @@
   border-bottom: none;
 }
 
+@keyframes loading {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 0.8;
+  }
+}
+
+.loading {
+  animation: loading 1s infinite linear;
+}
+
 .titles {
   font-size: 1.5vw;
   letter-spacing: 0.07vw;

@@ -3,7 +3,7 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
-import { KeyboardEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { redirect, RedirectType } from "next/navigation";
 import { useInView } from "react-intersection-observer";
 import {
@@ -13,17 +13,11 @@ import {
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
 } from "./config";
-import { error } from "console";
-import { validatePassword, getData } from "./helper";
-import { nanoid } from "nanoid";
-import { ErrorBoundary } from "next/dist/client/components/error-boundary";
-import Error from "./error";
-import { create } from "domain";
+import { getData } from "./helper";
 
 export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
-  const errorMsgEmpty = "※Please fill the field";
 
   const handleToggleLogin = function () {
     setShowLogin(!showLogin);
@@ -117,20 +111,16 @@ export default function Home() {
         </div>
       </div>
       <BottomHalf />
-      {/* <ErrorBoundary fallback={<Error />}> */}
       <OverlayLogin
         show={showLogin ? true : false}
-        errorMsgEmpty={errorMsgEmpty}
         onClickX={handleToggleLogin}
         onClickOutside={handleToggleLogin}
       />
       <OverlayCreateAccount
         show={showSignup ? true : false}
-        errorMsgEmpty={errorMsgEmpty}
         onClickX={handleToggleSignup}
         onClickOutside={handleToggleSignup}
       />
-      {/* </ErrorBoundary> */}
     </div>
   );
 }
@@ -223,7 +213,7 @@ function Details() {
         Manage your favorite recipes in one app
       </h1>
       {APP_EXPLANATIONS.map((explanation, i) => (
-        <Explanation key={nanoid()} explanation={explanation} i={i} />
+        <Explanation key={i} explanation={explanation} i={i} />
       ))}
     </div>
   );
@@ -271,62 +261,74 @@ function Explanation({
 
 function OverlayLogin({
   show,
-  errorMsgEmpty,
   onClickX,
   onClickOutside,
 }: {
   show: Boolean;
-  errorMsgEmpty: string;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string>();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string>();
   const [errorFields, setErrorFields] = useState<
-    "email" | "password" | "both"
-  >();
+    "email" | "password" | "both" | ""
+  >("");
 
   const handleTogglePassword = function () {
     setPasswordIsVisible(!isPasswordVisible);
   };
 
-  const handleSubmit = function (e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const [[email, emailValue], [password, passwordValue]] = [
-      ...new FormData(e.currentTarget),
-    ];
+  const handleSubmit = async function (e: React.FormEvent<HTMLFormElement>) {
+    try {
+      e.preventDefault();
 
-    const trimmedEmail = emailValue.toString().trim();
-    const trimmedPassword = passwordValue.toString().trim();
+      setError("");
+      setErrorFields("");
+      setIsPending(true);
 
-    if (!trimmedEmail && !trimmedPassword) {
-      setErrorFields("both");
-      return setErrorMsg("※Please fill both fields");
+      const [[email, emailValue], [password, passwordValue]] = [
+        ...new FormData(e.currentTarget),
+      ];
+
+      const trimmedEmail = emailValue.toString().trim();
+      const trimmedPassword = passwordValue.toString().trim();
+
+      if (!trimmedEmail && !trimmedPassword) {
+        setErrorFields("both");
+        return setError("※Please fill both fields");
+      }
+
+      //send data to server
+      await login({ email: trimmedEmail, password: trimmedPassword });
+    } catch (err: any) {
+      setError(err.message);
+      err.message.includes("password") && setErrorFields("password");
+      err.message.includes("email") && setErrorFields("email");
+
+      return console.error(
+        "Error while loging in",
+        err.message,
+        err.statusCode || 500
+      );
     }
-
-    if (!trimmedEmail) {
-      setErrorFields("email");
-      return setErrorMsg("※Please fill the field");
-    }
-
-    if (!trimmedPassword) {
-      setErrorFields("password");
-      return setErrorMsg("※Please fill the field");
-    }
-
-    if (!validatePassword(trimmedPassword)) {
-      setErrorFields("password");
-      return setErrorMsg("※Please set password that meets the requirements.");
-    }
-
-    //loading
-
-    //send data to server
-
     //redirect to main
     redirect("/main", RedirectType.replace);
   };
 
+  async function login(accountInfo: { email: string; password: string }) {
+    try {
+      const data = await getData("/api/users?create=false", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(accountInfo),
+      });
+
+      console.log(data);
+    } catch (err) {
+      throw err;
+    }
+  }
   return (
     <div
       className={styles.overlay__login}
@@ -343,10 +345,13 @@ function OverlayLogin({
         className={clsx(
           styles.warning,
           styles.warning__login,
-          !errorMsg && styles.hidden
+          !error && !isPending && styles.hidden
         )}
+        style={{
+          backgroundColor: error ? "orangered" : "rgba(255, 160, 16, 1)",
+        }}
       >
-        {errorMsg}
+        {error ? error : "Loging in..."}
       </p>
       <form className={styles.form__login} onSubmit={handleSubmit}>
         <button className={styles.btn__x} type="button" onClick={onClickX}>
@@ -407,17 +412,16 @@ function OverlayLogin({
 
 function OverlayCreateAccount({
   show,
-  errorMsgEmpty,
   onClickX,
   onClickOutside,
 }: {
   show: Boolean;
-  errorMsgEmpty: string;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string>();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
   const [errorFields, setErrorFields] = useState<
     "email" | "password" | "both"
   >();
@@ -430,6 +434,9 @@ function OverlayCreateAccount({
     try {
       e.preventDefault();
 
+      setError("");
+      setIsPending(true);
+
       const [[email, emailValue], [password, passwordValue]] = [
         ...new FormData(e.currentTarget),
       ];
@@ -439,26 +446,29 @@ function OverlayCreateAccount({
 
       if (!trimmedEmail && !trimmedPassword) {
         setErrorFields("both");
-        return setErrorMsg("※Please fill both fields");
+        return setError("※Please fill both fields");
       }
 
-      if (!trimmedEmail) {
-        setErrorFields("email");
-        return setErrorMsg("※Please fill the field");
-      }
+      // if (!trimmedEmail) {
+      //   setErrorFields("email");
+      //   return setErrorMsg("※Please fill the field");
+      // }
 
-      if (!trimmedPassword) {
-        setErrorFields("password");
-        return setErrorMsg("※Please fill the field");
-      }
+      // if (!trimmedPassword) {
+      //   setErrorFields("password");
+      //   return setErrorMsg("※Please fill the field");
+      // }
 
-      if (!validatePassword(trimmedPassword)) {
-        setErrorFields("password");
-        return setErrorMsg("※Please set password that meets the requirements.");
-      }
+      // if (!validatePassword(trimmedPassword)) {
+      //   setErrorFields("password");
+      //   return setErrorMsg("※Please set password that meets the requirements.");
+      // }
 
       await createAccount({ email: trimmedEmail, password: trimmedPassword });
     } catch (err: any) {
+      setError(err.message);
+      setErrorFields(err.message.includes("email") ? "email" : "password");
+
       return console.error(
         "error while creating account",
         err.message,
@@ -474,7 +484,7 @@ function OverlayCreateAccount({
     password: string;
   }) {
     try {
-      const data = await getData("/api/users", {
+      const data = await getData("/api/users?create=true", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(accountInfo),
@@ -502,11 +512,14 @@ function OverlayCreateAccount({
       <p
         className={clsx(
           styles.warning,
-          styles.warning__create_account,
-          !errorMsg && styles.hidden
+          styles.warning__login,
+          !error && !isPending && styles.hidden
         )}
+        style={{
+          backgroundColor: error ? "orangered" : "rgba(255, 160, 16, 1)",
+        }}
       >
-        {errorMsg}
+        {error ? error : "Creating your account..."}
       </p>
       <form className={styles.form__create_account} onSubmit={handleSubmit}>
         <button className={styles.btn__x} type="button" onClick={onClickX}>

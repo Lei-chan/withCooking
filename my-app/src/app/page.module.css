@@ -239,8 +239,8 @@
     letter-spacing: 0.1vw;
     padding: 0.6%;
     border-radius: 1% / 12%;
-    background-color: orangered;
-    color: aliceblue;
+    /* background-color: orangered; */
+    color: rgb(240, 255, 246);
     margin-bottom: 1%;
   }
 

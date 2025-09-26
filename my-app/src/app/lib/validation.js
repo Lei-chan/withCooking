@@ -79,6 +79,24 @@ export const userSchema = z.object({
       `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit`
     ),
   recipes: z.array(recipeSchema).optional(),
+});
 
-  // recipes: z.array(recipeSchema).optional() | z.array().optional(),
+export const passwordUpdateSchema = z.object({
+  newPassword: z
+    .string()
+    .trim()
+    .regex(
+      PASSWORD_REGEX,
+      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit`
+    ),
+});
+
+export const userOtherUpdateSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Please provide valid email address")
+    .optional(),
+  recipes: z.array(recipeSchema).optional(),
 });

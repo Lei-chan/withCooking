@@ -27,12 +27,12 @@
     "**/*.tsx",
     "next-env.d.ts",
     "src/app/.next/types/**/*.ts",
-    "src/app/lib/auth.js",
+    "src/app/lib/auth.ts",
     "src/app/lib/bycrypt.js",
-    "src/app/models/Recipes.js",
-    "src/app/models/User.tsx",
+    "src/app/modelSchemas/Recipes.js",
+    "src/app/modelSchemas/User.tsx",
     ".next/types/**/*.ts",
-    "src/app/api/users/route.js"
+    "src/app/api/users/route.ts"
   ],
   "exclude": ["node_modules"]
 }
