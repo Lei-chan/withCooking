@@ -36,7 +36,15 @@ export default function DropdownMenu({
           </li>
         </Link>
         <Link href="http://localhost:3000/converter">
-          <li className={styles.list}>Converter</li>
+          <li className={styles.list}>
+            <Image
+              src={"/convert.svg"}
+              alt="converter icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>Converter</span>
+          </li>
         </Link>
         <Link href="http://localhost:3000/account">
           <li className={styles.list}>

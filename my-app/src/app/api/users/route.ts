@@ -108,15 +108,6 @@ export async function POST(req: NextRequest) {
 
     const cookieStore = await cookies();
 
-    //set accessToken and refreshToken in cookies
-    // cookieStore.set("accessToken", accessToken, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === "production",
-    //   sameSite: "strict",
-    //   path: "/",
-    //   maxAge: 24 * 60 * 60 * 1000, //24 hours
-    // });
-
     cookieStore.set("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
