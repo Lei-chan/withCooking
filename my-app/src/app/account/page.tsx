@@ -1,30 +1,41 @@
 "use client";
 import styles from "./page.module.css";
 import {
-  accountInfo,
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_UPPERCASE,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_DIGIT,
 } from "../config";
-import { getData, validatePassword } from "../helper";
-import { useEffect, useState } from "react";
+import { getData } from "../helper";
+import { useEffect, useState, useContext } from "react";
+import { AccessTokenContext } from "../context";
+import { redirect, RedirectType } from "next/navigation";
 
 export default function Account() {
+  const userContext = useContext(AccessTokenContext);
   const [data, setData] = useState<{ email: string; createdAt: string }>();
 
-  console.log(data);
+  console.log(userContext?.accessToken);
   async function getUser() {
     try {
-      const data = await getData("/api/users", { method: "GET" });
+      const data = await getData("/api/users", {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+      });
 
       setData(data.data);
+
+      //set newAccessToken for context when it's refreshed
+      data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
       console.error(err.message);
     }
   }
 
   useEffect(() => {
+    if (!userContext?.accessToken) return;
     (async () => await getUser())();
   }, []);
 
@@ -88,29 +99,64 @@ export default function Account() {
 }
 
 function Email({ email }: { email: string }) {
+  const userContext = useContext(AccessTokenContext);
   const [change, setChange] = useState(false);
   const [value, setValue] = useState(email);
   const [error, setError] = useState<string>();
+  const [isPending, setIsPending] = useState(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    try {
+      e.preventDefault();
 
-    if (!change) return setChange(true);
+      if (!change) return setChange(true);
 
-    const [[name, value]] = [...new FormData(e.currentTarget)];
+      setIsPending(true);
+      setError("");
 
-    const trimmedValue = typeof value === "string" && value.trim();
-    if (!trimmedValue) return setError("※ Please fill the field");
+      const [[name, value]] = [...new FormData(e.currentTarget)];
 
-    if (trimmedValue === accountInfo.email)
-      return setError(
-        "※Please enter different email from the one you registered."
+      const trimmedValue = typeof value === "string" && value.trim();
+      if (!trimmedValue) return setError("※ Please fill the field");
+
+      // const newAccountInfo = { ...accountInfo };
+      // newAccountInfo.email = value;
+      // console.log(value);
+      ///And change account info
+      await updateEmail({ email: trimmedValue });
+
+      setChange(false);
+    } catch (err: any) {
+      setError(`※${err.message}`);
+      console.error(
+        "Error while updating email",
+        err.message,
+        err.statusCode || ""
       );
+    } finally {
+      setIsPending(false);
+    }
+  }
 
-    // const newAccountInfo = { ...accountInfo };
-    // newAccountInfo.email = value;
-    // console.log(value);
-    ///And change account info
+  async function updateEmail(emailInfo: { email: string }) {
+    try {
+      const data = await getData("/api/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+        body: JSON.stringify(emailInfo),
+      });
+
+      console.log(data);
+      setValue(data.data.email);
+
+      //set newAccessToken for context when it's refreshed
+      data.newAccessToken && userContext?.login(data.newAccessToken);
+    } catch (err) {
+      throw err;
+    }
   }
 
   function handleChangeInput(e: React.ChangeEvent<HTMLInputElement>) {
@@ -132,10 +178,19 @@ function Email({ email }: { email: string }) {
             name="email"
             onChange={handleChangeInput}
           />
-          <p className={styles.error}>{error}</p>
+          <p
+            className={styles.error}
+            style={{
+              color: error ? "orangered" : "rgba(255, 160, 16, 1)",
+              letterSpacing: error ? "0vw" : "0.05vw",
+            }}
+          >
+            {error ? error : ""}
+            {isPending ? "Updating..." : ""}
+          </p>
         </>
       ) : (
-        <p className={styles.content}>{email}</p>
+        <p className={styles.content}>{value}</p>
       )}
       <button className={styles.btn__change} type="submit">
         {change ? "Submit" : "Change"}
@@ -145,44 +200,89 @@ function Email({ email }: { email: string }) {
 }
 
 function Password() {
+  const userContext = useContext(AccessTokenContext);
   const [change, setChange] = useState(false);
-  const [errorField, setErrorField] = useState<"current" | "new" | "both">();
-  const [error, setError] = useState<string>();
+  const [errorField, setErrorField] = useState<"current" | "new" | "both" | "">(
+    ""
+  );
+  const [error, setError] = useState("");
+  const [isPending, setIsPending] = useState(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    //When users first click the change button
-    if (!change) return setChange(true);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    try {
+      e.preventDefault();
 
-    //When users submit new password
-    const inputDataArr = [...new FormData(e.currentTarget)];
-    const [curPassword, newPassword] = inputDataArr.map(
-      (dataArr) => typeof dataArr[1] === "string" && dataArr[1].trim()
-    );
+      //When users first click the change button
+      if (!change) return setChange(true);
+      setIsPending(true);
+      setError("");
+      setErrorField("");
 
-    if (!curPassword && !newPassword) {
-      setErrorField("both");
-      return setError("※ Please fill the field");
-    }
-
-    if (!curPassword) {
-      setErrorField("current");
-      return setError("※ Please fill the field");
-    }
-
-    if (!newPassword) {
-      setErrorField("new");
-      return setError("※ Please fill the field");
-    }
-
-    if (curPassword === newPassword) {
-      setErrorField("both");
-      return setError(
-        "※Same values were entered. Please enter different values."
+      //When users submit new password
+      const inputDataArr = [...new FormData(e.currentTarget)];
+      const [curPassword, newPassword] = inputDataArr.map(
+        (dataArr) => typeof dataArr[1] === "string" && dataArr[1].trim()
       );
-    }
 
-    //validate password and update
+      if (!curPassword && !newPassword) {
+        setErrorField("both");
+        return setError("※ Please fill the field");
+      }
+
+      if (!curPassword) {
+        setErrorField("current");
+        return setError("※ Please fill the field");
+      }
+
+      if (!newPassword) {
+        setErrorField("new");
+        return setError("※ Please fill the field");
+      }
+
+      if (curPassword === newPassword) {
+        setErrorField("both");
+        return setError(
+          "※Same values were entered. Please enter different values."
+        );
+      }
+
+      //validate password and update
+      await updatePassword({ curPassword, newPassword });
+
+      setChange(false);
+    } catch (err: any) {
+      setError(err.message);
+      setErrorField(err.statusCode === 401 ? "current" : "new");
+      console.error(
+        "Error while updating password",
+        err.message,
+        err.statusCode || ""
+      );
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  async function updatePassword(passwordInfo: {
+    curPassword: string;
+    newPassword: string;
+  }) {
+    try {
+      const data = await getData("/api/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+        body: JSON.stringify(passwordInfo),
+      });
+
+      console.log(data);
+      //set newAccessToken for context when it's refreshed
+      data.newAccessToken && userContext?.login(data.newAccessToken);
+    } catch (err) {
+      throw err;
+    }
   }
 
   return (
@@ -198,7 +298,16 @@ function Password() {
           </p>
           <PasswordInput passwordType={"current"} errorField={errorField} />
           <PasswordInput passwordType={"new"} errorField={errorField} />
-          <p className={styles.error}>{error}</p>
+          <p
+            className={styles.error}
+            style={{
+              color: error ? "orangered" : "rgba(255, 160, 16, 1)",
+              letterSpacing: error ? "0vw" : "0.05vw",
+            }}
+          >
+            {error ? error : ""}
+            {isPending ? "Updating..." : ""}
+          </p>
         </>
       ) : (
         <p style={{ fontSize: "1.2vw" }}>Change password from here</p>
@@ -215,7 +324,7 @@ function PasswordInput({
   errorField,
 }: {
   passwordType: "current" | "new";
-  errorField: "current" | "new" | "both" | undefined;
+  errorField: "current" | "new" | "both" | "";
 }) {
   const [inputType, setInputType] = useState("password");
 
@@ -234,6 +343,7 @@ function PasswordInput({
               passwordType === errorField || errorField === "both"
                 ? "orangered"
                 : "#0000004f",
+            fontSize: "1.2vw",
           }}
           className={styles.input}
           type={inputType}
@@ -265,28 +375,70 @@ function Since({ since }: { since: string }) {
 }
 
 function CloseAccount() {
+  const userContext = useContext(AccessTokenContext);
   const [close, setClose] = useState(false);
+  const [error, setError] = useState("");
+  const [isPending, setIsPending] = useState(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!close) return setClose(true);
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    try {
+      e.preventDefault();
+      if (!close) return setClose(true);
+      setIsPending(true);
+      setError("");
+
+      await closeAccount();
+      setClose(false);
+    } catch (err: any) {
+      setError(err.message);
+      return console.error(
+        "Error while closing account",
+        err.message,
+        err.statusCode || ""
+      );
+    } finally {
+      setIsPending(false);
+    }
+
+    redirect("/", RedirectType.replace);
+  }
+
+  async function closeAccount() {
+    try {
+      const data = await getData("/api/users", {
+        method: "DELETE",
+        headers: {
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+      });
+      console.log(data);
+
+      //delete accessToken from context
+      userContext?.logout();
+    } catch (err) {
+      throw err;
+    }
   }
 
   return (
     <form className={styles.box} onSubmit={handleSubmit}>
       <h3 className={styles.titles}>Close Account</h3>
-      {close && (
-        <p
-          style={{
-            fontSize: "1.2vw",
-            letterSpacing: "0.05vw",
-            color: "orangered",
-          }}
-        >
-          Are you sure you want to close your account? <br />
-          ※Once you close account, you can not go back!
-        </p>
-      )}
+      <p
+        style={{
+          fontSize: "1.2vw",
+          letterSpacing: "0.05vw",
+          color: isPending ? "rgba(255, 160, 16, 1)" : "orangered",
+        }}
+      >
+        {close && !isPending && !error && (
+          <span>
+            Are you sure you want to close your account? <br /> ※Once you close
+            account, you can not go back!
+          </span>
+        )}
+        {isPending && "Closing your account..."}
+        {error && error}
+      </p>
       <button className={styles.btn__close} type="submit">
         {!close ? "Close" : "I'm sure"}
       </button>

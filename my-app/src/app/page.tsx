@@ -3,7 +3,7 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { redirect, RedirectType } from "next/navigation";
 import { useInView } from "react-intersection-observer";
 import {
@@ -14,6 +14,7 @@ import {
   PASSWORD_MIN_UPPERCASE,
 } from "./config";
 import { getData } from "./helper";
+import { AccessTokenContext } from "./context";
 
 export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
@@ -268,6 +269,7 @@ function OverlayLogin({
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
+  const userContext = useContext(AccessTokenContext);
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -300,7 +302,10 @@ function OverlayLogin({
       }
 
       //send data to server
-      await login({ email: trimmedEmail, password: trimmedPassword });
+      await login({
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
     } catch (err: any) {
       setError(err.message);
       err.message.includes("password") && setErrorFields("password");
@@ -323,6 +328,8 @@ function OverlayLogin({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(accountInfo),
       });
+
+      userContext?.login(data.accessToken);
 
       console.log(data);
     } catch (err) {
@@ -419,6 +426,7 @@ function OverlayCreateAccount({
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
+  const userContext = useContext(AccessTokenContext);
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
@@ -489,6 +497,8 @@ function OverlayCreateAccount({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(accountInfo),
       });
+
+      userContext?.login(data.accessToken);
 
       console.log(data);
     } catch (err: any) {

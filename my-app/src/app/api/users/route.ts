@@ -31,15 +31,15 @@ export async function refreshAccessToken() {
     const id = decodedRefresh.userId;
 
     const accessToken = generateAccessToken(id);
-    cookieStore.set("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 24 * 60 * 60 * 1000, //24 hours
-    });
+    // cookieStore.set("accessToken", accessToken, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "strict",
+    //   path: "/",
+    //   maxAge: 24 * 60 * 60 * 1000, //24 hours
+    // });
 
-    return id;
+    return { id, accessToken };
   } catch (err) {
     throw err;
   }
@@ -109,13 +109,14 @@ export async function POST(req: NextRequest) {
     const cookieStore = await cookies();
 
     //set accessToken and refreshToken in cookies
-    cookieStore.set("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 24 * 60 * 60 * 1000, //24 hours
-    });
+    // cookieStore.set("accessToken", accessToken, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "strict",
+    //   path: "/",
+    //   maxAge: 24 * 60 * 60 * 1000, //24 hours
+    // });
+
     cookieStore.set("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -136,6 +137,7 @@ export async function POST(req: NextRequest) {
           recipes: user.recipes,
           createdAt: user.createdAt,
         },
+        accessToken,
       },
       { status: 200 }
     );
@@ -152,12 +154,14 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     //validate token
-    let userId = await authenticateToken();
+    let userId = await authenticateToken(req);
+    let newAccessToken;
 
     //try to refresh accessToken
     if (!userId) {
-      const id = await refreshAccessToken();
+      const { id, accessToken } = await refreshAccessToken();
       userId = id;
+      newAccessToken = accessToken;
     }
 
     const user = await User.findById(userId).select("-password");
@@ -168,7 +172,10 @@ export async function GET(req: NextRequest) {
       throw err;
     }
 
-    return NextResponse.json({ success: true, data: user }, { status: 200 });
+    return NextResponse.json(
+      { success: true, data: user, newAccessToken },
+      { status: 200 }
+    );
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err.message },
@@ -181,14 +188,20 @@ export async function PATCH(req: NextRequest) {
   try {
     await connectDB();
 
-    let userId = await authenticateToken();
+    let userId = await authenticateToken(req);
+    let newAccessToken;
     console.log("userId before refresh", userId);
 
     //try to refresh accessToken
     if (!userId) {
-      const id = await refreshAccessToken();
+      const { id, accessToken } = await refreshAccessToken();
       userId = id;
-      console.log("userId after refresh", userId);
+      newAccessToken = accessToken;
+      console.log(
+        "userId and accessToken after refresh",
+        userId,
+        newAccessToken
+      );
     }
 
     let updatedUser;
@@ -198,7 +211,17 @@ export async function PATCH(req: NextRequest) {
 
     //when user updates password
     if (curPassword) {
-      passwordUpdateSchema.parse({ newPassword });
+      const result = passwordUpdateSchema.safeParse({ newPassword });
+
+      if (!result.success) {
+        const errTarget = result.error.issues[0];
+        const err: any = new Error(
+          `<Error field: New password> ${errTarget.message}`
+        );
+        err.statusCode = 400;
+
+        throw err;
+      }
 
       const user = await User.findById(userId).select("+password");
       if (!user) {
@@ -238,7 +261,17 @@ export async function PATCH(req: NextRequest) {
         }
       }
 
-      userOtherUpdateSchema.parse(body);
+      const result = userOtherUpdateSchema.safeParse(body);
+
+      if (!result.success) {
+        const errTarget = result.error.issues[0];
+        const err: any = new Error(
+          `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+        );
+        err.statusCode = 400;
+
+        throw err;
+      }
 
       updatedUser = await User.findByIdAndUpdate(userId, body, {
         new: true,
@@ -251,6 +284,7 @@ export async function PATCH(req: NextRequest) {
         success: true,
         message: "User updated successfully",
         data: updatedUser,
+        newAccessToken,
       },
       { status: 200 }
     );
@@ -266,15 +300,15 @@ export async function DELETE(req: NextRequest) {
   try {
     await connectDB();
 
-    const body = await req.json();
-    const { password } = body;
+    // const body = await req.json();
+    // const { password } = body;
 
-    let userId = await authenticateToken();
+    let userId = await authenticateToken(req);
     console.log("userId before refresh", userId);
 
     //try to refresh accessToken
     if (!userId) {
-      const id = await refreshAccessToken();
+      const { id, accessToken } = await refreshAccessToken();
       userId = id;
       console.log("userId after refresh", userId);
     }
@@ -287,15 +321,15 @@ export async function DELETE(req: NextRequest) {
       throw err;
     }
 
-    const isValidPassword = await user.comparePassword(password);
+    // const isValidPassword = await user.comparePassword(password);
 
-    console.log("isValidPassword", isValidPassword);
+    // console.log("isValidPassword", isValidPassword);
 
-    if (!isValidPassword) {
-      const err: any = new Error("Invalid password is provided");
-      err.statusCode = 401;
-      throw err;
-    }
+    // if (!isValidPassword) {
+    //   const err: any = new Error("Invalid password is provided");
+    //   err.statusCode = 401;
+    //   throw err;
+    // }
 
     const deletedUser = await User.findByIdAndDelete(userId);
     console.log("deletedUser", deletedUser);

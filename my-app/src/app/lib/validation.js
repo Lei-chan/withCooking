@@ -87,7 +87,7 @@ export const passwordUpdateSchema = z.object({
     .trim()
     .regex(
       PASSWORD_REGEX,
-      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit`
+      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters long, with at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit`
     ),
 });
 

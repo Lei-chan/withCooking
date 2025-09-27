@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { NextRequest } from "next/server";
 
 export function generateAccessToken(userId: string) {
   return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -30,10 +31,13 @@ export function verifyRefreshToken(token: string) {
   }
 }
 
-export async function authenticateToken() {
+export async function authenticateToken(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
+    // const cookieStore = await cookies();
+    // const accessToken = cookieStore.get("accessToken")?.value;
+    const authHeader = req.headers.get("authorization");
+    const accessToken = authHeader && authHeader.split(" ")[1];
+
     console.log(accessToken);
 
     if (!accessToken) {
