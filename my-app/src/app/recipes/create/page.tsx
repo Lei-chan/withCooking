@@ -1,156 +1,214 @@
 "use client";
 import styles from "./page.module.css";
 import Image from "next/image";
-import Link from "next/link";
-import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { nanoid } from "nanoid";
-import { relative } from "path";
 import {
   calcTransitionXSlider,
   convertIngUnits,
+  getData,
   getImageURL,
   getRegion,
-  recipes,
 } from "@/app/helper";
-import { MAX_SERVINGS } from "@/app/config";
+import { MAX_SERVINGS, TYPE_RECIPE } from "@/app/config";
+import { AccessTokenContext } from "@/app/context";
+import { redirect, RedirectType } from "next/navigation";
 
-/////get rid of grey image and replace it with grey background
-export default function CreateRecipe() {
+export default function CreateRecipe({
+  recipes,
+}: {
+  recipes: TYPE_RECIPE[] | undefined;
+}) {
+  const userContext = useContext(AccessTokenContext);
   const [favorite, setFavorite] = useState(false);
+  const [mainImage, setMainImage] = useState<string>("");
+  const [instructionImages, setInstructionImages] = useState<string[]>();
+  const [memoryImages, setMemoryImages] = useState<string[]>();
+  // const [newRecipe, setNewRecipe] = useState<TYPE_RECIPE>();
+
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  function handleChangeMainImage(imagePath: string) {
+    setMainImage(imagePath);
+  }
+
+  function handleDeleteMainImage() {
+    setMainImage("");
+  }
+
+  ////do from here!
+  function handleChangeInstructionImage(imagePathsArr: string[]) {
+    setInstructionImages(imagePathsArr);
+  }
+
+  function handleChangeMemoryImages(imagePathsArr: string[]) {
+    setMemoryImages(imagePathsArr);
+  }
+
+  // useEffect(()=>{
+  //   if(!newRecipe) return;
+  //   let recipeData;
+  //    (async ()=> {
+  //     try{
+
+  // }
 
   function handleClickFavorite() {
     setFavorite(!favorite);
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    let recipeData;
+    try {
+      setIsPending(true);
+      setError("");
 
-    const formData = new FormData(e.currentTarget);
+      const formData = new FormData(e.currentTarget);
+      const dataArr = [...formData];
 
-    const data = {
-      ...Object.fromEntries(formData),
-      memoryImages: formData.getAll("memoryImages"),
-    } as any;
+      ///ingredients
+      const numberOfIngredients = dataArr.filter(
+        (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
+      ).length;
 
-    const dataArr = Object.entries(data);
+      const ingredients = new Array(numberOfIngredients)
+        .fill("")
+        .map((_, i) => {
+          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
+          const unit = formData.get(`ingredient${i + 1}Unit`);
 
-    ///ingredients
-    const numberOfIngredients = dataArr.filter(
-      (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
-    ).length;
+          if (
+            unit !== "noUnit" &&
+            unit !== "other" &&
+            unit !== "g" &&
+            unit !== "kg" &&
+            unit !== "oz" &&
+            unit !== "lb" &&
+            unit !== "ml" &&
+            unit !== "L" &&
+            unit !== "USCup" &&
+            unit !== "JapaneseCup" &&
+            unit !== "ImperialCup" &&
+            unit !== "riceCup" &&
+            unit !== "tsp" &&
+            unit !== "Tbsp" &&
+            unit !== "AustralianTbsp"
+          )
+            return;
 
-    const ingredients = new Array(numberOfIngredients).fill("").map((_, i) => {
-      const nameArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}Name`)
-      );
-      const amountArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}Amount`)
-      );
-      const unitArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}Unit`)
-      );
-      const customUnitArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}CustomUnit`)
-      );
-      if (!nameArr || !amountArr || !unitArr || !customUnitArr) return;
-      if (
-        typeof nameArr[1] !== "string" ||
-        typeof customUnitArr[1] !== "string"
-      )
-        return;
-      if (
-        unitArr[1] !== "other" &&
-        unitArr[1] !== "g" &&
-        unitArr[1] !== "kg" &&
-        unitArr[1] !== "oz" &&
-        unitArr[1] !== "lb" &&
-        unitArr[1] !== "ml" &&
-        unitArr[1] !== "L" &&
-        unitArr[1] !== "USCup" &&
-        unitArr[1] !== "JapaneseCup" &&
-        unitArr[1] !== "ImperialCup" &&
-        unitArr[1] !== "riceCup" &&
-        unitArr[1] !== "tsp" &&
-        unitArr[1] !== "Tbsp" &&
-        unitArr[1] !== "AustralianTbsp"
-      )
-        return;
+          return {
+            ingredient:
+              String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
+            amount,
+            unit,
+            customUnit:
+              String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+              "",
+            id: undefined,
+            convertion: convertIngUnits(amount, unit),
+          };
+        });
 
-      const amount = !amountArr[1] ? 0 : +amountArr[1];
+      ///instructions
+      const numberOfInstructions = dataArr.filter(
+        (arr) => arr[0].includes("instruction") && arr[0].includes("Image")
+      ).length;
 
-      return {
-        ingredient: nameArr[1].trim(),
-        amount,
-        unit: unitArr[1],
-        cusomUnit: customUnitArr[1].trim(),
-        id: "",
-        convertion: convertIngUnits(amount, unitArr[1]),
+      const instructions = new Array(numberOfInstructions)
+        .fill("")
+        .map((_, i) => {
+          return {
+            instruction: String(formData.get(`instruction${i + 1}`)) || "",
+            image: getImageURL(formData.get(`instruction${i + 1}Image`)) || "",
+          };
+        });
+
+      const newRecipe = {
+        favorite,
+        mainImage,
+        // mainImage: getImageURL(formData.get("mainImage")) || "",
+        title: String(formData.get("title"))?.trim() || "",
+        author: String(formData.get("author")).trim() || "",
+        region: getRegion(ingredients),
+        servings: {
+          servings: +(formData.get("servings") || 0),
+          unit: String(formData.get("servingsUnit")) || "people",
+          customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
+        },
+        temperatures: {
+          temperatures: [
+            +(formData.get("temperature1") || 0),
+            +(formData.get("temperature2") || 0),
+            +(formData.get("temperature3") || 0),
+            +(formData.get("temperature4") || 0),
+          ],
+          unit:
+            formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
+        },
+        ingredients,
+        instructions,
+        description: String(formData.get("description"))?.trim() || "",
+        memoryImages: Array.from(formData.getAll("memoryImages"))?.map((file) =>
+          getImageURL(file)
+        ),
+        comments: String(formData.get("comments"))?.trim() || "",
+        createdAt: new Date().toISOString(),
       };
-    });
 
-    ///instructions
-    const numberOfInstructions = dataArr.filter(
-      (arr) => arr[0].includes("instruction") && arr[0].includes("Image")
-    ).length;
+      console.log(newRecipe);
+      // setNewRecipe(newRecipe);
+      recipeData = await uploadRecipe(newRecipe);
 
-    const instructions = new Array(numberOfInstructions)
-      .fill("")
-      .map((_, i) => {
-        const instruction = dataArr.find(
-          (arr) =>
-            arr[0].includes(`instruction${i + 1}`) && !arr[0].includes("Image")
-        );
-        const image = dataArr.find(
-          (arr) =>
-            arr[0].includes(`instruction${i + 1}`) && arr[0].includes("Image")
-        );
-        if (!instruction || !image) return;
-        if (typeof instruction[1] !== "string") return;
+      setIsPending(false);
+      setMessage("Recipe created successfully :)");
+    } catch (err: any) {
+      setIsPending(false);
+      setError(err.message);
+      return console.error(
+        "Error while creating recipe",
+        err.message,
+        err.statusCode || 500
+      );
+    }
 
-        return {
-          instruction: instruction[1].trim(),
-          image: getImageURL(image[1]),
-        };
-      });
-
-    const newRecipe = {
-      id: nanoid(),
-      favorite,
-      mainImage: getImageURL(data.mainImage),
-      title: data.title.trim(),
-      author: data.author.trim(),
-      region: getRegion(ingredients),
-      servings: {
-        servings: +data.servings,
-        unit: data.servingsUnit,
-        customUnit: data.servingsCustomUnit.trim(),
-      },
-      temperatures: {
-        temperatures: [
-          +data.temperature1,
-          +data.temperature2,
-          +data.temperature3,
-          +data.temperature4,
-        ],
-        unit: data.temperatureUnit,
-      },
-      ingredients,
-      instructions,
-      description: data.description.trim(),
-      memoryImages: Array.from(data.memoryImages).map((file) =>
-        getImageURL(file)
-      ),
-      comments: data.comments.trim(),
-    };
-    console.log(newRecipe);
-
-    //redirect to loading page
-    // redirect("/loading", RedirectType.replace);
+    redirect(`/recipes/recipe?id=${recipeData._id}`, RedirectType.replace);
   }
 
-  return (
+  async function uploadRecipe(recipe: TYPE_RECIPE) {
+    try {
+      ///store new recipe in recipes database and user info database
+      const recipeData = await getData("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recipe),
+      });
+      console.log(recipeData);
+
+      //connect the recipe data id to user recipe data id
+      const userData = await getData("/api/users/recipes", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+        body: JSON.stringify({ recipeId: recipeData.data._id, ...recipe }),
+      });
+
+      console.log(userData);
+
+      userData.newAccessToken && userContext?.login(userData.newAccessToken);
+
+      return recipeData.data;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  return !isPending ? (
     <div
       style={{
         display: "flex",
@@ -164,6 +222,20 @@ export default function CreateRecipe() {
         padding: "2% 0",
       }}
     >
+      {(error || message) && (
+        <p
+          style={{
+            backgroundColor: error ? "orangered" : "orange",
+            color: "white",
+            padding: "1%",
+            borderRadius: "5px",
+            fontSize: "1.3vw",
+            letterSpacing: "0.05vw",
+          }}
+        >
+          {error || message}
+        </p>
+      )}
       <form
         style={{
           position: "relative",
@@ -182,15 +254,23 @@ export default function CreateRecipe() {
         }}
         onSubmit={handleSubmit}
       >
-        <ImageTitle />
+        <ImageTitle
+          imagePath={mainImage}
+          onChangeImage={handleChangeMainImage}
+          deleteImage={handleDeleteMainImage}
+        />
         <BriefExplanation
           favorite={favorite}
           onClickFavorite={handleClickFavorite}
         />
         <Ingredients />
-        <Instructions />
+        <Instructions
+        // onChangeImages={handleChangeInstructionImage}
+        />
         <AboutThisRecipe />
-        <Memories />
+        <Memories
+        // onChangeImages={handleChangeMemoryImages}
+        />
         <Comments />
 
         {/* <div className={styles.container__nutrition_facts}>
@@ -267,21 +347,29 @@ export default function CreateRecipe() {
         </button>
       </form>
     </div>
+  ) : (
+    <Loading />
   );
 }
 
-function ImageTitle() {
-  const [image, setImage] = useState("");
+function ImageTitle({
+  imagePath,
+  onChangeImage,
+  deleteImage,
+}: {
+  imagePath: string;
+  onChangeImage: (imagePath: string) => void;
+  deleteImage: () => void;
+}) {
+  // const [image, setImage] = useState("");
 
   function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.currentTarget.files;
     if (!files) return;
 
-    setImage(URL.createObjectURL(files[0]));
-  }
-
-  function handleDeleteImage() {
-    setImage("");
+    const path = URL.createObjectURL(files[0]);
+    // setImage(path);
+    onChangeImage(path);
   }
 
   return (
@@ -298,12 +386,12 @@ function ImageTitle() {
           right: "-8%",
           width: "7%",
           height: "9%",
-          opacity: image ? 1 : 0,
+          opacity: imagePath ? 1 : 0,
         }}
         type="button"
-        onClick={handleDeleteImage}
+        onClick={deleteImage}
       ></button>
-      {!image ? (
+      {!imagePath ? (
         <div
           className={styles.grey_background}
           style={{ width: "500px", height: "300px" }}
@@ -347,7 +435,12 @@ function ImageTitle() {
           </div>
         </div>
       ) : (
-        <Image src={image} alt="main image" width={500} height={300}></Image>
+        <Image
+          src={imagePath}
+          alt="main image"
+          width={500}
+          height={300}
+        ></Image>
       )}
       <div
         style={{
@@ -657,7 +750,6 @@ function InputTemp({ i }: { i: number }) {
 }
 
 function Ingredients() {
-  // const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout>();
   const [numberOfLines, setNumberOfLines] = useState(1);
   const [lines, setLines] = useState<any[]>(
     Array(numberOfLines)
@@ -1386,6 +1478,74 @@ function Comments() {
       </div> */}
       </div>
     </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        top: "0%",
+        left: "0%",
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(255, 174, 0, 1)",
+        zIndex: "100",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "15%",
+          width: "30%",
+          height: "40%",
+        }}
+      >
+        <p
+          style={{
+            color: "white",
+            fontSize: "1.8vw",
+            letterSpacing: "0.08vw",
+          }}
+        >
+          Creating your recipe...
+        </p>
+        <Image
+          className={styles.img__uploading}
+          src="/loading.png"
+          alt="loading icon"
+          width={150}
+          height={150}
+        ></Image>
+      </div>
+    </div>
+
+    // <p
+    //   style={{
+    //     display: "flex",
+    //     flexDirection: "column",
+    //     textAlign: "center",
+    //     justifyContent: "center",
+    //     width: "30%",
+    //     height: "30%",
+    //     fontSize: "1.5vw",
+    //     letterSpacing: "0.05vw",
+    //     padding: "1%",
+    //     color: "rgb(197, 118, 0)",
+    //     backgroundColor: "rgb(255, 254, 205)",
+    //     borderRadius: "2%/4%",
+    //   }}
+    // >
+    //   Recipe created successfully!
+    // </p>
   );
 }
 

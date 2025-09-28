@@ -133,6 +133,19 @@
   background-image: linear-gradient(rgb(229, 255, 0), rgb(136, 255, 0));
 }
 
+@keyframes loading {
+  from {
+    transform: rotate(-40deg);
+  }
+  to {
+    transform: rotate(40deg);
+  }
+}
+
+.img__uploading {
+  animation: loading 0.8s infinite;
+}
+
 .hidden {
   display: none;
 }

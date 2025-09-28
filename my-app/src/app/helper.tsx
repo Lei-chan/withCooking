@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { TYPE_RECIPE, PASSWORD_REGEX } from "./config";
+import { TYPE_RECIPE, PASSWORD_REGEX, TYPE_INGREDIENT } from "./config";
 
 export const getData = async (path: string, option: object) => {
   try {
@@ -95,24 +95,21 @@ export const updateIngsForServings = (
   servings: number,
   recipe: TYPE_RECIPE
 ) => {
-  const newIngs = recipe.ingredients.map(
-    (ing: {
-      ingredient: string;
-      amount: number | string;
-      unit: string;
-      id: number;
-    }) => {
-      ///calclate ing for one serivng first then multiply it by new servings
-      const newAmount =
-        typeof ing.amount === "string"
-          ? `${(1 / recipe.servings.servings) * servings} ${ing.amount}`
-          : +((ing.amount / recipe.servings.servings) * servings).toFixed(1);
+  const newIngs = recipe.ingredients.map((ing: TYPE_INGREDIENT) => {
+    if (!ing || !ing?.amount) return ing;
 
-      const newIng = { ...ing };
-      newIng.amount = newAmount;
-      return newIng;
-    }
-  );
+    ///calclate ing for one serivng first then multiply it by new servings
+    const newAmount = +(
+      (ing.amount / recipe.servings.servings) *
+      servings
+    ).toFixed(1);
+    // typeof ing?.amount === "string"
+    //   ? `${(1 / recipe.servings.servings) * servings} ${ing.amount}`
+
+    const newIng = { ...ing };
+    newIng.amount = newAmount;
+    return newIng;
+  });
 
   return newIngs; //array of updated ingredients for new servings
 };
@@ -192,7 +189,7 @@ export const convertTempUnits = function (
 // prettier-ignore
 export const convertIngUnits = function(
   amount: number,
-  unitFrom: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "USCup" | "JapaneseCup" | "ImperialCup" | "riceCup" | "tsp" | "Tbsp" | "AustralianTbsp" | "other"
+  unitFrom: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "USCup" | "JapaneseCup" | "ImperialCup" | "riceCup" | "tsp" | "Tbsp" | "AustralianTbsp" | "other" | 'noUnit'
 ) {
   ///for main page toFixed(1)
   let metric;
@@ -353,24 +350,24 @@ if (unitFrom === "ml") {
   AustralianTbsp = ml && {amount: +(ml.amount / 20).toFixed(3), unit: 'Australian Tbsp'};
 
   return {
-    metric: metric || "",
-    us: us || "",
-    japan: japan || "",
-    australia: australia || "",
-    metricCup: metricCup || "",
-    g: g || '',
-    kg: kg || '', 
-    oz: oz || '',
-    lb: lb || '',
-    ml: ml || '', 
-    L: L || '', 
-    USCup: USCup || '', 
-    JapaneseCup: JapaneseCup || '', 
-    ImperialCup: ImperialCup || '', 
-    riceCup: riceCup || '', 
-    tsp: tsp || '', 
-    Tbsp: Tbsp || '', 
-    AustralianTbsp: AustralianTbsp || '',
+    metric: metric || undefined,
+    us: us || undefined,
+    japan: japan || undefined,
+    australia: australia || undefined,
+    metricCup: metricCup || undefined,
+    g: g || undefined,
+    kg: kg || undefined, 
+    oz: oz || undefined,
+    lb: lb || undefined,
+    ml: ml || undefined, 
+    L: L || undefined, 
+    USCup: USCup || undefined, 
+    JapaneseCup: JapaneseCup || undefined, 
+    ImperialCup: ImperialCup || undefined, 
+    riceCup: riceCup || undefined, 
+    tsp: tsp || undefined, 
+    Tbsp: Tbsp || undefined, 
+    AustralianTbsp: AustralianTbsp || undefined,
   };
 };
 

@@ -33,7 +33,7 @@ export const APP_EXPLANATIONS = [
 ];
 
 export type TYPE_RECIPE = {
-  id: string;
+  // recipeId: string;
   favorite: boolean;
   region: string;
   mainImage: string;
@@ -41,38 +41,14 @@ export type TYPE_RECIPE = {
   author: string;
   servings: { servings: number; unit: string; customUnit: string };
   temperatures: { temperatures: number[]; unit: "℉" | "℃" };
-  ingredients: {
-    ingredient: string;
-    // amount: number | string;
-    amount: number;
-    unit: string;
-    customUnit: string;
-    id: number;
-    convertion: {
-      metric: { amount: number; unit: string } | "";
-      us: { amount: number; unit: string } | "";
-      japan: { amount: number; unit: string } | "";
-      australia: { amount: number; unit: string } | "";
-      metricCup: { amount: number; unit: string } | "";
-      g: { amount: number; unit: string } | "";
-      kg: { amount: number; unit: string } | "";
-      oz: { amount: number; unit: string } | "";
-      lb: { amount: number; unit: string } | "";
-      ml: { amount: number; unit: string } | "";
-      L: { amount: number; unit: string } | "";
-      USCup: { amount: number; unit: string } | "";
-      JapaneseCup: { amount: number; unit: string } | "";
-      ImperialCup: { amount: number; unit: string } | "";
-      riceCup: { amount: number; unit: string } | "";
-      tsp: { amount: number; unit: string } | "";
-      Tbsp: { amount: number; unit: string } | "";
-      AustralianTbsp: { amount: number; unit: string } | "";
-    };
-  }[];
-  instructions: {
-    instruction: string;
-    image: string;
-  }[];
+  ingredients: TYPE_INGREDIENTS;
+  instructions: (
+    | {
+        instruction: string;
+        image: string;
+      }
+    | undefined
+  )[];
   description: string;
   memoryImages: string[] | [];
   comments: string;
@@ -80,33 +56,41 @@ export type TYPE_RECIPE = {
 
 export type TYPE_INGREDIENTS = TYPE_INGREDIENT[];
 
-export type TYPE_INGREDIENT = {
-  ingredient: string;
-  amount: number | string;
-  unit: string;
-  customUnit: string;
-  id: number;
-  convertion: {
-    metric: { amount: number; unit: string } | "";
-    us: { amount: number; unit: string } | "";
-    japan: { amount: number; unit: string } | "";
-    australia: { amount: number; unit: string } | "";
-    metricCup: { amount: number; unit: string } | "";
-    g: { amount: number; unit: string } | "";
-    kg: { amount: number; unit: string } | "";
-    oz: { amount: number; unit: string } | "";
-    lb: { amount: number; unit: string } | "";
-    ml: { amount: number; unit: string } | "";
-    L: { amount: number; unit: string } | "";
-    USCup: { amount: number; unit: string } | "";
-    JapaneseCup: { amount: number; unit: string } | "";
-    ImperialCup: { amount: number; unit: string } | "";
-    riceCup: { amount: number; unit: string } | "";
-    tsp: { amount: number; unit: string } | "";
-    Tbsp: { amount: number; unit: string } | "";
-    AustralianTbsp: { amount: number; unit: string } | "";
-  };
-};
+export type TYPE_INGREDIENT =
+  | {
+      ingredient: string;
+      amount: number;
+      unit: string;
+      customUnit: string;
+      id: number | undefined;
+      convertion: {
+        metric: { amount: number; unit: string } | undefined;
+        us: { amount: number; unit: string } | undefined;
+        japan:
+          | { amount: number; unit: string }
+          | {
+              cupJapan: { amount: number; unit: string };
+              riceCup: { amount: number; unit: string };
+            }
+          | undefined;
+        australia: { amount: number; unit: string } | undefined;
+        metricCup: { amount: number; unit: string } | undefined;
+        g: { amount: number; unit: string } | undefined;
+        kg: { amount: number; unit: string } | undefined;
+        oz: { amount: number; unit: string } | undefined;
+        lb: { amount: number; unit: string } | undefined;
+        ml: { amount: number; unit: string } | undefined;
+        L: { amount: number; unit: string } | undefined;
+        USCup: { amount: number; unit: string } | undefined;
+        JapaneseCup: { amount: number; unit: string } | undefined;
+        ImperialCup: { amount: number; unit: string } | undefined;
+        riceCup: { amount: number; unit: string } | undefined;
+        tsp: { amount: number; unit: string } | undefined;
+        Tbsp: { amount: number; unit: string } | undefined;
+        AustralianTbsp: { amount: number; unit: string } | undefined;
+      };
+    }
+  | undefined;
 
 //for dev
 export const accountInfo = {

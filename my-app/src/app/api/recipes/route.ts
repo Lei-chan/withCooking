@@ -23,7 +23,17 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
-    recipeSchema.parse(body);
+
+    const result = recipeSchema.safeParse(body);
+    if (!result.success) {
+      const errTarget = result.error.issues[0];
+      const err: any = new Error(
+        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+      );
+      err.statusCode = 400;
+
+      throw err;
+    }
 
     const recipe = await Recipe.create(body);
 
@@ -73,7 +83,17 @@ export async function PUT(req: NextRequest) {
     const id = getId(req);
     const body = await req.json();
 
-    recipeSchema.parse(body);
+    const result = recipeSchema.safeParse(body);
+
+    if (!result.success) {
+      const errTarget = result.error.issues[0];
+      const err: any = new Error(
+        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+      );
+      err.statusCode = 400;
+
+      throw err;
+    }
 
     const recipe = await Recipe.findByIdAndUpdate(id, body, {
       new: true,

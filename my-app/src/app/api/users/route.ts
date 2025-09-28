@@ -198,7 +198,7 @@ export async function PATCH(req: NextRequest) {
     let updatedUser;
 
     const body = await req.json();
-    const { curPassword, newPassword, email, ...others } = body;
+    const { curPassword, newPassword, email } = body;
 
     //when user updates password
     if (curPassword) {
@@ -241,15 +241,13 @@ export async function PATCH(req: NextRequest) {
     }
 
     //when user updates fields that is not password
-    if (!curPassword) {
-      if (email) {
-        const existingUser = await User.findOne({ email });
+    if (!curPassword && email) {
+      const existingUser = await User.findOne({ email });
 
-        if (existingUser) {
-          const err: any = new Error("This email already exists");
-          err.statusCode = 400;
-          throw err;
-        }
+      if (existingUser) {
+        const err: any = new Error("This email already exists");
+        err.statusCode = 400;
+        throw err;
       }
 
       const result = userOtherUpdateSchema.safeParse(body);
