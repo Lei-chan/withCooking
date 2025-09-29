@@ -61,6 +61,22 @@ export const getImageURL = (file: any) => {
   return file?.name ? URL.createObjectURL(file) : "";
 };
 
+export function convertFileToString(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      reject(new Error(reader.error?.message));
+    };
+
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 ////local units are more important to convert to different units later
 export const getRegion = (ingredients: any) => {
   const servingsUnit = ingredients.reduce((acc: any, ing: any) => {
@@ -275,10 +291,10 @@ if (unitFrom === "ml") {
   if (unitFrom === "USCup") {
     metric = { amount: +(amount * 240).toFixed(1), unit: "ml" };
     us = {amount, unit: 'US cup'};
-    japan = {
-      cupJapan: { amount: +(amount * 1.2).toFixed(1), unit: "Japanese cup" },
-      riceCup: { amount: +(amount * 1.3333).toFixed(1), unit: "rice cup" }
-    };
+    japan = { amount: +(amount * 1.2).toFixed(1), unit: "Japanese cup" }
+    // cupJapan: 
+    //   riceCup: { amount: +(amount * 1.3333).toFixed(1), unit: "rice cup" }
+    // };
     metricCup = { amount: +(amount * 0.96).toFixed(1), unit: "Imperial cup" };
     australia = metricCup;
     ml = {amount: +(amount * 240).toFixed(3), unit: 'ml'};

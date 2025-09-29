@@ -7,7 +7,6 @@ import { recipeSchema } from "@/app/lib/validation";
 function getId(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const id = searchParams.get("id");
-  console.log("id", id);
 
   if (!mongoose.isValidObjectId(id)) {
     const err: any = new Error("Invalid Id provided");

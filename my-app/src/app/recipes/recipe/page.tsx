@@ -4,10 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import { AccessTokenContext } from "@/app/context";
 import {
   recipes,
+  getData,
   getImageURL,
+  convertFileToString,
+  getRegion,
   convertIngUnits,
   convertTempUnits,
   getReadableIngUnit,
@@ -24,9 +28,11 @@ import {
 } from "@/app/config";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
+import { resolve } from "path";
+import { rejects } from "assert";
 
 export default function Recipe() {
-  //recipe[0] for dev
+  const userContext = useContext(AccessTokenContext);
   const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
   const [favorite, setFavorite] = useState<boolean>();
   const [edit, setEdit] = useState(false);
@@ -35,50 +41,52 @@ export default function Recipe() {
   const [ingredientsUnit, setIngredientsUnit] = useState<
     "metric" | "us" | "japan" | "australia" | "metricCup"
   >();
+  const [mainImage, setMainImage] = useState<string | undefined>();
+  const [instructionImages, setInstructionImages] = useState<
+    (string | undefined)[]
+  >([undefined]);
+  const [memoryImages, setMemoryImages] = useState<string[]>([]);
+
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const id = window.location.hash.slice(1);
-    const recipe = recipes.find((recipe) => recipe.id === id);
-    if (!recipe) return console.error("No recipe found!");
-
-    setCurRecipe(recipe);
-    setFavorite(recipe.favorite);
-    setServingsValue(recipe.servings.servings);
-    setIngredientsUnit(recipe.region);
+    (async () => await getRecipe(id))();
   }, []);
+
+  async function getRecipe(id: string) {
+    try {
+      const data = await getData(`/api/recipes?id=${id}`, { method: "GET" });
+
+      const recipe = data.data;
+
+      setCurRecipe(recipe);
+      setFavorite(recipe.favorite);
+      setServingsValue(recipe.servings.servings);
+      setIngredientsUnit(recipe.region);
+      setMainImage(recipe.mainImage);
+      setInstructionImages(
+        recipe.instructions.map(
+          (inst: { instruction: string; image: string | undefined }) =>
+            inst.image
+        )
+      );
+      setMemoryImages(recipe.memoryImages);
+    } catch (err: any) {
+      setError(err.message);
+      console.error(
+        "Error while loading recipe",
+        err.message,
+        err.statusCode || 500
+      );
+    }
+  }
 
   function handleToggleEdit() {
     setEdit(!edit);
   }
-
-  function handleClickFavorite() {
-    setFavorite(!favorite);
-  }
-
-  // const updateIngsForServings = (servings: number, recipe: TYPE_RECIPE) => {
-  //     const newIngs = recipe.ingredients.map(
-  //       (ing: {
-  //         ingredient: string;
-  //         amount: number | string;
-  //         unit: string;
-  //         id: number;
-  //       }) => {
-  //         ///calclate ing for one serivng first then multiply it by new servings
-  //         const newAmount =
-  //           typeof ing.amount === "string"
-  //             ? `${(1 / recipe.servings.servings) * servings} ${ing.amount}`
-  //             : +((ing.amount / recipe.servings.servings) * servings).toFixed(
-  //                 1
-  //               );
-
-  //         const newIng = { ...ing };
-  //         newIng.amount = newAmount;
-  //         return newIng;
-  //       }
-  //     );
-
-  //     return newIngs; //array of updated ingredients for new servings
-  //   };
 
   //only when edit is false
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
@@ -110,179 +118,259 @@ export default function Recipe() {
     setIngredientsUnit(value);
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function handleChangeMainImage(image: string) {
+    setMainImage(image);
+  }
 
-    if (!edit || !curRecipe) return;
+  function handleDeleteMainImage() {
+    setMainImage(undefined);
+  }
 
-    const formData = new FormData(e.currentTarget);
+  function handleAddInstrucionImage() {
+    setInstructionImages((prev) => [...prev, undefined]);
+  }
 
-    const data = {
-      ...Object.fromEntries(formData),
-      memoryImages: formData.getAll("memoryImages"),
-    } as any;
-
-    const dataArr = Object.entries(data);
-
-    ///ingredients
-    const numberOfIngredients = dataArr.filter(
-      (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
-    ).length;
-
-    const ingredients = new Array(numberOfIngredients).fill("").map((_, i) => {
-      const nameArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}Name`)
-      );
-      const amountArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}Amount`)
-      );
-      const unitArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}Unit`)
-      );
-      const customUnitArr = dataArr.find((arr) =>
-        arr[0].includes(`ingredient${i + 1}CustomUnit`)
-      );
-      if (!nameArr || !amountArr || !unitArr || !customUnitArr) return;
-      if (
-        typeof nameArr[1] !== "string" ||
-        typeof customUnitArr[1] !== "string"
-      )
-        return;
-      if (
-        unitArr[1] !== "other" &&
-        unitArr[1] !== "g" &&
-        unitArr[1] !== "kg" &&
-        unitArr[1] !== "oz" &&
-        unitArr[1] !== "lb" &&
-        unitArr[1] !== "ml" &&
-        unitArr[1] !== "L" &&
-        unitArr[1] !== "USCup" &&
-        unitArr[1] !== "JapaneseCup" &&
-        unitArr[1] !== "ImperialCup" &&
-        unitArr[1] !== "riceCup" &&
-        unitArr[1] !== "tsp" &&
-        unitArr[1] !== "Tbsp" &&
-        unitArr[1] !== "AustralianTbsp"
-      )
-        return;
-
-      const amount = !amountArr[1] ? 0 : +amountArr[1];
-
-      return {
-        ingredient: nameArr[1].trim(),
-        amount,
-        unit: unitArr[1],
-        cusomUnit: customUnitArr[1].trim(),
-        id: "",
-        convertion: convertIngUnits(amount, unitArr[1]),
-      };
+  function handleDeleteInstructionImage(index: number) {
+    setInstructionImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = undefined;
+      return newImages;
     });
+  }
 
-    ///instructions
-    const numberOfInstructions = dataArr.filter(
-      (arr) => arr[0].includes("instruction") && arr[0].includes("Image")
-    ).length;
+  function handleChangeInstructionImage(image: string, index: number) {
+    setInstructionImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = image;
+      return newImages;
+    });
+  }
 
-    const instructions = new Array(numberOfInstructions)
-      .fill("")
-      .map((_, i) => {
-        const instruction = dataArr.find(
-          (arr) =>
-            arr[0].includes(`instruction${i + 1}`) && !arr[0].includes("Image")
-        );
-        const image = dataArr.find(
-          (arr) =>
-            arr[0].includes(`instruction${i + 1}`) && arr[0].includes("Image")
-        );
-        if (!instruction || !image) return;
-        if (typeof instruction[1] !== "string") return;
+  function handleDeleteInstruciton(index: number) {
+    setInstructionImages((prev) => prev.toSpliced(index, 1));
+  }
 
-        return {
-          instruction: instruction[1].trim(),
-          image: getImageURL(image[1]),
-        };
+  function handleChangeMemoryImages(imagesArr: string[]) {
+    setMemoryImages((prev) => [...prev, ...imagesArr]);
+  }
+
+  function handleDeleteMemoryImage(index: number) {
+    setMemoryImages((prev) => prev.toSpliced(index, 1));
+  }
+
+  function handleClickFavorite() {
+    setFavorite(!favorite);
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    let recipeData;
+    try {
+      setIsPending(true);
+      setError("");
+
+      const formData = new FormData(e.currentTarget);
+      const dataArr = [...formData];
+
+      ///ingredients
+      const numberOfIngredients = dataArr.filter(
+        (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
+      ).length;
+
+      const ingredients = new Array(numberOfIngredients)
+        .fill("")
+        .map((_, i) => {
+          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
+          const unit = formData.get(`ingredient${i + 1}Unit`);
+
+          if (
+            unit !== "noUnit" &&
+            unit !== "other" &&
+            unit !== "g" &&
+            unit !== "kg" &&
+            unit !== "oz" &&
+            unit !== "lb" &&
+            unit !== "ml" &&
+            unit !== "L" &&
+            unit !== "USCup" &&
+            unit !== "JapaneseCup" &&
+            unit !== "ImperialCup" &&
+            unit !== "riceCup" &&
+            unit !== "tsp" &&
+            unit !== "Tbsp" &&
+            unit !== "AustralianTbsp"
+          )
+            return {
+              ingredient:
+                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+                "",
+              amount,
+              unit: "g",
+              customUnit:
+                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+                "",
+              id: undefined,
+              convertion: undefined,
+            };
+
+          return {
+            ingredient:
+              String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
+            amount,
+            unit,
+            customUnit:
+              String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+              "",
+            id: undefined,
+            convertion: convertIngUnits(amount, unit),
+          };
+        });
+
+      const instructions = new Array(instructionImages.length)
+        .fill("")
+        .map((_, i) => {
+          return {
+            instruction: String(formData.get(`instruction${i + 1}`)) || "",
+            image: instructionImages[i],
+          };
+        });
+
+      const newRecipe = {
+        favorite: favorite === true ? true : false,
+        mainImage,
+        // mainImage: mainImage ? await convertFileToString(mainImage) : undefined,
+        title: String(formData.get("title"))?.trim() || "",
+        author: String(formData.get("author")).trim() || "",
+        region: getRegion(ingredients),
+        servings: {
+          servings: +(formData.get("servings") || 0),
+          unit: String(formData.get("servingsUnit")) || "people",
+          customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
+        },
+        temperatures: {
+          temperatures: [
+            +(formData.get("temperature1") || 0),
+            +(formData.get("temperature2") || 0),
+            +(formData.get("temperature3") || 0),
+            +(formData.get("temperature4") || 0),
+          ],
+          unit:
+            formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
+        },
+        ingredients,
+        instructions,
+        description: String(formData.get("description"))?.trim() || "",
+        memoryImages,
+        // memoryImages: await Promise.all(
+        //   memoryImages.map((image) => convertFileToString(image))
+        // ),
+        comments: String(formData.get("comments"))?.trim() || "",
+        createdAt: new Date().toISOString(),
+      };
+
+      recipeData = await uploadRecipe(newRecipe);
+
+      setIsPending(false);
+      setMessage("Recipe created successfully :)");
+    } catch (err: any) {
+      setIsPending(false);
+      setError(err.message);
+      return console.error(
+        "Error while creating recipe",
+        err.message,
+        err.statusCode || 500
+      );
+    }
+
+    redirect(`/recipes/recipe#${recipeData._id}`, RedirectType.replace);
+  }
+
+  async function uploadRecipe(recipe: TYPE_RECIPE) {
+    try {
+      ///store new recipe in recipes database and user info database
+      const recipeData = await getData("/api/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recipe),
       });
 
-    const editedRecipe = {
-      id: curRecipe.id,
-      favorite,
-      mainImage: getImageURL(data.mainImage),
-      title: data.title.trim(),
-      author: data.author.trim(),
-      servings: {
-        servings: +data.servings,
-        unit: data.servingsUnit,
-        customUnit: data.servingsCustomUnit.trim(),
-      },
-      temperatures: {
-        temperatures: [
-          +data.temperature1 || "",
-          +data.temperature2 || "",
-          +data.temperature3 || "",
-          +data.temperature4 || "",
-        ],
-        unit: data.temperatureUnit,
-      },
-      ingredients,
-      instructions,
-      description: data.description.trim(),
-      memoryImages: Array.from(data.memoryImages).map((file) =>
-        getImageURL(file)
-      ),
-      comments: data.comments.trim(),
-    };
-    console.log(editedRecipe);
+      //connect the recipe data id to user recipe data id
+      const userData = await getData("/api/users/recipes", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+        body: JSON.stringify({ recipeId: recipeData.data._id, ...recipe }),
+      });
 
-    //redirect to loading page
-    redirect("/loading", RedirectType.replace);
+      userData.newAccessToken && userContext?.login(userData.newAccessToken);
+
+      return recipeData.data;
+    } catch (err) {
+      throw err;
+    }
   }
+
   return (
-    curRecipe &&
-    favorite !== undefined &&
-    servingsValue &&
-    ingredientsUnit && (
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          textAlign: "center",
-          backgroundImage:
-            "linear-gradient(rgba(255, 253, 117, 1), rgba(225, 255, 117, 1))",
-          width: "100%",
-          height: "100%",
-          padding: "2% 0",
-        }}
-      >
-        {!edit ? (
-          <button
-            className={clsx(styles.btn__img, styles.btn__edit)}
-            style={{
-              color: "blueviolet",
-              backgroundImage: "url(/pencile.svg)",
-              width: "8%",
-              right: "10%",
-            }}
-            type="button"
-            onClick={handleToggleEdit}
-          >
-            Edit
-          </button>
-        ) : (
-          <button
-            className={clsx(styles.btn__img, styles.btn__edit)}
-            style={{
-              color: "blueviolet",
-              backgroundImage: "url(/recipes.svg)",
-              width: "12%",
-              right: "7%",
-            }}
-            onClick={handleToggleEdit}
-          >
-            Recipe
-          </button>
-        )}
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        backgroundImage:
+          "linear-gradient(rgba(255, 253, 117, 1), rgba(225, 255, 117, 1))",
+        width: "100%",
+        height: "100%",
+        padding: "2% 0",
+      }}
+    >
+      {!edit ? (
+        <button
+          className={clsx(styles.btn__img, styles.btn__edit)}
+          style={{
+            color: "blueviolet",
+            backgroundImage: "url(/pencile.svg)",
+            width: "8%",
+            right: "10%",
+          }}
+          type="button"
+          onClick={handleToggleEdit}
+        >
+          Edit
+        </button>
+      ) : (
+        <button
+          className={clsx(styles.btn__img, styles.btn__edit)}
+          style={{
+            color: "blueviolet",
+            backgroundImage: "url(/recipes.svg)",
+            width: "12%",
+            right: "7%",
+          }}
+          onClick={handleToggleEdit}
+        >
+          Recipe
+        </button>
+      )}
+      {!curRecipe ||
+      servingsValue === undefined ||
+      !ingredientsUnit ||
+      favorite === undefined ? (
+        <form
+          className={styles.loading}
+          style={{
+            backgroundImage:
+              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+            width: "50%",
+            height: "100%",
+            boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
+            borderRadius: "10px",
+          }}
+        ></form>
+      ) : (
         <form
           style={{
             position: "relative",
@@ -301,7 +389,13 @@ export default function Recipe() {
           }}
           onSubmit={handleSubmit}
         >
-          <ImageTitle edit={edit} curRecipe={curRecipe} />
+          <ImageTitle
+            edit={edit}
+            image={mainImage}
+            title={curRecipe.title}
+            onChangeImage={handleChangeMainImage}
+            deleteImage={handleDeleteMainImage}
+          />
           <BriefExplanation
             edit={edit}
             curRecipe={curRecipe}
@@ -317,9 +411,22 @@ export default function Recipe() {
             ingredients={curRecipe.ingredients}
             ingredientsUnit={ingredientsUnit}
           />
-          <Instructions edit={edit} curRecipe={curRecipe} />
+          <Instructions
+            edit={edit}
+            instructions={curRecipe.instructions}
+            images={instructionImages}
+            addImage={handleAddInstrucionImage}
+            deleteImage={handleDeleteInstructionImage}
+            onChangeImage={handleChangeInstructionImage}
+            deleteInstruction={handleDeleteInstruciton}
+          />
           <AboutThisRecipe edit={edit} curRecipe={curRecipe} />
-          <Memories edit={edit} curRecipe={curRecipe} />
+          <Memories
+            edit={edit}
+            images={memoryImages}
+            onChangeImages={handleChangeMemoryImages}
+            deleteImage={handleDeleteMemoryImage}
+          />
           <Comments edit={edit} curRecipe={curRecipe} />
 
           {/* <div className={styles.container__nutrition_facts}>
@@ -397,35 +504,43 @@ export default function Recipe() {
             </button>
           )}
         </form>
-      </div>
-    )
+      )}
+    </div>
   );
 }
 
 function ImageTitle({
   edit,
-  curRecipe,
+  image,
+  title,
+  onChangeImage,
+  deleteImage,
 }: {
   edit: boolean;
-  curRecipe: TYPE_RECIPE;
+  image: string | undefined;
+  title: string;
+  onChangeImage: (image: string) => void;
+  deleteImage: () => void;
 }) {
-  const [image, setImage] = useState(curRecipe.mainImage);
-  const [title, setTitle] = useState(curRecipe.title);
+  const [recipeTitle, setRecipeTitle] = useState(title);
 
-  function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.currentTarget.files;
-    if (!files) return;
+  async function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const files = e.currentTarget.files;
+      if (!files) return;
 
-    setImage(URL.createObjectURL(files[0]));
-  }
+      const convertedFile = await convertFileToString(files[0]);
 
-  function handleDeleteImage() {
-    setImage("");
+      // setImage(URL.createObjectURL(files[0]));
+      onChangeImage(convertedFile);
+    } catch (err: any) {
+      console.error(err.message);
+    }
   }
 
   function handleChangeTitle(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.currentTarget.value;
-    setTitle(value);
+    setRecipeTitle(value);
   }
 
   return (
@@ -492,7 +607,8 @@ function ImageTitle({
                 height: "9%",
               }}
               type="button"
-              onClick={handleDeleteImage}
+              // onClick={handleDeleteImage}
+              onClick={deleteImage}
             ></button>
           )}
           <Image src={image} alt="main image" width={500} height={300}></Image>
@@ -532,7 +648,7 @@ function ImageTitle({
             }}
             name="title"
             placeholder="Click here to set title"
-            value={title}
+            value={recipeTitle}
             onChange={handleChangeTitle}
           ></input>
         ) : (
@@ -545,7 +661,7 @@ function ImageTitle({
               textAlign: "center",
             }}
           >
-            {title}
+            {recipeTitle}
           </p>
         )}
       </div>
@@ -1026,16 +1142,7 @@ function Ingredients({
           <IngLine
             key={line.id}
             edit={edit}
-            ingredient={
-              ingredients[i] || {
-                ingredient: "",
-                amount: "",
-                unit: "",
-                customUnit: "",
-                id: "",
-                convertion: "",
-              }
-            }
+            ingredient={ingredients[i]}
             ingredientsUnit={ingredientsUnit}
             i={i}
             onClickDelete={handleClickDelete}
@@ -1064,7 +1171,33 @@ function IngLine({
   i: number;
   onClickDelete: (i: number) => void;
 }) {
-  const [line, setLine] = useState(ingredient);
+  const [line, setLine] = useState({
+    ingredient: ingredient?.ingredient,
+    amount: ingredient?.amount,
+    unit: ingredient?.unit,
+    customUnit: ingredient?.customUnit,
+  });
+  const [newIngredient, setNewIngredient] = useState<{
+    amount: number;
+    unit: string;
+  }>({ amount: 0, unit: "g" });
+
+  function getUnit(ingredient: {
+    ingredient: string;
+    amount: number;
+    unit: string;
+    customUnit: string;
+  }) {
+    let unit;
+    if (ingredient.unit === "NoUnit") {
+      unit = "";
+    } else if (ingredient.unit === "other") {
+      unit = ingredient.customUnit;
+    } else {
+      unit = ingredient.unit;
+    }
+    return unit;
+  }
 
   function handleChangeInput(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -1081,13 +1214,19 @@ function IngLine({
     });
   }
 
-  //amount is string or no applicable converted ingredients unit => ingrediet otherwise converted ingredient
-  const getNewIng = () =>
-    edit ||
-    typeof ingredient.amount === "string" ||
-    !ingredient.convertion[ingredientsUnit]
-      ? ingredient
-      : ingredient.convertion[ingredientsUnit];
+  useEffect(() => {
+    //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
+    const newIngredient =
+      edit || !ingredient?.convertion || !ingredient.convertion[ingredientsUnit]
+        ? ingredient
+        : ingredient.convertion[ingredientsUnit];
+
+    setNewIngredient(newIngredient);
+  }, [ingredientsUnit]);
+  // const getNewIng = () =>
+  //   edit || !ingredient?.convertion || !ingredient.convertion[ingredientsUnit]
+  //     ? ingredient
+  //     : ingredient.convertion[ingredientsUnit];
 
   return (
     <div
@@ -1165,17 +1304,16 @@ function IngLine({
             type="checkbox"
           ></input>
           <span>
-            {typeof getNewIng().amount === "string" ||
-            getNewIng().unit === "g" ||
-            getNewIng().unit === "kg" ||
-            getNewIng().unit === "oz" ||
-            getNewIng().unit === "lb" ||
-            getNewIng().unit === "ml" ||
-            getNewIng().unit === "L"
-              ? getNewIng().amount
-              : fracty(getNewIng().amount)}
+            {newIngredient.unit === "g" ||
+            newIngredient.unit === "kg" ||
+            newIngredient.unit === "oz" ||
+            newIngredient.unit === "lb" ||
+            newIngredient.unit === "ml" ||
+            newIngredient.unit === "L"
+              ? newIngredient.amount
+              : fracty(newIngredient.amount)}
           </span>
-          <span>{`${getNewIng().unit} of`}</span>
+          <span>{`${newIngredient.unit} of`}</span>
           <span>{ingredient.ingredient}</span>
         </>
       )}
@@ -1206,17 +1344,24 @@ function ButtonPlus({ onClickBtn }: { onClickBtn: () => void }) {
 
 function Instructions({
   edit,
-  curRecipe,
+  instructions,
+  images,
+  addImage,
+  deleteImage,
+  onChangeImage,
+  deleteInstruction,
 }: {
   edit: boolean;
-  curRecipe: TYPE_RECIPE;
+  instructions: { instruction: string; image: string | undefined }[];
+  images: (string | undefined)[];
+  addImage: () => void;
+  deleteImage: (index: number) => void;
+  onChangeImage: (image: string, index: number) => void;
+  deleteInstruction: (index: number) => void;
 }) {
-  const [numberOfInstructions, setNumberOfInstructions] = useState(
-    curRecipe.instructions.length
-  );
   //Store key so whenever user delete instruction, other instructions' info will remain the same
-  const [instructions, setInstructions] = useState(
-    Array(numberOfInstructions)
+  const [recipeInstructions, setRecipeInstructions] = useState(
+    Array(images.length)
       .fill("")
       .map(() => {
         return { id: nanoid() };
@@ -1224,31 +1369,26 @@ function Instructions({
   );
   const [deletedIndex, setDeletedIndex] = useState<number>();
 
-  function handleClickPlus() {
-    setNumberOfInstructions((prev) => prev + 1);
-    setInstructions((prev) => [...prev, { id: nanoid() }]);
-  }
-
   function handleClickDelete(i: number) {
     setDeletedIndex(i);
-    setNumberOfInstructions((prev) => prev - 1);
+    deleteInstruction(i);
   }
 
   //manually add or splice key info to remain other instructions info
   useEffect(() => {
     //when user adds instruction
-    if (instructions.length < numberOfInstructions)
-      setInstructions((prev) => [...prev, { id: nanoid() }]);
+    if (recipeInstructions.length < images.length)
+      setRecipeInstructions((prev) => [...prev, { id: nanoid() }]);
 
     //when user deletes instruction
-    if (instructions.length > numberOfInstructions)
-      setInstructions((prev) => {
+    if (recipeInstructions.length > images.length)
+      setRecipeInstructions((prev) => {
         if (!deletedIndex && deletedIndex !== 0) return prev;
 
         const newInstructions = [...prev];
         return newInstructions.toSpliced(deletedIndex, 1);
       });
-  }, [numberOfInstructions]);
+  }, [images.length]);
 
   return (
     <div
@@ -1262,18 +1402,16 @@ function Instructions({
       <h2 className={styles.header} style={{ marginBottom: "20px" }}>
         Instructions
       </h2>
-      {instructions.map((inst, i) => (
+      {recipeInstructions.map((inst, i) => (
         <Instruction
           key={inst.id}
-          edit={edit}
-          instruction={
-            curRecipe.instructions[i] || {
-              instruction: "",
-              image: "",
-            }
-          }
           i={i}
+          edit={edit}
+          instruction={instructions[i]}
+          image={images[i]}
+          onClickDeleteImage={deleteImage}
           onClickDelete={handleClickDelete}
+          onChangeImage={onChangeImage}
         />
       ))}
       {edit && (
@@ -1285,7 +1423,7 @@ function Instructions({
             paddingBottom: "2%",
           }}
         >
-          <ButtonPlus onClickBtn={handleClickPlus} />
+          <ButtonPlus onClickBtn={addImage} />
         </div>
       )}
     </div>
@@ -1294,29 +1432,34 @@ function Instructions({
 
 function Instruction({
   edit,
-  instruction,
   i,
+  instruction,
+  image,
+  onClickDeleteImage,
   onClickDelete,
+  onChangeImage,
 }: {
   edit: boolean;
-  instruction: { instruction: string; image: string };
   i: number;
+  instruction: { instruction: string; image: string | undefined };
+  image: string | undefined;
+  onClickDeleteImage: (i: number) => void;
   onClickDelete: (i: number) => void;
+  onChangeImage: (image: string, i: number) => void;
 }) {
   const [instructionText, setInstructionText] = useState(
     instruction.instruction
   );
-  const [image, setImage] = useState<string>(instruction.image);
+  async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const files = e.currentTarget.files;
+      if (!files) return;
 
-  function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.currentTarget.files;
-    if (!files) return;
-
-    setImage(URL.createObjectURL(files[0]));
-  }
-
-  function handleDeleteImg() {
-    setImage("");
+      const convertedFile = await convertFileToString(files[0]);
+      onChangeImage(convertedFile, i);
+    } catch (err: any) {
+      console.error(err.message);
+    }
   }
 
   function handleChangeInstruction(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -1382,7 +1525,6 @@ function Instruction({
             fontSize: "1.2vw",
             letterSpacing: "0.03vw",
             padding: image ? "0 1%" : "0 0 0 3%",
-            // backgroundColor: "blue",
           }}
         >
           {instructionText}
@@ -1443,7 +1585,7 @@ function Instruction({
               height: "18%",
             }}
             type="button"
-            onClick={handleDeleteImg}
+            onClick={() => onClickDeleteImage(i)}
           ></button>
         )}
       </div>
@@ -1541,20 +1683,30 @@ function AboutThisRecipe({
 
 function Memories({
   edit,
-  curRecipe,
+  images,
+  onChangeImages,
+  deleteImage,
 }: {
   edit: boolean;
-  curRecipe: TYPE_RECIPE;
+  images: [] | string[];
+  onChangeImages: (imagesArr: string[]) => void;
+  deleteImage: (i: number) => void;
 }) {
-  const [images, setImages] = useState<string[]>(curRecipe.memoryImages);
   const [curImage, setCurImage] = useState(0);
 
-  function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.currentTarget.files;
-    if (!files) return;
+  async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const files = e.currentTarget.files;
+      if (!files) return;
 
-    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
-    setImages((prev) => [...prev, ...urls]);
+      const convertedFiles = await Promise.all(
+        Array.from(files).map((image) => convertFileToString(image))
+      );
+
+      onChangeImages(convertedFiles);
+    } catch (err: any) {
+      console.error(err.message);
+    }
   }
 
   function handleClickDot(i: number) {
@@ -1562,10 +1714,8 @@ function Memories({
   }
 
   function handleDeleteImg(i: number) {
-    setImages((prev) => {
-      const newImgs = [...prev];
-      return newImgs.toSpliced(i, 1);
-    });
+    deleteImage(i);
+
     //if deleted img was the last img and not the only img, set curImg as one before the img, otherwise, one after the img
     setCurImage((prev) =>
       prev && images.length - 1 === prev ? prev - 1 : prev
@@ -1592,20 +1742,16 @@ function Memories({
           overflow: "hidden",
         }}
       >
-        {images.length ? (
-          images.map((img, i) => (
-            <MemoryImg
-              key={nanoid()}
-              edit={edit}
-              i={i}
-              image={img}
-              translateX={calcTransitionXSlider(i, curImage)}
-              onClickDelete={handleDeleteImg}
-            />
-          ))
-        ) : (
-          <></>
-        )}
+        {images.map((img, i) => (
+          <MemoryImg
+            key={nanoid()}
+            edit={edit}
+            i={i}
+            image={img}
+            translateX={calcTransitionXSlider(i, curImage)}
+            onClickDelete={handleDeleteImg}
+          />
+        ))}
         {edit && (
           <div
             style={{

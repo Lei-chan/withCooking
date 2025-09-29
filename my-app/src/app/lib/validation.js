@@ -12,7 +12,7 @@ export const recipeSchema = z.object({
   recipeId: z.string().optional(), //only for recipe in user info
   favorite: z.boolean(),
   region: z.string(),
-  mainImage: z.string(),
+  mainImage: z.any(),
   title: z.string(),
   author: z.string(),
   servings: z.object({
@@ -40,7 +40,7 @@ export const recipeSchema = z.object({
   instructions: z.array(
     z.object({
       instruction: z.string(),
-      image: z.string(),
+      image: z.any(),
     })
   ),
   description: z.string(),

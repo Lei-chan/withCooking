@@ -87,8 +87,11 @@ export async function PATCH(req: NextRequest) {
       newAccessToken = accessToken;
     }
 
-    const userRecipes = await User.findById(userId).select("recipes");
-    const newRecipes = userRecipes ? [...userRecipes, body] : [body];
+    const userRecipes = await User.findById(userId);
+
+    const newRecipes = userRecipes.recipes.length
+      ? [...userRecipes.recipes, body]
+      : [body];
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,

@@ -36,19 +36,16 @@ export type TYPE_RECIPE = {
   // recipeId: string;
   favorite: boolean;
   region: string;
-  mainImage: string;
+  mainImage: string | undefined;
   title: string;
   author: string;
   servings: { servings: number; unit: string; customUnit: string };
   temperatures: { temperatures: number[]; unit: "℉" | "℃" };
   ingredients: TYPE_INGREDIENTS;
-  instructions: (
-    | {
-        instruction: string;
-        image: string;
-      }
-    | undefined
-  )[];
+  instructions: {
+    instruction: string;
+    image: string | undefined;
+  }[];
   description: string;
   memoryImages: string[] | [];
   comments: string;
@@ -56,22 +53,22 @@ export type TYPE_RECIPE = {
 
 export type TYPE_INGREDIENTS = TYPE_INGREDIENT[];
 
-export type TYPE_INGREDIENT =
-  | {
-      ingredient: string;
-      amount: number;
-      unit: string;
-      customUnit: string;
-      id: number | undefined;
-      convertion: {
+export type TYPE_INGREDIENT = {
+  ingredient: string;
+  amount: number;
+  unit: string;
+  customUnit: string;
+  id: number | undefined;
+  convertion:
+    | {
         metric: { amount: number; unit: string } | undefined;
         us: { amount: number; unit: string } | undefined;
         japan:
           | { amount: number; unit: string }
-          | {
-              cupJapan: { amount: number; unit: string };
-              riceCup: { amount: number; unit: string };
-            }
+          // | {
+          //     cupJapan: { amount: number; unit: string };
+          //     riceCup: { amount: number; unit: string };
+          //   }
           | undefined;
         australia: { amount: number; unit: string } | undefined;
         metricCup: { amount: number; unit: string } | undefined;
@@ -88,9 +85,9 @@ export type TYPE_INGREDIENT =
         tsp: { amount: number; unit: string } | undefined;
         Tbsp: { amount: number; unit: string } | undefined;
         AustralianTbsp: { amount: number; unit: string } | undefined;
-      };
-    }
-  | undefined;
+      }
+    | undefined;
+};
 
 //for dev
 export const accountInfo = {

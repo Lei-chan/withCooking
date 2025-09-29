@@ -1,8 +1,44 @@
 import mongoose from "mongoose";
 
-const RecipeSchema = new mongoose.Schema(Object);
+const RecipeSchema = new mongoose.Schema({
+  //recipeId => only for recipe in user info
+  recipeId: String,
+  favorite: Boolean,
+  region: String,
+  mainImage: String,
+  title: String,
+  author: String,
+  servings: {
+    servings: Number,
+    unit: String,
+    customUnit: String,
+  },
+  temperatures: {
+    temperatures: [Number],
+    unit: String,
+  },
+  ingredients: [
+    {
+      ingredient: String,
+      amount: Number,
+      unit: String,
+      customUnit: String,
+      id: {},
+      convertion: {},
+    },
+  ],
+  instructions: [
+    {
+      instruction: String,
+      image: String,
+    },
+  ],
+  description: String,
+  memoryImages: [{}],
+  comments: String,
+  createdAt: String,
+});
 
-const Recipes =
-  mongoose.models.Recipes || mongoose.model("Recipes", RecipeSchema);
+const Recipe = mongoose.models.Recipe || mongoose.model("Recipe", RecipeSchema);
 
-export default Recipes;
+export default Recipe;

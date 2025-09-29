@@ -6,6 +6,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { nanoid } from "nanoid";
 import {
   calcTransitionXSlider,
+  convertFileToString,
   convertIngUnits,
   getData,
   getImageURL,
@@ -22,39 +23,55 @@ export default function CreateRecipe({
 }) {
   const userContext = useContext(AccessTokenContext);
   const [favorite, setFavorite] = useState(false);
-  const [mainImage, setMainImage] = useState<string>("");
-  const [instructionImages, setInstructionImages] = useState<string[]>();
-  const [memoryImages, setMemoryImages] = useState<string[]>();
-  // const [newRecipe, setNewRecipe] = useState<TYPE_RECIPE>();
+  const [mainImage, setMainImage] = useState<string | undefined>();
+  const [instructionImages, setInstructionImages] = useState<
+    (string | undefined)[]
+  >([undefined]);
+  const [memoryImages, setMemoryImages] = useState<string[]>([]);
 
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  function handleChangeMainImage(imagePath: string) {
-    setMainImage(imagePath);
+  function handleChangeMainImage(image: string) {
+    setMainImage(image);
   }
 
   function handleDeleteMainImage() {
-    setMainImage("");
+    setMainImage(undefined);
   }
 
-  ////do from here!
-  function handleChangeInstructionImage(imagePathsArr: string[]) {
-    setInstructionImages(imagePathsArr);
+  function handleAddInstrucionImage() {
+    setInstructionImages((prev) => [...prev, undefined]);
   }
 
-  function handleChangeMemoryImages(imagePathsArr: string[]) {
-    setMemoryImages(imagePathsArr);
+  function handleDeleteInstructionImage(index: number) {
+    setInstructionImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = undefined;
+      return newImages;
+    });
   }
 
-  // useEffect(()=>{
-  //   if(!newRecipe) return;
-  //   let recipeData;
-  //    (async ()=> {
-  //     try{
+  function handleChangeInstructionImage(image: string, index: number) {
+    setInstructionImages((prev) => {
+      const newImages = [...prev];
+      newImages[index] = image;
+      return newImages;
+    });
+  }
 
-  // }
+  function handleDeleteInstruciton(index: number) {
+    setInstructionImages((prev) => prev.toSpliced(index, 1));
+  }
+
+  function handleChangeMemoryImages(imagesArr: string[]) {
+    setMemoryImages((prev) => [...prev, ...imagesArr]);
+  }
+
+  function handleDeleteMemoryImage(index: number) {
+    setMemoryImages((prev) => prev.toSpliced(index, 1));
+  }
 
   function handleClickFavorite() {
     setFavorite(!favorite);
@@ -98,7 +115,18 @@ export default function CreateRecipe({
             unit !== "Tbsp" &&
             unit !== "AustralianTbsp"
           )
-            return;
+            return {
+              ingredient:
+                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+                "",
+              amount,
+              unit: "g",
+              customUnit:
+                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+                "",
+              id: undefined,
+              convertion: undefined,
+            };
 
           return {
             ingredient:
@@ -113,24 +141,19 @@ export default function CreateRecipe({
           };
         });
 
-      ///instructions
-      const numberOfInstructions = dataArr.filter(
-        (arr) => arr[0].includes("instruction") && arr[0].includes("Image")
-      ).length;
-
-      const instructions = new Array(numberOfInstructions)
+      const instructions = new Array(instructionImages.length)
         .fill("")
         .map((_, i) => {
           return {
             instruction: String(formData.get(`instruction${i + 1}`)) || "",
-            image: getImageURL(formData.get(`instruction${i + 1}Image`)) || "",
+            image: instructionImages[i],
           };
         });
 
       const newRecipe = {
-        favorite,
+        favorite: favorite === true ? true : false,
         mainImage,
-        // mainImage: getImageURL(formData.get("mainImage")) || "",
+        // mainImage: mainImage ? await convertFileToString(mainImage) : undefined,
         title: String(formData.get("title"))?.trim() || "",
         author: String(formData.get("author")).trim() || "",
         region: getRegion(ingredients),
@@ -152,15 +175,16 @@ export default function CreateRecipe({
         ingredients,
         instructions,
         description: String(formData.get("description"))?.trim() || "",
-        memoryImages: Array.from(formData.getAll("memoryImages"))?.map((file) =>
-          getImageURL(file)
-        ),
+        memoryImages,
+        // memoryImages: await Promise.all(
+        //   memoryImages.map((image) => convertFileToString(image))
+        // ),
         comments: String(formData.get("comments"))?.trim() || "",
         createdAt: new Date().toISOString(),
       };
 
       console.log(newRecipe);
-      // setNewRecipe(newRecipe);
+
       recipeData = await uploadRecipe(newRecipe);
 
       setIsPending(false);
@@ -175,18 +199,18 @@ export default function CreateRecipe({
       );
     }
 
-    redirect(`/recipes/recipe?id=${recipeData._id}`, RedirectType.replace);
+    redirect(`/recipes/recipe#${recipeData._id}`, RedirectType.replace);
   }
 
   async function uploadRecipe(recipe: TYPE_RECIPE) {
     try {
+      console.log(JSON.stringify(recipe));
       ///store new recipe in recipes database and user info database
       const recipeData = await getData("/api/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(recipe),
       });
-      console.log(recipeData);
 
       //connect the recipe data id to user recipe data id
       const userData = await getData("/api/users/recipes", {
@@ -197,8 +221,6 @@ export default function CreateRecipe({
         },
         body: JSON.stringify({ recipeId: recipeData.data._id, ...recipe }),
       });
-
-      console.log(userData);
 
       userData.newAccessToken && userContext?.login(userData.newAccessToken);
 
@@ -255,7 +277,7 @@ export default function CreateRecipe({
         onSubmit={handleSubmit}
       >
         <ImageTitle
-          imagePath={mainImage}
+          image={mainImage}
           onChangeImage={handleChangeMainImage}
           deleteImage={handleDeleteMainImage}
         />
@@ -265,11 +287,17 @@ export default function CreateRecipe({
         />
         <Ingredients />
         <Instructions
-        // onChangeImages={handleChangeInstructionImage}
+          images={instructionImages}
+          addImage={handleAddInstrucionImage}
+          deleteImage={handleDeleteInstructionImage}
+          onChangeImage={handleChangeInstructionImage}
+          deleteInstruction={handleDeleteInstruciton}
         />
         <AboutThisRecipe />
         <Memories
-        // onChangeImages={handleChangeMemoryImages}
+          images={memoryImages}
+          onChangeImages={handleChangeMemoryImages}
+          deleteImage={handleDeleteMemoryImage}
         />
         <Comments />
 
@@ -353,23 +381,26 @@ export default function CreateRecipe({
 }
 
 function ImageTitle({
-  imagePath,
+  image,
   onChangeImage,
   deleteImage,
 }: {
-  imagePath: string;
-  onChangeImage: (imagePath: string) => void;
+  image: string | undefined;
+  onChangeImage: (image: string) => void;
   deleteImage: () => void;
 }) {
-  // const [image, setImage] = useState("");
+  async function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const files = e.currentTarget.files;
+      if (!files) return;
 
-  function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.currentTarget.files;
-    if (!files) return;
+      const convertedFile = await convertFileToString(files[0]);
 
-    const path = URL.createObjectURL(files[0]);
-    // setImage(path);
-    onChangeImage(path);
+      // setImage(URL.createObjectURL(files[0]));
+      onChangeImage(convertedFile);
+    } catch (err: any) {
+      console.error(err.message);
+    }
   }
 
   return (
@@ -386,12 +417,12 @@ function ImageTitle({
           right: "-8%",
           width: "7%",
           height: "9%",
-          opacity: imagePath ? 1 : 0,
+          opacity: image ? 1 : 0,
         }}
         type="button"
         onClick={deleteImage}
       ></button>
-      {!imagePath ? (
+      {!image ? (
         <div
           className={styles.grey_background}
           style={{ width: "500px", height: "300px" }}
@@ -435,12 +466,7 @@ function ImageTitle({
           </div>
         </div>
       ) : (
-        <Image
-          src={imagePath}
-          alt="main image"
-          width={500}
-          height={300}
-        ></Image>
+        <Image src={image} alt="main image" width={500} height={300}></Image>
       )}
       <div
         style={{
@@ -971,11 +997,22 @@ function ButtonPlus({ onClickBtn }: { onClickBtn: () => void }) {
   );
 }
 
-function Instructions() {
-  const [numberOfInstructions, setNumberOfInstructions] = useState(1);
+function Instructions({
+  images,
+  addImage,
+  deleteImage,
+  onChangeImage,
+  deleteInstruction,
+}: {
+  images: (string | undefined)[];
+  addImage: () => void;
+  deleteImage: (index: number) => void;
+  onChangeImage: (image: string, index: number) => void;
+  deleteInstruction: (index: number) => void;
+}) {
   //Store key so whenever user delete instruction, other instructions' info will remain the same
   const [instructions, setInstructions] = useState(
-    Array(numberOfInstructions)
+    Array(images.length)
       .fill("")
       .map(() => {
         return { id: nanoid() };
@@ -983,30 +1020,26 @@ function Instructions() {
   );
   const [deletedIndex, setDeletedIndex] = useState<number>();
 
-  function handleClickPlus() {
-    setNumberOfInstructions((prev) => prev + 1);
-  }
-
   function handleClickDelete(i: number) {
     setDeletedIndex(i);
-    setNumberOfInstructions((prev) => prev - 1);
+    deleteInstruction(i);
   }
 
   //manually add or splice key info to remain other instructions info
   useEffect(() => {
     //when user adds instruction
-    if (instructions.length < numberOfInstructions)
+    if (instructions.length < images.length)
       setInstructions((prev) => [...prev, { id: nanoid() }]);
 
     //when user deletes instruction
-    if (instructions.length > numberOfInstructions)
+    if (instructions.length > images.length)
       setInstructions((prev) => {
         if (!deletedIndex && deletedIndex !== 0) return prev;
 
         const newInstructions = [...prev];
         return newInstructions.toSpliced(deletedIndex, 1);
       });
-  }, [numberOfInstructions]);
+  }, [images.length]);
 
   return (
     <div
@@ -1021,7 +1054,14 @@ function Instructions() {
         Instructions
       </h2>
       {instructions.map((inst, i) => (
-        <Instruction key={inst.id} i={i} onClickDelete={handleClickDelete} />
+        <Instruction
+          key={inst.id}
+          i={i}
+          image={images[i]}
+          onClickDeleteImage={deleteImage}
+          onClickDelete={handleClickDelete}
+          onChangeImage={onChangeImage}
+        />
       ))}
       <div
         style={{
@@ -1031,7 +1071,10 @@ function Instructions() {
           paddingBottom: "2%",
         }}
       >
-        <ButtonPlus onClickBtn={handleClickPlus} />
+        <ButtonPlus
+          // onClickBtn={handleClickPlus}
+          onClickBtn={addImage}
+        />
       </div>
 
       {/* {recipe.instructions.map((step: any, i: number) => (
@@ -1070,22 +1113,27 @@ function Instructions() {
 
 function Instruction({
   i,
+  image,
+  onClickDeleteImage,
   onClickDelete,
+  onChangeImage,
 }: {
   i: number;
+  image: string | undefined;
+  onClickDeleteImage: (i: number) => void;
   onClickDelete: (i: number) => void;
+  onChangeImage: (image: string, i: number) => void;
 }) {
-  const [img, setImg] = useState<string>();
+  async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const files = e.currentTarget.files;
+      if (!files) return;
 
-  function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.currentTarget.files;
-    if (!files) return;
-
-    setImg(URL.createObjectURL(files[0]));
-  }
-
-  function handleDeleteImg() {
-    setImg("");
+      const convertedFile = await convertFileToString(files[0]);
+      onChangeImage(convertedFile, i);
+    } catch (err: any) {
+      console.error(err.message);
+    }
   }
 
   return (
@@ -1133,7 +1181,7 @@ function Instruction({
         placeholder={`Instruction ${i + 1}`}
       ></textarea>
       <div style={{ position: "relative", width: "140px", height: "100px" }}>
-        {!img ? (
+        {!image ? (
           <div
             className={styles.grey_background}
             style={{ width: "100%", height: "100%" }}
@@ -1160,7 +1208,7 @@ function Instruction({
         ) : (
           <>
             <Image
-              src={img}
+              src={image}
               alt={`instruction ${i + 1} image`}
               width={140}
               height={100}
@@ -1174,7 +1222,7 @@ function Instruction({
                 height: "18%",
               }}
               type="button"
-              onClick={handleDeleteImg}
+              onClick={() => onClickDeleteImage(i)}
             ></button>
           </>
         )}
@@ -1238,17 +1286,30 @@ function AboutThisRecipe() {
   );
 }
 
-function Memories() {
-  const [imgs, setImgs] = useState<string[]>([]);
-  //default is upload slide
+function Memories({
+  images,
+  onChangeImages,
+  deleteImage,
+}: {
+  images: [] | string[];
+  onChangeImages: (imagesArr: string[]) => void;
+  deleteImage: (i: number) => void;
+}) {
   const [curImg, setCurImg] = useState(0);
 
-  function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.currentTarget.files;
-    if (!files) return;
+  async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
+    try {
+      const files = e.currentTarget.files;
+      if (!files) return;
 
-    const urls = Array.from(files).map((file) => URL.createObjectURL(file));
-    setImgs((prev) => [...prev, ...urls]);
+      const convertedFiles = await Promise.all(
+        Array.from(files).map((image) => convertFileToString(image))
+      );
+
+      onChangeImages(convertedFiles);
+    } catch (err: any) {
+      console.error(err.message);
+    }
   }
 
   function handleClickDot(i: number) {
@@ -1256,12 +1317,9 @@ function Memories() {
   }
 
   function handleDeleteImg(i: number) {
-    setImgs((prev) => {
-      const newImgs = [...prev];
-      return newImgs.toSpliced(i, 1);
-    });
+    deleteImage(i);
     //if deleted img was the last img and not the only img, set curImg as one before the img, otherwise, one after the img
-    setCurImg((prev) => (prev && imgs.length - 1 === prev ? prev - 1 : prev));
+    setCurImg((prev) => (prev && images.length - 1 === prev ? prev - 1 : prev));
   }
 
   return (
@@ -1284,11 +1342,11 @@ function Memories() {
           overflow: "hidden",
         }}
       >
-        {imgs.map((img, i) => (
+        {images.map((img, i) => (
           <MemoryImg
             key={nanoid()}
             i={i}
-            img={img}
+            image={img}
             translateX={calcTransitionXSlider(i, curImg)}
             onClickDelete={handleDeleteImg}
           />
@@ -1298,7 +1356,7 @@ function Memories() {
             position: "absolute",
             width: "100%",
             height: "100%",
-            transform: calcTransitionXSlider(imgs.length, curImg),
+            transform: calcTransitionXSlider(images.length, curImg),
             transition: "all 0.4s",
           }}
         >
@@ -1363,7 +1421,7 @@ function Memories() {
           }}
         >
           {/* add one for upload slide */}
-          {[...imgs, ""].map((_, i) => (
+          {[...images, ""].map((_, i) => (
             <button
               key={nanoid()}
               style={{
@@ -1395,12 +1453,12 @@ function Memories() {
 
 function MemoryImg({
   i,
-  img,
+  image,
   translateX,
   onClickDelete,
 }: {
   i: number;
-  img: string;
+  image: string;
   translateX: string;
   onClickDelete: (i: number) => void;
 }) {
@@ -1426,7 +1484,7 @@ function MemoryImg({
         onClick={() => onClickDelete(i)}
       ></button>
       <Image
-        src={img}
+        src={image}
         alt={`memory image ${i + 1}`}
         width={400}
         height={200}

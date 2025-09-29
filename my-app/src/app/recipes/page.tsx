@@ -6,6 +6,7 @@ import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
 import {
   calcNumberOfPages,
+  getData,
   getFilteredRecipes,
   getRecipesPerPage,
   getTotalNumberOfRecipes,
