@@ -28,19 +28,17 @@ import {
 } from "@/app/config";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
-import { resolve } from "path";
-import { rejects } from "assert";
 
 export default function Recipe() {
   const userContext = useContext(AccessTokenContext);
   const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
   const [favorite, setFavorite] = useState<boolean>();
   const [edit, setEdit] = useState(false);
-  //Use when edit is
   const [servingsValue, setServingsValue] = useState<number>();
   const [ingredientsUnit, setIngredientsUnit] = useState<
     "metric" | "us" | "japan" | "australia" | "metricCup"
   >();
+  //Use when edit is
   const [mainImage, setMainImage] = useState<string | undefined>();
   const [instructionImages, setInstructionImages] = useState<
     (string | undefined)[]
@@ -96,7 +94,7 @@ export default function Recipe() {
     if (edit) return;
     setCurRecipe((prev: any) => {
       const newRecipe = { ...prev };
-      newRecipe.ingredients = updateIngsForServings(newValue, recipes[0]);
+      newRecipe.ingredients = updateIngsForServings(newValue, prev);
       //update convertion for updated ing amount
       return updateConvertion(newRecipe);
     });
@@ -163,9 +161,8 @@ export default function Recipe() {
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    let recipeData;
     try {
+      e.preventDefault();
       setIsPending(true);
       setError("");
 
@@ -238,7 +235,6 @@ export default function Recipe() {
       const newRecipe = {
         favorite: favorite === true ? true : false,
         mainImage,
-        // mainImage: mainImage ? await convertFileToString(mainImage) : undefined,
         title: String(formData.get("title"))?.trim() || "",
         author: String(formData.get("author")).trim() || "",
         region: getRegion(ingredients),
@@ -261,28 +257,25 @@ export default function Recipe() {
         instructions,
         description: String(formData.get("description"))?.trim() || "",
         memoryImages,
-        // memoryImages: await Promise.all(
-        //   memoryImages.map((image) => convertFileToString(image))
-        // ),
         comments: String(formData.get("comments"))?.trim() || "",
         createdAt: new Date().toISOString(),
       };
 
-      recipeData = await uploadRecipe(newRecipe);
+      const recipeData = await uploadRecipe(newRecipe);
 
+      setCurRecipe(recipeData);
       setIsPending(false);
-      setMessage("Recipe created successfully :)");
+      setMessage("Recipe uploaded successfully :)");
+      setEdit(false);
     } catch (err: any) {
       setIsPending(false);
       setError(err.message);
       return console.error(
-        "Error while creating recipe",
+        "Error while uploading recipe",
         err.message,
         err.statusCode || 500
       );
     }
-
-    redirect(`/recipes/recipe#${recipeData._id}`, RedirectType.replace);
   }
 
   async function uploadRecipe(recipe: TYPE_RECIPE) {
@@ -312,6 +305,8 @@ export default function Recipe() {
     }
   }
 
+  console.log(curRecipe);
+
   return (
     <div
       style={{
@@ -327,6 +322,36 @@ export default function Recipe() {
         padding: "2% 0",
       }}
     >
+      {isPending && (
+        <p
+          style={{
+            backgroundColor: "orange",
+            color: "white",
+            padding: "0.7% 1%",
+            borderRadius: "5px",
+            fontSize: "1.4vw",
+            letterSpacing: "0.07vw",
+            marginBottom: "1%",
+          }}
+        >
+          Updating your recipe...
+        </p>
+      )}
+      {(error || message) && (
+        <p
+          style={{
+            backgroundColor: error ? "orangered" : "rgba(112, 231, 0, 1)",
+            color: "white",
+            padding: "0.7% 1%",
+            borderRadius: "5px",
+            fontSize: "1.4vw",
+            letterSpacing: "0.07vw",
+            marginBottom: "1%",
+          }}
+        >
+          {error || message}
+        </p>
+      )}
       {!edit ? (
         <button
           className={clsx(styles.btn__img, styles.btn__edit)}
@@ -365,7 +390,7 @@ export default function Recipe() {
             backgroundImage:
               "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
             width: "50%",
-            height: "100%",
+            height: "600px",
             boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
             borderRadius: "10px",
           }}
@@ -408,6 +433,7 @@ export default function Recipe() {
           />
           <Ingredients
             edit={edit}
+            servingsValue={servingsValue}
             ingredients={curRecipe.ingredients}
             ingredientsUnit={ingredientsUnit}
           />
@@ -694,10 +720,10 @@ function BriefExplanation({
   const [servingsCustomUnit, setServingsCustomUnit] = useState(
     curRecipe.servings.customUnit
   );
-  const [temperatureKeys, setTemperatureKeys] = useState(
+  const [tempKeys, setTempKeys] = useState(
     Array(NUMBER_OF_TEMPERATURES)
       .fill("")
-      .map((str) => {
+      .map((_) => {
         return { id: nanoid() };
       })
   );
@@ -986,9 +1012,9 @@ function BriefExplanation({
             ></Image>
           </div>
           {edit ? (
-            temperatureKeys.map((idObj, i) => (
+            tempKeys.map((keyObj, i) => (
               <InputTemp
-                key={idObj.id}
+                key={keyObj.id}
                 edit={edit}
                 temperature={curRecipe.temperatures.temperatures[i]}
                 temperatureUnit={temperatureUnit}
@@ -1069,10 +1095,12 @@ function InputTemp({
 
 function Ingredients({
   edit,
+  servingsValue,
   ingredients,
   ingredientsUnit,
 }: {
   edit: boolean;
+  servingsValue: number;
   ingredients: TYPE_INGREDIENTS;
   ingredientsUnit: "metric" | "us" | "japan" | "australia" | "metricCup";
 }) {
@@ -1142,6 +1170,7 @@ function Ingredients({
           <IngLine
             key={line.id}
             edit={edit}
+            servingsValue={servingsValue}
             ingredient={ingredients[i]}
             ingredientsUnit={ingredientsUnit}
             i={i}
@@ -1160,12 +1189,14 @@ function Ingredients({
 
 function IngLine({
   edit,
+  servingsValue,
   ingredient,
   ingredientsUnit,
   i,
   onClickDelete,
 }: {
   edit: boolean;
+  servingsValue: number;
   ingredient: TYPE_INGREDIENT;
   ingredientsUnit: "metric" | "us" | "japan" | "australia" | "metricCup";
   i: number;
@@ -1180,7 +1211,7 @@ function IngLine({
   const [newIngredient, setNewIngredient] = useState<{
     amount: number;
     unit: string;
-  }>({ amount: 0, unit: "g" });
+  }>({ amount: ingredient.amount, unit: getUnit(ingredient) });
 
   function getUnit(ingredient: {
     ingredient: string;
@@ -1218,11 +1249,13 @@ function IngLine({
     //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
     const newIngredient =
       edit || !ingredient?.convertion || !ingredient.convertion[ingredientsUnit]
-        ? ingredient
+        ? { amount: ingredient.amount, unit: getUnit(ingredient) }
         : ingredient.convertion[ingredientsUnit];
 
     setNewIngredient(newIngredient);
-  }, [ingredientsUnit]);
+  }, [servingsValue, ingredientsUnit]);
+
+  console.log(newIngredient);
   // const getNewIng = () =>
   //   edit || !ingredient?.convertion || !ingredient.convertion[ingredientsUnit]
   //     ? ingredient
@@ -1636,13 +1669,14 @@ function AboutThisRecipe({
       <h2 className={styles.header}>About this recipe</h2>
       <div
         style={{
-          backgroundColor: "rgb(255, 247, 133)",
+          backgroundColor:
+            description || edit ? "rgb(255, 247, 133)" : "transparent",
           width: "85%",
           height: "130px",
           fontSize: "1.2vw",
           letterSpacing: "0.05vw",
           padding: "1.2% 1.5%",
-          overflowY: "auto",
+          overflowY: edit ? "hidden" : "auto",
           scrollbarColor: "rgb(255, 247, 133) rgba(255, 209, 2, 1)",
         }}
       >
@@ -1665,6 +1699,7 @@ function AboutThisRecipe({
           ></textarea>
         ) : (
           <p
+            className={description || styles.no_content}
             style={{
               width: "100%",
               height: "100%",
@@ -1673,7 +1708,7 @@ function AboutThisRecipe({
               padding: "1.2% 1.5%",
             }}
           >
-            {description}
+            {description || "There's no description"}
           </p>
         )}
       </div>
@@ -1936,7 +1971,8 @@ function Comments({
           width: "100%",
           height: "70%",
           borderRadius: "1% / 3%",
-          backgroundColor: edit || comments ? "rgb(255, 253, 222)" : "none",
+          backgroundColor:
+            edit || comments ? "rgb(255, 253, 222)" : "transparent",
         }}
       >
         {edit ? (
@@ -1969,7 +2005,7 @@ function Comments({
               textAlign: comments ? "left" : "center",
             }}
           >
-            {comments ? comments : "There're no comments"}
+            {comments || "There're no comments"}
           </p>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { TYPE_RECIPE, PASSWORD_REGEX, TYPE_INGREDIENT } from "./config";
+import Converter from "./converter/page";
 
 export const getData = async (path: string, option: object) => {
   try {
@@ -77,6 +78,18 @@ export function convertFileToString(file: File): Promise<string> {
   });
 }
 
+export async function getFileData(file: File) {
+  try {
+    return {
+      data: await convertFileToString(file),
+      contentType: file.type,
+      filename: file.name,
+      fileSize: file.size,
+    };
+  } catch (err) {
+    throw err;
+  }
+}
 ////local units are more important to convert to different units later
 export const getRegion = (ingredients: any) => {
   const servingsUnit = ingredients.reduce((acc: any, ing: any) => {

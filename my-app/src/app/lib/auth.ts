@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import { access } from "fs";
 
 export function generateAccessToken(userId: string) {
   return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
@@ -33,22 +34,43 @@ export function verifyRefreshToken(token: string) {
 
 export async function authenticateToken(req: NextRequest) {
   try {
-    // const cookieStore = await cookies();
-    // const accessToken = cookieStore.get("accessToken")?.value;
     const authHeader = req.headers.get("authorization");
     const accessToken = authHeader && authHeader.split(" ")[1];
 
-    console.log(accessToken);
+    //for when user reloaded and accessToken info disappeared
+    if (!accessToken) return await refreshAccessToken();
 
-    if (!accessToken) {
-      const err: any = new Error("Access token required.");
+    // if (!accessToken) {
+    //   const err: any = new Error("Access token required.");
+    //   err.statusCode = 401;
+    //   throw err;
+    // }
+
+    const decoded = verifyAccessToken(accessToken);
+
+    return { id: decoded?.userId, newAccessToken: null };
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function refreshAccessToken() {
+  try {
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get("refreshToken")?.value;
+
+    const decodedRefresh = refreshToken && verifyRefreshToken(refreshToken);
+    if (!decodedRefresh) {
+      const err: any = new Error("Invalid token");
       err.statusCode = 401;
       throw err;
     }
 
-    const decoded = verifyAccessToken(accessToken);
+    const id = decodedRefresh.userId;
 
-    return decoded?.userId;
+    const newAccessToken = generateAccessToken(id);
+
+    return { id, newAccessToken };
   } catch (err) {
     throw err;
   }

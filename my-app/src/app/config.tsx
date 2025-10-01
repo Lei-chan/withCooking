@@ -36,7 +36,7 @@ export type TYPE_RECIPE = {
   // recipeId: string;
   favorite: boolean;
   region: string;
-  mainImage: string | undefined;
+  mainImage: TYPE_FILE | undefined;
   title: string;
   author: string;
   servings: { servings: number; unit: string; customUnit: string };
@@ -44,11 +44,31 @@ export type TYPE_RECIPE = {
   ingredients: TYPE_INGREDIENTS;
   instructions: {
     instruction: string;
-    image: string | undefined;
+    image: TYPE_FILE | undefined;
   }[];
   description: string;
-  memoryImages: string[] | [];
+  memoryImages: TYPE_FILE[] | [];
   comments: string;
+};
+
+export type TYPE_FILE = {
+  data: string;
+  contentType: string;
+  filename: string;
+  fileSize: number;
+};
+
+export type TYPE_INSTRUCTION = {
+  instruction: string;
+  image: TYPE_FILE | undefined;
+};
+
+export type TYPE_CONVERTED_FILE = {
+  fileId: any;
+  filename: string;
+  contentType: string;
+  fileSize: number;
+  uploadedAt: Date;
 };
 
 export type TYPE_INGREDIENTS = TYPE_INGREDIENT[];

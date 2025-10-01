@@ -2,9 +2,8 @@ import connectDB from "@/app/lib/mongoDB";
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/app/modelSchemas/User";
 import { authenticateToken } from "@/app/lib/auth";
-import { refreshAccessToken } from "../route";
-import { AccessTokenContext } from "@/app/context";
-import { TYPE_RECIPE } from "@/app/config";
+import { refreshAccessToken } from "@/app/lib/auth";
+import { getGridFSBucket } from "@/app/lib/mongoDB";
 
 //get recipes in user data
 export async function GET(req: NextRequest) {
@@ -22,18 +21,17 @@ export async function GET(req: NextRequest) {
       throw err;
     }
 
-    //validate token
-    let userId = await authenticateToken(req);
-    let newAccessToken;
+    let { id, newAccessToken } = await authenticateToken(req);
+    // let newAccessToken;
 
-    //try to refresh accessToken
-    if (!userId) {
-      const { id, accessToken } = await refreshAccessToken();
-      userId = id;
-      newAccessToken = AccessTokenContext;
+    //try to refresh accessToken when access token is expired
+    if (!id) {
+      const tokenInfo = await refreshAccessToken();
+      id = tokenInfo.id;
+      newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const recipes = await User.findById(userId).select("recipes");
+    const recipes = await User.findById(id).select("recipes");
     const filteredRecipes =
       keyword && recipes
         ? recipes.filter((recipe: any) => {
@@ -77,25 +75,31 @@ export async function PATCH(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
-    let userId = await authenticateToken(req);
-    let newAccessToken;
+    let { id, newAccessToken } = await authenticateToken(req);
+    // let newAccessToken;
 
-    //try to refresh accessToken
-    if (!userId) {
-      const { id, accessToken } = await refreshAccessToken();
-      userId = id;
-      newAccessToken = accessToken;
+    //try to refresh accessToken when access token is expired
+    if (!id) {
+      const tokenInfo = await refreshAccessToken();
+      id = tokenInfo.id;
+      newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const userRecipes = await User.findById(userId);
+    // const userRecipes = await User.findById(id);
 
-    const newRecipes = userRecipes.recipes.length
-      ? [...userRecipes.recipes, body]
-      : [body];
+    // const newRecipes = userRecipes.recipes.length
+    //   ? [...userRecipes.recipes, body]
+    //   : [body];
+
+    // const updatedUser = await User.findByIdAndUpdate(
+    //   id,
+    //   { recipes: newRecipes },
+    //   { new: true, runValidators: true }
+    // );
 
     const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { recipes: newRecipes },
+      id,
+      { $push: { recipes: body } },
       { new: true, runValidators: true }
     );
 
@@ -121,16 +125,17 @@ export async function DELETE(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const recipeId = searchParams.get("id");
 
-    let userId = await authenticateToken(req);
-    let newAccessToken;
+    let { id, newAccessToken } = await authenticateToken(req);
+    // let newAccessToken;
 
-    if (!userId) {
-      const { id, accessToken } = await refreshAccessToken();
-      userId = id;
-      newAccessToken = accessToken;
+    //try to refresh accessToken when access token is expired
+    if (!id) {
+      const tokenInfo = await refreshAccessToken();
+      id = tokenInfo.id;
+      newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const recipes = await User.findById(userId).select("recipes");
+    const recipes = await User.findById(id).select("recipes");
     const deletedRecipeIndex = recipes.findIndex(
       (recipe: any) => recipe.recipeId === recipeId
     );
@@ -143,7 +148,7 @@ export async function DELETE(req: NextRequest) {
 
     const newRecipes = recipes.toSpliced(deletedRecipeIndex, 1);
     const updatedUser = await User.findByIdAndUpdate(
-      userId,
+      id,
       { recipes: newRecipes },
       { new: true, runValidators: true }
     );

@@ -1,49 +1,19 @@
-import connectDB from "../../lib/mongoDB";
-import * as z from "zod";
+import connectDB from "@/app/lib/mongoDB";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import User from "../../modelSchemas/User";
+import User from "@/app/modelSchemas/User";
 import {
   passwordUpdateSchema,
   userOtherUpdateSchema,
   userSchema,
-} from "../../lib/validation";
+} from "@/app/lib/validation";
 import {
-  verifyRefreshToken,
   authenticateToken,
   generateAccessToken,
   generateRefreshToken,
+  refreshAccessToken,
   hashPassword,
-} from "../../lib/auth";
-
-export async function refreshAccessToken() {
-  try {
-    const cookieStore = await cookies();
-    const refreshToken = cookieStore.get("refreshToken")?.value;
-
-    const decodedRefresh = refreshToken && verifyRefreshToken(refreshToken);
-    if (!decodedRefresh) {
-      const err: any = new Error("Invalid token");
-      err.statusCode = 401;
-      throw err;
-    }
-
-    const id = decodedRefresh.userId;
-
-    const accessToken = generateAccessToken(id);
-    // cookieStore.set("accessToken", accessToken, {
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === "production",
-    //   sameSite: "strict",
-    //   path: "/",
-    //   maxAge: 24 * 60 * 60 * 1000, //24 hours
-    // });
-
-    return { id, accessToken };
-  } catch (err) {
-    throw err;
-  }
-}
+} from "@/app/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -144,18 +114,17 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    //validate token
-    let userId = await authenticateToken(req);
-    let newAccessToken;
+    let { id, newAccessToken } = await authenticateToken(req);
+    // let newAccessToken;
 
-    //try to refresh accessToken
-    if (!userId) {
-      const { id, accessToken } = await refreshAccessToken();
-      userId = id;
-      newAccessToken = accessToken;
+    //try to refresh accessToken when access token is expired
+    if (!id) {
+      const tokenInfo = await refreshAccessToken();
+      id = tokenInfo.id;
+      newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findById(id).select("-password");
 
     if (!user) {
       const err: any = new Error("User not found");
@@ -179,20 +148,14 @@ export async function PATCH(req: NextRequest) {
   try {
     await connectDB();
 
-    let userId = await authenticateToken(req);
-    let newAccessToken;
-    console.log("userId before refresh", userId);
+    let { id, newAccessToken } = await authenticateToken(req);
+    // let newAccessToken;
 
-    //try to refresh accessToken
-    if (!userId) {
-      const { id, accessToken } = await refreshAccessToken();
-      userId = id;
-      newAccessToken = accessToken;
-      console.log(
-        "userId and accessToken after refresh",
-        userId,
-        newAccessToken
-      );
+    //try to refresh accessToken when access token is expired
+    if (!id) {
+      const tokenInfo = await refreshAccessToken();
+      id = tokenInfo.id;
+      newAccessToken = tokenInfo.newAccessToken;
     }
 
     let updatedUser;
@@ -214,7 +177,7 @@ export async function PATCH(req: NextRequest) {
         throw err;
       }
 
-      const user = await User.findById(userId).select("+password");
+      const user = await User.findById(id).select("+password");
       if (!user) {
         const err: any = new Error("User not found");
         err.statusCode = 404;
@@ -232,7 +195,7 @@ export async function PATCH(req: NextRequest) {
       console.log(hashedPassword);
 
       updatedUser = await User.findByIdAndUpdate(
-        userId,
+        id,
         {
           password: hashedPassword,
         },
@@ -262,7 +225,7 @@ export async function PATCH(req: NextRequest) {
         throw err;
       }
 
-      updatedUser = await User.findByIdAndUpdate(userId, body, {
+      updatedUser = await User.findByIdAndUpdate(id, body, {
         new: true,
         runValidators: true,
       }).select("-password");
@@ -292,17 +255,17 @@ export async function DELETE(req: NextRequest) {
     // const body = await req.json();
     // const { password } = body;
 
-    let userId = await authenticateToken(req);
-    console.log("userId before refresh", userId);
+    let { id, newAccessToken } = await authenticateToken(req);
+    // let newAccessToken;
 
-    //try to refresh accessToken
-    if (!userId) {
-      const { id, accessToken } = await refreshAccessToken();
-      userId = id;
-      console.log("userId after refresh", userId);
+    //try to refresh accessToken when access token is expired
+    if (!id) {
+      const tokenInfo = await refreshAccessToken();
+      id = tokenInfo.id;
+      newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const user = await User.findById(userId).select("+password");
+    const user = await User.findById(id).select("+password");
 
     if (!user) {
       const err: any = new Error("User not found");
@@ -320,7 +283,7 @@ export async function DELETE(req: NextRequest) {
     //   throw err;
     // }
 
-    const deletedUser = await User.findByIdAndDelete(userId);
+    const deletedUser = await User.findByIdAndDelete(id);
     console.log("deletedUser", deletedUser);
 
     return NextResponse.json(

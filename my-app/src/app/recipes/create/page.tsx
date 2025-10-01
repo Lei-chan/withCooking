@@ -10,9 +10,15 @@ import {
   convertIngUnits,
   getData,
   getImageURL,
+  getFileData,
   getRegion,
 } from "@/app/helper";
-import { MAX_SERVINGS, TYPE_RECIPE } from "@/app/config";
+import {
+  MAX_SERVINGS,
+  NUMBER_OF_TEMPERATURES,
+  TYPE_RECIPE,
+  TYPE_FILE,
+} from "@/app/config";
 import { AccessTokenContext } from "@/app/context";
 import { redirect, RedirectType } from "next/navigation";
 
@@ -23,18 +29,18 @@ export default function CreateRecipe({
 }) {
   const userContext = useContext(AccessTokenContext);
   const [favorite, setFavorite] = useState(false);
-  const [mainImage, setMainImage] = useState<string | undefined>();
+  const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
   const [instructionImages, setInstructionImages] = useState<
-    (string | undefined)[]
+    (TYPE_FILE | undefined)[]
   >([undefined]);
-  const [memoryImages, setMemoryImages] = useState<string[]>([]);
+  const [memoryImages, setMemoryImages] = useState<TYPE_FILE[]>([]);
 
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  function handleChangeMainImage(image: string) {
-    setMainImage(image);
+  function handleChangeMainImage(file: TYPE_FILE) {
+    setMainImage(file);
   }
 
   function handleDeleteMainImage() {
@@ -53,10 +59,10 @@ export default function CreateRecipe({
     });
   }
 
-  function handleChangeInstructionImage(image: string, index: number) {
+  function handleChangeInstructionImage(file: TYPE_FILE, index: number) {
     setInstructionImages((prev) => {
       const newImages = [...prev];
-      newImages[index] = image;
+      newImages[index] = file;
       return newImages;
     });
   }
@@ -65,8 +71,8 @@ export default function CreateRecipe({
     setInstructionImages((prev) => prev.toSpliced(index, 1));
   }
 
-  function handleChangeMemoryImages(imagesArr: string[]) {
-    setMemoryImages((prev) => [...prev, ...imagesArr]);
+  function handleChangeMemoryImages(filesArr: TYPE_FILE[]) {
+    setMemoryImages((prev) => [...prev, ...filesArr]);
   }
 
   function handleDeleteMemoryImage(index: number) {
@@ -144,6 +150,10 @@ export default function CreateRecipe({
       const instructions = new Array(instructionImages.length)
         .fill("")
         .map((_, i) => {
+          const instructionImageFile = formData.get(
+            `instruction${i + 1}Image`
+          ) as File;
+
           return {
             instruction: String(formData.get(`instruction${i + 1}`)) || "",
             image: instructionImages[i],
@@ -153,7 +163,6 @@ export default function CreateRecipe({
       const newRecipe = {
         favorite: favorite === true ? true : false,
         mainImage,
-        // mainImage: mainImage ? await convertFileToString(mainImage) : undefined,
         title: String(formData.get("title"))?.trim() || "",
         author: String(formData.get("author")).trim() || "",
         region: getRegion(ingredients),
@@ -176,16 +185,12 @@ export default function CreateRecipe({
         instructions,
         description: String(formData.get("description"))?.trim() || "",
         memoryImages,
-        // memoryImages: await Promise.all(
-        //   memoryImages.map((image) => convertFileToString(image))
-        // ),
         comments: String(formData.get("comments"))?.trim() || "",
         createdAt: new Date().toISOString(),
       };
 
-      console.log(newRecipe);
-
       recipeData = await uploadRecipe(newRecipe);
+      console.log(recipeData);
 
       setIsPending(false);
       setMessage("Recipe created successfully :)");
@@ -204,13 +209,15 @@ export default function CreateRecipe({
 
   async function uploadRecipe(recipe: TYPE_RECIPE) {
     try {
-      console.log(JSON.stringify(recipe));
       ///store new recipe in recipes database and user info database
       const recipeData = await getData("/api/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(recipe),
       });
+
+      recipeData.newAccessToken &&
+        userContext?.login(recipeData.newAccessToken);
 
       //connect the recipe data id to user recipe data id
       const userData = await getData("/api/users/recipes", {
@@ -219,7 +226,7 @@ export default function CreateRecipe({
           "Content-Type": "application/json",
           authorization: `Bearer ${userContext?.accessToken}`,
         },
-        body: JSON.stringify({ recipeId: recipeData.data._id, ...recipe }),
+        body: JSON.stringify({ ...recipeData.data }),
       });
 
       userData.newAccessToken && userContext?.login(userData.newAccessToken);
@@ -247,12 +254,13 @@ export default function CreateRecipe({
       {(error || message) && (
         <p
           style={{
-            backgroundColor: error ? "orangered" : "orange",
+            backgroundColor: error ? "orangered" : "rgba(112, 231, 0, 1)",
             color: "white",
-            padding: "1%",
+            padding: "0.7% 1%",
             borderRadius: "5px",
-            fontSize: "1.3vw",
-            letterSpacing: "0.05vw",
+            fontSize: "1.4vw",
+            letterSpacing: "0.07vw",
+            marginBottom: "1%",
           }}
         >
           {error || message}
@@ -300,76 +308,6 @@ export default function CreateRecipe({
           deleteImage={handleDeleteMemoryImage}
         />
         <Comments />
-
-        {/* <div className={styles.container__nutrition_facts}>
-          <div className={styles.nutrition_facts}>
-            <div className={styles.container__h3_input}>
-              <h3>Nutrition Facts</h3>
-              <input
-                id={styles.input__servings}
-                type="number"
-                min="1"
-                max="500"
-                defaultValue="1"
-              ></input>
-              <span>servings</span>
-            </div>
-            <table className={styles.nutrients}>
-              <thead>
-                <tr>
-                  <th scope="col">Type</th>
-                  <th scope="col">Amount</th>
-                  <th scope="col">
-                    Recommended amount a day
-                    <br />
-                    (Adult Men/Adult Women)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">Calories</th>
-                  <td scope="row">300kcal(1000jl)/30%</td>
-                  <td scope="row">15%</td>
-                </tr>
-                <tr>
-                  <th scope="row">Carbs</th>
-                  <td scope="row">100g/30%</td>
-                  <td scope="row">20%</td>
-                </tr>
-                <tr>
-                  <th scope="row">Protein</th>
-                  <td scope="row">10g/4%</td>
-                  <td scope="row">10%</td>
-                </tr>
-                <tr>
-                  <th scope="row">Fat</th>
-                  <td scope="row">20g/10%</td>
-                  <td scope="row">70%</td>
-                </tr>
-                <tr>
-                  <th scope="row">Sugar</th>
-                  <td scope="row">20g/10%</td>
-                  <td scope="row">70%</td>
-                </tr>
-                <tr>
-                  <th scope="row">Sodium</th>
-                  <td scope="row">2g/0.5%</td>
-                  <td scope="row">10%/20%</td>
-                </tr>
-                <tr>
-                  <th scope="row">Fibers</th>
-                  <td scope="row">2g/0.5%</td>
-                  <td scope="row">10%/20%</td>
-                </tr>
-              </tbody>
-            </table>
-            <p style={{ color: "red", width: "95%", marginTop: "2%" }}>
-                ※ Couldn't find the information of aaaa, and aaa, so that is
-                excluded here.
-              </p> 
-          </div>
-        </div> */}
         <button className={styles.btn__upload_recipe} type="submit">
           Upload
         </button>
@@ -385,8 +323,8 @@ function ImageTitle({
   onChangeImage,
   deleteImage,
 }: {
-  image: string | undefined;
-  onChangeImage: (image: string) => void;
+  image: TYPE_FILE | undefined;
+  onChangeImage: (image: TYPE_FILE) => void;
   deleteImage: () => void;
 }) {
   async function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -394,10 +332,10 @@ function ImageTitle({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      const convertedFile = await convertFileToString(files[0]);
+      // const convertedFile = await convertFileToString(files[0]);
 
       // setImage(URL.createObjectURL(files[0]));
-      onChangeImage(convertedFile);
+      onChangeImage(await getFileData(files[0]));
     } catch (err: any) {
       console.error(err.message);
     }
@@ -466,7 +404,12 @@ function ImageTitle({
           </div>
         </div>
       ) : (
-        <Image src={image} alt="main image" width={500} height={300}></Image>
+        <Image
+          src={image.data}
+          alt="main image"
+          width={500}
+          height={300}
+        ></Image>
       )}
       <div
         style={{
@@ -515,6 +458,13 @@ function BriefExplanation({
   onClickFavorite: () => void;
 }) {
   const [mouseOver, setMouseOver] = useState([false, false, false]);
+  const [tempKeys, setTempKeys] = useState(
+    Array(NUMBER_OF_TEMPERATURES)
+      .fill("")
+      .map((_) => {
+        return { id: nanoid() };
+      })
+  );
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     const index = e.currentTarget.dataset.icon;
@@ -662,43 +612,6 @@ function BriefExplanation({
           />
         </div>
         <div className={styles.container__units}>
-          {/* <div
-            className={styles.icons__brief_explanation}
-            data-icon="2"
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
-            <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "500%",
-                height: "330%",
-                top: "-350%",
-                left: "-360%",
-                opacity: !mouseOver[2] ? 0 : 1,
-              }}
-            >
-              <p className={styles.p__fukidashi}>Unit system you prefer</p>
-            </div>
-            <Image
-              src={"/scale.svg"}
-              alt="ingredient units icon"
-              width={14}
-              height={16}
-            ></Image>
-          </div>
-          <select
-            className={styles.input__brief_explanation}
-            style={{ width: "25%" }}
-            name="IngredientsUnit"
-          >
-            <option value="metric">Metric</option>
-            <option value="us">US</option>
-            <option value="japan">Japan</option>
-            <option value="australia">Australia</option>
-            <option value="metricCup">Metric cup (1cup = 250ml)</option>
-          </select> */}
-
           <div
             className={styles.icons__brief_explanation}
             data-icon="2"
@@ -729,11 +642,9 @@ function BriefExplanation({
               height={17}
             ></Image>
           </div>
-          {Array(4)
-            .fill("")
-            .map((_, i) => (
-              <InputTemp key={nanoid()} i={i} />
-            ))}
+          {tempKeys.map((keyObj, i) => (
+            <InputTemp key={keyObj.id} i={i} />
+          ))}
           <select
             className={styles.input__brief_explanation}
             style={{ width: "8%" }}
@@ -1004,10 +915,10 @@ function Instructions({
   onChangeImage,
   deleteInstruction,
 }: {
-  images: (string | undefined)[];
+  images: (TYPE_FILE | undefined)[];
   addImage: () => void;
   deleteImage: (index: number) => void;
-  onChangeImage: (image: string, index: number) => void;
+  onChangeImage: (image: TYPE_FILE, index: number) => void;
   deleteInstruction: (index: number) => void;
 }) {
   //Store key so whenever user delete instruction, other instructions' info will remain the same
@@ -1119,18 +1030,19 @@ function Instruction({
   onChangeImage,
 }: {
   i: number;
-  image: string | undefined;
+  image: TYPE_FILE | undefined;
   onClickDeleteImage: (i: number) => void;
   onClickDelete: (i: number) => void;
-  onChangeImage: (image: string, i: number) => void;
+  onChangeImage: (image: TYPE_FILE, i: number) => void;
 }) {
   async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
     try {
       const files = e.currentTarget.files;
       if (!files) return;
 
-      const convertedFile = await convertFileToString(files[0]);
-      onChangeImage(convertedFile, i);
+      // const convertedFile = await convertFileToString(files[0]);
+      // onChangeImage(convertedFile, i);
+      onChangeImage(await getFileData(files[0]), i);
     } catch (err: any) {
       console.error(err.message);
     }
@@ -1208,7 +1120,7 @@ function Instruction({
         ) : (
           <>
             <Image
-              src={image}
+              src={image.data}
               alt={`instruction ${i + 1} image`}
               width={140}
               height={100}
@@ -1291,8 +1203,8 @@ function Memories({
   onChangeImages,
   deleteImage,
 }: {
-  images: [] | string[];
-  onChangeImages: (imagesArr: string[]) => void;
+  images: [] | TYPE_FILE[];
+  onChangeImages: (imagesArr: TYPE_FILE[]) => void;
   deleteImage: (i: number) => void;
 }) {
   const [curImg, setCurImg] = useState(0);
@@ -1302,8 +1214,11 @@ function Memories({
       const files = e.currentTarget.files;
       if (!files) return;
 
+      // const convertedFiles = await Promise.all(
+      //   Array.from(files).map((image) => convertFileToString(image))
+      // );
       const convertedFiles = await Promise.all(
-        Array.from(files).map((image) => convertFileToString(image))
+        Array.from(files).map((image) => getFileData(image))
       );
 
       onChangeImages(convertedFiles);
@@ -1458,7 +1373,7 @@ function MemoryImg({
   onClickDelete,
 }: {
   i: number;
-  image: string;
+  image: TYPE_FILE;
   translateX: string;
   onClickDelete: (i: number) => void;
 }) {
@@ -1484,7 +1399,7 @@ function MemoryImg({
         onClick={() => onClickDelete(i)}
       ></button>
       <Image
-        src={image}
+        src={image.data}
         alt={`memory image ${i + 1}`}
         width={400}
         height={200}

@@ -5,7 +5,7 @@ const RecipeSchema = new mongoose.Schema({
   recipeId: String,
   favorite: Boolean,
   region: String,
-  mainImage: String,
+  mainImage: {},
   title: String,
   author: String,
   servings: {
@@ -30,7 +30,7 @@ const RecipeSchema = new mongoose.Schema({
   instructions: [
     {
       instruction: String,
-      image: String,
+      image: {},
     },
   ],
   description: String,
