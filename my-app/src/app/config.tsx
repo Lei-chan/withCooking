@@ -32,10 +32,12 @@ export const APP_EXPLANATIONS = [
   },
 ];
 
+export const MESSAGE_TIMEOUT = 3; //seconds
+
 export type TYPE_RECIPE = {
-  // recipeId: string;
+  // id: string;
   favorite: boolean;
-  region: string;
+  region: "metric" | "us" | "japan" | "australia" | "metricCup";
   mainImage: TYPE_FILE | undefined;
   title: string;
   author: string;
@@ -58,17 +60,17 @@ export type TYPE_FILE = {
   fileSize: number;
 };
 
-export type TYPE_INSTRUCTION = {
-  instruction: string;
-  image: TYPE_FILE | undefined;
-};
-
 export type TYPE_CONVERTED_FILE = {
   fileId: any;
   filename: string;
   contentType: string;
   fileSize: number;
   uploadedAt: Date;
+};
+
+export type TYPE_INSTRUCTION = {
+  instruction: string;
+  image: TYPE_FILE | undefined;
 };
 
 export type TYPE_INGREDIENTS = TYPE_INGREDIENT[];
@@ -107,11 +109,4 @@ export type TYPE_INGREDIENT = {
         AustralianTbsp: { amount: number; unit: string } | undefined;
       }
     | undefined;
-};
-
-//for dev
-export const accountInfo = {
-  id: "khskhju9393&83u",
-  email: "jskss@kks",
-  since: "2025/10/05",
 };

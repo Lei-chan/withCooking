@@ -85,23 +85,23 @@ export async function PATCH(req: NextRequest) {
       newAccessToken = tokenInfo.newAccessToken;
     }
 
-    // const userRecipes = await User.findById(id);
+    const userRecipes = await User.findById(id);
 
-    // const newRecipes = userRecipes.recipes.length
-    //   ? [...userRecipes.recipes, body]
-    //   : [body];
-
-    // const updatedUser = await User.findByIdAndUpdate(
-    //   id,
-    //   { recipes: newRecipes },
-    //   { new: true, runValidators: true }
-    // );
+    const newRecipes = userRecipes.recipes.length
+      ? [...userRecipes.recipes, body]
+      : [body];
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { $push: { recipes: body } },
+      { recipes: newRecipes },
       { new: true, runValidators: true }
     );
+
+    // const updatedUser = await User.findByIdAndUpdate(
+    //   id,
+    //   { $push: { recipes: body } },
+    //   { new: true, runValidators: true }
+    // );
 
     return NextResponse.json(
       {

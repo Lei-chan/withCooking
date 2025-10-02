@@ -163,6 +163,19 @@
   letter-spacing: 0.03vw;
 }
 
+@keyframes updating {
+  from {
+    transform: rotate(-40deg);
+  }
+  to {
+    transform: rotate(40deg);
+  }
+}
+
+.img__uploading {
+  animation: updating 0.8s infinite;
+}
+
 @keyframes loading {
   from {
     opacity: 0.5;

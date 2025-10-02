@@ -150,10 +150,6 @@ export default function CreateRecipe({
       const instructions = new Array(instructionImages.length)
         .fill("")
         .map((_, i) => {
-          const instructionImageFile = formData.get(
-            `instruction${i + 1}Image`
-          ) as File;
-
           return {
             instruction: String(formData.get(`instruction${i + 1}`)) || "",
             image: instructionImages[i],
@@ -332,9 +328,6 @@ function ImageTitle({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      // const convertedFile = await convertFileToString(files[0]);
-
-      // setImage(URL.createObjectURL(files[0]));
       onChangeImage(await getFileData(files[0]));
     } catch (err: any) {
       console.error(err.message);
@@ -1040,8 +1033,6 @@ function Instruction({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      // const convertedFile = await convertFileToString(files[0]);
-      // onChangeImage(convertedFile, i);
       onChangeImage(await getFileData(files[0]), i);
     } catch (err: any) {
       console.error(err.message);
@@ -1214,9 +1205,6 @@ function Memories({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      // const convertedFiles = await Promise.all(
-      //   Array.from(files).map((image) => convertFileToString(image))
-      // );
       const convertedFiles = await Promise.all(
         Array.from(files).map((image) => getFileData(image))
       );

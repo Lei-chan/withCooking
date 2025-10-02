@@ -84,6 +84,7 @@ export default function Home() {
             alt="withCooking"
             width={700}
             height={200}
+            priority
           ></Image>
           <p className={styles.description}>
             In this app, all necessary and useful tools for cooking are

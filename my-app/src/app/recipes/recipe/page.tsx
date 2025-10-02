@@ -7,10 +7,9 @@ import clsx from "clsx";
 import React, { useEffect, useState, useContext } from "react";
 import { AccessTokenContext } from "@/app/context";
 import {
-  recipes,
+  wait,
   getData,
-  getImageURL,
-  convertFileToString,
+  getFileData,
   getRegion,
   convertIngUnits,
   convertTempUnits,
@@ -22,6 +21,7 @@ import {
 import {
   MAX_SERVINGS,
   NUMBER_OF_TEMPERATURES,
+  TYPE_FILE,
   TYPE_INGREDIENT,
   TYPE_INGREDIENTS,
   TYPE_RECIPE,
@@ -31,6 +31,9 @@ import fracty from "fracty";
 
 export default function Recipe() {
   const userContext = useContext(AccessTokenContext);
+  //don't modify recipe value unless the recipe is changed
+  const [recipe, setRecipe] = useState<TYPE_RECIPE>();
+  //use curRecipe to modify the recipe value
   const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
   const [favorite, setFavorite] = useState<boolean>();
   const [edit, setEdit] = useState(false);
@@ -39,11 +42,11 @@ export default function Recipe() {
     "metric" | "us" | "japan" | "australia" | "metricCup"
   >();
   //Use when edit is
-  const [mainImage, setMainImage] = useState<string | undefined>();
+  const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
   const [instructionImages, setInstructionImages] = useState<
-    (string | undefined)[]
+    (TYPE_FILE | undefined)[]
   >([undefined]);
-  const [memoryImages, setMemoryImages] = useState<string[]>([]);
+  const [memoryImages, setMemoryImages] = useState<TYPE_FILE[]>([]);
 
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
@@ -58,20 +61,19 @@ export default function Recipe() {
     try {
       const data = await getData(`/api/recipes?id=${id}`, { method: "GET" });
 
-      const recipe = data.data;
+      //recipe is stored inside _doc of data.data
+      //images are stored in data.data
+      const recipe = data.data._doc;
 
-      setCurRecipe(recipe);
-      setFavorite(recipe.favorite);
-      setServingsValue(recipe.servings.servings);
-      setIngredientsUnit(recipe.region);
-      setMainImage(recipe.mainImage);
+      setStateInitNoImages(recipe);
+      setMainImage(data.data.mainImage);
       setInstructionImages(
-        recipe.instructions.map(
-          (inst: { instruction: string; image: string | undefined }) =>
+        data.data.instructions.map(
+          (inst: { instruction: string; image: TYPE_FILE | undefined }) =>
             inst.image
         )
       );
-      setMemoryImages(recipe.memoryImages);
+      setMemoryImages(data.data.memoryImages);
     } catch (err: any) {
       setError(err.message);
       console.error(
@@ -80,6 +82,14 @@ export default function Recipe() {
         err.statusCode || 500
       );
     }
+  }
+
+  function setStateInitNoImages(recipe: TYPE_RECIPE) {
+    setRecipe(recipe);
+    setCurRecipe(recipe);
+    setFavorite(recipe.favorite);
+    setServingsValue(recipe.servings.servings);
+    setIngredientsUnit(recipe.region);
   }
 
   function handleToggleEdit() {
@@ -91,10 +101,10 @@ export default function Recipe() {
     const newValue = +e.currentTarget.value;
     setServingsValue(newValue);
 
-    if (edit) return;
+    if (edit || !recipe || !curRecipe) return;
     setCurRecipe((prev: any) => {
-      const newRecipe = { ...prev };
-      newRecipe.ingredients = updateIngsForServings(newValue, prev);
+      const newRecipe = { ...recipe };
+      newRecipe.ingredients = updateIngsForServings(newValue, recipe);
       //update convertion for updated ing amount
       return updateConvertion(newRecipe);
     });
@@ -116,7 +126,7 @@ export default function Recipe() {
     setIngredientsUnit(value);
   }
 
-  function handleChangeMainImage(image: string) {
+  function handleChangeMainImage(image: TYPE_FILE) {
     setMainImage(image);
   }
 
@@ -136,7 +146,7 @@ export default function Recipe() {
     });
   }
 
-  function handleChangeInstructionImage(image: string, index: number) {
+  function handleChangeInstructionImage(image: TYPE_FILE, index: number) {
     setInstructionImages((prev) => {
       const newImages = [...prev];
       newImages[index] = image;
@@ -148,7 +158,7 @@ export default function Recipe() {
     setInstructionImages((prev) => prev.toSpliced(index, 1));
   }
 
-  function handleChangeMemoryImages(imagesArr: string[]) {
+  function handleChangeMemoryImages(imagesArr: TYPE_FILE[]) {
     setMemoryImages((prev) => [...prev, ...imagesArr]);
   }
 
@@ -161,8 +171,9 @@ export default function Recipe() {
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    let recipeData;
     try {
-      e.preventDefault();
       setIsPending(true);
       setError("");
 
@@ -261,11 +272,13 @@ export default function Recipe() {
         createdAt: new Date().toISOString(),
       };
 
-      const recipeData = await uploadRecipe(newRecipe);
+      recipeData = await uploadRecipe(newRecipe);
 
-      setCurRecipe(recipeData);
+      setStateInitNoImages(recipeData);
       setIsPending(false);
       setMessage("Recipe uploaded successfully :)");
+      await wait();
+      setMessage("");
       setEdit(false);
     } catch (err: any) {
       setIsPending(false);
@@ -280,9 +293,10 @@ export default function Recipe() {
 
   async function uploadRecipe(recipe: TYPE_RECIPE) {
     try {
+      const recipeId = window.location.hash.slice(1);
       ///store new recipe in recipes database and user info database
-      const recipeData = await getData("/api/recipes", {
-        method: "POST",
+      const recipeData = await getData(`/api/recipes?id=${recipeId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(recipe),
       });
@@ -294,7 +308,7 @@ export default function Recipe() {
           "Content-Type": "application/json",
           authorization: `Bearer ${userContext?.accessToken}`,
         },
-        body: JSON.stringify({ recipeId: recipeData.data._id, ...recipe }),
+        body: JSON.stringify(recipeData.data),
       });
 
       userData.newAccessToken && userContext?.login(userData.newAccessToken);
@@ -305,9 +319,7 @@ export default function Recipe() {
     }
   }
 
-  console.log(curRecipe);
-
-  return (
+  return !isPending ? (
     <div
       style={{
         position: "relative",
@@ -322,21 +334,6 @@ export default function Recipe() {
         padding: "2% 0",
       }}
     >
-      {isPending && (
-        <p
-          style={{
-            backgroundColor: "orange",
-            color: "white",
-            padding: "0.7% 1%",
-            borderRadius: "5px",
-            fontSize: "1.4vw",
-            letterSpacing: "0.07vw",
-            marginBottom: "1%",
-          }}
-        >
-          Updating your recipe...
-        </p>
-      )}
       {(error || message) && (
         <p
           style={{
@@ -380,7 +377,8 @@ export default function Recipe() {
           Recipe
         </button>
       )}
-      {!curRecipe ||
+      {!recipe ||
+      !curRecipe ||
       servingsValue === undefined ||
       !ingredientsUnit ||
       favorite === undefined ? (
@@ -532,6 +530,8 @@ export default function Recipe() {
         </form>
       )}
     </div>
+  ) : (
+    <Loading />
   );
 }
 
@@ -543,9 +543,9 @@ function ImageTitle({
   deleteImage,
 }: {
   edit: boolean;
-  image: string | undefined;
+  image: TYPE_FILE | undefined;
   title: string;
-  onChangeImage: (image: string) => void;
+  onChangeImage: (image: TYPE_FILE) => void;
   deleteImage: () => void;
 }) {
   const [recipeTitle, setRecipeTitle] = useState(title);
@@ -555,10 +555,7 @@ function ImageTitle({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      const convertedFile = await convertFileToString(files[0]);
-
-      // setImage(URL.createObjectURL(files[0]));
-      onChangeImage(convertedFile);
+      onChangeImage(await getFileData(files[0]));
     } catch (err: any) {
       console.error(err.message);
     }
@@ -633,11 +630,15 @@ function ImageTitle({
                 height: "9%",
               }}
               type="button"
-              // onClick={handleDeleteImage}
               onClick={deleteImage}
             ></button>
           )}
-          <Image src={image} alt="main image" width={500} height={300}></Image>
+          <Image
+            src={image.data}
+            alt="main image"
+            width={500}
+            height={300}
+          ></Image>
         </>
       )}
       <div
@@ -1116,7 +1117,6 @@ function Ingredients({
 
   function handleClickPlus() {
     setNumberOfLines((prev) => prev + 1);
-    setLines((prev) => [...prev, { id: nanoid() }]);
   }
 
   function handleClickDelete(i: number) {
@@ -1135,7 +1135,7 @@ function Ingredients({
       setLines((prev) => {
         if (!deletedIndex && deletedIndex !== 0) return prev;
 
-        return [...prev].toSpliced(deletedIndex, 1);
+        return prev.toSpliced(deletedIndex, 1);
       });
   }, [numberOfLines]);
 
@@ -1171,7 +1171,16 @@ function Ingredients({
             key={line.id}
             edit={edit}
             servingsValue={servingsValue}
-            ingredient={ingredients[i]}
+            ingredient={
+              ingredients[i] || {
+                ingredient: "",
+                amount: 0,
+                unit: "g",
+                customUnit: "",
+                id: undefined,
+                convertion: undefined,
+              }
+            }
             ingredientsUnit={ingredientsUnit}
             i={i}
             onClickDelete={handleClickDelete}
@@ -1220,7 +1229,7 @@ function IngLine({
     customUnit: string;
   }) {
     let unit;
-    if (ingredient.unit === "NoUnit") {
+    if (ingredient.unit === "noUnit") {
       unit = "";
     } else if (ingredient.unit === "other") {
       unit = ingredient.customUnit;
@@ -1253,13 +1262,7 @@ function IngLine({
         : ingredient.convertion[ingredientsUnit];
 
     setNewIngredient(newIngredient);
-  }, [servingsValue, ingredientsUnit]);
-
-  console.log(newIngredient);
-  // const getNewIng = () =>
-  //   edit || !ingredient?.convertion || !ingredient.convertion[ingredientsUnit]
-  //     ? ingredient
-  //     : ingredient.convertion[ingredientsUnit];
+  }, [ingredient, servingsValue, ingredientsUnit]);
 
   return (
     <div
@@ -1336,17 +1339,19 @@ function IngLine({
             style={{ width: "1.3vw", marginLeft: "2%" }}
             type="checkbox"
           ></input>
-          <span>
-            {newIngredient.unit === "g" ||
-            newIngredient.unit === "kg" ||
-            newIngredient.unit === "oz" ||
-            newIngredient.unit === "lb" ||
-            newIngredient.unit === "ml" ||
-            newIngredient.unit === "L"
-              ? newIngredient.amount
-              : fracty(newIngredient.amount)}
-          </span>
-          <span>{`${newIngredient.unit} of`}</span>
+          {newIngredient.amount !== 0 && (
+            <span>
+              {newIngredient.unit === "g" ||
+              newIngredient.unit === "kg" ||
+              newIngredient.unit === "oz" ||
+              newIngredient.unit === "lb" ||
+              newIngredient.unit === "ml" ||
+              newIngredient.unit === "L"
+                ? newIngredient.amount
+                : fracty(newIngredient.amount)}
+            </span>
+          )}
+          {newIngredient.unit && <span>{`${newIngredient.unit} of`}</span>}
           <span>{ingredient.ingredient}</span>
         </>
       )}
@@ -1385,11 +1390,11 @@ function Instructions({
   deleteInstruction,
 }: {
   edit: boolean;
-  instructions: { instruction: string; image: string | undefined }[];
-  images: (string | undefined)[];
+  instructions: { instruction: string; image: TYPE_FILE | undefined }[];
+  images: (TYPE_FILE | undefined)[];
   addImage: () => void;
   deleteImage: (index: number) => void;
-  onChangeImage: (image: string, index: number) => void;
+  onChangeImage: (image: TYPE_FILE, index: number) => void;
   deleteInstruction: (index: number) => void;
 }) {
   //Store key so whenever user delete instruction, other instructions' info will remain the same
@@ -1474,11 +1479,11 @@ function Instruction({
 }: {
   edit: boolean;
   i: number;
-  instruction: { instruction: string; image: string | undefined };
-  image: string | undefined;
+  instruction: { instruction: string; image: TYPE_FILE | undefined };
+  image: TYPE_FILE | undefined;
   onClickDeleteImage: (i: number) => void;
   onClickDelete: (i: number) => void;
-  onChangeImage: (image: string, i: number) => void;
+  onChangeImage: (image: TYPE_FILE, i: number) => void;
 }) {
   const [instructionText, setInstructionText] = useState(
     instruction.instruction
@@ -1488,8 +1493,7 @@ function Instruction({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      const convertedFile = await convertFileToString(files[0]);
-      onChangeImage(convertedFile, i);
+      onChangeImage(await getFileData(files[0]), i);
     } catch (err: any) {
       console.error(err.message);
     }
@@ -1602,7 +1606,7 @@ function Instruction({
         )}
         {image && (
           <Image
-            src={image}
+            src={image.data}
             alt={`instruction ${i + 1} image`}
             width={140}
             height={100}
@@ -1723,8 +1727,8 @@ function Memories({
   deleteImage,
 }: {
   edit: boolean;
-  images: [] | string[];
-  onChangeImages: (imagesArr: string[]) => void;
+  images: [] | TYPE_FILE[];
+  onChangeImages: (imagesArr: TYPE_FILE[]) => void;
   deleteImage: (i: number) => void;
 }) {
   const [curImage, setCurImage] = useState(0);
@@ -1735,7 +1739,7 @@ function Memories({
       if (!files) return;
 
       const convertedFiles = await Promise.all(
-        Array.from(files).map((image) => convertFileToString(image))
+        Array.from(files).map((image) => getFileData(image))
       );
 
       onChangeImages(convertedFiles);
@@ -1904,7 +1908,7 @@ function MemoryImg({
 }: {
   edit: boolean;
   i: number;
-  image: string;
+  image: TYPE_FILE;
   translateX: string;
   onClickDelete: (i: number) => void;
 }) {
@@ -1933,7 +1937,7 @@ function MemoryImg({
       )}
       {image && (
         <Image
-          src={image}
+          src={image.data}
           alt={`memory image ${i + 1}`}
           width={400}
           height={200}
@@ -2008,6 +2012,55 @@ function Comments({
             {comments || "There're no comments"}
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        top: "0%",
+        left: "0%",
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(255, 174, 0, 1)",
+        zIndex: "100",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "15%",
+          width: "30%",
+          height: "40%",
+        }}
+      >
+        <p
+          style={{
+            color: "white",
+            fontSize: "1.8vw",
+            letterSpacing: "0.08vw",
+          }}
+        >
+          Updating your recipe...
+        </p>
+        <Image
+          className={styles.img__uploading}
+          src="/loading.png"
+          alt="loading icon"
+          width={150}
+          height={150}
+        ></Image>
       </div>
     </div>
   );

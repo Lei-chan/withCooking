@@ -1,6 +1,18 @@
 import { nanoid } from "nanoid";
-import { TYPE_RECIPE, PASSWORD_REGEX, TYPE_INGREDIENT } from "./config";
+import {
+  TYPE_RECIPE,
+  PASSWORD_REGEX,
+  TYPE_INGREDIENT,
+  MESSAGE_TIMEOUT,
+} from "./config";
 import Converter from "./converter/page";
+import { resolve } from "path";
+
+export function wait(second: number = MESSAGE_TIMEOUT) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, second * 1000);
+  });
+}
 
 export const getData = async (path: string, option: object) => {
   try {

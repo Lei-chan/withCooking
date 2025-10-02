@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../lib/mongoDB";
 import Recipe from "@/app/modelSchemas/Recipes";
@@ -6,7 +7,7 @@ import { recipeSchema } from "@/app/lib/validation";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
 import { TYPE_FILE, TYPE_INSTRUCTION, TYPE_CONVERTED_FILE } from "@/app/config";
 import { authenticateToken, refreshAccessToken } from "@/app/lib/auth";
-import { resolve } from "path";
+import { parse, resolve } from "path";
 
 function getId(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -57,13 +58,43 @@ function downloadFile(bucket: any, file: any) {
 
     downloadStream.on("end", () => {
       const buffer = Buffer.concat(chunks);
-      resolve(JSON.parse(buffer.toString("utf-8")));
+      const parsedBuffer = JSON.parse(buffer.toString("utf-8"));
+      resolve(parsedBuffer);
     });
 
     downloadStream.on("error", () =>
       reject(new Error("Error while downloading files"))
     );
   });
+}
+
+function uploadInstructionImages(
+  bucket: any,
+  instructions: TYPE_INSTRUCTION[],
+  metadata: any
+) {
+  return Promise.all(
+    instructions.map((inst: TYPE_INSTRUCTION, i: number) =>
+      inst.image
+        ? uploadFile(bucket, inst.image, {
+            ...metadata,
+            index: i,
+          })
+        : Promise.resolve(undefined)
+    )
+  );
+}
+
+function uploadMemoryImages(
+  bucket: any,
+  memoryImages: TYPE_FILE[],
+  metadata: any
+) {
+  return Promise.all(
+    memoryImages.map((image: TYPE_FILE, i: number) =>
+      uploadFile(bucket, image, { ...metadata, index: i })
+    )
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -93,48 +124,39 @@ export async function POST(req: NextRequest) {
       throw err;
     }
 
-    const uploadMainImage =
-      body.mainImage &&
-      (await uploadFile(bucket, body.mainImage, {
-        userId: id,
-        recipeTitle: body.title,
-        section: "mainImage",
-      }));
+    //upload mainImage
+    const mainImage = body.mainImage
+      ? await uploadFile(bucket, body.mainImage, {
+          userId: id,
+          recipeTitle: body.title,
+          section: "mainImage",
+        })
+      : undefined;
 
-    const uploadInstImages = await Promise.all(
-      body.instructions.map((inst: TYPE_INSTRUCTION, i: number) =>
-        inst.image
-          ? uploadFile(bucket, inst.image, {
-              userId: id,
-              recipeTitle: body.title,
-              section: "instructionImage",
-              index: i,
-            })
-          : Promise.resolve(undefined)
-      )
+    //upload instruction images
+    const instructionImages = await uploadInstructionImages(
+      bucket,
+      body.instructions,
+      { userId: id, recipeTitle: body.title, section: "instructionImage" }
     );
 
-    const uploadMemoryImages =
-      body.memoryImages.length &&
-      (await Promise.all(
-        body.memoryImages.map((image: TYPE_FILE, i: number) =>
-          uploadFile(bucket, image, {
-            userId: id,
-            recipeTitle: body.title,
-            section: "memoryImage",
-            index: i,
-          })
-        )
-      ));
+    //upload memoryImages
+    const memoryImages = body.memoryImages.length
+      ? await uploadMemoryImages(bucket, body.memoryImages, {
+          userId: id,
+          recipeTitle: body.title,
+          section: "memoryImage",
+        })
+      : [];
 
     const newBody = { ...body };
-    newBody.mainImage = uploadMainImage || undefined;
+    newBody.mainImage = mainImage;
     newBody.instructions = body.instructions.map(
       (inst: TYPE_INSTRUCTION, i: number) => {
-        return { instruction: inst.instruction, image: uploadInstImages[i] };
+        return { instruction: inst.instruction, image: instructionImages[i] };
       }
     );
-    newBody.memoryImages = body.memoryImages.length ? uploadMemoryImages : [];
+    newBody.memoryImages = memoryImages;
 
     const recipe = await Recipe.create(newBody);
 
@@ -172,6 +194,7 @@ export async function GET(req: NextRequest) {
 
     const mainImage =
       recipe.mainImage && (await downloadFile(bucket, recipe.mainImage));
+
     const instructionImages = await Promise.all(
       recipe.instructions.map(
         (inst: {
@@ -179,15 +202,16 @@ export async function GET(req: NextRequest) {
           image: TYPE_CONVERTED_FILE | undefined;
         }) =>
           inst.image
-            ? downloadFile(bucket, inst.image.fileId)
+            ? downloadFile(bucket, inst.image)
             : Promise.resolve(undefined)
       )
     );
+
     const memoryImages =
       recipe.memoryImages.length &&
       (await Promise.all(
         recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-          downloadFile(bucket, image.fileId)
+          downloadFile(bucket, image)
         )
       ));
 
@@ -218,6 +242,7 @@ export async function GET(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     await connectDB();
+    const bucket = getGridFSBucket();
 
     const id = getId(req);
     const body = await req.json();
@@ -234,21 +259,82 @@ export async function PUT(req: NextRequest) {
       throw err;
     }
 
-    const recipe = await Recipe.findByIdAndUpdate(id, body, {
-      new: true,
-    }).select("-__v");
-
+    const recipe = await Recipe.findById(id);
     if (!recipe) {
       const err: any = new Error("Recipe not found");
       err.statusCode = 404;
       throw err;
     }
 
+    //delete existing mainImage from bucket
+    recipe.mainImage &&
+      (await bucket.delete(new ObjectId(recipe.mainImage.fileId)));
+
+    //delete existing instruction images from bucket
+    await Promise.all(
+      recipe.instructions.map(
+        (inst: {
+          instruction: string;
+          image: TYPE_CONVERTED_FILE | undefined;
+        }) => {
+          inst.image
+            ? bucket.delete(new ObjectId(inst.image.fileId))
+            : Promise.resolve(undefined);
+        }
+      )
+    );
+
+    //delete existing memoryImages from bucket
+    recipe.memoryImages.length &&
+      (await Promise.all(
+        recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
+          bucket.delete(new ObjectId(image.fileId))
+        )
+      ));
+
+    //upload mainImage
+    const mainImage = !body.mainImage
+      ? undefined
+      : await uploadFile(bucket, body.mainImage, {
+          userId: id,
+          recipeTitle: body.title,
+          section: "mainImage",
+        });
+
+    //upload instruction images
+    const instructionImages = await uploadInstructionImages(
+      bucket,
+      body.instructions,
+      { userId: id, recipeTitle: body.title, section: "instructionImage" }
+    );
+
+    //upload memoryImages
+    const memoryImages = body.memoryImages.length
+      ? await uploadMemoryImages(bucket, body.memoryImages, {
+          userId: id,
+          recipeTitle: body.title,
+          section: "memoryImage",
+        })
+      : [];
+
+    const newBody = { ...body };
+    newBody.mainImage = mainImage;
+    newBody.instructions = body.instructions.map(
+      (inst: TYPE_INSTRUCTION, i: number) => {
+        return { instruction: inst.instruction, image: instructionImages[i] };
+      }
+    );
+    newBody.memoryImages = memoryImages;
+
+    const newRecipe = await Recipe.findByIdAndUpdate(id, newBody, {
+      new: true,
+    }).select("-__v");
+
     return NextResponse.json(
       {
         success: true,
         message: "Recipe updated successfully",
-        data: recipe,
+        data: newRecipe,
       },
       { status: 200 }
     );
