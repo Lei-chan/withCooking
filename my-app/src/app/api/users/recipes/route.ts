@@ -4,25 +4,19 @@ import User from "@/app/modelSchemas/User";
 import { authenticateToken } from "@/app/lib/auth";
 import { refreshAccessToken } from "@/app/lib/auth";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
+import { downloadFile } from "../../recipes/route";
 
 //get recipes in user data
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+    const bucket = getGridFSBucket();
+
     const searchParams = req.nextUrl.searchParams;
 
     const keyword = searchParams.get("keyword");
-    const startIndex = searchParams.get("startIndex");
-    const endIndex = searchParams.get("endIndex");
-
-    if (!startIndex || !endIndex) {
-      const err: any = new Error("StartIndex and endIndex are required");
-      err.statusCode = 400;
-      throw err;
-    }
 
     let { id, newAccessToken } = await authenticateToken(req);
-    // let newAccessToken;
 
     //try to refresh accessToken when access token is expired
     if (!id) {
@@ -31,7 +25,9 @@ export async function GET(req: NextRequest) {
       newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const recipes = await User.findById(id).select("recipes");
+    const user = await User.findById(id);
+    console.log(user);
+    const recipes = user.recipes || [];
     const filteredRecipes =
       keyword && recipes
         ? recipes.filter((recipe: any) => {
@@ -46,19 +42,30 @@ export async function GET(req: NextRequest) {
           })
         : recipes;
 
-    if (!filteredRecipes || !filteredRecipes.length) {
-      const err: any = new Error("Recipes not found");
-      err.statusCode = 404;
-      throw err;
-    }
+    const mainImages = filteredRecipes.length
+      ? await Promise.all(
+          filteredRecipes.map((recipe: any) =>
+            recipe.mainImage
+              ? downloadFile(bucket, recipe.mainImage)
+              : Promise.resolve(undefined)
+          )
+        )
+      : [];
 
-    const slicedRecipes = recipes.slice(
-      parseInt(startIndex),
-      parseInt(endIndex)
-    );
+    const recipesWithMainImage = filteredRecipes.length
+      ? filteredRecipes.map((recipe: any, i: number) => {
+          const newRecipe = { ...recipe };
+          newRecipe.mainImage = mainImages[i];
+          return newRecipe;
+        })
+      : [];
 
     return NextResponse.json(
-      { success: true, data: slicedRecipes, newAccessToken },
+      {
+        success: true,
+        data: recipesWithMainImage,
+        newAccessToken,
+      },
       { status: 200 }
     );
   } catch (err: any) {

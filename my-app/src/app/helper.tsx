@@ -61,7 +61,7 @@ export const getRecipesPerPage = (
   const endIndex = startIndex + numberRecipesPerPage;
   const recipesPerPage = filteredRecipes.slice(startIndex, endIndex);
 
-  return recipesPerPage ? recipesPerPage : null;
+  return recipesPerPage ? recipesPerPage : [];
 };
 
 export const calcTransitionXSlider = (index: number, curSlide: number) => {
@@ -2645,9 +2645,9 @@ const originalRecipes = [
   },
 ];
 
-export const getTotalNumberOfRecipes = function () {
-  return originalRecipes.length;
-};
+// export const getTotalNumberOfRecipes = function () {
+//   return originalRecipes.length;
+// };
 
 //returns recipe with updated convertion
 export const updateConvertion = function (recipe: TYPE_RECIPE) {
@@ -2662,6 +2662,25 @@ export const updateConvertion = function (recipe: TYPE_RECIPE) {
   newRecipe.ingredients = newIngs;
   return newRecipe;
 };
+
+export function getOrderedRecipes(recipes: TYPE_RECIPE[]) {
+  return recipes
+    .toSorted((a: any, b: any) => {
+      const titleA = a.title.toLowerCase();
+      const titleB = b.title.toLowerCase();
+
+      if (titleA < titleB) return -1;
+      if (titleA > titleB) return 1;
+
+      return 0;
+    })
+    .toSorted((a: any, b: any) => {
+      if (a.favorite && !b.favorite) return -1;
+      if (!a.favorite && b.favorite) return 1;
+
+      return 0;
+    });
+}
 
 ///sort recipes by alphabetical order and favorite order
 export const recipes = [...originalRecipes]

@@ -41,17 +41,12 @@
   height: 15%;
   margin-bottom: 2%;
   gap: 5%;
-  padding-left: 3%;
+  padding: 0 3%;
   border-radius: 1% / 4%;
+  cursor: pointer;
 
   &:hover {
     background-image: linear-gradient(rgb(233, 233, 194), rgb(226, 222, 177));
-  }
-
-  .img__main {
-    width: 18%;
-    aspect-ratio: 1;
-    border-radius: 50%;
   }
 
   p {
@@ -60,11 +55,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
-  /* .img__favorite {
-    width: 9%;
-    height: 30%;
-  } */
 }
 
 .btn__create {

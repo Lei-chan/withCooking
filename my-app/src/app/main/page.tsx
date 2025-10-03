@@ -276,19 +276,23 @@ function Search({
                 className={styles.recipe_preview}
                 onClick={() => onClickPreview(recipe)}
               >
-                <img
-                  className={styles.img__main}
-                  src={recipe.mainImage || "/grey-img.png"}
-                  alt="main image"
-                ></img>
+                {recipe.mainImage && (
+                  <Image
+                    className={styles.img__main}
+                    src={recipe.mainImage}
+                    alt="main image"
+                    width={50}
+                    height={50}
+                  ></Image>
+                )}
                 <p className={styles.title}>{recipe.title}</p>
                 {recipe.favorite && (
                   <Image
                     className={styles.img__favorite}
                     src="/star-on.png"
                     alt="favorite icon"
-                    width={512}
-                    height={512}
+                    width={18}
+                    height={18}
                   ></Image>
                 )}
               </li>

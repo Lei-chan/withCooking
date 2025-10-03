@@ -49,7 +49,7 @@ function uploadFile(bucket: any, file: TYPE_FILE, metadata: any) {
   });
 }
 
-function downloadFile(bucket: any, file: any) {
+export function downloadFile(bucket: any, file: any) {
   return new Promise((resolve, reject) => {
     const downloadStream = bucket.openDownloadStream(new ObjectId(file.fileId));
 

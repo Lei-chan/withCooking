@@ -4,49 +4,81 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
-import {
-  calcNumberOfPages,
-  getData,
-  getFilteredRecipes,
-  getRecipesPerPage,
-  getTotalNumberOfRecipes,
-  recipes,
-} from "../helper";
-import React, { useEffect, useState } from "react";
+import { getData, getRecipesPerPage, getOrderedRecipes } from "../helper";
+import React, { useContext, useEffect, useState } from "react";
 import { nanoid } from "nanoid";
 import { TYPE_RECIPE } from "../config";
+import { AccessTokenContext } from "../context";
 
 export default function Recipes() {
+  const userContext = useContext(AccessTokenContext);
   const RECIPES_PER_PAGE = 30;
-  const [filteredRecipes, setFilteredRecipes] =
-    useState<TYPE_RECIPE[]>(recipes);
-  const [curRecipes, setCurRecipes] = useState<TYPE_RECIPE[]>(recipes);
-  const [numberOfPages, setNumberOfPages] = useState<number>(
-    getTotalNumberOfRecipes() / RECIPES_PER_PAGE
-  );
+  const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  const [curRecipes, setCurRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  const [numberOfPages, setNumberOfPages] = useState<number>(0);
   const [curPage, setCurPage] = useState<number>(1);
 
-  function handleSearchRecipes(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const [isPending, setIsPending] = useState(true);
+  const [error, setError] = useState("");
 
-    const value = e.currentTarget.querySelector("input")?.value;
-    if (!value) return;
+  useEffect(() => {
+    (async () => {
+      await getRecipes();
+      setIsPending(false);
+    })();
+  }, []);
 
-    //get recipe results
-    const filteredRecipes = getFilteredRecipes(value);
-    setFilteredRecipes(filteredRecipes);
-
-    setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
+  //when curPage changes, change curRecipes too
+  useEffect(() => {
+    if (!recipes) return;
 
     const recipesPerPage = getRecipesPerPage(
-      filteredRecipes,
+      recipes,
       RECIPES_PER_PAGE,
       curPage
     );
     //set recipes for current page
-    recipesPerPage && setCurRecipes(recipesPerPage);
+    setCurRecipes(recipesPerPage);
+  }, [curPage]);
 
-    setCurPage(1);
+  async function getRecipes(
+    // startIndex: number,
+    // endIndex: number,
+    keyword: string = ""
+  ) {
+    try {
+      const structuredKeyword = keyword.toLowerCase().trim();
+      const data = await getData(
+        `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
+        {
+          method: "GET",
+          headers: { authorization: `Bearer ${userContext?.accessToken}` },
+        }
+      );
+      console.log(data);
+
+      const orderedRecipes = getOrderedRecipes(data.data);
+      setCurPage(1);
+      setRecipes(orderedRecipes);
+      setCurRecipes(getRecipesPerPage(orderedRecipes, RECIPES_PER_PAGE, 1));
+      setNumberOfPages(Math.ceil(orderedRecipes.length / RECIPES_PER_PAGE));
+      data.newAccessToken && userContext?.login(data.newAccessToken);
+      return orderedRecipes;
+    } catch (err: any) {
+      setError(`Server error while getting recipes 🙇‍♂️ ${err.message}`);
+      console.error("Error while getting recipes", err.message);
+    }
+  }
+
+  async function handleSearchRecipes(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    // const value = e.currentTarget.querySelector("input")?.value;
+    const value = new FormData(e.currentTarget).get("input") as string;
+    if (!value) return;
+
+    //get recipe results
+    await getRecipes(value);
   }
 
   function handlePagination(e: React.MouseEvent<HTMLButtonElement>) {
@@ -56,19 +88,6 @@ export default function Recipes() {
       ? setCurPage((prev) => (prev === 1 ? prev : prev - 1))
       : setCurPage((prev) => (prev === numberOfPages ? prev : prev + 1));
   }
-
-  //when curPage changes, change curRecipes too
-  useEffect(() => {
-    if (!filteredRecipes) return;
-
-    const recipesPerPage = getRecipesPerPage(
-      filteredRecipes,
-      RECIPES_PER_PAGE,
-      curPage
-    );
-    //set recipes for current page
-    recipesPerPage && setCurRecipes(recipesPerPage);
-  }, [curPage]);
 
   return (
     <div
@@ -83,12 +102,17 @@ export default function Recipes() {
       }}
     >
       <SearchSection
-        numberOfFilteredRecipes={filteredRecipes.length}
-        numberOfCurRecipes={curRecipes.length}
+        curPage={curPage}
+        numberOfPages={numberOfPages}
+        numberOfCurRecipes={curRecipes ? curRecipes.length : 0}
         onSubmitSearch={handleSearchRecipes}
-        // onChangeInput={handleSearchRecipes}
       />
-      <RecipeContainer curRecipes={curRecipes} />
+      <RecipeContainer
+        isPending={isPending}
+        totalUserRecipes={recipes.length}
+        curRecipes={curRecipes}
+        error={error}
+      />
       <PaginationButtons
         curPage={curPage}
         numberOfPages={numberOfPages}
@@ -99,15 +123,15 @@ export default function Recipes() {
 }
 
 function SearchSection({
+  curPage,
+  numberOfPages,
   numberOfCurRecipes,
-  numberOfFilteredRecipes,
   onSubmitSearch,
-}: // onChangeInput,
-{
+}: {
+  curPage: number;
+  numberOfPages: number;
   numberOfCurRecipes: number;
-  numberOfFilteredRecipes: number;
   onSubmitSearch: (e: React.FormEvent<HTMLFormElement>) => void;
-  // onChangeInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div
@@ -134,7 +158,9 @@ function SearchSection({
           color: "rgb(172, 112, 0)",
           textAlign: "center",
         }}
-      >{`${numberOfCurRecipes} / ${numberOfFilteredRecipes} results`}</p>
+      >{`${curPage} / ${numberOfPages} ${
+        numberOfPages === 1 ? "page" : "pages"
+      } (${numberOfCurRecipes} results)`}</p>
       <form
         className={styles.container__search}
         style={{
@@ -148,6 +174,7 @@ function SearchSection({
         <input
           className={styles.input__search}
           type="search"
+          name="input"
           placeholder="Search your recipe"
         />
         <button className={styles.btn__search} type="submit">
@@ -163,7 +190,17 @@ function SearchSection({
   );
 }
 
-function RecipeContainer({ curRecipes }: { curRecipes: TYPE_RECIPE[] }) {
+function RecipeContainer({
+  isPending,
+  totalUserRecipes,
+  curRecipes,
+  error,
+}: {
+  isPending: boolean;
+  totalUserRecipes: number;
+  curRecipes: TYPE_RECIPE[] | [];
+  error: string;
+}) {
   const NUMBER_OF_COLUMNS = 5;
   const RECIPES_PER_COLUMN = 6;
 
@@ -177,6 +214,23 @@ function RecipeContainer({ curRecipes }: { curRecipes: TYPE_RECIPE[] }) {
   };
   const recipesPerColumn = getRecipesPerColumn();
 
+  function createMessage() {
+    let message;
+
+    if (isPending) {
+      message = "Loading your recipes...";
+    } else if (!totalUserRecipes) {
+      message = "No recipes created yet. Let't start by creating a recipe :)";
+    } else if (!curRecipes) {
+      message =
+        "No recipes found. Please try again with a different keyword :)";
+    } else {
+      message = error;
+    }
+
+    return message;
+  }
+
   return (
     <div
       style={{
@@ -189,36 +243,40 @@ function RecipeContainer({ curRecipes }: { curRecipes: TYPE_RECIPE[] }) {
         justifyItems: "center",
       }}
     >
-      {recipesPerColumn.map((recipes) => {
-        if (!recipes) return;
-
-        return (
-          <ul key={nanoid()} style={{ width: "85%", height: "100%" }}>
-            {recipes.map((_, i) => {
-              return <RecipePreview key={nanoid()} recipe={recipes[i]} />;
-            })}
-          </ul>
-        );
-      })}
-      <MessageContainer numberOfRecipes={curRecipes.length} />
+      {recipesPerColumn.map((recipes, i) => (
+        <ul key={i} style={{ width: "85%", height: "100%", zIndex: "1" }}>
+          {recipes.map((_, i) => {
+            return <RecipePreview key={i} recipe={recipes[i]} />;
+          })}
+        </ul>
+      ))}
+      <MessageContainer message={createMessage()} />
     </div>
   );
 }
 
-function RecipePreview({ recipe }: { recipe: TYPE_RECIPE }) {
-  function handleClickPreview() {
-    const id = recipe.id;
+function RecipePreview({ recipe }: { recipe: any }) {
+  function handleClickPreview(e: React.MouseEvent<HTMLElement>) {
+    const id = e.currentTarget.id;
 
     redirect(`/recipes/recipe#${id}`, RedirectType.replace);
   }
 
   return (
-    <li className={styles.recipe_preview} onClick={handleClickPreview}>
-      <img
-        className={styles.img__main}
-        src={recipe.mainImage || "/grey-img.png"}
-        alt="main image"
-      ></img>
+    <li
+      className={styles.recipe_preview}
+      id={recipe._id}
+      onClick={handleClickPreview}
+    >
+      {recipe.mainImage && (
+        <Image
+          style={{ borderRadius: "50%" }}
+          src={recipe.mainImage.data}
+          alt="main image"
+          width={48}
+          height={48}
+        ></Image>
+      )}
       <p className={styles.title}>{recipe.title}</p>
       {recipe.favorite && (
         <Image
@@ -232,12 +290,13 @@ function RecipePreview({ recipe }: { recipe: TYPE_RECIPE }) {
   );
 }
 
-function MessageContainer({ numberOfRecipes }: { numberOfRecipes: number }) {
+function MessageContainer({ message }: { message: string }) {
   return (
     <div
       style={{
         position: "absolute",
-        display: numberOfRecipes ? "none" : "flex",
+        // display: numberOfRecipes ? "none" : "flex",
+        display: "flex",
         flexDirection: "column",
         width: "100%",
         height: "100%",
@@ -248,21 +307,10 @@ function MessageContainer({ numberOfRecipes }: { numberOfRecipes: number }) {
         letterSpacing: "0.1vw",
         wordSpacing: "0.3vw",
         color: "rgb(190, 124, 0)",
+        zIndex: "0",
       }}
     >
-      {!getTotalNumberOfRecipes() ? (
-        <p>
-          No recipes created yet.
-          <br />
-          Let't start by creating a recipe :)
-        </p>
-      ) : (
-        <p>
-          No recipes found.
-          <br />
-          Please try with a different keyword :)
-        </p>
-      )}
+      <p>{message}</p>
     </div>
   );
 }
