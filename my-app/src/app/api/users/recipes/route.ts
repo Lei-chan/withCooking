@@ -26,8 +26,8 @@ export async function GET(req: NextRequest) {
     }
 
     const user = await User.findById(id);
-    console.log(user);
     const recipes = user.recipes || [];
+
     const filteredRecipes =
       keyword && recipes
         ? recipes.filter((recipe: any) => {
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
 }
 
 ///Update recipes in user data
-export async function PATCH(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
@@ -92,11 +92,9 @@ export async function PATCH(req: NextRequest) {
       newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const userRecipes = await User.findById(id);
+    const user = await User.findById(id);
 
-    const newRecipes = userRecipes.recipes.length
-      ? [...userRecipes.recipes, body]
-      : [body];
+    const newRecipes = user.recipes.length ? [...user.recipes, body] : [body];
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
@@ -104,11 +102,52 @@ export async function PATCH(req: NextRequest) {
       { new: true, runValidators: true }
     );
 
-    // const updatedUser = await User.findByIdAndUpdate(
-    //   id,
-    //   { $push: { recipes: body } },
-    //   { new: true, runValidators: true }
-    // );
+    return NextResponse.json(
+      {
+        success: true,
+        message: "User recipe created successfully",
+        data: updatedUser,
+        newAccessToken,
+      },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: err.statusCode || 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    await connectDB();
+
+    const body = await req.json();
+    let { id, newAccessToken } = await authenticateToken(req);
+
+    //try to refresh accessToken when access token is expired
+    if (!id) {
+      const tokenInfo = await refreshAccessToken();
+      id = tokenInfo.id;
+      newAccessToken = tokenInfo.newAccessToken;
+    }
+
+    const user = await User.findById(id);
+    const recipesNoRecipeToUpdate = user.recipes.length
+      ? user.recipes.filter((recipe: any) => recipe._id !== body._id)
+      : [];
+    const newRecipes = user.recipes.length
+      ? [...recipesNoRecipeToUpdate, body]
+      : [body];
+
+    console.log(newRecipes);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { recipes: newRecipes },
+      { new: true, runValidators: true }
+    );
 
     return NextResponse.json(
       {

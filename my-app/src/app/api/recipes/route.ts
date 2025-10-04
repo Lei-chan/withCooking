@@ -51,7 +51,11 @@ function uploadFile(bucket: any, file: TYPE_FILE, metadata: any) {
 
 export function downloadFile(bucket: any, file: any) {
   return new Promise((resolve, reject) => {
-    const downloadStream = bucket.openDownloadStream(new ObjectId(file.fileId));
+    const downloadStream = bucket.openDownloadStream(
+      file.fileId instanceof mongoose.Types.ObjectId
+        ? file.fileId
+        : new ObjectId(file.fileId)
+    );
 
     const chunks: any[] = [];
     downloadStream.on("data", (chunk: any) => chunks.push(chunk));
@@ -59,6 +63,7 @@ export function downloadFile(bucket: any, file: any) {
     downloadStream.on("end", () => {
       const buffer = Buffer.concat(chunks);
       const parsedBuffer = JSON.parse(buffer.toString("utf-8"));
+      // console.log(parsedBuffer);
       resolve(parsedBuffer);
     });
 
@@ -192,8 +197,9 @@ export async function GET(req: NextRequest) {
       throw err;
     }
 
-    const mainImage =
-      recipe.mainImage && (await downloadFile(bucket, recipe.mainImage));
+    const mainImage = recipe.mainImage
+      ? await downloadFile(bucket, recipe.mainImage)
+      : undefined;
 
     const instructionImages = await Promise.all(
       recipe.instructions.map(
@@ -207,16 +213,16 @@ export async function GET(req: NextRequest) {
       )
     );
 
-    const memoryImages =
-      recipe.memoryImages.length &&
-      (await Promise.all(
-        recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-          downloadFile(bucket, image)
+    const memoryImages = recipe.memoryImages.length
+      ? await Promise.all(
+          recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
+            downloadFile(bucket, image)
+          )
         )
-      ));
+      : [];
 
     const newRecipe = { ...recipe };
-    newRecipe.mainImage = mainImage || undefined;
+    newRecipe.mainImage = mainImage;
     newRecipe.instructions = recipe.instructions.map(
       (
         inst: { instruction: string; image: TYPE_CONVERTED_FILE | undefined },
@@ -225,7 +231,7 @@ export async function GET(req: NextRequest) {
         return { instruction: inst.instruction, image: instructionImages[i] };
       }
     );
-    newRecipe.memoryImages = memoryImages || [];
+    newRecipe.memoryImages = memoryImages;
 
     return NextResponse.json(
       { success: true, data: newRecipe },

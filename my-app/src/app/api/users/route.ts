@@ -115,7 +115,6 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     let { id, newAccessToken } = await authenticateToken(req);
-    // let newAccessToken;
 
     //try to refresh accessToken when access token is expired
     if (!id) {

@@ -15,7 +15,6 @@ export default function Account() {
   const userContext = useContext(AccessTokenContext);
   const [data, setData] = useState<{ email: string; createdAt: string }>();
 
-  console.log(userContext?.accessToken);
   async function getUser() {
     try {
       const data = await getData("/api/users", {
@@ -35,7 +34,6 @@ export default function Account() {
   }
 
   useEffect(() => {
-    if (!userContext?.accessToken) return;
     (async () => await getUser())();
   }, []);
 

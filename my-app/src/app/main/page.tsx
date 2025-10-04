@@ -14,7 +14,6 @@ import {
   convertTempUnits,
   convertIngUnits,
   calcTransitionXSlider,
-  recipes,
   updateConvertion,
   updateIngsForServings,
 } from "../helper";
@@ -197,15 +196,15 @@ function Search({
   const [page, setPage] = useState(1);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
-  const getRecipes = (value: string = input) => {
-    if (!recipes.length) return;
+  // const getRecipes = (value: string = input) => {
+  //   if (!recipes.length) return;
 
-    const filteredRecipes = getFilteredRecipes(value);
+  //   const filteredRecipes = getFilteredRecipes(value);
 
-    setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
+  //   setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
 
-    return getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, page);
-  };
+  //   return getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, page);
+  // };
 
   const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
     if (timeoutId) clearTimeout(timeoutId);
@@ -217,8 +216,8 @@ function Search({
       setInput(value);
       setPage(1);
 
-      const nextRecipes = getRecipes(value);
-      nextRecipes && setCurRecipes(nextRecipes);
+      // const nextRecipes = getRecipes(value);
+      // nextRecipes && setCurRecipes(nextRecipes);
     }, 500);
 
     setTimeoutId(id);
@@ -238,8 +237,8 @@ function Search({
   }
 
   useEffect(() => {
-    const nextRecipes = getRecipes();
-    nextRecipes && setCurRecipes(nextRecipes);
+    // const nextRecipes = getRecipes();
+    // nextRecipes && setCurRecipes(nextRecipes);
   }, [page]);
 
   return (
@@ -276,10 +275,10 @@ function Search({
                 className={styles.recipe_preview}
                 onClick={() => onClickPreview(recipe)}
               >
-                {recipe.mainImage && (
+                {recipe.mainImage?.data && (
                   <Image
                     className={styles.img__main}
-                    src={recipe.mainImage}
+                    src={recipe.mainImage.data}
                     alt="main image"
                     width={50}
                     height={50}

@@ -5,8 +5,6 @@ import {
   TYPE_INGREDIENT,
   MESSAGE_TIMEOUT,
 } from "./config";
-import Converter from "./converter/page";
-import { resolve } from "path";
 
 export function wait(second: number = MESSAGE_TIMEOUT) {
   return new Promise((resolve) => {
@@ -40,12 +38,12 @@ export const validatePassword = (input: string) => {
 export const calcNumberOfPages = (recipes: Object[], recipesPerPage: number) =>
   Math.ceil(recipes.length / recipesPerPage);
 
-export const getFilteredRecipes = (value: string) => {
+export const getFilteredRecipes = (recipes: any[] | [], value: string) => {
   const structuredValue = value.trim().toLowerCase();
   const filteredRecipes = recipes.filter(
-    (recipe) =>
+    (recipe: any) =>
       recipe.title.toLocaleLowerCase().includes(structuredValue) ||
-      recipe.ingredients.find((ing) =>
+      recipe.ingredients.find((ing: TYPE_INGREDIENT) =>
         ing.ingredient.toLowerCase().includes(structuredValue)
       )
   );
@@ -2683,23 +2681,23 @@ export function getOrderedRecipes(recipes: TYPE_RECIPE[]) {
 }
 
 ///sort recipes by alphabetical order and favorite order
-export const recipes = [...originalRecipes]
-  .sort((a: any, b: any) => {
-    const titleA = a.title.toLowerCase();
-    const titleB = b.title.toLowerCase();
+// export const recipes = [...originalRecipes]
+//   .sort((a: any, b: any) => {
+//     const titleA = a.title.toLowerCase();
+//     const titleB = b.title.toLowerCase();
 
-    if (titleA < titleB) return -1;
-    if (titleA > titleB) return 1;
+//     if (titleA < titleB) return -1;
+//     if (titleA > titleB) return 1;
 
-    return 0;
-  })
-  .sort((a: any, b: any) => {
-    if (a.favorite && !b.favorite) return -1;
-    if (!a.favorite && b.favorite) return 1;
+//     return 0;
+//   })
+//   .sort((a: any, b: any) => {
+//     if (a.favorite && !b.favorite) return -1;
+//     if (!a.favorite && b.favorite) return 1;
 
-    return 0;
-  })
-  .map((recipe: any) => updateConvertion(recipe))
-  .map((recipe) => {
-    return { ...recipe, region: getRegion(recipe.ingredients) };
-  });
+//     return 0;
+//   })
+//   .map((recipe: any) => updateConvertion(recipe))
+//   .map((recipe) => {
+//     return { ...recipe, region: getRegion(recipe.ingredients) };
+//   });

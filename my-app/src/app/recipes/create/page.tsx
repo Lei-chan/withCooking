@@ -217,7 +217,7 @@ export default function CreateRecipe({
 
       //connect the recipe data id to user recipe data id
       const userData = await getData("/api/users/recipes", {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${userContext?.accessToken}`,

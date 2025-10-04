@@ -4,7 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
-import { getData, getRecipesPerPage, getOrderedRecipes } from "../helper";
+import {
+  getData,
+  getRecipesPerPage,
+  getOrderedRecipes,
+  getFilteredRecipes,
+} from "../helper";
 import React, { useContext, useEffect, useState } from "react";
 import { nanoid } from "nanoid";
 import { TYPE_RECIPE } from "../config";
@@ -13,18 +18,19 @@ import { AccessTokenContext } from "../context";
 export default function Recipes() {
   const userContext = useContext(AccessTokenContext);
   const RECIPES_PER_PAGE = 30;
+  const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
-  const [curRecipes, setCurRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  const [curPageRecipes, setCurPageRecipes] = useState<TYPE_RECIPE[] | []>([]);
   const [numberOfPages, setNumberOfPages] = useState<number>(0);
   const [curPage, setCurPage] = useState<number>(1);
 
-  const [isPending, setIsPending] = useState(true);
+  const [isPending, setIsPending] = useState<boolean>(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     (async () => {
-      await getRecipes();
-      setIsPending(false);
+      const userRecipes = await getRecipes();
+      setNumberOfUserRecipes(userRecipes?.length || 0);
     })();
   }, []);
 
@@ -38,15 +44,13 @@ export default function Recipes() {
       curPage
     );
     //set recipes for current page
-    setCurRecipes(recipesPerPage);
+    setCurPageRecipes(recipesPerPage);
   }, [curPage]);
 
-  async function getRecipes(
-    // startIndex: number,
-    // endIndex: number,
-    keyword: string = ""
-  ) {
+  async function getRecipes(keyword: string = "") {
     try {
+      setIsPending(true);
+
       const structuredKeyword = keyword.toLowerCase().trim();
       const data = await getData(
         `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
@@ -60,11 +64,14 @@ export default function Recipes() {
       const orderedRecipes = getOrderedRecipes(data.data);
       setCurPage(1);
       setRecipes(orderedRecipes);
-      setCurRecipes(getRecipesPerPage(orderedRecipes, RECIPES_PER_PAGE, 1));
+      setCurPageRecipes(getRecipesPerPage(orderedRecipes, RECIPES_PER_PAGE, 1));
       setNumberOfPages(Math.ceil(orderedRecipes.length / RECIPES_PER_PAGE));
       data.newAccessToken && userContext?.login(data.newAccessToken);
+
+      setIsPending(false);
       return orderedRecipes;
     } catch (err: any) {
+      setIsPending(false);
       setError(`Server error while getting recipes 🙇‍♂️ ${err.message}`);
       console.error("Error while getting recipes", err.message);
     }
@@ -73,11 +80,11 @@ export default function Recipes() {
   async function handleSearchRecipes(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    // const value = e.currentTarget.querySelector("input")?.value;
     const value = new FormData(e.currentTarget).get("input") as string;
     if (!value) return;
 
     //get recipe results
+    // return getFilteredRecipes(recipes, value);
     await getRecipes(value);
   }
 
@@ -104,13 +111,13 @@ export default function Recipes() {
       <SearchSection
         curPage={curPage}
         numberOfPages={numberOfPages}
-        numberOfCurRecipes={curRecipes ? curRecipes.length : 0}
+        numberOfCurRecipes={curPageRecipes?.length || 0}
         onSubmitSearch={handleSearchRecipes}
       />
       <RecipeContainer
         isPending={isPending}
-        totalUserRecipes={recipes.length}
-        curRecipes={curRecipes}
+        numberOfUserRecipes={numberOfUserRecipes}
+        curPageRecipes={curPageRecipes}
         error={error}
       />
       <PaginationButtons
@@ -192,43 +199,57 @@ function SearchSection({
 
 function RecipeContainer({
   isPending,
-  totalUserRecipes,
-  curRecipes,
+  numberOfUserRecipes,
+  curPageRecipes,
   error,
 }: {
   isPending: boolean;
-  totalUserRecipes: number;
-  curRecipes: TYPE_RECIPE[] | [];
+  numberOfUserRecipes: number;
+  curPageRecipes: TYPE_RECIPE[] | [];
   error: string;
 }) {
   const NUMBER_OF_COLUMNS = 5;
   const RECIPES_PER_COLUMN = 6;
+  const [recipesPerColumn, setRecipesPerColumn] = useState<any[]>(
+    new Array(NUMBER_OF_COLUMNS).fill([])
+  );
+  const [message, setMessage] = useState("");
 
   //recipes for each column array[];
   const getRecipesPerColumn = () => {
     const recipesPerColumnArr = new Array(NUMBER_OF_COLUMNS).fill("");
 
     return recipesPerColumnArr.map((_, i) =>
-      getRecipesPerPage(curRecipes, RECIPES_PER_COLUMN, i + 1)
+      getRecipesPerPage(curPageRecipes, RECIPES_PER_COLUMN, i + 1)
     );
   };
-  const recipesPerColumn = getRecipesPerColumn();
+
+  useEffect(() => {
+    setRecipesPerColumn(getRecipesPerColumn());
+  }, [curPageRecipes]);
+
+  useEffect(() => {
+    createMessage();
+  }, [error, isPending, numberOfUserRecipes, curPageRecipes.length]);
 
   function createMessage() {
-    let message;
+    console.log(curPageRecipes);
+    if (error) return setMessage(error);
 
-    if (isPending) {
-      message = "Loading your recipes...";
-    } else if (!totalUserRecipes) {
-      message = "No recipes created yet. Let't start by creating a recipe :)";
-    } else if (!curRecipes) {
-      message =
-        "No recipes found. Please try again with a different keyword :)";
-    } else {
-      message = error;
-    }
+    if (isPending) return setMessage("Loading your recipes...");
 
-    return message;
+    if (!numberOfUserRecipes)
+      return setMessage(
+        "No recipes created yet. Let't start by creating a recipe :)"
+      );
+
+    if (!curPageRecipes.length)
+      return setMessage(
+        "No recipes found. Please try again with a different keyword :)"
+      );
+
+    //otherwise reset message
+    setMessage("");
   }
 
   return (
@@ -243,14 +264,18 @@ function RecipeContainer({
         justifyItems: "center",
       }}
     >
-      {recipesPerColumn.map((recipes, i) => (
-        <ul key={i} style={{ width: "85%", height: "100%", zIndex: "1" }}>
-          {recipes.map((_, i) => {
-            return <RecipePreview key={i} recipe={recipes[i]} />;
-          })}
-        </ul>
-      ))}
-      <MessageContainer message={createMessage()} />
+      {/* when there are no recipes => message, otherwise recipes */}
+      {recipesPerColumn[0].length ? (
+        recipesPerColumn.map((recipes, i) => (
+          <ul key={i} style={{ width: "85%", height: "100%", zIndex: "1" }}>
+            {recipes.map((recipe: TYPE_RECIPE, i: number) => {
+              return <RecipePreview key={i} recipe={recipe} />;
+            })}
+          </ul>
+        ))
+      ) : (
+        <MessageContainer message={message} />
+      )}
     </div>
   );
 }
@@ -268,7 +293,7 @@ function RecipePreview({ recipe }: { recipe: any }) {
       id={recipe._id}
       onClick={handleClickPreview}
     >
-      {recipe.mainImage && (
+      {recipe.mainImage?.data ? (
         <Image
           style={{ borderRadius: "50%" }}
           src={recipe.mainImage.data}
@@ -276,6 +301,15 @@ function RecipePreview({ recipe }: { recipe: any }) {
           width={48}
           height={48}
         ></Image>
+      ) : (
+        <div
+          style={{
+            borderRadius: "50%",
+            width: "48px",
+            height: "48px",
+            backgroundColor: "grey",
+          }}
+        ></div>
       )}
       <p className={styles.title}>{recipe.title}</p>
       {recipe.favorite && (

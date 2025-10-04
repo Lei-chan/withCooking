@@ -64,6 +64,7 @@ export default function Recipe() {
       //recipe is stored inside _doc of data.data
       //images are stored in data.data
       const recipe = data.data._doc;
+      console.log(data.data);
 
       setStateInitNoImages(recipe);
       setMainImage(data.data.mainImage);
@@ -166,133 +167,132 @@ export default function Recipe() {
     setMemoryImages((prev) => prev.toSpliced(index, 1));
   }
 
-  function handleClickFavorite() {
+  async function handleClickFavorite() {
     setFavorite(!favorite);
+
+    if (!recipe) return;
+
+    const newRecipe = { ...recipe };
+    newRecipe.favorite = !favorite;
+    newRecipe.mainImage = mainImage;
+    newRecipe.instructions = recipe.instructions.map((inst, i) => {
+      return {
+        instruction: inst.instruction,
+        image: instructionImages[i],
+      };
+    });
+    newRecipe.memoryImages = memoryImages;
+
+    uploadRecipe(newRecipe);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    let recipeData;
-    try {
-      setIsPending(true);
-      setError("");
 
-      const formData = new FormData(e.currentTarget);
-      const dataArr = [...formData];
+    setIsPending(true);
 
-      ///ingredients
-      const numberOfIngredients = dataArr.filter(
-        (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
-      ).length;
+    const formData = new FormData(e.currentTarget);
+    const dataArr = [...formData];
 
-      const ingredients = new Array(numberOfIngredients)
-        .fill("")
-        .map((_, i) => {
-          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
-          const unit = formData.get(`ingredient${i + 1}Unit`);
+    ///ingredients
+    const numberOfIngredients = dataArr.filter(
+      (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
+    ).length;
 
-          if (
-            unit !== "noUnit" &&
-            unit !== "other" &&
-            unit !== "g" &&
-            unit !== "kg" &&
-            unit !== "oz" &&
-            unit !== "lb" &&
-            unit !== "ml" &&
-            unit !== "L" &&
-            unit !== "USCup" &&
-            unit !== "JapaneseCup" &&
-            unit !== "ImperialCup" &&
-            unit !== "riceCup" &&
-            unit !== "tsp" &&
-            unit !== "Tbsp" &&
-            unit !== "AustralianTbsp"
-          )
-            return {
-              ingredient:
-                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-                "",
-              amount,
-              unit: "g",
-              customUnit:
-                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-                "",
-              id: undefined,
-              convertion: undefined,
-            };
+    const ingredients = new Array(numberOfIngredients).fill("").map((_, i) => {
+      const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
+      const unit = formData.get(`ingredient${i + 1}Unit`);
 
-          return {
-            ingredient:
-              String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
-            amount,
-            unit,
-            customUnit:
-              String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-              "",
-            id: undefined,
-            convertion: convertIngUnits(amount, unit),
-          };
-        });
+      if (
+        unit !== "noUnit" &&
+        unit !== "other" &&
+        unit !== "g" &&
+        unit !== "kg" &&
+        unit !== "oz" &&
+        unit !== "lb" &&
+        unit !== "ml" &&
+        unit !== "L" &&
+        unit !== "USCup" &&
+        unit !== "JapaneseCup" &&
+        unit !== "ImperialCup" &&
+        unit !== "riceCup" &&
+        unit !== "tsp" &&
+        unit !== "Tbsp" &&
+        unit !== "AustralianTbsp"
+      )
+        return {
+          ingredient:
+            String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() || "",
+          amount,
+          unit: "g",
+          customUnit:
+            String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() || "",
+          id: undefined,
+          convertion: undefined,
+        };
 
-      const instructions = new Array(instructionImages.length)
-        .fill("")
-        .map((_, i) => {
-          return {
-            instruction: String(formData.get(`instruction${i + 1}`)) || "",
-            image: instructionImages[i],
-          };
-        });
-
-      const newRecipe = {
-        favorite: favorite === true ? true : false,
-        mainImage,
-        title: String(formData.get("title"))?.trim() || "",
-        author: String(formData.get("author")).trim() || "",
-        region: getRegion(ingredients),
-        servings: {
-          servings: +(formData.get("servings") || 0),
-          unit: String(formData.get("servingsUnit")) || "people",
-          customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
-        },
-        temperatures: {
-          temperatures: [
-            +(formData.get("temperature1") || 0),
-            +(formData.get("temperature2") || 0),
-            +(formData.get("temperature3") || 0),
-            +(formData.get("temperature4") || 0),
-          ],
-          unit:
-            formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
-        },
-        ingredients,
-        instructions,
-        description: String(formData.get("description"))?.trim() || "",
-        memoryImages,
-        comments: String(formData.get("comments"))?.trim() || "",
-        createdAt: new Date().toISOString(),
+      return {
+        ingredient:
+          String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
+        amount,
+        unit,
+        customUnit:
+          String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() || "",
+        id: undefined,
+        convertion: convertIngUnits(amount, unit),
       };
+    });
 
-      recipeData = await uploadRecipe(newRecipe);
+    const instructions = new Array(instructionImages.length)
+      .fill("")
+      .map((_, i) => {
+        return {
+          instruction: String(formData.get(`instruction${i + 1}`)) || "",
+          image: instructionImages[i],
+        };
+      });
 
-      setStateInitNoImages(recipeData);
-      setIsPending(false);
-      setMessage("Recipe uploaded successfully :)");
-      await wait();
-      setMessage("");
-      setEdit(false);
-    } catch (err: any) {
-      setIsPending(false);
-      setError(err.message);
-      return console.error(
-        "Error while uploading recipe",
-        err.message,
-        err.statusCode || 500
-      );
-    }
+    const newRecipe = {
+      favorite: favorite === true ? true : false,
+      mainImage,
+      title: String(formData.get("title"))?.trim() || "",
+      author: String(formData.get("author")).trim() || "",
+      region: getRegion(ingredients),
+      servings: {
+        servings: +(formData.get("servings") || 0),
+        unit: String(formData.get("servingsUnit")) || "people",
+        customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
+      },
+      temperatures: {
+        temperatures: [
+          +(formData.get("temperature1") || 0),
+          +(formData.get("temperature2") || 0),
+          +(formData.get("temperature3") || 0),
+          +(formData.get("temperature4") || 0),
+        ],
+        unit:
+          formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
+      },
+      ingredients,
+      instructions,
+      description: String(formData.get("description"))?.trim() || "",
+      memoryImages,
+      comments: String(formData.get("comments"))?.trim() || "",
+      createdAt: new Date().toISOString(),
+    };
+
+    await uploadRecipe(newRecipe);
+
+    setIsPending(false);
+    setMessage("Recipe uploaded successfully :)");
+    await wait();
+    setMessage("");
+    setEdit(false);
   }
 
   async function uploadRecipe(recipe: TYPE_RECIPE) {
     try {
+      setError("");
       const recipeId = window.location.hash.slice(1);
       ///store new recipe in recipes database and user info database
       const recipeData = await getData(`/api/recipes?id=${recipeId}`, {
@@ -301,21 +301,33 @@ export default function Recipe() {
         body: JSON.stringify(recipe),
       });
 
+      recipeData.newAccessToken &&
+        userContext?.login(recipeData.newAccessToken);
+
       //connect the recipe data id to user recipe data id
       const userData = await getData("/api/users/recipes", {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${userContext?.accessToken}`,
         },
-        body: JSON.stringify(recipeData.data),
+        body: JSON.stringify({ ...recipeData.data }),
       });
 
+      console.log(recipeData, userData);
       userData.newAccessToken && userContext?.login(userData.newAccessToken);
 
+      setStateInitNoImages(recipeData.data);
+
       return recipeData.data;
-    } catch (err) {
-      throw err;
+    } catch (err: any) {
+      setIsPending(false);
+      setError(`Server error while uploading recipe 🙇‍♂️ ${err.message}`);
+      console.error(
+        "Error while uploading recipe",
+        err.message,
+        err.statusCode || 500
+      );
     }
   }
 
@@ -574,7 +586,7 @@ function ImageTitle({
         height: "300px",
       }}
     >
-      {!image ? (
+      {!image?.data ? (
         <div
           className={styles.grey_background}
           style={{ width: "500px", height: "300px" }}
@@ -1574,7 +1586,7 @@ function Instruction({
           height: "100px",
         }}
       >
-        {edit && !image && (
+        {edit && !image?.data && (
           <div
             className={styles.grey_background}
             style={{ width: "100%", height: "100%" }}
@@ -1604,7 +1616,7 @@ function Instruction({
             />
           </div>
         )}
-        {image && (
+        {image?.data && (
           <Image
             src={image.data}
             alt={`instruction ${i + 1} image`}
@@ -1612,7 +1624,7 @@ function Instruction({
             height={100}
           ></Image>
         )}
-        {edit && image && (
+        {edit && image?.data && (
           <button
             className={clsx(styles.btn__img, styles.btn__trash_img)}
             style={{
@@ -1783,7 +1795,7 @@ function Memories({
       >
         {images.map((img, i) => (
           <MemoryImg
-            key={nanoid()}
+            key={i}
             edit={edit}
             i={i}
             image={img}
@@ -1856,7 +1868,7 @@ function Memories({
             {edit
               ? [...images, ""].map((_, i) => (
                   <button
-                    key={nanoid()}
+                    key={i}
                     style={{
                       opacity: "0.6",
                       width: "2.5%",
@@ -1872,7 +1884,7 @@ function Memories({
                 ))
               : images.map((_, i) => (
                   <button
-                    key={nanoid()}
+                    key={i}
                     style={{
                       opacity: "0.6",
                       width: "2.5%",
