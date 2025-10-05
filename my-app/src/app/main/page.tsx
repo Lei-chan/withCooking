@@ -3,11 +3,16 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import Link from "next/link";
 import clsx from "clsx";
-import React, { useEffect, useRef, useState } from "react";
-import { create } from "domain";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
+import { AccessTokenContext } from "../context";
 import {
+  getData,
+  createMessage,
+  uploadRecipe,
+  getTemperatures,
+  getOrderedRecipes,
   calcNumberOfPages,
   getFilteredRecipes,
   getRecipesPerPage,
@@ -16,14 +21,22 @@ import {
   calcTransitionXSlider,
   updateConvertion,
   updateIngsForServings,
+  getReadableIngUnit,
 } from "../helper";
-import { TYPE_RECIPE } from "../config";
+import {
+  MAX_SERVINGS,
+  TYPE_RECIPE,
+  TYPE_FILE,
+  TYPE_INGREDIENT,
+  TYPE_INGREDIENTS,
+} from "../config";
 import DropdownMenu from "./(dropdown)/page";
+import { MessageContainer } from "../components";
+import { relative } from "path";
 
 export default function MAIN() {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
   const searchRef = useRef(null);
   const [isDraggingX, setIsDraggingX] = useState(false);
   const [isDraggingY, setIsDraggingY] = useState(false);
@@ -79,25 +92,9 @@ export default function MAIN() {
     setIsSearchVisible(false);
   };
 
-  function handleClickPreview(recipe: TYPE_RECIPE) {
-    setCurRecipe(recipe);
-  }
-
-  function updateRecipeFavorite(newFavoriteStatus: boolean) {
-    let recipe = recipes.find(
-      (recipe: TYPE_RECIPE) => recipe.id === curRecipe?.id
-    );
-    if (!recipe) return;
-    const newRecipe = { ...recipe };
-    newRecipe.favorite = newFavoriteStatus;
-    recipe = newRecipe;
-
-    setCurRecipe(recipe);
-  }
-
   return (
     <div
-      className={clsx(styles.page__main)}
+      className={styles.page__main}
       onClick={handleCloseDropdownSearch}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMoveRecipe}
@@ -108,9 +105,6 @@ export default function MAIN() {
             position: "absolute",
             top: "0",
             left: `calc(${recipeWidth} - 1.5%)`,
-            //for dev
-            // backgroundColor: "blue",
-            // opacity: "0.5",
             width: "2%",
             height: "100%",
             cursor: "ew-resize",
@@ -139,12 +133,8 @@ export default function MAIN() {
             isSearchVisible={isSearchVisible}
             searchRef={searchRef}
             onClickSearch={handleToggleSearch}
-            onClickPreview={handleClickPreview}
           />
-          <Recipe
-            curRecipe={curRecipe}
-            updateRecipeFavorite={updateRecipeFavorite}
-          />
+          <Recipe recipeWidth={recipeWidth} />
         </section>
 
         <section
@@ -160,9 +150,6 @@ export default function MAIN() {
               position: "absolute",
               top: `calc(${timerHeight} - 2%)`,
               right: "0",
-              //for dev
-              // backgroundColor: "blue",
-              // opacity: "0.5",
               width: `calc(100% - ${recipeWidth})`,
               height: "2%",
               cursor: "ns-resize",
@@ -182,43 +169,98 @@ function Search({
   isSearchVisible,
   searchRef,
   onClickSearch,
-  onClickPreview,
 }: {
   isSearchVisible: boolean;
   searchRef: any;
   onClickSearch: () => void;
-  onClickPreview: (recipe: TYPE_RECIPE) => void;
 }) {
   const RECIPES_PER_PAGE = 6;
+  const userContext = useContext(AccessTokenContext);
+  const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
+  const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  const [curPageRecipes, setCurPageRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  const [numberOfPages, setNumberOfPages] = useState<number>(0);
+  const [curPage, setCurPage] = useState<number>(1);
+
+  const [isPending, setIsPending] = useState<boolean>(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
   const [input, setInput] = useState("");
-  const [curRecipes, setCurRecipes] = useState<TYPE_RECIPE[]>([]);
-  const [numberOfPages, setNumberOfPages] = useState(0);
-  const [page, setPage] = useState(1);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
-  // const getRecipes = (value: string = input) => {
-  //   if (!recipes.length) return;
+  useEffect(() => {
+    (async () => {
+      const userRecipes = await getRecipes();
+      setNumberOfUserRecipes(userRecipes?.length || 0);
+    })();
+  }, []);
 
-  //   const filteredRecipes = getFilteredRecipes(value);
+  //when curPage changes, change curRecipes too
+  useEffect(() => {
+    if (!recipes) return;
 
-  //   setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
+    const recipesPerPage = getRecipesPerPage(
+      recipes,
+      RECIPES_PER_PAGE,
+      curPage
+    );
+    //set recipes for current page
+    setCurPageRecipes(recipesPerPage);
+  }, [curPage]);
 
-  //   return getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, page);
-  // };
+  useEffect(() => {
+    const message = createMessage(
+      error,
+      isPending,
+      numberOfUserRecipes,
+      curPageRecipes.length
+    ) as string;
+    setMessage(message);
+  }, [error, isPending, numberOfUserRecipes, curPageRecipes.length]);
+
+  async function getRecipes(keyword: string = "") {
+    try {
+      setIsPending(true);
+
+      const structuredKeyword = keyword.toLowerCase().trim();
+      const data = await getData(
+        `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
+        {
+          method: "GET",
+          headers: { authorization: `Bearer ${userContext?.accessToken}` },
+        }
+      );
+      console.log(data);
+
+      const orderedRecipes = getOrderedRecipes(data.data);
+      setCurPage(1);
+      setRecipes(orderedRecipes);
+      setCurPageRecipes(getRecipesPerPage(orderedRecipes, RECIPES_PER_PAGE, 1));
+      setNumberOfPages(calcNumberOfPages(orderedRecipes, RECIPES_PER_PAGE));
+      data.newAccessToken && userContext?.login(data.newAccessToken);
+
+      setIsPending(false);
+      return orderedRecipes;
+    } catch (err: any) {
+      setIsPending(false);
+      setError(`Server error while getting recipes 🙇‍♂️ ${err.message}`);
+      console.error("Error while getting recipes", err.message);
+    }
+  }
 
   const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
     if (timeoutId) clearTimeout(timeoutId);
 
-    const value = e.currentTarget.value.trim().toLowerCase();
+    const keyword = e.currentTarget.value.trim().toLowerCase();
 
-    const id = setTimeout(() => {
-      if (!value) return;
-      setInput(value);
-      setPage(1);
+    const id = setTimeout(async () => {
+      if (!keyword) return;
+      setInput(keyword);
+      setCurPage(1);
 
-      // const nextRecipes = getRecipes(value);
-      // nextRecipes && setCurRecipes(nextRecipes);
-    }, 500);
+      await getRecipes(keyword);
+    }, 600);
 
     setTimeoutId(id);
   };
@@ -232,14 +274,13 @@ function Search({
     const target = e.currentTarget;
 
     target.value === "decrease"
-      ? setPage((prev) => prev - 1)
-      : setPage((prev) => prev + 1);
+      ? setCurPage((prev) => prev - 1)
+      : setCurPage((prev) => prev + 1);
   }
 
-  useEffect(() => {
-    // const nextRecipes = getRecipes();
-    // nextRecipes && setCurRecipes(nextRecipes);
-  }, [page]);
+  function handleClickPreview(recipe: any) {
+    window.location.hash = recipe._id;
+  }
 
   return (
     <div
@@ -266,16 +307,16 @@ function Search({
           </button>
         </form>
         <ul className={styles.search_results}>
-          {!curRecipes.length ? (
-            <p className={styles.no_results}>0 search results</p>
+          {message ? (
+            <p className={styles.no_results}>{message}</p>
           ) : (
-            curRecipes.map((recipe) => (
+            curPageRecipes.map((recipe, i) => (
               <li
-                key={recipe.id}
+                key={i}
                 className={styles.recipe_preview}
-                onClick={() => onClickPreview(recipe)}
+                onClick={() => handleClickPreview(recipe)}
               >
-                {recipe.mainImage?.data && (
+                {recipe.mainImage?.data ? (
                   <Image
                     className={styles.img__main}
                     src={recipe.mainImage.data}
@@ -283,6 +324,15 @@ function Search({
                     width={50}
                     height={50}
                   ></Image>
+                ) : (
+                  <div
+                    style={{
+                      backgroundColor: "grey",
+                      width: "50px",
+                      height: "50px",
+                      borderRadius: "50%",
+                    }}
+                  ></div>
                 )}
                 <p className={styles.title}>{recipe.title}</p>
                 {recipe.favorite && (
@@ -298,7 +348,7 @@ function Search({
             ))
           )}
         </ul>
-        {page > 1 && (
+        {curPage > 1 && (
           <button
             className={clsx(
               styles.btn__pagination,
@@ -308,12 +358,12 @@ function Search({
             value="decrease"
             onClick={handlePagination}
           >
-            Page {page - 1}
+            Page {curPage - 1}
             <br />
             &larr;
           </button>
         )}
-        {page < numberOfPages && (
+        {curPage < numberOfPages && (
           <button
             className={clsx(
               styles.btn__pagination,
@@ -323,7 +373,7 @@ function Search({
             value="increase"
             onClick={handlePagination}
           >
-            Page {page + 1}
+            Page {curPage + 1}
             <br />
             &rarr;{" "}
           </button>
@@ -334,361 +384,1082 @@ function Search({
 }
 
 //prettier ignore
-function Recipe({
-  curRecipe,
-  updateRecipeFavorite,
-}: {
-  curRecipe: any;
-  updateRecipeFavorite: (newFavoriteStatus: boolean) => void;
-}) {
-  const [recipe, setRecipe] = useState(curRecipe);
+function Recipe({ recipeWidth }: { recipeWidth: string }) {
+  const userContext = useContext(AccessTokenContext);
+  //don't modify recipe value unless the recipe is changed
+  const [recipe, setRecipe] = useState<TYPE_RECIPE>();
+  //use curRecipe to modify the recipe value
+  const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
+  const [favorite, setFavorite] = useState<boolean>();
+  const [servingsValue, setServingsValue] = useState<number>();
+  const [ingredientsUnit, setIngredientsUnit] = useState<
+    "original" | "metric" | "us" | "japan" | "australia" | "metricCup"
+  >("original");
+  // const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
+  // const [instructionImages, setInstructionImages] = useState<
+  //   (TYPE_FILE | undefined)[]
+  // >([undefined]);
+  // const [memoryImages, setMemoryImages] = useState<TYPE_FILE[]>([]);
 
-  const [servingsValue, setServingsValue] = useState(
-    curRecipe?.servings.servings
-  );
-  const [temperatureUnit, setTemperatureUnit] = useState<"℉" | "℃">(
-    curRecipe?.temperatures.unit
-  );
-  const [ingredientsUnit, setIngredientsUnit] = useState(
-    curRecipe?.servings.unit
-  );
-  const [favorite, setFavorite] = useState(curRecipe?.favorite);
-  const [curSlide, setCurSlide] = useState(0);
-  const [maxSlide, setMaxSlide] = useState(curRecipe?.memoryImages.length - 1);
+  const [isLoading, setIsLoading] = useState<boolean>();
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    setRecipe(curRecipe);
-    setServingsValue(curRecipe?.servings.servings);
-    setTemperatureUnit(curRecipe?.temperatures.unit);
-    setIngredientsUnit(curRecipe?.servings.unit);
-    setFavorite(curRecipe?.favorite);
-    setCurSlide(0);
-    setMaxSlide(curRecipe?.memoryImages.length - 1);
-  }, [curRecipe]);
+    const id = window.location.hash.slice(1);
+    if (!id)
+      return setMessage("Let's start cooking by selecting your recipe :)");
+    (async () => await getRecipe(id))();
+  }, [window.location.hash]);
 
-  // useEffect(() => {
-  //   const id = setInterval(() => {
-  //     setCurSlide((prev) => (prev === maxSlide ? 0 : prev + 1));
-  //   }, 5000);
+  async function getRecipe(id: string) {
+    try {
+      setIsLoading(true);
+      const data = await getData(`/api/recipes?id=${id}`, { method: "GET" });
 
-  //   return () => {
-  //     clearInterval(id);
-  //   };
-  // }, []);
+      //recipe is stored inside _doc of data.data
+      //images are stored in data.data
+      const recipe = { ...data.data._doc };
+      recipe.mainImage = data.data.mainImage;
+      recipe.instructions = data.data.instructions;
+      recipe.memoryImages = data.data.memoryImages;
 
-  // const updateIngsForServings = (servings: number) => {
-  //   const newIngs = curRecipe.ingredients.map(
-  //     (ing: {
-  //       ingredient: string;
-  //       amount: number | string;
-  //       unit: string;
-  //       id: number;
-  //     }) => {
-  //       ///calclate ing for one serivng first then multiply it by new servings
-  //       const newAmount =
-  //         typeof ing.amount === "string"
-  //           ? `${(1 / curRecipe.servings.servings) * servings} ${ing.amount}`
-  //           : +((ing.amount / curRecipe.servings.servings) * servings).toFixed(
-  //               1
-  //             );
+      console.log(recipe);
+      setStateInitNoImages(recipe);
+      // setMainImage(data.data.mainImage);
+      // setInstructionImages(
+      //   data.data.instructions.map(
+      //     (inst: { instruction: string; image: TYPE_FILE | undefined }) =>
+      //       inst.image
+      //   )
+      // );
+      // setMemoryImages(data.data.memoryImages);
 
-  //       const newIng = { ...ing };
-  //       newIng.amount = newAmount;
-  //       return newIng;
-  //     }
-  //   );
+      setIsLoading(false);
+    } catch (err: any) {
+      setIsLoading(false);
+      setError(err.message);
+      console.error(
+        "Error while loading recipe",
+        err.message,
+        err.statusCode || 500
+      );
+    }
+  }
 
-  //   return newIngs; //array of updated ingredients for new servings
-  // };
+  function setStateInitNoImages(recipe: TYPE_RECIPE) {
+    setRecipe(recipe);
+    setCurRecipe(recipe);
+    setFavorite(recipe.favorite);
+    setServingsValue(recipe.servings.servings);
+    setIngredientsUnit(recipe.region);
+  }
 
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = +e.currentTarget.value;
     setServingsValue(newValue);
-    setRecipe((prev: any) => {
-      const newRecipe = { ...prev };
-      newRecipe.ingredients = updateIngsForServings(newValue, curRecipe);
+
+    if (!recipe) return;
+    setCurRecipe((prev: any) => {
+      const newRecipe = { ...recipe };
+      newRecipe.ingredients = updateIngsForServings(newValue, recipe);
       //update convertion for updated ing amount
       return updateConvertion(newRecipe);
     });
   }
 
-  function handleChangeIngUnit(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newValue = e.currentTarget.value;
-    setIngredientsUnit(newValue);
-  }
-
-  function handleChangeTempUnit(e: React.ChangeEvent<HTMLSelectElement>) {
-    //if the value hasn't change => return;
-    const newValue = e.currentTarget.value;
-    if ((newValue !== "℉" && newValue !== "℃") || newValue === temperatureUnit)
+  function handleChangeIngredientsUnit(
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) {
+    const value = e.currentTarget.value;
+    if (
+      value !== "metric" &&
+      value !== "us" &&
+      value !== "japan" &&
+      value !== "australia" &&
+      value !== "metricCup"
+    )
       return;
 
-    //otherwise set new temperature unit
-    setTemperatureUnit(newValue);
-    //and set converted temperature
-    setRecipe((prev: any) => {
-      const newRecipe = { ...prev };
-      const newTemp = prev.temperatures.temperatures.map((temp: number) =>
-        convertTempUnits(temp, newValue === "℃" ? "℉" : "℃")
-      );
-      newRecipe.temperatures = { temperatures: newTemp, unit: newValue };
-      return newRecipe;
-    });
+    setIngredientsUnit(value);
   }
 
-  function handleClickFavorite() {
-    const newFavoriteStatus = !favorite;
-    setFavorite(newFavoriteStatus);
-    updateRecipeFavorite(newFavoriteStatus);
-  }
+  async function handleClickFavorite() {
+    setFavorite(!favorite);
 
-  function handleClickDots(i: number) {
-    setCurSlide(i);
+    if (!recipe) return;
+
+    const newRecipe = { ...recipe };
+    newRecipe.favorite = !favorite;
+    // newRecipe.mainImage = mainImage;
+    // newRecipe.instructions = recipe.instructions.map((inst, i) => {
+    //   return {
+    //     instruction: inst.instruction,
+    //     image: instructionImages[i],
+    //   };
+    // });
+    // newRecipe.memoryImages = memoryImages;
+
+    uploadRecipe(newRecipe, userContext);
   }
 
   return (
-    <div className={styles.container__recipe}>
-      {recipe ? (
-        <>
-          <img
-            className={styles.img__main}
-            src={recipe.mainImage || "/grey-img.png"}
-            alt="main image"
-          ></img>
-          <div className={styles.title_wrapper}>
-            <h2 className={styles.title}>{recipe.title}</h2>
-          </div>
-          <div className={styles.container__description_favorite}>
-            <div className={styles.container__description}>
-              <div className={styles.container__author_servings}>
-                <p>Author</p>
-                <span className={styles.author}>{recipe.author}</span>
-                <p>Servings</p>
-                <input
-                  id={styles.input__servings}
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={servingsValue}
-                  onChange={handleChangeServings}
-                />
-                <span className={styles.servings_unit}>
-                  {recipe.servings.unit}
-                </span>
-              </div>
-              <div className={styles.container__ingredients_unit}>
-                <p>Ingredients Unit</p>
-                <select
-                  id={styles.input__ingredients_unit}
-                  value={ingredientsUnit}
-                  onChange={handleChangeIngUnit}
-                >
-                  <option value="metric">Metric</option>
-                  <option value="us">US</option>
-                  <option value="japan">Japan</option>
-                  <option value="australia">Australia</option>
-                  <option value="metricCup">Metric cup (1cup = 250ml)</option>
-                </select>
-              </div>
-              <div className={styles.container__temperature_unit}>
-                <p>Temperature</p>
-                <span className={styles.temperature}>
-                  {recipe.temperatures.temperatures.join("/")}
-                </span>
-                <select
-                  id={styles.input__temperature_units}
-                  value={temperatureUnit}
-                  onChange={handleChangeTempUnit}
-                >
-                  <option value="℃">℃</option>
-                  <option value="℉">℉</option>
-                </select>
-              </div>
-            </div>
-            <button
-              className={clsx(
-                styles.btn__favorite,
-                favorite && styles.btn__favorite_on
-              )}
-              onClick={handleClickFavorite}
-            ></button>
-          </div>
-          <div className={styles.container__ingredients}>
-            <h3>~ Ingredients ~</h3>
-            <div className={styles.ingredients}>
-              {recipe.ingredients.map((ing: any) => {
-                const newIng = ing.convertion[ingredientsUnit]
-                  ? ing.convertion[ingredientsUnit]
-                  : ing;
+    <>
+      {error && (
+        <p
+          style={{
+            backgroundColor: error ? "orangered" : "rgba(112, 231, 0, 1)",
+            color: "white",
+            padding: "0.7% 1%",
+            borderRadius: "5px",
+            fontSize: "1.4vw",
+            letterSpacing: "0.07vw",
+            marginBottom: "1%",
+          }}
+        >
+          {error}
+        </p>
+      )}
+      {isLoading ||
+      !recipe ||
+      !curRecipe ||
+      (!servingsValue && servingsValue !== 0) ||
+      favorite === undefined ? (
+        <MessageContainer
+          message={isLoading ? "Loading your recipe..." : message}
+          fontSize={"1.6vw"}
+          letterSpacing={"0.05vw"}
+          wordSpacing={"0.3vw"}
+        />
+      ) : (
+        <form
+          style={{
+            position: "relative",
+            textAlign: "center",
+            backgroundImage:
+              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+            width: "100%",
+            height: "fit-content",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "3% 0",
+            color: "rgb(60, 0, 116)",
+          }}
+        >
+          <ImageTitle
+            recipeWidth={recipeWidth}
+            image={recipe.mainImage}
+            title={recipe.title}
+          />
+          <BriefExplanation
+            recipeWidth={recipeWidth}
+            curRecipe={curRecipe}
+            servingsValue={servingsValue}
+            favorite={favorite}
+            ingredientsUnit={ingredientsUnit}
+            onChangeServings={handleChangeServings}
+            onChangeIngredientsUnit={handleChangeIngredientsUnit}
+            onClickFavorite={handleClickFavorite}
+          />
+          <Ingredients
+            recipeWidth={recipeWidth}
+            servingsValue={servingsValue}
+            ingredients={curRecipe.ingredients}
+            ingredientsUnit={ingredientsUnit}
+          />
+          <Instructions
+            recipeWidth={recipeWidth}
+            instructions={recipe.instructions}
+          />
+          <AboutThisRecipe description={recipe.description} />
+          <Memories recipeWidth={recipeWidth} images={recipe.memoryImages} />
+          <Comments comments={recipe.comments} />
 
-                return (
-                  <div key={nanoid()} className={styles.ingredient_line}>
-                    <input type="checkbox" />
-                    <span>
-                      {" "}
-                      {typeof newIng.amount === "string" ||
-                      newIng.unit === "g" ||
-                      newIng.unit === "kg" ||
-                      newIng.unit === "oz" ||
-                      newIng.unit === "lb" ||
-                      newIng.unit === "ml" ||
-                      newIng.unit === "L"
-                        ? newIng.amount
-                        : fracty(newIng.amount)}{" "}
-                      {newIng.unit} of {ing.ingredient}
-                    </span>
-                  </div>
-                );
-              })}
+          {/* <div className={styles.container__nutrition_facts}>
+          <div className={styles.nutrition_facts}>
+            <div className={styles.container__h3_input}>
+              <h3>Nutrition Facts</h3>
+              <input
+                id={styles.input__servings}
+                type="number"
+                min="1"
+                max="500"
+                defaultValue="1"
+              ></input>
+              <span>servings</span>
             </div>
-          </div>
-
-          <div className={styles.container__instructions}>
-            <h2>~ Instructions ~</h2>
-            {recipe.instructions.map((step: any, i: number) => (
-              <div key={nanoid()} className={styles.step}>
-                <div className={styles.container__step_step_img}>
-                  <p>
-                    <span>{i + 1}</span> {step.instruction}
-                  </p>
-                  {step.image && (
-                    <img
-                      src={step.image || "/grey-img.png"}
-                      alt={`step ${i + 1} image`}
-                    ></img>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className={styles.container__recipe_description}>
-            <h2>~ About this recipe ~</h2>
-            <p>{recipe.description}</p>
-          </div>
-          {recipe.memoryImages.length && (
-            <div className={styles.container__slider}>
-              <h2>~ Memories of the recipe ~</h2>
-              <div className={styles.slider__imgs}>
-                {recipe.memoryImages.map((img: string, i: number) => (
-                  <img
-                    key={nanoid()}
-                    src={img || "/grey-img.png"}
-                    alt={`memory image${i + 1}`}
-                    style={{
-                      transform: calcTransitionXSlider(i, curSlide),
-                    }}
-                  ></img>
-                ))}
-                <div
-                  style={{
-                    position: "absolute",
-                    width: "70%",
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    gap: "1.7%",
-                    bottom: "5%",
-                  }}
-                >
-                  {recipe.memoryImages.map((_: any, i: number) => (
-                    <button
-                      key={nanoid()}
-                      className={styles.btn__dot}
-                      style={{ opacity: i === curSlide ? "0.6" : "0.3" }}
-                      onClick={() => handleClickDots(i)}
-                    ></button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className={styles.container__comments}>
-            <h2>~ Comments ~</h2>
-            <div className={styles.comments_wrapper}>
-              <div
-                className={styles.comments}
-                contentEditable="true"
-                defaultValue="Use this space for free :)"
-              >
-                {recipe.comments}
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.container__nutrition_facts}>
-            <div className={styles.nutrition_facts}>
-              <div className={styles.container__h3_input}>
-                <h3>Nutrition Facts</h3>
-                <input
-                  id={styles.input__servings}
-                  type="number"
-                  min="1"
-                  max="500"
-                  defaultValue="1"
-                ></input>
-                <span>servings</span>
-              </div>
-              <table className={styles.nutrients}>
-                <thead>
-                  <tr>
-                    <th scope="col">Type</th>
-                    <th scope="col">Amount</th>
-                    <th scope="col">
-                      Recommended amount a day
-                      <br />
-                      (Adult Men/Adult Women)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row">Calories</th>
-                    <td scope="row">300kcal(1000jl)/30%</td>
-                    <td scope="row">15%</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Carbs</th>
-                    <td scope="row">100g/30%</td>
-                    <td scope="row">20%</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Protein</th>
-                    <td scope="row">10g/4%</td>
-                    <td scope="row">10%</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Fat</th>
-                    <td scope="row">20g/10%</td>
-                    <td scope="row">70%</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Sugar</th>
-                    <td scope="row">20g/10%</td>
-                    <td scope="row">70%</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Sodium</th>
-                    <td scope="row">2g/0.5%</td>
-                    <td scope="row">10%/20%</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Fibers</th>
-                    <td scope="row">2g/0.5%</td>
-                    <td scope="row">10%/20%</td>
-                  </tr>
-                </tbody>
-              </table>
-              {/* <p style={{ color: "red", width: "95%", marginTop: "2%" }}>
+            <table className={styles.nutrients}>
+              <thead>
+                <tr>
+                  <th scope="col">Type</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">
+                    Recommended amount a day
+                    <br />
+                    (Adult Men/Adult Women)
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Calories</th>
+                  <td scope="row">300kcal(1000jl)/30%</td>
+                  <td scope="row">15%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Carbs</th>
+                  <td scope="row">100g/30%</td>
+                  <td scope="row">20%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Protein</th>
+                  <td scope="row">10g/4%</td>
+                  <td scope="row">10%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Fat</th>
+                  <td scope="row">20g/10%</td>
+                  <td scope="row">70%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Sugar</th>
+                  <td scope="row">20g/10%</td>
+                  <td scope="row">70%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Sodium</th>
+                  <td scope="row">2g/0.5%</td>
+                  <td scope="row">10%/20%</td>
+                </tr>
+                <tr>
+                  <th scope="row">Fibers</th>
+                  <td scope="row">2g/0.5%</td>
+                  <td scope="row">10%/20%</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style={{ color: "red", width: "95%", marginTop: "2%" }}>
                 ※ Couldn't find the information of aaaa, and aaa, so that is
                 excluded here.
-              </p> */}
-            </div>
+              </p> 
           </div>
-        </>
-      ) : (
-        <p className={styles.no_recipe}>Let's start by selecting a recipe :)</p>
+        </div> */}
+        </form>
       )}
+    </>
+  );
+}
+
+function ImageTitle({
+  image,
+  title,
+  recipeWidth,
+}: {
+  image: TYPE_FILE | undefined;
+  title: string;
+  recipeWidth: string;
+}) {
+  const [width, setWidth] = useState(440);
+  const [height, setHeight] = useState(290);
+
+  useEffect(() => {
+    setWidthHeight();
+  }, [recipeWidth]);
+
+  function setWidthHeight() {
+    const width = recipeWidth.includes("px")
+      ? parseInt(recipeWidth) * 0.7
+      : 440;
+    const height = width * 0.66;
+
+    setWidth(width);
+    setHeight(height);
+  }
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: width,
+        height: height,
+      }}
+    >
+      {!image?.data ? (
+        <div
+          className={styles.grey_background}
+          style={{ width: `${width}px`, height: `${height}px` }}
+        ></div>
+      ) : (
+        <Image
+          src={image.data}
+          alt="main image"
+          width={width}
+          height={height}
+        ></Image>
+      )}
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          top: "-10%",
+          left: "7%",
+          width: "85%",
+          height: "fit-content",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+          backgroundImage:
+            "linear-gradient(150deg, rgb(255, 230, 0) 10%,rgb(255, 102, 0))",
+          padding: "1% 3.5%",
+          transform: "skewX(-17deg)",
+          zIndex: "2",
+        }}
+      >
+        <p
+          style={{
+            width: "100%",
+            height: "100%",
+            fontSize: `${width / 15}px`,
+            letterSpacing: "0.1vw",
+            textAlign: "center",
+          }}
+        >
+          {title}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BriefExplanation({
+  recipeWidth,
+  curRecipe,
+  servingsValue,
+  ingredientsUnit,
+  favorite,
+  onChangeServings,
+  onChangeIngredientsUnit,
+  onClickFavorite,
+}: {
+  recipeWidth: string;
+  curRecipe: TYPE_RECIPE;
+  servingsValue: number;
+  ingredientsUnit: string;
+  favorite: boolean;
+  onChangeServings: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChangeIngredientsUnit: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onClickFavorite: () => void;
+}) {
+  const [width, setWidth] = useState<string>("90%");
+  const [iconSize, setIconSize] = useState<string>("20");
+  const [fontFukidashiSize, setFontFukidashiSize] = useState<string>("1.2vw");
+  const [fontOtherSize, setFontOtherSize] = useState<string>("1.2vw");
+
+  const [mouseOver, setMouseOver] = useState([false, false, false, false]);
+  const [author, setAuthour] = useState(curRecipe.author);
+  const [servingsUnit, setServingsUnit] = useState(curRecipe.servings.unit);
+  const [servingsCustomUnit, setServingsCustomUnit] = useState(
+    curRecipe.servings.customUnit
+  );
+  const [temperaturs, setTemperatures] = useState(
+    curRecipe.temperatures.temperatures.join(" / ")
+  );
+  const [temperatureUnit, setTemperatureUnit] = useState<"℉" | "℃">(
+    curRecipe.temperatures.unit
+  );
+
+  useEffect(() => {
+    setWidth(getSize(recipeWidth, 0.9, "90%"));
+    setIconSize(getSize(recipeWidth, 0.02, "20"));
+    setFontFukidashiSize(getSize(recipeWidth, 0.02, "1.2vw"));
+    setFontOtherSize(getSize(recipeWidth, 0.025, "1.2vw"));
+  }, [recipeWidth]);
+
+  function getSize(recipeWidth: string, ratio: number, defaultRatio: string) {
+    return recipeWidth.includes("px")
+      ? `${parseInt(recipeWidth) * ratio}px`
+      : defaultRatio;
+  }
+
+  function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
+    const index = e.currentTarget.dataset.icon;
+    if (!index) return;
+
+    setMouseOver((prev) => {
+      const newMouseOver = [...prev];
+      newMouseOver[+index] = true;
+      return newMouseOver;
+    });
+  }
+
+  function handleMouseOut(e: React.MouseEvent<HTMLDivElement>) {
+    const index = e.currentTarget.dataset.icon;
+    if (!index) return;
+
+    setMouseOver((prev) => {
+      const newMouseOver = [...prev];
+      newMouseOver[+index] = false;
+      return newMouseOver;
+    });
+  }
+
+  function handleChangeInput(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    i: number
+  ) {
+    const target = e.currentTarget;
+    const value = target.value;
+
+    if (target.name === "author") setAuthour(value);
+    if (target.name === "servingsUnit") setServingsUnit(value);
+    if (target.name === "servingsCustomUnit") setServingsCustomUnit(value);
+    if (target.name === "temperatureUnit") {
+      (value === "℉" || value === "℃") && handleChangeTempUnit(value);
+    }
+  }
+
+  function handleChangeTempUnit(value: "℉" | "℃") {
+    setTemperatureUnit(value);
+  }
+
+  useEffect(() => {
+    const newTemps = getTemperatures(
+      curRecipe.temperatures.temperatures,
+      curRecipe.temperatures.unit,
+      temperatureUnit
+    );
+    setTemperatures(newTemps);
+  }, [temperatureUnit]);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        width: width,
+        aspectRatio: "1/0.1",
+        gap: "3%",
+        margin: recipeWidth.includes("px")
+          ? `${parseInt(recipeWidth) * 0.07}px 0 ${
+              parseInt(recipeWidth) * 0.07
+            }px 0`
+          : "50px 0 28px 0",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "start",
+          minWidth: "80%",
+          width: "fit-content",
+          maxWidth: "91%",
+          height: "100%",
+          whiteSpace: "nowrap",
+          padding: "3%",
+          backgroundColor: "rgb(255, 217, 0)",
+          borderRadius: "1% / 7%",
+          gap: "20%",
+          boxShadow: "rgba(0, 0, 0, 0.27) 3px 3px 5px",
+        }}
+      >
+        <div className={styles.container__author_servings}>
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="0"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "fit-content",
+                height: "fit-content",
+                top: "-230%",
+                left: "-280%",
+                opacity: !mouseOver[0] ? 0 : 1,
+              }}
+            >
+              <p
+                className={styles.p__fukidashi}
+                style={{ fontSize: fontFukidashiSize }}
+              >
+                Author of the recipe
+              </p>
+            </div>
+            <Image
+              src={"/person.svg"}
+              alt="person icon"
+              width={parseInt(iconSize)}
+              height={parseInt(iconSize)}
+            ></Image>
+          </div>
+          <span style={{ width: "19%", fontSize: fontOtherSize }}>
+            {author}
+          </span>
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="1"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "fit-content",
+                height: "fit-content",
+                top: "-280%",
+                left: "-380%",
+                opacity: !mouseOver[1] ? 0 : 1,
+              }}
+            >
+              <p
+                className={styles.p__fukidashi}
+                style={{ fontSize: fontFukidashiSize }}
+              >
+                Number of servings of the recipe
+              </p>
+            </div>
+            <Image
+              src={"/servings.svg"}
+              alt="servings icon"
+              width={parseInt(iconSize)}
+              height={parseInt(iconSize)}
+            ></Image>
+          </div>
+          <input
+            className={styles.input__brief_explanation}
+            style={{ width: "17%", fontSize: fontOtherSize }}
+            type="number"
+            min="1"
+            max={MAX_SERVINGS}
+            name="servings"
+            placeholder="Servings"
+            value={servingsValue}
+            onChange={onChangeServings}
+          />
+          <span style={{ width: "20%", fontSize: fontOtherSize }}>
+            {servingsUnit !== "other" ? servingsUnit : servingsCustomUnit}
+          </span>
+        </div>
+        <div className={styles.container__units}>
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="2"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "fit-content",
+                height: "fit-content",
+                top: "-260%",
+                left: "-300%",
+                opacity: !mouseOver[2] ? 0 : 1,
+              }}
+            >
+              <p
+                className={styles.p__fukidashi}
+                style={{ fontSize: fontFukidashiSize }}
+              >
+                Unit system you prefer
+              </p>
+            </div>
+            <Image
+              src={"/scale.svg"}
+              alt="ingredient units icon"
+              width={parseInt(iconSize)}
+              height={parseInt(iconSize)}
+            ></Image>
+          </div>
+          <select
+            className={styles.input__brief_explanation}
+            style={{ width: "25%", fontSize: fontOtherSize }}
+            name="region"
+            value={ingredientsUnit}
+            onChange={onChangeIngredientsUnit}
+          >
+            <option value="original">Original</option>
+            <option value="metric">Metric</option>
+            <option value="us">US</option>
+            <option value="japan">Japan</option>
+            <option value="australia">Australia</option>
+            <option value="metricCup">Metric cup (1cup = 250ml)</option>
+          </select>
+
+          <div
+            className={styles.icons__brief_explanation}
+            data-icon="3"
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
+          >
+            <div
+              className={styles.container__fukidashi}
+              style={{
+                width: "fit-content",
+                height: "fit-content",
+                top: "-300%",
+                left: "-370%",
+                opacity: !mouseOver[3] ? 0 : 1,
+              }}
+            >
+              <p
+                className={styles.p__fukidashi}
+                style={{ fontSize: fontFukidashiSize }}
+              >
+                Temperatures used in the recipe
+              </p>
+            </div>
+            <Image
+              src={"/temperature.svg"}
+              alt="ingredient units icon"
+              width={parseInt(iconSize)}
+              height={parseInt(iconSize)}
+            ></Image>
+          </div>
+          <span style={{ fontSize: fontOtherSize }}>{temperaturs}</span>
+          <select
+            className={styles.input__brief_explanation}
+            style={{ width: "8%", fontSize: fontOtherSize }}
+            name="temperatureUnit"
+            value={temperatureUnit}
+            onChange={(e) => handleChangeInput(e, 0)}
+          >
+            <option value="℃">℃</option>
+            <option value="℉">℉</option>
+          </select>
+        </div>
+      </div>
+      <button
+        style={{
+          background: "none",
+          backgroundImage: !favorite
+            ? 'url("/star-off.png")'
+            : 'url("/star-on.png")',
+          width: "4.5%",
+          aspectRatio: "1",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "100%",
+          border: "none",
+        }}
+        type="button"
+        onClick={onClickFavorite}
+      ></button>
+    </div>
+  );
+}
+
+function Ingredients({
+  servingsValue,
+  ingredients,
+  ingredientsUnit,
+}: {
+  servingsValue: number;
+  ingredients: TYPE_INGREDIENTS;
+  ingredientsUnit:
+    | "original"
+    | "metric"
+    | "us"
+    | "japan"
+    | "australia"
+    | "metricCup";
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "90%",
+        height: "fit-content",
+        backgroundColor: "rgb(255, 247, 177)",
+        padding: "2%",
+        borderRadius: "3px",
+        overflowX: "auto",
+      }}
+    >
+      <h2 className={styles.header}>Ingredients</h2>
+      <div
+        style={{
+          width: "100%",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          justifyItems: "left",
+          marginTop: "2%",
+          fontSize: "1.3vw",
+          wordSpacing: "0.1vw",
+          columnGap: "5%",
+          rowGap: "0px",
+          paddingLeft: "0",
+        }}
+      >
+        {ingredients.map((ing, i) => (
+          <IngLine
+            key={i}
+            servingsValue={servingsValue}
+            ingredient={ing}
+            ingredientsUnit={ingredientsUnit}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function IngLine({
+  servingsValue,
+  ingredient,
+  ingredientsUnit,
+}: {
+  servingsValue: number;
+  ingredient: TYPE_INGREDIENT;
+  ingredientsUnit:
+    | "original"
+    | "metric"
+    | "us"
+    | "japan"
+    | "australia"
+    | "metricCup";
+}) {
+  const [newIngredient, setNewIngredient] = useState<{
+    amount: number;
+    unit: string;
+  }>({
+    amount: ingredient.amount,
+    unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
+  });
+
+  useEffect(() => {
+    //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
+    const newIngredient =
+      ingredientsUnit === "original" ||
+      !ingredient?.convertion ||
+      !ingredient.convertion[ingredientsUnit]
+        ? {
+            amount: ingredient.amount,
+            unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
+          }
+        : ingredient.convertion[ingredientsUnit];
+
+    setNewIngredient(newIngredient);
+  }, [ingredient, servingsValue, ingredientsUnit]);
+
+  return (
+    <div
+      className={styles.ingredients_line}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        gap: "4%",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <input
+        style={{ width: "1.3vw", marginLeft: "2%" }}
+        type="checkbox"
+      ></input>
+      {newIngredient.amount !== 0 && (
+        <span>
+          {newIngredient.unit === "g" ||
+          newIngredient.unit === "kg" ||
+          newIngredient.unit === "oz" ||
+          newIngredient.unit === "lb" ||
+          newIngredient.unit === "ml" ||
+          newIngredient.unit === "L"
+            ? newIngredient.amount
+            : fracty(newIngredient.amount)}
+        </span>
+      )}
+      {newIngredient.unit && <span>{`${newIngredient.unit} of`}</span>}
+      <span>{ingredient.ingredient}</span>
+    </div>
+  );
+}
+
+function Instructions({
+  instructions,
+}: {
+  instructions: { instruction: string; image: TYPE_FILE | undefined }[];
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        top: "30px",
+        width: "80%",
+        height: "fit-content",
+      }}
+    >
+      <h2 className={styles.header} style={{ marginBottom: "20px" }}>
+        Instructions
+      </h2>
+      {instructions.map((inst, i) => (
+        <Instruction key={i} instruction={inst} i={i} />
+      ))}
+    </div>
+  );
+}
+
+function Instruction({
+  instruction,
+  i,
+}: {
+  instruction: { instruction: string; image: TYPE_FILE | undefined };
+  i: number;
+}) {
+  return (
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        textAlign: "left",
+        alignItems: "center",
+        gap: "5%",
+        width: "100%",
+        height: "fit-content",
+        backgroundColor: "rgba(255, 255, 236, 0.91)",
+        padding: "4% 3%",
+        fontSize: "1.2vw",
+        letterSpacing: "0.05vw",
+      }}
+    >
+      <span
+        style={{
+          position: "relative",
+          top: "-35px",
+          textAlign: "center",
+          width: "25px",
+          aspectRatio: "1",
+          fontSize: "1.4vw",
+          borderRadius: "50%",
+          color: "white",
+          backgroundColor: " #ce3a00e7 ",
+        }}
+      >
+        {i + 1}
+      </span>
+      <p
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          width: instruction.image ? "55%" : "100%",
+          height: "100px",
+          fontSize: "1.2vw",
+          letterSpacing: "0.03vw",
+          padding: instruction.image?.data ? "0 1%" : "0 0 0 3%",
+        }}
+      >
+        {instruction.instruction}
+      </p>
+      <div
+        style={{
+          position: "relative",
+          width: instruction.image?.data ? "140px" : "0",
+          height: "100px",
+        }}
+      >
+        {instruction.image?.data && (
+          <Image
+            src={instruction.image.data}
+            alt={`instruction ${i + 1} image`}
+            width={140}
+            height={100}
+          ></Image>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AboutThisRecipe({ description }: { description: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        textAlign: "center",
+        alignItems: "center",
+        width: "100%",
+        maxHeight: "30%",
+        marginTop: "70px",
+      }}
+    >
+      <h2 className={styles.header}>About this recipe</h2>
+      <div
+        style={{
+          backgroundColor: description ? "rgb(255, 247, 133)" : "transparent",
+          width: "85%",
+          height: "130px",
+          fontSize: "1.2vw",
+          letterSpacing: "0.05vw",
+          padding: "1.2% 1.5%",
+          overflowY: "auto",
+          scrollbarColor: "rgb(255, 247, 133) rgba(255, 209, 2, 1)",
+        }}
+      >
+        <p
+          className={description || styles.no_content}
+          style={{
+            width: "100%",
+            height: "100%",
+            fontSize: "1.3vw",
+            letterSpacing: "0.05vw",
+            padding: "1.2% 1.5%",
+          }}
+        >
+          {description || "There's no description"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Memories({ images }: { images: [] | TYPE_FILE[] }) {
+  const [curImage, setCurImage] = useState(0);
+
+  function handleClickDot(i: number) {
+    setCurImage(i);
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: "40px",
+        width: "60%",
+        height: images.length ? "250px" : "150px",
+      }}
+    >
+      <h2 className={styles.header}>Memories of the recipe</h2>
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          height: "80%",
+          overflow: "hidden",
+        }}
+      >
+        {images.map((img, i) => (
+          <MemoryImg
+            key={i}
+            i={i}
+            image={img}
+            translateX={calcTransitionXSlider(i, curImage)}
+          />
+        ))}
+        {images.length ? (
+          <div
+            style={{
+              position: "absolute",
+              width: "70%",
+              height: "5%",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "1.7%",
+              bottom: "5%",
+            }}
+          >
+            {/* add one for upload slide for edit */}
+            {images.map((_, i) => (
+              <button
+                key={i}
+                style={{
+                  opacity: "0.6",
+                  width: "2.5%",
+                  aspectRatio: "1",
+                  backgroundColor:
+                    curImage === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
+                  borderRadius: "50%",
+                  border: "none",
+                }}
+                type="button"
+                onClick={() => handleClickDot(i)}
+              ></button>
+            ))}
+          </div>
+        ) : (
+          <p className={styles.no_content}>There're no memory images</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MemoryImg({
+  i,
+  image,
+  translateX,
+}: {
+  i: number;
+  image: TYPE_FILE;
+  translateX: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        transform: translateX,
+        transition: "all 0.4s",
+      }}
+    >
+      {image?.data && (
+        <Image
+          src={image.data}
+          alt={`memory image ${i + 1}`}
+          width={400}
+          height={200}
+        ></Image>
+      )}
+    </div>
+  );
+}
+
+function Comments({ comments }: { comments: string }) {
+  return (
+    <div
+      style={{
+        marginTop: "30px",
+        width: "70%",
+        height: comments ? "200px" : "150px",
+      }}
+    >
+      <h2 className={styles.header}> Comments</h2>
+      <div
+        style={{
+          width: "100%",
+          height: "70%",
+          borderRadius: "1% / 3%",
+          backgroundColor: comments ? "rgb(255, 253, 222)" : "transparent",
+        }}
+      >
+        <p
+          className={comments || styles.no_content}
+          style={{
+            width: "100%",
+            height: "100%",
+            fontSize: comments ? "1.3vw" : "1.4vw",
+            letterSpacing: comments ? "0.05vw" : "0.03vw",
+            padding: comments ? "3%" : "0",
+            overflowY: "auto",
+            textAlign: comments ? "left" : "center",
+          }}
+        >
+          {comments || "There're no comments"}
+        </p>
+      </div>
     </div>
   );
 }

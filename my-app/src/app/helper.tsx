@@ -12,6 +12,26 @@ export function wait(second: number = MESSAGE_TIMEOUT) {
   });
 }
 
+export function createMessage(
+  error: string,
+  isPending: boolean,
+  numberOfUserRecipes: number,
+  numberOfCurPageRecipes: number
+) {
+  if (error) return error;
+
+  if (isPending) return "Loading your recipes...";
+
+  if (!numberOfUserRecipes) return;
+  ("No recipes created yet. Let't start by creating a recipe :)");
+
+  if (!numberOfCurPageRecipes)
+    return "No recipes found. Please try again with a different keyword :)";
+
+  //otherwise no message
+  return "";
+}
+
 export const getData = async (path: string, option: object) => {
   try {
     const res = await fetch(path, option);
@@ -28,6 +48,66 @@ export const getData = async (path: string, option: object) => {
     throw err;
   }
 };
+
+export async function uploadRecipe(recipe: TYPE_RECIPE, userContext: any) {
+  try {
+    const recipeId = window.location.hash.slice(1);
+    ///store new recipe in recipes database and user info database
+    const recipeData = await getData(`/api/recipes?id=${recipeId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(recipe),
+    });
+
+    recipeData.newAccessToken && userContext?.login(recipeData.newAccessToken);
+
+    //connect the recipe data id to user recipe data id
+    const userData = await getData("/api/users/recipes", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${userContext?.accessToken}`,
+      },
+      body: JSON.stringify({ ...recipeData.data }),
+    });
+
+    userData.newAccessToken && userContext?.login(userData.newAccessToken);
+
+    return recipeData.data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export function getTemperatures(
+  temperatures: number[],
+  originalUnit: "℉" | "℃",
+  newUnit: "℉" | "℃"
+) {
+  const newTemps =
+    originalUnit === newUnit
+      ? temperatures
+      : temperatures.map((temp) => convertTempUnits(temp, originalUnit));
+
+  return newTemps.join(" / ");
+}
+
+// export function getUnit(ingredient: {
+//   ingredient: string;
+//   amount: number;
+//   unit: string;
+//   customUnit: string;
+// }) {
+//   let unit;
+//   if (ingredient.unit === "noUnit") {
+//     unit = "";
+//   } else if (ingredient.unit === "other") {
+//     unit = ingredient.customUnit;
+//   } else {
+//     unit = ingredient.unit;
+//   }
+//   return unit;
+// }
 
 export const validatePassword = (input: string) => {
   const passwordRegex = PASSWORD_REGEX;
@@ -126,7 +206,6 @@ export const getReadableIngUnit = (unit: string, customUnit: string = "") => {
   else if (unit === "noUnit") readableUnit = "";
   else readableUnit = unit;
 
-  console.log(readableUnit);
   return readableUnit;
 };
 

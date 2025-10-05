@@ -9,7 +9,10 @@ import { AccessTokenContext } from "@/app/context";
 import {
   wait,
   getData,
+  uploadRecipe,
   getFileData,
+  getTemperatures,
+  // getUnit,
   getRegion,
   convertIngUnits,
   convertTempUnits,
@@ -41,7 +44,6 @@ export default function Recipe() {
   const [ingredientsUnit, setIngredientsUnit] = useState<
     "metric" | "us" | "japan" | "australia" | "metricCup"
   >();
-  //Use when edit is
   const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
   const [instructionImages, setInstructionImages] = useState<
     (TYPE_FILE | undefined)[]
@@ -64,7 +66,6 @@ export default function Recipe() {
       //recipe is stored inside _doc of data.data
       //images are stored in data.data
       const recipe = data.data._doc;
-      console.log(data.data);
 
       setStateInitNoImages(recipe);
       setMainImage(data.data.mainImage);
@@ -102,7 +103,7 @@ export default function Recipe() {
     const newValue = +e.currentTarget.value;
     setServingsValue(newValue);
 
-    if (edit || !recipe || !curRecipe) return;
+    if (edit || !recipe) return;
     setCurRecipe((prev: any) => {
       const newRecipe = { ...recipe };
       newRecipe.ingredients = updateIngsForServings(newValue, recipe);
@@ -168,158 +169,149 @@ export default function Recipe() {
   }
 
   async function handleClickFavorite() {
-    setFavorite(!favorite);
+    try {
+      setError("");
+      setMessage("Updating favorite status...");
+      setFavorite(!favorite);
 
-    if (!recipe) return;
+      if (!recipe) return;
 
-    const newRecipe = { ...recipe };
-    newRecipe.favorite = !favorite;
-    newRecipe.mainImage = mainImage;
-    newRecipe.instructions = recipe.instructions.map((inst, i) => {
-      return {
-        instruction: inst.instruction,
-        image: instructionImages[i],
-      };
-    });
-    newRecipe.memoryImages = memoryImages;
-
-    uploadRecipe(newRecipe);
-  }
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    setIsPending(true);
-
-    const formData = new FormData(e.currentTarget);
-    const dataArr = [...formData];
-
-    ///ingredients
-    const numberOfIngredients = dataArr.filter(
-      (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
-    ).length;
-
-    const ingredients = new Array(numberOfIngredients).fill("").map((_, i) => {
-      const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
-      const unit = formData.get(`ingredient${i + 1}Unit`);
-
-      if (
-        unit !== "noUnit" &&
-        unit !== "other" &&
-        unit !== "g" &&
-        unit !== "kg" &&
-        unit !== "oz" &&
-        unit !== "lb" &&
-        unit !== "ml" &&
-        unit !== "L" &&
-        unit !== "USCup" &&
-        unit !== "JapaneseCup" &&
-        unit !== "ImperialCup" &&
-        unit !== "riceCup" &&
-        unit !== "tsp" &&
-        unit !== "Tbsp" &&
-        unit !== "AustralianTbsp"
-      )
+      const newRecipe = { ...recipe };
+      newRecipe.favorite = !favorite;
+      newRecipe.mainImage = mainImage;
+      newRecipe.instructions = recipe.instructions.map((inst, i) => {
         return {
-          ingredient:
-            String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() || "",
-          amount,
-          unit: "g",
-          customUnit:
-            String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() || "",
-          id: undefined,
-          convertion: undefined,
-        };
-
-      return {
-        ingredient:
-          String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
-        amount,
-        unit,
-        customUnit:
-          String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() || "",
-        id: undefined,
-        convertion: convertIngUnits(amount, unit),
-      };
-    });
-
-    const instructions = new Array(instructionImages.length)
-      .fill("")
-      .map((_, i) => {
-        return {
-          instruction: String(formData.get(`instruction${i + 1}`)) || "",
+          instruction: inst.instruction,
           image: instructionImages[i],
         };
       });
+      newRecipe.memoryImages = memoryImages;
 
-    const newRecipe = {
-      favorite: favorite === true ? true : false,
-      mainImage,
-      title: String(formData.get("title"))?.trim() || "",
-      author: String(formData.get("author")).trim() || "",
-      region: getRegion(ingredients),
-      servings: {
-        servings: +(formData.get("servings") || 0),
-        unit: String(formData.get("servingsUnit")) || "people",
-        customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
-      },
-      temperatures: {
-        temperatures: [
-          +(formData.get("temperature1") || 0),
-          +(formData.get("temperature2") || 0),
-          +(formData.get("temperature3") || 0),
-          +(formData.get("temperature4") || 0),
-        ],
-        unit:
-          formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
-      },
-      ingredients,
-      instructions,
-      description: String(formData.get("description"))?.trim() || "",
-      memoryImages,
-      comments: String(formData.get("comments"))?.trim() || "",
-      createdAt: new Date().toISOString(),
-    };
-
-    await uploadRecipe(newRecipe);
-
-    setIsPending(false);
-    setMessage("Recipe uploaded successfully :)");
-    await wait();
-    setMessage("");
-    setEdit(false);
+      await uploadRecipe(newRecipe, userContext);
+      setMessage("Favorite status updated successfully!");
+      await wait();
+      setMessage("");
+    } catch (err: any) {
+      setMessage("");
+      setError(`Server error while uploading recipe 🙇‍♂️ ${err.message}`);
+      console.error(
+        "Error while uploading recipe",
+        err.message,
+        err.statusCode || 500
+      );
+    }
   }
 
-  async function uploadRecipe(recipe: TYPE_RECIPE) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     try {
+      e.preventDefault();
+
       setError("");
-      const recipeId = window.location.hash.slice(1);
-      ///store new recipe in recipes database and user info database
-      const recipeData = await getData(`/api/recipes?id=${recipeId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(recipe),
-      });
+      setIsPending(true);
 
-      recipeData.newAccessToken &&
-        userContext?.login(recipeData.newAccessToken);
+      const formData = new FormData(e.currentTarget);
+      const dataArr = [...formData];
 
-      //connect the recipe data id to user recipe data id
-      const userData = await getData("/api/users/recipes", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${userContext?.accessToken}`,
+      ///ingredients
+      const numberOfIngredients = dataArr.filter(
+        (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
+      ).length;
+
+      const ingredients = new Array(numberOfIngredients)
+        .fill("")
+        .map((_, i) => {
+          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
+          const unit = formData.get(`ingredient${i + 1}Unit`);
+
+          if (
+            unit !== "noUnit" &&
+            unit !== "other" &&
+            unit !== "g" &&
+            unit !== "kg" &&
+            unit !== "oz" &&
+            unit !== "lb" &&
+            unit !== "ml" &&
+            unit !== "L" &&
+            unit !== "USCup" &&
+            unit !== "JapaneseCup" &&
+            unit !== "ImperialCup" &&
+            unit !== "riceCup" &&
+            unit !== "tsp" &&
+            unit !== "Tbsp" &&
+            unit !== "AustralianTbsp"
+          )
+            return {
+              ingredient:
+                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+                "",
+              amount,
+              unit: "g",
+              customUnit:
+                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+                "",
+              id: undefined,
+              convertion: undefined,
+            };
+
+          return {
+            ingredient:
+              String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
+            amount,
+            unit,
+            customUnit:
+              String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
+              "",
+            id: undefined,
+            convertion: convertIngUnits(amount, unit),
+          };
+        });
+
+      const instructions = new Array(instructionImages.length)
+        .fill("")
+        .map((_, i) => {
+          return {
+            instruction: String(formData.get(`instruction${i + 1}`)) || "",
+            image: instructionImages[i],
+          };
+        });
+
+      const newRecipe = {
+        favorite: favorite === true ? true : false,
+        mainImage,
+        title: String(formData.get("title"))?.trim() || "",
+        author: String(formData.get("author")).trim() || "",
+        region: getRegion(ingredients),
+        servings: {
+          servings: +(formData.get("servings") || 0),
+          unit: String(formData.get("servingsUnit")) || "people",
+          customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
         },
-        body: JSON.stringify({ ...recipeData.data }),
-      });
+        temperatures: {
+          temperatures: [
+            +(formData.get("temperature1") || 0),
+            +(formData.get("temperature2") || 0),
+            +(formData.get("temperature3") || 0),
+            +(formData.get("temperature4") || 0),
+          ],
+          unit:
+            formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
+        },
+        ingredients,
+        instructions,
+        description: String(formData.get("description"))?.trim() || "",
+        memoryImages,
+        comments: String(formData.get("comments"))?.trim() || "",
+        createdAt: new Date().toISOString(),
+      };
 
-      console.log(recipeData, userData);
-      userData.newAccessToken && userContext?.login(userData.newAccessToken);
+      const recipeData = await uploadRecipe(newRecipe, userContext);
+      setStateInitNoImages(recipeData);
 
-      setStateInitNoImages(recipeData.data);
-
-      return recipeData.data;
+      setIsPending(false);
+      setMessage("Recipe uploaded successfully :)");
+      await wait();
+      setMessage("");
+      setEdit(false);
     } catch (err: any) {
       setIsPending(false);
       setError(`Server error while uploading recipe 🙇‍♂️ ${err.message}`);
@@ -740,6 +732,9 @@ function BriefExplanation({
         return { id: nanoid() };
       })
   );
+  const [temperaturs, setTemperatures] = useState(
+    curRecipe.temperatures.temperatures.join(" / ")
+  );
   const [temperatureUnit, setTemperatureUnit] = useState<"℉" | "℃">(
     curRecipe.temperatures.unit
   );
@@ -785,17 +780,14 @@ function BriefExplanation({
     setTemperatureUnit(value);
   }
 
-  const getNewTemps = () => {
-    const temperatures = curRecipe.temperatures.temperatures;
-    const unit = curRecipe.temperatures.unit;
-
-    const newTemps =
-      temperatureUnit === unit
-        ? temperatures
-        : temperatures.map((temp) => convertTempUnits(temp, unit));
-
-    return newTemps.join(" / ");
-  };
+  useEffect(() => {
+    const newTemps = getTemperatures(
+      curRecipe.temperatures.temperatures,
+      curRecipe.temperatures.unit,
+      temperatureUnit
+    );
+    setTemperatures(newTemps);
+  }, [temperatureUnit]);
 
   return (
     <div
@@ -1035,7 +1027,7 @@ function BriefExplanation({
               />
             ))
           ) : (
-            <span>{getNewTemps()}</span>
+            <span>{temperaturs}</span>
           )}
           <select
             className={styles.input__brief_explanation}
@@ -1232,24 +1224,10 @@ function IngLine({
   const [newIngredient, setNewIngredient] = useState<{
     amount: number;
     unit: string;
-  }>({ amount: ingredient.amount, unit: getUnit(ingredient) });
-
-  function getUnit(ingredient: {
-    ingredient: string;
-    amount: number;
-    unit: string;
-    customUnit: string;
-  }) {
-    let unit;
-    if (ingredient.unit === "noUnit") {
-      unit = "";
-    } else if (ingredient.unit === "other") {
-      unit = ingredient.customUnit;
-    } else {
-      unit = ingredient.unit;
-    }
-    return unit;
-  }
+  }>({
+    amount: ingredient.amount,
+    unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
+  });
 
   function handleChangeInput(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -1270,7 +1248,10 @@ function IngLine({
     //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
     const newIngredient =
       edit || !ingredient?.convertion || !ingredient.convertion[ingredientsUnit]
-        ? { amount: ingredient.amount, unit: getUnit(ingredient) }
+        ? {
+            amount: ingredient.amount,
+            unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
+          }
         : ingredient.convertion[ingredientsUnit];
 
     setNewIngredient(newIngredient);

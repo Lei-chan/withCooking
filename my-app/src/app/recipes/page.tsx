@@ -3,15 +3,16 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
-import clsx from "clsx";
+import { MessageContainer, PaginationButtons } from "@/app/components";
 import {
+  createMessage,
   getData,
   getRecipesPerPage,
   getOrderedRecipes,
   getFilteredRecipes,
+  calcNumberOfPages,
 } from "../helper";
 import React, { useContext, useEffect, useState } from "react";
-import { nanoid } from "nanoid";
 import { TYPE_RECIPE } from "../config";
 import { AccessTokenContext } from "../context";
 
@@ -65,7 +66,7 @@ export default function Recipes() {
       setCurPage(1);
       setRecipes(orderedRecipes);
       setCurPageRecipes(getRecipesPerPage(orderedRecipes, RECIPES_PER_PAGE, 1));
-      setNumberOfPages(Math.ceil(orderedRecipes.length / RECIPES_PER_PAGE));
+      setNumberOfPages(calcNumberOfPages(orderedRecipes, RECIPES_PER_PAGE));
       data.newAccessToken && userContext?.login(data.newAccessToken);
 
       setIsPending(false);
@@ -121,6 +122,7 @@ export default function Recipes() {
         error={error}
       />
       <PaginationButtons
+        styles={styles}
         curPage={curPage}
         numberOfPages={numberOfPages}
         onClickPagination={handlePagination}
@@ -229,28 +231,14 @@ function RecipeContainer({
   }, [curPageRecipes]);
 
   useEffect(() => {
-    createMessage();
+    const message = createMessage(
+      error,
+      isPending,
+      numberOfUserRecipes,
+      curPageRecipes.length
+    ) as string;
+    setMessage(message);
   }, [error, isPending, numberOfUserRecipes, curPageRecipes.length]);
-
-  function createMessage() {
-    console.log(curPageRecipes);
-    if (error) return setMessage(error);
-
-    if (isPending) return setMessage("Loading your recipes...");
-
-    if (!numberOfUserRecipes)
-      return setMessage(
-        "No recipes created yet. Let't start by creating a recipe :)"
-      );
-
-    if (!curPageRecipes.length)
-      return setMessage(
-        "No recipes found. Please try again with a different keyword :)"
-      );
-
-    //otherwise reset message
-    setMessage("");
-  }
 
   return (
     <div
@@ -274,7 +262,12 @@ function RecipeContainer({
           </ul>
         ))
       ) : (
-        <MessageContainer message={message} />
+        <MessageContainer
+          message={message}
+          fontSize={"2.1vw"}
+          letterSpacing={"0.1vw"}
+          wordSpacing={"0.3vw"}
+        />
       )}
     </div>
   );
@@ -324,64 +317,41 @@ function RecipePreview({ recipe }: { recipe: any }) {
   );
 }
 
-function MessageContainer({ message }: { message: string }) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        // display: numberOfRecipes ? "none" : "flex",
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        padding: "3% 5% 0 5%",
-        textAlign: "center",
-        justifyContent: "center",
-        fontSize: "2.1vw",
-        letterSpacing: "0.1vw",
-        wordSpacing: "0.3vw",
-        color: "rgb(190, 124, 0)",
-        zIndex: "0",
-      }}
-    >
-      <p>{message}</p>
-    </div>
-  );
-}
-
-function PaginationButtons({
-  curPage,
-  numberOfPages,
-  onClickPagination,
-}: {
-  curPage: number;
-  numberOfPages: number;
-  onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
-}) {
-  return (
-    <div className={styles.container__pagination}>
-      {curPage > 1 && (
-        <button
-          className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
-          value="decrease"
-          onClick={onClickPagination}
-        >
-          {`Page ${curPage - 1}`}
-          <br />
-          &larr;
-        </button>
-      )}
-      {numberOfPages > curPage && (
-        <button
-          className={clsx(styles.btn__pagination, styles.btn__pagination_right)}
-          value="increase"
-          onClick={onClickPagination}
-        >
-          {`Page ${curPage + 1}`}
-          <br />
-          &rarr;
-        </button>
-      )}
-    </div>
-  );
-}
+// function PaginationButtons({
+//   styles,
+//   curPage,
+//   numberOfPages,
+//   onClickPagination,
+// }: {
+//   styles: any;
+//   curPage: number;
+//   numberOfPages: number;
+//   onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
+// }) {
+//   return (
+//     <div className={styles.container__pagination}>
+//       {curPage > 1 && (
+//         <button
+//           className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
+//           value="decrease"
+//           onClick={onClickPagination}
+//         >
+//           {`Page ${curPage - 1}`}
+//           <br />
+//           &larr;
+//         </button>
+//       )}
+//       {numberOfPages > curPage && (
+//         <button
+//           className={clsx(styles.btn__pagination, styles.btn__pagination_right)}
+//           value="increase"
+//           onClick={onClickPagination}
+//         >
+//           {`Page ${curPage + 1}`}
+//           <br />
+//           &rarr;
+//         </button>
+//       )}
+//     </div>
+//   );
+// }
