@@ -49,6 +49,20 @@ export const getData = async (path: string, option: object) => {
   }
 };
 
+export function getSize(
+  recipeWidth: string,
+  ratio: number,
+  defaultRatio: string
+) {
+  return recipeWidth.includes("px")
+    ? `${parseInt(recipeWidth) * ratio}px`
+    : defaultRatio;
+}
+
+export function getNextSlideIndex(curSlide: number, maxSlideIndex: number) {
+  return curSlide === maxSlideIndex ? 0 : curSlide + 1;
+}
+
 export async function uploadRecipe(recipe: TYPE_RECIPE, userContext: any) {
   try {
     const recipeId = window.location.hash.slice(1);

@@ -191,7 +191,6 @@ export async function PATCH(req: NextRequest) {
       }
 
       const hashedPassword = await hashPassword(newPassword);
-      console.log(hashedPassword);
 
       updatedUser = await User.findByIdAndUpdate(
         id,
@@ -283,7 +282,6 @@ export async function DELETE(req: NextRequest) {
     // }
 
     const deletedUser = await User.findByIdAndDelete(id);
-    console.log("deletedUser", deletedUser);
 
     return NextResponse.json(
       { success: true, message: "User deleted successfully" },

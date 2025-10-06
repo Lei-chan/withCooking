@@ -9,6 +9,7 @@ import fracty from "fracty";
 import { AccessTokenContext } from "../context";
 import {
   getData,
+  getSize,
   createMessage,
   uploadRecipe,
   getTemperatures,
@@ -22,6 +23,7 @@ import {
   updateConvertion,
   updateIngsForServings,
   getReadableIngUnit,
+  getNextSlideIndex,
 } from "../helper";
 import {
   MAX_SERVINGS,
@@ -29,10 +31,10 @@ import {
   TYPE_FILE,
   TYPE_INGREDIENT,
   TYPE_INGREDIENTS,
+  SLIDE_TRANSITION_SEC,
 } from "../config";
 import DropdownMenu from "./(dropdown)/page";
 import { MessageContainer } from "../components";
-import { relative } from "path";
 
 export default function MAIN() {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -42,6 +44,11 @@ export default function MAIN() {
   const [isDraggingY, setIsDraggingY] = useState(false);
   const [recipeWidth, setRecipeWidth] = useState("50%");
   const [timerHeight, setTimerHeight] = useState("65%");
+  const [fontSizeRecipe, setFontSizeRecipe] = useState("1.2vw");
+
+  useEffect(() => {
+    setFontSizeRecipe(getSize(recipeWidth, 0.026, "1.2vw"));
+  }, [recipeWidth]);
 
   function handleMouseDownX() {
     setIsDraggingX(true);
@@ -130,11 +137,13 @@ export default function MAIN() {
           }}
         >
           <Search
+            recipeWidth={recipeWidth}
+            fontSize={fontSizeRecipe}
             isSearchVisible={isSearchVisible}
             searchRef={searchRef}
             onClickSearch={handleToggleSearch}
           />
-          <Recipe recipeWidth={recipeWidth} />
+          <Recipe recipeWidth={recipeWidth} fontSize={fontSizeRecipe} />
         </section>
 
         <section
@@ -166,16 +175,23 @@ export default function MAIN() {
 }
 
 function Search({
+  recipeWidth,
+  fontSize,
   isSearchVisible,
   searchRef,
   onClickSearch,
 }: {
+  recipeWidth: string;
+  fontSize: string;
   isSearchVisible: boolean;
   searchRef: any;
   onClickSearch: () => void;
 }) {
   const RECIPES_PER_PAGE = 6;
   const userContext = useContext(AccessTokenContext);
+
+  const [mainImageSize, setMainImageSize] = useState("50px");
+
   const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
   const [curPageRecipes, setCurPageRecipes] = useState<TYPE_RECIPE[] | []>([]);
@@ -186,7 +202,6 @@ function Search({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const [input, setInput] = useState("");
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -195,6 +210,11 @@ function Search({
       setNumberOfUserRecipes(userRecipes?.length || 0);
     })();
   }, []);
+
+  useEffect(() => {
+    const size = getSize(recipeWidth, 0.09, "65px");
+    setMainImageSize(size);
+  }, [recipeWidth]);
 
   //when curPage changes, change curRecipes too
   useEffect(() => {
@@ -256,7 +276,6 @@ function Search({
 
     const id = setTimeout(async () => {
       if (!keyword) return;
-      setInput(keyword);
       setCurPage(1);
 
       await getRecipes(keyword);
@@ -287,6 +306,7 @@ function Search({
       className={styles.container__search_menu}
       style={{
         transform: !isSearchVisible ? "translateX(-100%)" : "translateX(0%)",
+        fontSize: fontSize,
       }}
     >
       <button
@@ -298,11 +318,16 @@ function Search({
         <form className={styles.container__search} onSubmit={handleSubmit}>
           <input
             id={styles.input__search}
+            style={{ fontSize: fontSize }}
             type="search"
             placeholder="Search your recipe"
             onChange={handleChangeInput}
           ></input>
-          <button className={styles.btn__search} type="submit">
+          <button
+            className={styles.btn__search}
+            style={{ fontSize: `calc(${fontSize} * 0.8)` }}
+            type="submit"
+          >
             Search
           </button>
         </form>
@@ -318,18 +343,18 @@ function Search({
               >
                 {recipe.mainImage?.data ? (
                   <Image
-                    className={styles.img__main}
+                    style={{ borderRadius: "50%" }}
                     src={recipe.mainImage.data}
                     alt="main image"
-                    width={50}
-                    height={50}
+                    width={parseFloat(mainImageSize)}
+                    height={parseFloat(mainImageSize)}
                   ></Image>
                 ) : (
                   <div
                     style={{
                       backgroundColor: "grey",
-                      width: "50px",
-                      height: "50px",
+                      width: mainImageSize,
+                      height: mainImageSize,
                       borderRadius: "50%",
                     }}
                   ></div>
@@ -337,11 +362,10 @@ function Search({
                 <p className={styles.title}>{recipe.title}</p>
                 {recipe.favorite && (
                   <Image
-                    className={styles.img__favorite}
                     src="/star-on.png"
                     alt="favorite icon"
-                    width={18}
-                    height={18}
+                    width={parseFloat(mainImageSize) * 0.35}
+                    height={parseFloat(mainImageSize) * 0.35}
                   ></Image>
                 )}
               </li>
@@ -384,8 +408,19 @@ function Search({
 }
 
 //prettier ignore
-function Recipe({ recipeWidth }: { recipeWidth: string }) {
+function Recipe({
+  recipeWidth,
+  fontSize,
+}: {
+  recipeWidth: string;
+  fontSize: string;
+}) {
   const userContext = useContext(AccessTokenContext);
+
+  ///design
+  const [headerSize, setHeaderSize] = useState("1.5vw");
+  const [marginTop, setMarginTop] = useState("30px");
+
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE>();
   //use curRecipe to modify the recipe value
@@ -395,22 +430,30 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
   const [ingredientsUnit, setIngredientsUnit] = useState<
     "original" | "metric" | "us" | "japan" | "australia" | "metricCup"
   >("original");
-  // const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
-  // const [instructionImages, setInstructionImages] = useState<
-  //   (TYPE_FILE | undefined)[]
-  // >([undefined]);
-  // const [memoryImages, setMemoryImages] = useState<TYPE_FILE[]>([]);
 
   const [isLoading, setIsLoading] = useState<boolean>();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    handleHashChange();
+
+    window.addEventListener("hashchange", handleHashChange);
+
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  async function handleHashChange() {
     const id = window.location.hash.slice(1);
     if (!id)
       return setMessage("Let's start cooking by selecting your recipe :)");
-    (async () => await getRecipe(id))();
-  }, [window.location.hash]);
+    await getRecipe(id);
+  }
+
+  useEffect(() => {
+    setHeaderSize(getSize(recipeWidth, 0.033, "1.5vw"));
+    setMarginTop(getSize(recipeWidth, 0.11, "30px"));
+  }, [recipeWidth]);
 
   async function getRecipe(id: string) {
     try {
@@ -426,14 +469,6 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
 
       console.log(recipe);
       setStateInitNoImages(recipe);
-      // setMainImage(data.data.mainImage);
-      // setInstructionImages(
-      //   data.data.instructions.map(
-      //     (inst: { instruction: string; image: TYPE_FILE | undefined }) =>
-      //       inst.image
-      //   )
-      // );
-      // setMemoryImages(data.data.memoryImages);
 
       setIsLoading(false);
     } catch (err: any) {
@@ -563,18 +598,37 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
             onClickFavorite={handleClickFavorite}
           />
           <Ingredients
-            recipeWidth={recipeWidth}
+            fontSize={fontSize}
+            headerSize={headerSize}
             servingsValue={servingsValue}
             ingredients={curRecipe.ingredients}
             ingredientsUnit={ingredientsUnit}
           />
           <Instructions
             recipeWidth={recipeWidth}
+            fontSize={fontSize}
+            headerSize={headerSize}
+            marginTop={marginTop}
             instructions={recipe.instructions}
           />
-          <AboutThisRecipe description={recipe.description} />
-          <Memories recipeWidth={recipeWidth} images={recipe.memoryImages} />
-          <Comments comments={recipe.comments} />
+          <AboutThisRecipe
+            fontSize={fontSize}
+            headerSize={headerSize}
+            marginTop={marginTop}
+            description={recipe.description}
+          />
+          <Memories
+            recipeWidth={recipeWidth}
+            headerSize={headerSize}
+            marginTop={marginTop}
+            images={recipe.memoryImages}
+          />
+          <Comments
+            fontSize={fontSize}
+            headerSize={headerSize}
+            marginTop={marginTop}
+            comments={recipe.comments}
+          />
 
           {/* <div className={styles.container__nutrition_facts}>
           <div className={styles.nutrition_facts}>
@@ -660,22 +714,15 @@ function ImageTitle({
   title: string;
   recipeWidth: string;
 }) {
-  const [width, setWidth] = useState(440);
-  const [height, setHeight] = useState(290);
+  const [width, setWidth] = useState("440px");
+  const [height, setHeight] = useState("290px");
 
   useEffect(() => {
-    setWidthHeight();
-  }, [recipeWidth]);
-
-  function setWidthHeight() {
-    const width = recipeWidth.includes("px")
-      ? parseInt(recipeWidth) * 0.7
-      : 440;
-    const height = width * 0.66;
-
+    const width = getSize(recipeWidth, 0.65, "440px");
+    const height = parseInt(width) * 0.6 + "px";
     setWidth(width);
     setHeight(height);
-  }
+  }, [recipeWidth]);
 
   return (
     <div
@@ -688,14 +735,14 @@ function ImageTitle({
       {!image?.data ? (
         <div
           className={styles.grey_background}
-          style={{ width: `${width}px`, height: `${height}px` }}
+          style={{ width: width, height: height }}
         ></div>
       ) : (
         <Image
           src={image.data}
           alt="main image"
-          width={width}
-          height={height}
+          width={parseInt(width)}
+          height={parseInt(height)}
         ></Image>
       )}
       <div
@@ -722,7 +769,7 @@ function ImageTitle({
           style={{
             width: "100%",
             height: "100%",
-            fontSize: `${width / 15}px`,
+            fontSize: `calc(${width} * 0.06)`,
             letterSpacing: "0.1vw",
             textAlign: "center",
           }}
@@ -756,7 +803,7 @@ function BriefExplanation({
   const [width, setWidth] = useState<string>("90%");
   const [iconSize, setIconSize] = useState<string>("20");
   const [fontFukidashiSize, setFontFukidashiSize] = useState<string>("1.2vw");
-  const [fontOtherSize, setFontOtherSize] = useState<string>("1.2vw");
+  const [fontSize, setFontSize] = useState<string>("1.2vw");
 
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
   const [author, setAuthour] = useState(curRecipe.author);
@@ -775,14 +822,8 @@ function BriefExplanation({
     setWidth(getSize(recipeWidth, 0.9, "90%"));
     setIconSize(getSize(recipeWidth, 0.02, "20"));
     setFontFukidashiSize(getSize(recipeWidth, 0.02, "1.2vw"));
-    setFontOtherSize(getSize(recipeWidth, 0.025, "1.2vw"));
+    setFontSize(getSize(recipeWidth, 0.025, "1.2vw"));
   }, [recipeWidth]);
-
-  function getSize(recipeWidth: string, ratio: number, defaultRatio: string) {
-    return recipeWidth.includes("px")
-      ? `${parseInt(recipeWidth) * ratio}px`
-      : defaultRatio;
-  }
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     const index = e.currentTarget.dataset.icon;
@@ -845,11 +886,12 @@ function BriefExplanation({
         width: width,
         aspectRatio: "1/0.1",
         gap: "3%",
-        margin: recipeWidth.includes("px")
-          ? `${parseInt(recipeWidth) * 0.07}px 0 ${
-              parseInt(recipeWidth) * 0.07
-            }px 0`
-          : "50px 0 28px 0",
+        margin: "6% 0 5% 0 ",
+        // margin: recipeWidth.includes("px")
+        //   ? `${parseInt(recipeWidth) * 0.07}px 0 ${
+        //       parseInt(recipeWidth) * 0.07
+        //     }px 0`
+        //   : "50px 0 28px 0",
       }}
     >
       <div
@@ -900,9 +942,7 @@ function BriefExplanation({
               height={parseInt(iconSize)}
             ></Image>
           </div>
-          <span style={{ width: "19%", fontSize: fontOtherSize }}>
-            {author}
-          </span>
+          <span style={{ width: "19%", fontSize: fontSize }}>{author}</span>
           <div
             className={styles.icons__brief_explanation}
             data-icon="1"
@@ -935,7 +975,7 @@ function BriefExplanation({
           </div>
           <input
             className={styles.input__brief_explanation}
-            style={{ width: "17%", fontSize: fontOtherSize }}
+            style={{ width: "17%", fontSize: fontSize }}
             type="number"
             min="1"
             max={MAX_SERVINGS}
@@ -944,7 +984,7 @@ function BriefExplanation({
             value={servingsValue}
             onChange={onChangeServings}
           />
-          <span style={{ width: "20%", fontSize: fontOtherSize }}>
+          <span style={{ width: "20%", fontSize: fontSize }}>
             {servingsUnit !== "other" ? servingsUnit : servingsCustomUnit}
           </span>
         </div>
@@ -981,7 +1021,7 @@ function BriefExplanation({
           </div>
           <select
             className={styles.input__brief_explanation}
-            style={{ width: "25%", fontSize: fontOtherSize }}
+            style={{ width: "25%", fontSize: fontSize }}
             name="region"
             value={ingredientsUnit}
             onChange={onChangeIngredientsUnit}
@@ -1024,10 +1064,10 @@ function BriefExplanation({
               height={parseInt(iconSize)}
             ></Image>
           </div>
-          <span style={{ fontSize: fontOtherSize }}>{temperaturs}</span>
+          <span style={{ fontSize: fontSize }}>{temperaturs}</span>
           <select
             className={styles.input__brief_explanation}
-            style={{ width: "8%", fontSize: fontOtherSize }}
+            style={{ width: "8%", fontSize: fontSize }}
             name="temperatureUnit"
             value={temperatureUnit}
             onChange={(e) => handleChangeInput(e, 0)}
@@ -1057,10 +1097,14 @@ function BriefExplanation({
 }
 
 function Ingredients({
+  fontSize,
+  headerSize,
   servingsValue,
   ingredients,
   ingredientsUnit,
 }: {
+  fontSize: string;
+  headerSize: string;
   servingsValue: number;
   ingredients: TYPE_INGREDIENTS;
   ingredientsUnit:
@@ -1083,7 +1127,9 @@ function Ingredients({
         overflowX: "auto",
       }}
     >
-      <h2 className={styles.header}>Ingredients</h2>
+      <h2 className={styles.header} style={{ fontSize: headerSize }}>
+        Ingredients
+      </h2>
       <div
         style={{
           width: "100%",
@@ -1091,16 +1137,15 @@ function Ingredients({
           gridTemplateColumns: "1fr 1fr",
           justifyItems: "left",
           marginTop: "2%",
-          fontSize: "1.3vw",
           wordSpacing: "0.1vw",
           columnGap: "5%",
-          rowGap: "0px",
           paddingLeft: "0",
         }}
       >
         {ingredients.map((ing, i) => (
           <IngLine
             key={i}
+            fontSize={fontSize}
             servingsValue={servingsValue}
             ingredient={ing}
             ingredientsUnit={ingredientsUnit}
@@ -1112,10 +1157,12 @@ function Ingredients({
 }
 
 function IngLine({
+  fontSize,
   servingsValue,
   ingredient,
   ingredientsUnit,
 }: {
+  fontSize: string;
   servingsValue: number;
   ingredient: TYPE_INGREDIENT;
   ingredientsUnit:
@@ -1155,12 +1202,18 @@ function IngLine({
       style={{
         display: "flex",
         flexDirection: "row",
+        alignItems: "center",
         gap: "4%",
         whiteSpace: "nowrap",
+        fontSize: fontSize,
       }}
     >
       <input
-        style={{ width: "1.3vw", marginLeft: "2%" }}
+        style={{
+          width: `calc(${fontSize} * 0.8)`,
+          height: `calc(${fontSize} * 0.8)`,
+          marginLeft: "2%",
+        }}
         type="checkbox"
       ></input>
       {newIngredient.amount !== 0 && (
@@ -1182,36 +1235,67 @@ function IngLine({
 }
 
 function Instructions({
+  recipeWidth,
+  fontSize,
+  headerSize,
+  marginTop,
   instructions,
 }: {
+  recipeWidth: string;
+  fontSize: string;
+  headerSize: string;
+  marginTop: string;
   instructions: { instruction: string; image: TYPE_FILE | undefined }[];
 }) {
   return (
     <div
       style={{
         position: "relative",
-        top: "30px",
+        marginTop: marginTop,
         width: "80%",
         height: "fit-content",
       }}
     >
-      <h2 className={styles.header} style={{ marginBottom: "20px" }}>
+      <h2
+        className={styles.header}
+        style={{ marginBottom: headerSize, fontSize: headerSize }}
+      >
         Instructions
       </h2>
       {instructions.map((inst, i) => (
-        <Instruction key={i} instruction={inst} i={i} />
+        <Instruction
+          key={i}
+          recipeWidth={recipeWidth}
+          fontSize={fontSize}
+          instruction={inst}
+          i={i}
+        />
       ))}
     </div>
   );
 }
 
 function Instruction({
+  recipeWidth,
+  fontSize,
   instruction,
   i,
 }: {
+  recipeWidth: string;
+  fontSize: string;
   instruction: { instruction: string; image: TYPE_FILE | undefined };
   i: number;
 }) {
+  const [imageWidth, setImageWidth] = useState("140px");
+  const [imageHeight, setImageHeaight] = useState("100px");
+
+  useEffect(() => {
+    const imageWidth = getSize(recipeWidth, 0.22, "140px");
+    const imageHeight = getSize(recipeWidth, 0.15, "100px");
+
+    setImageWidth(imageWidth);
+    setImageHeaight(imageHeight);
+  }, [recipeWidth]);
   return (
     <div
       style={{
@@ -1225,8 +1309,8 @@ function Instruction({
         height: "fit-content",
         backgroundColor: "rgba(255, 255, 236, 0.91)",
         padding: "4% 3%",
-        fontSize: "1.2vw",
-        letterSpacing: "0.05vw",
+        fontSize: fontSize,
+        letterSpacing: "0.06vw",
       }}
     >
       <span
@@ -1236,7 +1320,6 @@ function Instruction({
           textAlign: "center",
           width: "25px",
           aspectRatio: "1",
-          fontSize: "1.4vw",
           borderRadius: "50%",
           color: "white",
           backgroundColor: " #ce3a00e7 ",
@@ -1251,7 +1334,6 @@ function Instruction({
           justifyContent: "center",
           width: instruction.image ? "55%" : "100%",
           height: "100px",
-          fontSize: "1.2vw",
           letterSpacing: "0.03vw",
           padding: instruction.image?.data ? "0 1%" : "0 0 0 3%",
         }}
@@ -1261,16 +1343,16 @@ function Instruction({
       <div
         style={{
           position: "relative",
-          width: instruction.image?.data ? "140px" : "0",
-          height: "100px",
+          width: instruction.image?.data ? imageWidth : "0",
+          height: imageHeight,
         }}
       >
         {instruction.image?.data && (
           <Image
             src={instruction.image.data}
             alt={`instruction ${i + 1} image`}
-            width={140}
-            height={100}
+            width={parseInt(imageWidth)}
+            height={parseInt(imageHeight)}
           ></Image>
         )}
       </div>
@@ -1278,7 +1360,17 @@ function Instruction({
   );
 }
 
-function AboutThisRecipe({ description }: { description: string }) {
+function AboutThisRecipe({
+  fontSize,
+  headerSize,
+  marginTop,
+  description,
+}: {
+  fontSize: string;
+  headerSize: string;
+  marginTop: string;
+  description: string;
+}) {
   return (
     <div
       style={{
@@ -1288,17 +1380,22 @@ function AboutThisRecipe({ description }: { description: string }) {
         alignItems: "center",
         width: "100%",
         maxHeight: "30%",
-        marginTop: "70px",
+        marginTop: marginTop,
       }}
     >
-      <h2 className={styles.header}>About this recipe</h2>
+      <h2
+        className={styles.header}
+        style={{ marginBottom: headerSize, fontSize: headerSize }}
+      >
+        About this recipe
+      </h2>
       <div
         style={{
           backgroundColor: description ? "rgb(255, 247, 133)" : "transparent",
           width: "85%",
-          height: "130px",
-          fontSize: "1.2vw",
-          letterSpacing: "0.05vw",
+          aspectRatio: "1/0.28",
+          fontSize: `calc(${fontSize} * 0.9)`,
+          letterSpacing: "0.03vw",
           padding: "1.2% 1.5%",
           overflowY: "auto",
           scrollbarColor: "rgb(255, 247, 133) rgba(255, 209, 2, 1)",
@@ -1309,7 +1406,6 @@ function AboutThisRecipe({ description }: { description: string }) {
           style={{
             width: "100%",
             height: "100%",
-            fontSize: "1.3vw",
             letterSpacing: "0.05vw",
             padding: "1.2% 1.5%",
           }}
@@ -1321,8 +1417,42 @@ function AboutThisRecipe({ description }: { description: string }) {
   );
 }
 
-function Memories({ images }: { images: [] | TYPE_FILE[] }) {
+function Memories({
+  recipeWidth,
+  headerSize,
+  marginTop,
+  images,
+}: {
+  recipeWidth: string;
+  headerSize: string;
+  marginTop: string;
+  images: [] | TYPE_FILE[];
+}) {
+  const MAX_SLIDE = images.length - 1;
+  const [width, setWidth] = useState("400px");
+  const [height, setHeight] = useState("200px");
+
+  const [timeourId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const [curImage, setCurImage] = useState(0);
+
+  useEffect(() => {
+    if (timeourId) clearInterval(timeourId);
+
+    const id = setTimeout(() => {
+      const nextSlide = getNextSlideIndex(curImage, MAX_SLIDE);
+      setCurImage(nextSlide);
+    }, SLIDE_TRANSITION_SEC * 1000);
+
+    setTimeoutId(id);
+  }, [curImage]);
+
+  useEffect(() => {
+    const width = getSize(recipeWidth, 0.5, "400px");
+    const height = parseInt(width) * 0.55 + "px";
+
+    setWidth(width);
+    setHeight(height);
+  }, [recipeWidth]);
 
   function handleClickDot(i: number) {
     setCurImage(i);
@@ -1331,12 +1461,17 @@ function Memories({ images }: { images: [] | TYPE_FILE[] }) {
   return (
     <div
       style={{
-        marginTop: "40px",
+        marginTop: marginTop,
         width: "60%",
-        height: images.length ? "250px" : "150px",
+        height: images.length ? `calc(${headerSize} * 2 + ${height})` : height,
       }}
     >
-      <h2 className={styles.header}>Memories of the recipe</h2>
+      <h2
+        className={styles.header}
+        style={{ marginBottom: headerSize, fontSize: headerSize }}
+      >
+        Memories of the recipe
+      </h2>
       <div
         style={{
           position: "relative",
@@ -1344,13 +1479,15 @@ function Memories({ images }: { images: [] | TYPE_FILE[] }) {
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          height: "80%",
+          height: height,
           overflow: "hidden",
         }}
       >
         {images.map((img, i) => (
           <MemoryImg
             key={i}
+            width={width}
+            height={height}
             i={i}
             image={img}
             translateX={calcTransitionXSlider(i, curImage)}
@@ -1397,10 +1534,14 @@ function Memories({ images }: { images: [] | TYPE_FILE[] }) {
 }
 
 function MemoryImg({
+  width,
+  height,
   i,
   image,
   translateX,
 }: {
+  width: string;
+  height: string;
   i: number;
   image: TYPE_FILE;
   translateX: string;
@@ -1419,24 +1560,40 @@ function MemoryImg({
         <Image
           src={image.data}
           alt={`memory image ${i + 1}`}
-          width={400}
-          height={200}
+          width={parseInt(width)}
+          height={parseInt(height)}
         ></Image>
       )}
     </div>
   );
 }
 
-function Comments({ comments }: { comments: string }) {
+function Comments({
+  fontSize,
+  headerSize,
+  marginTop,
+  comments,
+}: {
+  fontSize: string;
+  headerSize: string;
+  marginTop: string;
+  comments: string;
+}) {
   return (
     <div
       style={{
-        marginTop: "30px",
+        marginTop: marginTop,
         width: "70%",
         height: comments ? "200px" : "150px",
       }}
     >
-      <h2 className={styles.header}> Comments</h2>
+      <h2
+        className={styles.header}
+        style={{ marginBottom: headerSize, fontSize: headerSize }}
+      >
+        {" "}
+        Comments
+      </h2>
       <div
         style={{
           width: "100%",
@@ -1450,7 +1607,7 @@ function Comments({ comments }: { comments: string }) {
           style={{
             width: "100%",
             height: "100%",
-            fontSize: comments ? "1.3vw" : "1.4vw",
+            fontSize: `calc(${fontSize} * 0.9)`,
             letterSpacing: comments ? "0.05vw" : "0.03vw",
             padding: comments ? "3%" : "0",
             overflowY: "auto",

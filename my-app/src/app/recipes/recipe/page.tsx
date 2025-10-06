@@ -27,6 +27,7 @@ import {
   TYPE_FILE,
   TYPE_INGREDIENT,
   TYPE_INGREDIENTS,
+  TYPE_INSTRUCTION,
   TYPE_RECIPE,
 } from "@/app/config";
 import { nanoid } from "nanoid";
@@ -44,11 +45,11 @@ export default function Recipe() {
   const [ingredientsUnit, setIngredientsUnit] = useState<
     "metric" | "us" | "japan" | "australia" | "metricCup"
   >();
-  const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
-  const [instructionImages, setInstructionImages] = useState<
-    (TYPE_FILE | undefined)[]
-  >([undefined]);
-  const [memoryImages, setMemoryImages] = useState<TYPE_FILE[]>([]);
+  // const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
+  // const [instructionImages, setInstructionImages] = useState<
+  //   (TYPE_FILE | undefined)[]
+  // >([undefined]);
+  // const [memoryImages, setMemoryImages] = useState<TYPE_FILE[]>([]);
 
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
@@ -65,17 +66,22 @@ export default function Recipe() {
 
       //recipe is stored inside _doc of data.data
       //images are stored in data.data
-      const recipe = data.data._doc;
+      const recipe = { ...data.data._doc };
+      recipe.mainImage = data.data.mainImage;
+      recipe.instructions = data.data.instructions;
+      recipe.memoryImages = data.data.memoryImages;
 
+      console.log(recipe);
       setStateInitNoImages(recipe);
-      setMainImage(data.data.mainImage);
-      setInstructionImages(
-        data.data.instructions.map(
-          (inst: { instruction: string; image: TYPE_FILE | undefined }) =>
-            inst.image
-        )
-      );
-      setMemoryImages(data.data.memoryImages);
+
+      // setMainImage(data.data.mainImage);
+      // setInstructionImages(
+      //   data.data.instructions.map(
+      //     (inst: { instruction: string; image: TYPE_FILE | undefined }) =>
+      //       inst.image
+      //   )
+      // );
+      // setMemoryImages(data.data.memoryImages);
     } catch (err: any) {
       setError(err.message);
       console.error(
@@ -129,43 +135,110 @@ export default function Recipe() {
   }
 
   function handleChangeMainImage(image: TYPE_FILE) {
-    setMainImage(image);
-  }
-
-  function handleDeleteMainImage() {
-    setMainImage(undefined);
-  }
-
-  function handleAddInstrucionImage() {
-    setInstructionImages((prev) => [...prev, undefined]);
-  }
-
-  function handleDeleteInstructionImage(index: number) {
-    setInstructionImages((prev) => {
-      const newImages = [...prev];
-      newImages[index] = undefined;
-      return newImages;
+    // setMainImage(image);
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+      const newRecipe = { ...prev };
+      newRecipe.mainImage = image;
+      return newRecipe;
     });
   }
 
-  function handleChangeInstructionImage(image: TYPE_FILE, index: number) {
-    setInstructionImages((prev) => {
-      const newImages = [...prev];
-      newImages[index] = image;
-      return newImages;
+  function handleDeleteMainImage() {
+    // setMainImage(undefined);
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+      const newRecipe = { ...prev };
+      newRecipe.mainImage = undefined;
+      return newRecipe;
+    });
+  }
+
+  function handleAddInstrucion() {
+    // setInstructionImages((prev) => [...prev, undefined]);
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+
+      const newRecipe = { ...prev };
+      newRecipe.instructions = [
+        ...prev.instructions,
+        { instruction: "", image: undefined },
+      ];
+      return newRecipe;
     });
   }
 
   function handleDeleteInstruciton(index: number) {
-    setInstructionImages((prev) => prev.toSpliced(index, 1));
+    // setInstructionImages((prev) => prev.toSpliced(index, 1));
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+
+      const newRecipe = { ...prev };
+      newRecipe.instructions = prev.instructions.toSpliced(index, 1);
+      return newRecipe;
+    });
+  }
+
+  function handleChangeInstruction(value: string, i: number) {
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+
+      const newRecipe = { ...prev };
+      newRecipe.instructions[i].instruction = value;
+      return newRecipe;
+    });
+  }
+
+  function handleChangeInstructionImage(image: TYPE_FILE, index: number) {
+    // setInstructionImages((prev) => {
+    //   const newImages = [...prev];
+    //   newImages[index] = image;
+    //   return newImages;
+    // });
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+
+      const newRecipe = { ...prev };
+      newRecipe.instructions[index].image = image;
+      return newRecipe;
+    });
+  }
+
+  function handleDeleteInstructionImage(index: number) {
+    // setInstructionImages((prev) => {
+    //   const newImages = [...prev];
+    //   newImages[index] = undefined;
+    //   return newImages;
+    // });
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+
+      const newRecipe = { ...prev };
+      newRecipe.instructions[index].image = undefined;
+      return newRecipe;
+    });
   }
 
   function handleChangeMemoryImages(imagesArr: TYPE_FILE[]) {
-    setMemoryImages((prev) => [...prev, ...imagesArr]);
+    // setMemoryImages((prev) => [...prev, ...imagesArr]);
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+
+      const newRecipe = { ...prev };
+      newRecipe.memoryImages = [...prev.memoryImages, ...imagesArr];
+      return newRecipe;
+    });
   }
 
   function handleDeleteMemoryImage(index: number) {
-    setMemoryImages((prev) => prev.toSpliced(index, 1));
+    // setMemoryImages((prev) => prev.toSpliced(index, 1));
+    setCurRecipe((prev) => {
+      if (!prev) return undefined;
+
+      const newRecipe = { ...prev };
+      newRecipe.memoryImages = prev.memoryImages.toSpliced(index, 1);
+      return newRecipe;
+    });
   }
 
   async function handleClickFavorite() {
@@ -178,14 +251,14 @@ export default function Recipe() {
 
       const newRecipe = { ...recipe };
       newRecipe.favorite = !favorite;
-      newRecipe.mainImage = mainImage;
-      newRecipe.instructions = recipe.instructions.map((inst, i) => {
-        return {
-          instruction: inst.instruction,
-          image: instructionImages[i],
-        };
-      });
-      newRecipe.memoryImages = memoryImages;
+      // newRecipe.mainImage = mainImage;
+      // newRecipe.instructions = recipe.instructions.map((inst, i) => {
+      //   return {
+      //     instruction: inst.instruction,
+      //     image: instructionImages[i],
+      //   };
+      // });
+      // newRecipe.memoryImages = memoryImages;
 
       await uploadRecipe(newRecipe, userContext);
       setMessage("Favorite status updated successfully!");
@@ -266,18 +339,18 @@ export default function Recipe() {
           };
         });
 
-      const instructions = new Array(instructionImages.length)
-        .fill("")
-        .map((_, i) => {
-          return {
-            instruction: String(formData.get(`instruction${i + 1}`)) || "",
-            image: instructionImages[i],
-          };
-        });
+      // const instructions = new Array(instructionImages.length)
+      //   .fill("")
+      //   .map((_, i) => {
+      //     return {
+      //       instruction: String(formData.get(`instruction${i + 1}`)) || "",
+      //       image: instructionImages[i],
+      //     };
+      //   });
 
       const newRecipe = {
         favorite: favorite === true ? true : false,
-        mainImage,
+        mainImage: curRecipe?.mainImage,
         title: String(formData.get("title"))?.trim() || "",
         author: String(formData.get("author")).trim() || "",
         region: getRegion(ingredients),
@@ -297,9 +370,9 @@ export default function Recipe() {
             formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
         },
         ingredients,
-        instructions,
+        instructions: curRecipe?.instructions as TYPE_INSTRUCTION[],
         description: String(formData.get("description"))?.trim() || "",
-        memoryImages,
+        memoryImages: curRecipe?.memoryImages as TYPE_FILE[] | [],
         comments: String(formData.get("comments"))?.trim() || "",
         createdAt: new Date().toISOString(),
       };
@@ -418,7 +491,7 @@ export default function Recipe() {
         >
           <ImageTitle
             edit={edit}
-            image={mainImage}
+            image={curRecipe.mainImage}
             title={curRecipe.title}
             onChangeImage={handleChangeMainImage}
             deleteImage={handleDeleteMainImage}
@@ -442,16 +515,17 @@ export default function Recipe() {
           <Instructions
             edit={edit}
             instructions={curRecipe.instructions}
-            images={instructionImages}
-            addImage={handleAddInstrucionImage}
-            deleteImage={handleDeleteInstructionImage}
-            onChangeImage={handleChangeInstructionImage}
+            // images={instructionImages}
+            addInstruction={handleAddInstrucion}
             deleteInstruction={handleDeleteInstruciton}
+            onChangeInstruction={handleChangeInstruction}
+            onChangeImage={handleChangeInstructionImage}
+            deleteImage={handleDeleteInstructionImage}
           />
           <AboutThisRecipe edit={edit} curRecipe={curRecipe} />
           <Memories
             edit={edit}
-            images={memoryImages}
+            images={curRecipe.memoryImages}
             onChangeImages={handleChangeMemoryImages}
             deleteImage={handleDeleteMemoryImage}
           />
@@ -1376,27 +1450,27 @@ function ButtonPlus({ onClickBtn }: { onClickBtn: () => void }) {
 function Instructions({
   edit,
   instructions,
-  images,
-  addImage,
-  deleteImage,
-  onChangeImage,
+  // images,
+  addInstruction,
   deleteInstruction,
+  onChangeInstruction,
+  onChangeImage,
+  deleteImage,
 }: {
   edit: boolean;
   instructions: { instruction: string; image: TYPE_FILE | undefined }[];
-  images: (TYPE_FILE | undefined)[];
-  addImage: () => void;
-  deleteImage: (index: number) => void;
-  onChangeImage: (image: TYPE_FILE, index: number) => void;
+  // images: (TYPE_FILE | undefined)[];
+  addInstruction: () => void;
   deleteInstruction: (index: number) => void;
+  onChangeInstruction: (value: string, i: number) => void;
+  onChangeImage: (image: TYPE_FILE, index: number) => void;
+  deleteImage: (index: number) => void;
 }) {
   //Store key so whenever user delete instruction, other instructions' info will remain the same
   const [recipeInstructions, setRecipeInstructions] = useState(
-    Array(images.length)
-      .fill("")
-      .map(() => {
-        return { id: nanoid() };
-      })
+    instructions.map(() => {
+      return { id: nanoid() };
+    })
   );
   const [deletedIndex, setDeletedIndex] = useState<number>();
 
@@ -1407,19 +1481,31 @@ function Instructions({
 
   //manually add or splice key info to remain other instructions info
   useEffect(() => {
-    //when user adds instruction
-    if (recipeInstructions.length < images.length)
-      setRecipeInstructions((prev) => [...prev, { id: nanoid() }]);
+    // if (recipeInstructions.length < images.length)
+    setRecipeInstructions((prev) => {
+      //when user adds instruction
+      if (recipeInstructions.length < instructions.length)
+        return [...prev, { id: nanoid() }];
 
-    //when user deletes instruction
-    if (recipeInstructions.length > images.length)
-      setRecipeInstructions((prev) => {
+      //when user deletes instruction
+      if (recipeInstructions.length > instructions.length) {
         if (!deletedIndex && deletedIndex !== 0) return prev;
 
         const newInstructions = [...prev];
         return newInstructions.toSpliced(deletedIndex, 1);
-      });
-  }, [images.length]);
+      }
+
+      return prev;
+    });
+
+    // if (recipeInstructions.length > images.length)
+    //   setRecipeInstructions((prev) => {
+    //     if (!deletedIndex && deletedIndex !== 0) return prev;
+
+    //     const newInstructions = [...prev];
+    //     return newInstructions.toSpliced(deletedIndex, 1);
+    //   });
+  }, [instructions.length]);
 
   return (
     <div
@@ -1439,10 +1525,11 @@ function Instructions({
           i={i}
           edit={edit}
           instruction={instructions[i]}
-          image={images[i]}
-          onClickDeleteImage={deleteImage}
+          // image={images[i]}
+          onChangeInstruction={onChangeInstruction}
           onClickDelete={handleClickDelete}
           onChangeImage={onChangeImage}
+          onClickDeleteImage={deleteImage}
         />
       ))}
       {edit && (
@@ -1454,7 +1541,7 @@ function Instructions({
             paddingBottom: "2%",
           }}
         >
-          <ButtonPlus onClickBtn={addImage} />
+          <ButtonPlus onClickBtn={addInstruction} />
         </div>
       )}
     </div>
@@ -1465,7 +1552,8 @@ function Instruction({
   edit,
   i,
   instruction,
-  image,
+  // image,
+  onChangeInstruction,
   onClickDeleteImage,
   onClickDelete,
   onChangeImage,
@@ -1473,7 +1561,8 @@ function Instruction({
   edit: boolean;
   i: number;
   instruction: { instruction: string; image: TYPE_FILE | undefined };
-  image: TYPE_FILE | undefined;
+  // image: TYPE_FILE | undefined;
+  onChangeInstruction: (value: string, i: number) => void;
   onClickDeleteImage: (i: number) => void;
   onClickDelete: (i: number) => void;
   onChangeImage: (image: TYPE_FILE, i: number) => void;
@@ -1495,6 +1584,7 @@ function Instruction({
   function handleChangeInstruction(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = e.currentTarget.value;
     setInstructionText(value);
+    onChangeInstruction(value, i);
   }
 
   return (
@@ -1550,11 +1640,11 @@ function Instruction({
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
-            width: image ? "55%" : "100%",
+            width: instruction.image ? "55%" : "100%",
             height: "100px",
             fontSize: "1.2vw",
             letterSpacing: "0.03vw",
-            padding: image ? "0 1%" : "0 0 0 3%",
+            padding: instruction.image ? "0 1%" : "0 0 0 3%",
           }}
         >
           {instructionText}
@@ -1563,11 +1653,11 @@ function Instruction({
       <div
         style={{
           position: "relative",
-          width: image || edit ? "140px" : "0",
+          width: instruction.image || edit ? "140px" : "0",
           height: "100px",
         }}
       >
-        {edit && !image?.data && (
+        {edit && !instruction.image?.data && (
           <div
             className={styles.grey_background}
             style={{ width: "100%", height: "100%" }}
@@ -1597,15 +1687,15 @@ function Instruction({
             />
           </div>
         )}
-        {image?.data && (
+        {instruction.image?.data && (
           <Image
-            src={image.data}
+            src={instruction.image.data}
             alt={`instruction ${i + 1} image`}
             width={140}
             height={100}
           ></Image>
         )}
-        {edit && image?.data && (
+        {edit && instruction.image?.data && (
           <button
             className={clsx(styles.btn__img, styles.btn__trash_img)}
             style={{

@@ -141,8 +141,6 @@ export async function PUT(req: NextRequest) {
       ? [...recipesNoRecipeToUpdate, body]
       : [body];
 
-    console.log(newRecipes);
-
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { recipes: newRecipes },
