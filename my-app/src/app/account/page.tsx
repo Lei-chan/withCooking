@@ -5,10 +5,10 @@ import {
   PASSWORD_MIN_UPPERCASE,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_DIGIT,
-} from "../config";
-import { getData } from "../helper";
+} from "../lib/config";
+import { getData } from "@/app/lib/helper";
 import { useEffect, useState, useContext } from "react";
-import { AccessTokenContext } from "../context";
+import { AccessTokenContext } from "../lib/context";
 import { redirect, RedirectType } from "next/navigation";
 
 export default function Account() {

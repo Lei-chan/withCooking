@@ -1,6 +1,6 @@
 import connectDB from "@/app/lib/mongoDB";
 import { NextRequest, NextResponse } from "next/server";
-import User from "@/app/modelSchemas/User";
+import User from "@/app/lib/modelSchemas/User";
 import { authenticateToken } from "@/app/lib/auth";
 import { refreshAccessToken } from "@/app/lib/auth";
 import { getGridFSBucket } from "@/app/lib/mongoDB";

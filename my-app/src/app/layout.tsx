@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { useState, useCallback, useMemo } from "react";
-import { AccessTokenContext } from "./context";
+import { AccessTokenContext } from "./lib/context";
+import { wait } from "@/app/lib/helper";
+import { MESSAGE_TIMEOUT } from "./lib/config";
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
 //   subsets: ["latin"],
@@ -25,6 +27,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [accessToken, setAccessToken] = useState("");
+  const [isMessageVisible, setIsMessageVisible] = useState(false);
+
+  const firstLogin = useCallback(async (accessToken: string) => {
+    setAccessToken(accessToken);
+    await showMessage();
+  }, []);
+
+  async function showMessage() {
+    setIsMessageVisible(true);
+    await wait(MESSAGE_TIMEOUT);
+    setIsMessageVisible(false);
+  }
 
   const login = useCallback((accessToken: string) => {
     setAccessToken(accessToken);
@@ -35,8 +49,8 @@ export default function RootLayout({
   }, []);
 
   const contextValue = useMemo(
-    () => ({ accessToken, login, logout }),
-    [accessToken, login, logout]
+    () => ({ accessToken, isMessageVisible, firstLogin, login, logout }),
+    [accessToken, isMessageVisible, firstLogin, login, logout]
   );
 
   return (

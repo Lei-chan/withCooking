@@ -18,8 +18,8 @@ import {
   NUMBER_OF_TEMPERATURES,
   TYPE_RECIPE,
   TYPE_FILE,
-} from "@/app/config";
-import { AccessTokenContext } from "@/app/context";
+} from "@/app/lib/config";
+import { AccessTokenContext } from "@/app/lib/context";
 import { redirect, RedirectType } from "next/navigation";
 
 export default function CreateRecipe({

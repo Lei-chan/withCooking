@@ -1,7 +1,7 @@
 import connectDB from "@/app/lib/mongoDB";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import User from "@/app/modelSchemas/User";
+import User from "@/app/lib/modelSchemas/User";
 import {
   passwordUpdateSchema,
   userOtherUpdateSchema,
@@ -270,16 +270,6 @@ export async function DELETE(req: NextRequest) {
       err.statusCode = 404;
       throw err;
     }
-
-    // const isValidPassword = await user.comparePassword(password);
-
-    // console.log("isValidPassword", isValidPassword);
-
-    // if (!isValidPassword) {
-    //   const err: any = new Error("Invalid password is provided");
-    //   err.statusCode = 401;
-    //   throw err;
-    // }
 
     const deletedUser = await User.findByIdAndDelete(id);
 

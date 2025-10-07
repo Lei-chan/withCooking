@@ -29,8 +29,8 @@
     "src/app/.next/types/**/*.ts",
     "src/app/lib/auth.ts",
     "src/app/lib/bycrypt.js",
-    "src/app/modelSchemas/Recipes.js",
-    "src/app/modelSchemas/User.tsx",
+    "src/app/lib/modelSchemas/Recipes.js",
+    "src/app/lib/modelSchemas/User.tsx",
     ".next/types/**/*.ts",
     "src/app/api/users/route.ts"
   ],

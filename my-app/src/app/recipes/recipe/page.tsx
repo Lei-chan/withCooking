@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
 import React, { useEffect, useState, useContext } from "react";
-import { AccessTokenContext } from "@/app/context";
+import { AccessTokenContext } from "@/app/lib/context";
 import {
   wait,
   getData,
@@ -29,7 +29,7 @@ import {
   TYPE_INGREDIENTS,
   TYPE_INSTRUCTION,
   TYPE_RECIPE,
-} from "@/app/config";
+} from "@/app/lib/config";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
 

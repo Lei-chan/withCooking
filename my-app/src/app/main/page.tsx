@@ -6,7 +6,7 @@ import clsx from "clsx";
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
-import { AccessTokenContext } from "../context";
+import { AccessTokenContext } from "../lib/context";
 import {
   getData,
   getSize,
@@ -24,7 +24,7 @@ import {
   updateIngsForServings,
   getReadableIngUnit,
   getNextSlideIndex,
-} from "../helper";
+} from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
   TYPE_RECIPE,
@@ -32,23 +32,26 @@ import {
   TYPE_INGREDIENT,
   TYPE_INGREDIENTS,
   SLIDE_TRANSITION_SEC,
-} from "../config";
-import DropdownMenu from "./(dropdown)/page";
-import { MessageContainer } from "../components";
+} from "../lib/config";
+import { MessageContainer, OverlayMessage } from "../lib/components/components";
 
 export default function MAIN() {
+  const userContext = useContext(AccessTokenContext);
+
+  const searchRef = useRef(null);
+
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const searchRef = useRef(null);
+  const [isMessageVisible, setIsMessageVisible] = useState(false);
   const [isDraggingX, setIsDraggingX] = useState(false);
   const [isDraggingY, setIsDraggingY] = useState(false);
-  const [recipeWidth, setRecipeWidth] = useState("50%");
-  const [timerHeight, setTimerHeight] = useState("65%");
-  const [fontSizeRecipe, setFontSizeRecipe] = useState("1.2vw");
-
-  useEffect(() => {
-    setFontSizeRecipe(getSize(recipeWidth, 0.026, "1.2vw"));
-  }, [recipeWidth]);
+  const [recipeWidth, setRecipeWidth] = useState(
+    window.innerWidth * 0.5 + "px"
+  );
+  const [timerHeight, setTimerHeight] = useState(
+    window.innerHeight * 0.65 + "px"
+  );
+  const timerNoteWidth = window.innerWidth - parseFloat(recipeWidth) + "px";
 
   function handleMouseDownX() {
     setIsDraggingX(true);
@@ -99,6 +102,10 @@ export default function MAIN() {
     setIsSearchVisible(false);
   };
 
+  function handleToggleLogout() {
+    setIsMessageVisible(!isMessageVisible);
+  }
+
   return (
     <div
       className={styles.page__main}
@@ -106,7 +113,22 @@ export default function MAIN() {
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMoveRecipe}
     >
+      {userContext?.isMessageVisible && (
+        <OverlayMessage option="message" content="welcome" />
+      )}
+      {isMessageVisible && (
+        <OverlayMessage
+          option="question"
+          content="logout"
+          toggleLogout={handleToggleLogout}
+        />
+      )}
       <div className={styles.container__cooking}>
+        <Search
+          isSearchVisible={isSearchVisible}
+          searchRef={searchRef}
+          onClickSearch={handleToggleSearch}
+        />
         <div
           style={{
             position: "absolute",
@@ -122,6 +144,7 @@ export default function MAIN() {
         <DropdownMenu
           isDropdownVisible={isDropdownVisible}
           onClickDropdown={handleToggleDropdown}
+          onClickLogout={handleToggleLogout}
         />
 
         <section
@@ -136,14 +159,7 @@ export default function MAIN() {
             scrollbarColor: "rgb(255, 255, 232) rgb(253, 231, 157)",
           }}
         >
-          <Search
-            recipeWidth={recipeWidth}
-            fontSize={fontSizeRecipe}
-            isSearchVisible={isSearchVisible}
-            searchRef={searchRef}
-            onClickSearch={handleToggleSearch}
-          />
-          <Recipe recipeWidth={recipeWidth} fontSize={fontSizeRecipe} />
+          <Recipe recipeWidth={recipeWidth} />
         </section>
 
         <section
@@ -166,8 +182,8 @@ export default function MAIN() {
             }}
             onMouseDown={handleMouseDownY}
           ></div>
-          <Timers />
-          <Note />
+          <Timers timerWidth={timerNoteWidth} />
+          <Note noteWidth={timerNoteWidth} />
         </section>
       </div>
     </div>
@@ -175,22 +191,23 @@ export default function MAIN() {
 }
 
 function Search({
-  recipeWidth,
-  fontSize,
+  // recipeWidth,
+  // fontSize,
   isSearchVisible,
   searchRef,
   onClickSearch,
 }: {
-  recipeWidth: string;
-  fontSize: string;
+  // recipeWidth: string;
+  // fontSize: string;
   isSearchVisible: boolean;
   searchRef: any;
   onClickSearch: () => void;
 }) {
   const RECIPES_PER_PAGE = 6;
-  const userContext = useContext(AccessTokenContext);
+  const searchMenuSize = window.innerWidth * 0.25 + "px";
+  const fontSize = parseFloat(searchMenuSize) * 0.05 + "px";
 
-  const [mainImageSize, setMainImageSize] = useState("50px");
+  const userContext = useContext(AccessTokenContext);
 
   const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
@@ -210,11 +227,6 @@ function Search({
       setNumberOfUserRecipes(userRecipes?.length || 0);
     })();
   }, []);
-
-  useEffect(() => {
-    const size = getSize(recipeWidth, 0.09, "65px");
-    setMainImageSize(size);
-  }, [recipeWidth]);
 
   //when curPage changes, change curRecipes too
   useEffect(() => {
@@ -251,7 +263,6 @@ function Search({
           headers: { authorization: `Bearer ${userContext?.accessToken}` },
         }
       );
-      console.log(data);
 
       const orderedRecipes = getOrderedRecipes(data.data);
       setCurPage(1);
@@ -303,8 +314,14 @@ function Search({
 
   return (
     <div
-      className={styles.container__search_menu}
       style={{
+        position: "absolute",
+        top: "0",
+        left: "0",
+        width: searchMenuSize,
+        height: "100%",
+        zIndex: "10",
+        transition: "all 0.3s",
         transform: !isSearchVisible ? "translateX(-100%)" : "translateX(0%)",
         fontSize: fontSize,
       }}
@@ -346,15 +363,15 @@ function Search({
                     style={{ borderRadius: "50%" }}
                     src={recipe.mainImage.data}
                     alt="main image"
-                    width={parseFloat(mainImageSize)}
-                    height={parseFloat(mainImageSize)}
+                    width={parseFloat(searchMenuSize) * 0.2}
+                    height={parseFloat(searchMenuSize) * 0.2}
                   ></Image>
                 ) : (
                   <div
                     style={{
                       backgroundColor: "grey",
-                      width: mainImageSize,
-                      height: mainImageSize,
+                      width: `${parseFloat(searchMenuSize) * 0.2}px`,
+                      height: `${parseFloat(searchMenuSize) * 0.2}px`,
                       borderRadius: "50%",
                     }}
                   ></div>
@@ -364,8 +381,8 @@ function Search({
                   <Image
                     src="/star-on.png"
                     alt="favorite icon"
-                    width={parseFloat(mainImageSize) * 0.35}
-                    height={parseFloat(mainImageSize) * 0.35}
+                    width={parseFloat(searchMenuSize) * 0.06}
+                    height={parseFloat(searchMenuSize) * 0.06}
                   ></Image>
                 )}
               </li>
@@ -407,19 +424,117 @@ function Search({
   );
 }
 
-//prettier ignore
-function Recipe({
-  recipeWidth,
-  fontSize,
+function DropdownMenu({
+  isDropdownVisible,
+  onClickDropdown,
+  onClickLogout,
 }: {
-  recipeWidth: string;
-  fontSize: string;
+  isDropdownVisible: boolean;
+  onClickDropdown: () => void;
+  onClickLogout: () => void;
 }) {
+  return (
+    <div
+      className={styles.container__dropdown}
+      style={{ pointerEvents: !isDropdownVisible ? "none" : "all" }}
+    >
+      <button
+        className={styles.btn__dropdown}
+        type="button"
+        onClick={onClickDropdown}
+      ></button>
+      <ul
+        className={clsx(styles.dropdown_menu)}
+        style={{ opacity: !isDropdownVisible ? 0 : 1 }}
+      >
+        <Link href="http://localhost:3000/recipes">
+          <li className={styles.list}>
+            <Image
+              src={"/recipes.svg"}
+              alt="recipe icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>Recipes</span>
+          </li>
+        </Link>
+        <Link href="http://localhost:3000/converter">
+          <li className={styles.list}>
+            <Image
+              src={"/convert.svg"}
+              alt="converter icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>Converter</span>
+          </li>
+        </Link>
+        <Link href="http://localhost:3000/account">
+          <li className={styles.list}>
+            <Image
+              src={"/account.svg"}
+              alt="account icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>Account</span>
+          </li>
+        </Link>
+        <Link href="http://localhost:3000/news">
+          <li className={styles.list}>
+            <Image
+              src={"/news.svg"}
+              alt="news icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>News</span>
+          </li>
+        </Link>
+        <Link href="http://localhost:3000/how-to-use">
+          <li className={styles.list}>
+            <Image
+              src={"/howtouse.svg"}
+              alt="how to use icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>How to use</span>
+          </li>
+        </Link>
+        <Link href="http://localhost:3000/feedback">
+          <li className={styles.list}>
+            <Image
+              src={"/feedback.svg"}
+              alt="feedback icon"
+              width={25}
+              height={25}
+            ></Image>
+            <span>Feedback</span>
+          </li>
+        </Link>
+        <li className={styles.list} onClick={onClickLogout}>
+          <Image
+            src={"/logout.svg"}
+            alt="logout icon"
+            width={25}
+            height={25}
+          ></Image>
+          <span style={{ color: "rgba(233, 4, 4, 1)" }}>Logout</span>
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+//prettier ignore
+function Recipe({ recipeWidth }: { recipeWidth: string }) {
   const userContext = useContext(AccessTokenContext);
 
   ///design
-  const [headerSize, setHeaderSize] = useState("1.5vw");
-  const [marginTop, setMarginTop] = useState("30px");
+  const fontSize = getSize(recipeWidth, 0.026, "1.2vw");
+  const headerSize = getSize(recipeWidth, 0.033, "1.5vw");
+  const marginTop = getSize(recipeWidth, 0.11, "30px");
 
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE>();
@@ -449,11 +564,6 @@ function Recipe({
       return setMessage("Let's start cooking by selecting your recipe :)");
     await getRecipe(id);
   }
-
-  useEffect(() => {
-    setHeaderSize(getSize(recipeWidth, 0.033, "1.5vw"));
-    setMarginTop(getSize(recipeWidth, 0.11, "30px"));
-  }, [recipeWidth]);
 
   async function getRecipe(id: string) {
     try {
@@ -526,14 +636,6 @@ function Recipe({
 
     const newRecipe = { ...recipe };
     newRecipe.favorite = !favorite;
-    // newRecipe.mainImage = mainImage;
-    // newRecipe.instructions = recipe.instructions.map((inst, i) => {
-    //   return {
-    //     instruction: inst.instruction,
-    //     image: instructionImages[i],
-    //   };
-    // });
-    // newRecipe.memoryImages = memoryImages;
 
     uploadRecipe(newRecipe, userContext);
   }
@@ -619,6 +721,7 @@ function Recipe({
           />
           <Memories
             recipeWidth={recipeWidth}
+            fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
             images={recipe.memoryImages}
@@ -714,15 +817,8 @@ function ImageTitle({
   title: string;
   recipeWidth: string;
 }) {
-  const [width, setWidth] = useState("440px");
-  const [height, setHeight] = useState("290px");
-
-  useEffect(() => {
-    const width = getSize(recipeWidth, 0.65, "440px");
-    const height = parseInt(width) * 0.6 + "px";
-    setWidth(width);
-    setHeight(height);
-  }, [recipeWidth]);
+  const width = getSize(recipeWidth, 0.65, "440px");
+  const height = parseInt(width) * 0.6 + "px";
 
   return (
     <div
@@ -800,10 +896,10 @@ function BriefExplanation({
   onChangeIngredientsUnit: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onClickFavorite: () => void;
 }) {
-  const [width, setWidth] = useState<string>("90%");
-  const [iconSize, setIconSize] = useState<string>("20");
-  const [fontFukidashiSize, setFontFukidashiSize] = useState<string>("1.2vw");
-  const [fontSize, setFontSize] = useState<string>("1.2vw");
+  const width = getSize(recipeWidth, 0.9, "90%");
+  const iconSize = getSize(recipeWidth, 0.02, "20");
+  const fontFukidashiSize = getSize(recipeWidth, 0.02, "1.2vw");
+  const fontSize = getSize(recipeWidth, 0.025, "1.2vw");
 
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
   const [author, setAuthour] = useState(curRecipe.author);
@@ -817,13 +913,6 @@ function BriefExplanation({
   const [temperatureUnit, setTemperatureUnit] = useState<"℉" | "℃">(
     curRecipe.temperatures.unit
   );
-
-  useEffect(() => {
-    setWidth(getSize(recipeWidth, 0.9, "90%"));
-    setIconSize(getSize(recipeWidth, 0.02, "20"));
-    setFontFukidashiSize(getSize(recipeWidth, 0.02, "1.2vw"));
-    setFontSize(getSize(recipeWidth, 0.025, "1.2vw"));
-  }, [recipeWidth]);
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     const index = e.currentTarget.dataset.icon;
@@ -1419,23 +1508,28 @@ function AboutThisRecipe({
 
 function Memories({
   recipeWidth,
+  fontSize,
   headerSize,
   marginTop,
   images,
 }: {
   recipeWidth: string;
+  fontSize: string;
   headerSize: string;
   marginTop: string;
   images: [] | TYPE_FILE[];
 }) {
   const MAX_SLIDE = images.length - 1;
-  const [width, setWidth] = useState("400px");
-  const [height, setHeight] = useState("200px");
+
+  //design
+  const width = getSize(recipeWidth, 0.5, "400px");
+  const height = parseInt(width) * 0.55 + "px";
 
   const [timeourId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const [curImage, setCurImage] = useState(0);
 
   useEffect(() => {
+    if (!images.length) return;
     if (timeourId) clearInterval(timeourId);
 
     const id = setTimeout(() => {
@@ -1446,14 +1540,6 @@ function Memories({
     setTimeoutId(id);
   }, [curImage]);
 
-  useEffect(() => {
-    const width = getSize(recipeWidth, 0.5, "400px");
-    const height = parseInt(width) * 0.55 + "px";
-
-    setWidth(width);
-    setHeight(height);
-  }, [recipeWidth]);
-
   function handleClickDot(i: number) {
     setCurImage(i);
   }
@@ -1461,9 +1547,12 @@ function Memories({
   return (
     <div
       style={{
+        position: "relative",
         marginTop: marginTop,
         width: "60%",
-        height: images.length ? `calc(${headerSize} * 2 + ${height})` : height,
+        height: images.length
+          ? `calc(${headerSize} * 2 + ${height})`
+          : `calc(${height} * 0.8)`,
       }}
     >
       <h2
@@ -1479,20 +1568,26 @@ function Memories({
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          height: height,
+          height: images.length
+            ? height
+            : `calc(${height} * 0.8 - ${headerSize} * 2)`,
           overflow: "hidden",
         }}
       >
-        {images.map((img, i) => (
-          <MemoryImg
-            key={i}
-            width={width}
-            height={height}
-            i={i}
-            image={img}
-            translateX={calcTransitionXSlider(i, curImage)}
-          />
-        ))}
+        {images.length ? (
+          images.map((img, i) => (
+            <MemoryImg
+              key={i}
+              width={width}
+              height={height}
+              i={i}
+              image={img}
+              translateX={calcTransitionXSlider(i, curImage)}
+            />
+          ))
+        ) : (
+          <></>
+        )}
         {images.length ? (
           <div
             style={{
@@ -1526,7 +1621,12 @@ function Memories({
             ))}
           </div>
         ) : (
-          <p className={styles.no_content}>There're no memory images</p>
+          <p
+            className={styles.no_content}
+            style={{ fontSize: `calc(${fontSize} * 0.9)`, height: "100%" }}
+          >
+            There're no memory images
+          </p>
         )}
       </div>
     </div>
@@ -1621,375 +1721,75 @@ function Comments({
   );
 }
 
-function Timer({
-  index,
-  audioRef,
-  onClickDelete,
-}: {
-  index: number;
-  audioRef: any;
-  onClickDelete: (i: number) => void;
-}) {
-  const defaultTime = { hours: "", minutes: "", seconds: "" };
-  const [title, setTitle] = useState(`Timer ${index + 1}`);
-  const [time, setTime] = useState(defaultTime);
-  const [paused, setPaused] = useState(false);
-  const [reseted, setReseted] = useState(false);
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
-  let immediateTime = time; //For immediate update
-
-  const changeTime = (newTime: {
-    hours: string;
-    minutes: string;
-    seconds: string;
-  }) => {
-    setTime(newTime);
-    immediateTime = newTime;
-  };
-
-  const handleKeyDown = function (e: React.KeyboardEvent) {
-    e.preventDefault();
-  };
-
-  //save change after 0.3 sec
-  const handleChangeTitle = function (e: React.ChangeEvent<HTMLInputElement>) {
-    if (timeoutId) clearTimeout(timeoutId);
-
-    const newTimeoutId = setTimeout(() => setTitle(e.target.value), 500);
-
-    setTimeoutId(newTimeoutId);
-  };
-
-  const startTimer = () => {
-    if (
-      !immediateTime.hours &&
-      !immediateTime.minutes &&
-      !immediateTime.seconds
-    )
-      return;
-
-    const id = setInterval(() => {
-      const numberHours = parseInt(immediateTime.hours);
-      const numberMinutes = parseInt(immediateTime.minutes);
-      const numberSeconds = parseInt(immediateTime.seconds);
-      if (!numberHours && !numberMinutes && !numberSeconds) {
-        audioRef.current.play();
-        clearInterval(id);
-        return;
-      }
-      const nextSeconds = !numberSeconds
-        ? "59"
-        : (numberSeconds - 1).toString().padStart(2, "0");
-
-      let nextMinutes: string = "0";
-      if (nextSeconds === "59") {
-        if (!numberMinutes) nextMinutes = "59";
-        if (numberMinutes)
-          nextMinutes = (numberMinutes - 1).toString().padStart(2, "0");
-      } else {
-        nextMinutes = immediateTime.minutes;
-      }
-
-      let nextHours: string = "0";
-      if (nextSeconds === "59" && nextMinutes === "59") {
-        if (!numberHours) nextHours = "00";
-        if (numberHours)
-          nextHours = (numberHours - 1).toString().padStart(2, "0");
-      } else {
-        nextHours = immediateTime.hours;
-      }
-
-      const nextTime = {
-        hours: nextHours,
-        minutes: nextMinutes,
-        seconds: nextSeconds,
-      };
-
-      //assign to times for immediate update
-      changeTime(nextTime);
-    }, 1000);
-
-    setIntervalId(id);
-  };
-
-  const handleStart = function (e: React.MouseEvent<HTMLButtonElement>) {
-    if (e.currentTarget.value === "stop") return;
-
-    const MAX_HOURS = 23;
-    const MAX_MINUTES = 59;
-    const MAX_SECONDS = 59;
-
-    const convertTime = (hours: number, minutes: number, seconds: number) => {
-      if (hours > MAX_HOURS) return null;
-
-      // all fields within the allowed range
-      if (minutes <= MAX_MINUTES && seconds <= MAX_SECONDS)
-        return {
-          hours: hours.toString().padStart(2, "0"),
-          minutes: minutes.toString().padStart(2, "0"),
-          seconds: seconds.toString().padStart(2, "0"),
-        };
-
-      // minutes, seconds, or both are not within the allowd range => convert
-      const newSeconds = seconds % 60;
-      const min = +parseInt(seconds / 60 + "") + minutes;
-      const newMinutes = min % 60;
-      const newHours = +parseInt(min / 60 + "") + hours;
-
-      if (newHours > MAX_HOURS) return null;
-
-      return {
-        hours: newHours.toString().padStart(2, "0"),
-        minutes: newMinutes.toString().padStart(2, "0"),
-        seconds: newSeconds.toString().padStart(2, "0"),
-      };
-    };
-
-    const validateTime = (hours: number, minutes: number, seconds: number) => {
-      //if no input => false
-      if (!hours && !minutes && !seconds) return false;
-
-      //if input is lower than 0 => false
-      if (
-        (hours && hours < 0) ||
-        (minutes && minutes < 0) ||
-        (seconds && seconds < 0)
-      )
-        return false;
-
-      if (!convertTime(hours, minutes, seconds)) return false;
-
-      return true;
-    };
-
-    const form = e.currentTarget.closest("form");
-    if (!form) return console.error("No form!");
-
-    const inputHours =
-      +(form.querySelector('input[name="hours"]') as HTMLInputElement).value ||
-      0;
-    const inputMinutes =
-      +(form.querySelector('input[name="minutes"]') as HTMLInputElement)
-        .value || 0;
-    const inputSeconds =
-      +(form.querySelector('input[name="seconds"]') as HTMLInputElement)
-        .value || 0;
-
-    if (!validateTime(inputHours, inputMinutes, inputSeconds)) return;
-
-    const newTime = convertTime(inputHours, inputMinutes, inputSeconds);
-    if (!newTime) return;
-
-    changeTime(newTime);
-
-    startTimer();
-  };
-
-  const handleStop = function (e: React.MouseEvent<HTMLButtonElement>) {
-    if (e.currentTarget.value === "start") return;
-
-    if (
-      parseInt(time.hours) ||
-      parseInt(time.minutes) ||
-      parseInt(time.seconds)
-    ) {
-      setPaused(true);
-      intervalId && clearInterval(intervalId);
-      return;
-    }
-
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
-
-    changeTime(defaultTime);
-  };
-
-  const togglePaused = () => {
-    setPaused(!paused);
-  };
-
-  const handlePause = function (e: React.MouseEvent<HTMLButtonElement>) {
-    if (e.currentTarget.value === "start") return;
-
-    if (time.hours === "" && time.minutes === "" && time.seconds === "") return;
-
-    togglePaused();
-    intervalId && clearInterval(intervalId);
-  };
-
-  const handleRestart = function (e: React.MouseEvent<HTMLButtonElement>) {
-    if (e.currentTarget.value === "pause") return;
-
-    togglePaused();
-    startTimer();
-  };
-
-  const handleReset = function (e: React.MouseEvent<HTMLButtonElement>) {
-    if (time.hours === "" && time.minutes === "" && time.seconds === "") return;
-
-    const value = e.currentTarget.value;
-
-    setReseted(value === "reset" ? true : false);
-
-    if (value === "delete") setTime(defaultTime);
-  };
-
-  const isTimerSet = () =>
-    !time.hours && !time.minutes && !time.seconds ? false : true;
-  return (
-    <form className={styles.timer} data-timer={index}>
-      <button
-        className={clsx(styles.btn__x, styles.btn__x_timer)}
-        type="button"
-        onClick={(e) => {
-          onClickDelete(index);
-          handleStop(e);
-        }}
-      >
-        &times;
-      </button>
-      <input
-        className={styles.input__timer_title}
-        type="text"
-        placeholder="Set title for timer"
-        defaultValue={title}
-        onKeyDown={handleKeyDown}
-        onChange={handleChangeTitle}
-      />
-      <div className={styles.container__input_time}>
-        {!isTimerSet() || reseted ? (
-          <>
-            <input
-              className={clsx(styles.input__time, styles.input__timer_hours)}
-              name="hours"
-              type="number"
-              placeholder="h"
-              min="0"
-              max="23"
-              defaultValue={time.hours}
-            />
-            <input
-              className={clsx(styles.input__time, styles.input__timer_minutes)}
-              name="minutes"
-              type="number"
-              placeholder="min"
-              min="0"
-              max="59"
-              defaultValue={time.minutes}
-            />
-            <input
-              className={clsx(styles.input__time, styles.input__timer_seconds)}
-              name="seconds"
-              type="number"
-              placeholder="sec"
-              min="0"
-              max="59"
-              defaultValue={time.seconds}
-            />
-          </>
-        ) : (
-          <>
-            <span>
-              {time.hours} : {time.minutes} : {time.seconds}
-            </span>
-          </>
-        )}
-      </div>
-      <div className={styles.container__btns}>
-        <button
-          className={styles.btn__start}
-          type="button"
-          onClick={(e) => {
-            handleStart(e), handleStop(e);
-          }}
-          value={!isTimerSet() ? "start" : "stop"}
-        >
-          {!isTimerSet() ? "Start" : "Stop"}
-        </button>
-        <button
-          className={styles.btn__pause}
-          type="button"
-          onClick={(e) => {
-            handlePause(e);
-            handleRestart(e);
-          }}
-          value={!paused ? "pause" : "start"}
-        >
-          {!paused ? "Pause" : "Start"}
-        </button>
-        <button
-          className={styles.btn__reset}
-          type="reset"
-          onClick={handleReset}
-          value={!reseted ? "reset" : "delete"}
-        >
-          Reset
-        </button>
-      </div>
-    </form>
-  );
-}
-
-/////There is a bug when delete timer with fewer number they can not be deleted! Because I can't update index after spliced markupTimersArr I assume
-function Timers() {
+function Timers({ timerWidth }: { timerWidth: string }) {
   const MAX_TIMERS = 10;
-  const audioRef = useRef(null);
-  const [numberOfTimers, setNumberOfTimers] = useState<number>(1);
-  const [deletedIndex, setDeletedIndex] = useState<number | null>(null);
+  const fontSize = getSize(timerWidth, 0.027, "1.2vw");
+
+  const [timerKeys, setTimerKeys] = useState(
+    Array(1)
+      .fill("")
+      .map((_) => {
+        return { id: nanoid() };
+      })
+  );
 
   const handleDeleteTimers = function (i: number) {
-    if (!numberOfTimers) return;
-    setNumberOfTimers((prev) => (!prev ? prev : prev - 1));
-    setDeletedIndex(i);
+    if (!timerKeys.length) return;
+    setTimerKeys((prev) => prev.toSpliced(i, 1));
   };
 
   const handleAddTimers = function () {
-    if (numberOfTimers === MAX_TIMERS) return;
-    setNumberOfTimers((prev) => prev + 1);
+    if (timerKeys.length === MAX_TIMERS) return;
+    setTimerKeys((prev) => [...prev, { id: nanoid() }]);
   };
-
-  const markupTimer = (i: number) => (
-    <Timer
-      key={nanoid()}
-      index={i}
-      audioRef={audioRef}
-      onClickDelete={handleDeleteTimers}
-    />
-  );
-
-  // const updatedIndex = markupTimersArr.findIndex(markup=> markup === markupPrev)
-
-  const [markupTimersArr, setMarkupTimersArr] = useState(
-    numberOfTimers
-      ? new Array(numberOfTimers).fill("").map((_, i) => markupTimer(i))
-      : []
-  );
-
-  ////update when numberOfTimers changes
-  useEffect(() => {
-    //when timer is added
-    if (markupTimersArr.length < numberOfTimers)
-      setMarkupTimersArr((prev) => [...prev, markupTimer(numberOfTimers - 1)]);
-
-    //when timer is deleted
-    if (markupTimersArr.length > numberOfTimers)
-      setMarkupTimersArr((prev) => {
-        if (!deletedIndex && deletedIndex !== 0) return [...prev];
-
-        return [...prev].toSpliced(deletedIndex, 1);
-      });
-  }, [numberOfTimers]);
 
   return (
     <section className={styles.section__timers}>
-      <h2>Timers</h2>
-      <div className={styles.container__timers}>
-        <audio ref={audioRef} src="/timerAlerm.mp3"></audio>
-        {markupTimersArr}
-        {numberOfTimers === MAX_TIMERS || (
-          <div className={styles.container__btn_add}>
-            <button className={styles.btn__add} onClick={handleAddTimers}>
+      <h2
+        style={{
+          fontSize: `calc(${fontSize} * 1.4)`,
+          letterSpacing: "0.1vw",
+          marginBottom: "5%",
+        }}
+      >
+        Timers
+      </h2>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          justifyItems: "center",
+          width: "100%",
+          height: "fit-content",
+          fontSize: fontSize,
+        }}
+      >
+        {timerKeys.map((keyObj, i) => (
+          <Timer
+            key={keyObj.id}
+            fontSize={fontSize}
+            index={i}
+            onClickDelete={handleDeleteTimers}
+          />
+        ))}
+        {timerKeys.length === MAX_TIMERS || (
+          <div
+            className={styles.container__timer}
+            style={{ justifyContent: "center" }}
+          >
+            <button
+              style={{
+                width: "fit-content",
+                aspectRatio: "1",
+                letterSpacing: "0.05vw",
+                lineHeight: "105%",
+                padding: "4%",
+                backgroundImage:
+                  "linear-gradient(rgb(251, 255, 0), rgb(255, 217, 0))",
+                fontSize: `calc(${fontSize} * 0.9)`,
+              }}
+              onClick={handleAddTimers}
+            >
               +<br />
               Add
             </button>
@@ -2000,10 +1800,371 @@ function Timers() {
   );
 }
 
-function Note() {
+function Timer({
+  fontSize,
+  index,
+  onClickDelete,
+}: {
+  fontSize: string;
+  index: number;
+  onClickDelete: (i: number) => void;
+}) {
+  const MAX_HOURS = 23;
+  const MAX_MINUTES = 59;
+  const MAX_SECONDS = 59;
+
+  //design
+  const fontSizeTimeInput = parseFloat(fontSize) * 1.2 + "px";
+  const fontSizeControlBtn = parseFloat(fontSize) * 0.9 + "px";
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const defaultTime = { hours: "", minutes: "", seconds: "" };
+  const [title, setTitle] = useState(`Timer ${index + 1}`);
+  const [time, setTime] = useState(defaultTime);
+  const [paused, setPaused] = useState(false);
+  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  function isTimerSet() {
+    return !time.hours && !time.minutes && !time.seconds ? false : true;
+  }
+
+  const handleChangeTitle = function (e: React.ChangeEvent<HTMLInputElement>) {
+    setTitle(e.currentTarget.value);
+  };
+
+  useEffect(() => {
+    if (!isTimerSet()) return;
+
+    //if paused is true, get rid of the timeout
+    if (paused) {
+      timeoutId && clearTimeout(timeoutId);
+      return;
+    }
+
+    const id = setTimeout(() => {
+      const numberHours = parseInt(time.hours);
+      const numberMinutes = parseInt(time.minutes);
+      const numberSeconds = parseInt(time.seconds);
+
+      if (!numberHours && !numberMinutes && !numberSeconds)
+        return audioRef.current?.play();
+
+      setNewTime(numberSeconds, numberMinutes, numberHours);
+    }, 1000);
+
+    setTimeoutId(id);
+
+    return () => clearTimeout(id);
+  }, [time, paused]);
+
+  function setNewTime(
+    curNumberSeconds: number,
+    curNumberMinutes: number,
+    curNumberHours: number
+  ) {
+    const nextSeconds = !curNumberSeconds
+      ? "59"
+      : (curNumberSeconds - 1).toString().padStart(2, "0");
+
+    let nextMinutes: string = "0";
+    if (nextSeconds === "59") {
+      if (!curNumberMinutes) nextMinutes = "59";
+      if (curNumberMinutes)
+        nextMinutes = (curNumberMinutes - 1).toString().padStart(2, "0");
+    } else {
+      nextMinutes = time.minutes;
+    }
+
+    let nextHours: string = "0";
+    if (nextSeconds === "59" && nextMinutes === "59") {
+      if (!curNumberHours) nextHours = "00";
+      if (curNumberHours)
+        nextHours = (curNumberHours - 1).toString().padStart(2, "0");
+    } else {
+      nextHours = time.hours;
+    }
+
+    setTime({
+      hours: nextHours,
+      minutes: nextMinutes,
+      seconds: nextSeconds,
+    });
+  }
+
+  const handleStart = function (e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const formData = new FormData(e.currentTarget);
+
+    const inputHours = +(formData.get("hours") || 0);
+    const inputMinutes = +(formData.get("minutes") || 0);
+    const inputSeconds = +(formData.get("seconds") || 0);
+
+    if (!validateTime(inputHours, inputMinutes, inputSeconds)) return;
+
+    const newTime = convertTime(inputHours, inputMinutes, inputSeconds);
+    if (!newTime) return;
+
+    setTime(newTime);
+  };
+
+  function convertTime(hours: number, minutes: number, seconds: number) {
+    if (hours > MAX_HOURS) return null;
+
+    //all fields within the allowed range
+    if (minutes <= MAX_MINUTES && seconds <= MAX_SECONDS)
+      return {
+        hours: hours.toString().padStart(2, "0"),
+        minutes: minutes.toString().padStart(2, "0"),
+        seconds: seconds.toString().padStart(2, "0"),
+      };
+
+    //minutes, seconds, or both are not within the allowd range => convert
+    const newSeconds = seconds % 60;
+    const min = +parseInt(seconds / 60 + "") + minutes;
+    const newMinutes = min % 60;
+    const newHours = +parseInt(min / 60 + "") + hours;
+
+    if (newHours > MAX_HOURS) return null;
+
+    return {
+      hours: newHours.toString().padStart(2, "0"),
+      minutes: newMinutes.toString().padStart(2, "0"),
+      seconds: newSeconds.toString().padStart(2, "0"),
+    };
+  }
+
+  function validateTime(hours: number, minutes: number, seconds: number) {
+    //if no input => false
+    if (!hours && !minutes && !seconds) return false;
+
+    //if input is lower than 0 => false
+    if (
+      (hours && hours < 0) ||
+      (minutes && minutes < 0) ||
+      (seconds && seconds < 0)
+    )
+      return false;
+
+    if (!convertTime(hours, minutes, seconds)) return false;
+
+    return true;
+  }
+
+  const handleStop = function () {
+    if (
+      parseInt(time.hours) ||
+      parseInt(time.minutes) ||
+      parseInt(time.seconds)
+    )
+      return setPaused(true);
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setTime(defaultTime);
+  };
+
+  const togglePaused = () => {
+    setPaused(!paused);
+  };
+
+  const handlePause = function (e: React.MouseEvent<HTMLButtonElement>) {
+    if (e.currentTarget.value === "start") return;
+
+    if (!isTimerSet()) return;
+
+    togglePaused();
+  };
+
+  const handleRestart = function (e: React.MouseEvent<HTMLButtonElement>) {
+    if (e.currentTarget.value === "pause") return;
+
+    togglePaused();
+  };
+
+  const handleReset = function () {
+    if (!isTimerSet()) return;
+
+    setTime(defaultTime);
+  };
+
   return (
-    <section className={styles.section__note} contentEditable="true">
-      You can use this space for taking a note for cooking :)
-    </section>
+    <form
+      className={styles.container__timer}
+      style={{
+        position: "relative",
+        backgroundColor: "rgb(255, 245, 199)",
+        gap: "8%",
+        boxShadow: "rgba(0, 0, 0, 0.267) 3px 3px 8px",
+      }}
+      data-timer={index}
+      onSubmit={handleStart}
+    >
+      <audio loop ref={audioRef} src="/timerAlerm.mp3"></audio>
+      <button
+        style={{
+          position: "absolute",
+          backgroundColor: "orange",
+          width: "7%",
+          aspectRatio: "1",
+          borderRadius: "50%",
+          border: "none",
+          top: "2%",
+          right: "1%",
+          fontWeight: "bold",
+          fontSize: `calc(${fontSize} * 0.7)`,
+        }}
+        type="button"
+        onClick={() => {
+          onClickDelete(index);
+          handleStop();
+        }}
+      >
+        &times;
+      </button>
+      <input
+        style={{
+          width: "80%",
+          height: "16%",
+          marginTop: "8%",
+          borderRadius: "2% / 18%",
+          borderColor: "orange",
+          fontSize: fontSize,
+        }}
+        type="text"
+        placeholder="Set title for timer"
+        value={title}
+        onChange={handleChangeTitle}
+      />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          gap: "3%",
+          width: "80%",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {!isTimerSet() ? (
+          <>
+            <input
+              className={styles.input__time}
+              style={{ fontSize: fontSizeTimeInput }}
+              name="hours"
+              type="number"
+              placeholder="h"
+              min="0"
+              max="23"
+              defaultValue={time.hours}
+            />
+            <input
+              className={styles.input__time}
+              style={{ fontSize: fontSizeTimeInput }}
+              name="minutes"
+              type="number"
+              placeholder="min"
+              min="0"
+              max="59"
+              defaultValue={time.minutes}
+            />
+            <input
+              className={styles.input__time}
+              style={{ fontSize: fontSizeTimeInput }}
+              name="seconds"
+              type="number"
+              placeholder="sec"
+              min="0"
+              max="59"
+              defaultValue={time.seconds}
+            />
+          </>
+        ) : (
+          <>
+            <span
+              style={{
+                fontSize: `calc(${fontSize}* 1.7)`,
+                letterSpacing: "0.07vw",
+              }}
+            >
+              {time.hours} : {time.minutes} : {time.seconds}
+            </span>
+          </>
+        )}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          width: "100%",
+          height: "fitContent",
+          gap: "6%",
+        }}
+      >
+        <button
+          className={styles.btn__control_timer}
+          style={{
+            fontSize: fontSizeControlBtn,
+            backgroundColor: "greenyellow",
+          }}
+          type="submit"
+          onClick={handleStop}
+        >
+          {!isTimerSet() ? "Start" : "Stop"}
+        </button>
+        <button
+          className={styles.btn__control_timer}
+          style={{
+            fontSize: fontSizeControlBtn,
+            backgroundColor: "rgb(255, 153, 0)",
+          }}
+          type="button"
+          onClick={(e) => {
+            handlePause(e);
+            handleRestart(e);
+          }}
+          value={!paused ? "pause" : "start"}
+        >
+          {!paused ? "Pause" : "Start"}
+        </button>
+        <button
+          className={styles.btn__control_timer}
+          style={{
+            fontSize: fontSizeControlBtn,
+            backgroundColor: "rgb(191, 52, 255)",
+          }}
+          type="reset"
+          onClick={handleReset}
+        >
+          Reset
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function Note({ noteWidth }: { noteWidth: string }) {
+  return (
+    <textarea
+      style={{
+        resize: "none",
+        border: "none",
+        backgroundImage:
+          "linear-gradient(rgb(254, 255, 213), rgb(254, 255, 186))",
+        width: "100%",
+        overflowY: "auto",
+        scrollbarColor: "rgb(255, 250, 209) rgb(255, 231, 92)",
+        fontSize: getSize(noteWidth, 0.03, "1.3vw"),
+        letterSpacing: "0.05vw",
+        padding: "2% 2.8%",
+        zIndex: "1",
+      }}
+      contentEditable="true"
+      placeholder="Use this section for anything :)"
+    ></textarea>
   );
 }

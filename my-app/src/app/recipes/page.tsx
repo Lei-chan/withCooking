@@ -3,7 +3,10 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
-import { MessageContainer, PaginationButtons } from "@/app/components";
+import {
+  MessageContainer,
+  PaginationButtons,
+} from "@/app/lib/components/components";
 import {
   createMessage,
   getData,
@@ -13,8 +16,8 @@ import {
   calcNumberOfPages,
 } from "../helper";
 import React, { useContext, useEffect, useState } from "react";
-import { TYPE_RECIPE } from "../config";
-import { AccessTokenContext } from "../context";
+import { TYPE_RECIPE } from "../lib/config";
+import { AccessTokenContext } from "../lib/context";
 
 export default function Recipes() {
   const userContext = useContext(AccessTokenContext);

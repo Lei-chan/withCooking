@@ -2,10 +2,14 @@ import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../lib/mongoDB";
-import Recipe from "@/app/modelSchemas/Recipes";
+import Recipe from "@/app/lib/modelSchemas/Recipes";
 import { recipeSchema } from "@/app/lib/validation";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
-import { TYPE_FILE, TYPE_INSTRUCTION, TYPE_CONVERTED_FILE } from "@/app/config";
+import {
+  TYPE_FILE,
+  TYPE_INSTRUCTION,
+  TYPE_CONVERTED_FILE,
+} from "@/app/lib/config";
 import { authenticateToken, refreshAccessToken } from "@/app/lib/auth";
 import { parse, resolve } from "path";
 

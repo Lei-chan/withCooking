@@ -6,6 +6,7 @@ export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 export const NUMBER_OF_TEMPERATURES = 4;
 export const MAX_SERVINGS = 999;
 export const SLIDE_TRANSITION_SEC = 4;
+export const MESSAGE_TIMEOUT = 4; //seconds
 
 export const APP_EXPLANATIONS = [
   {
@@ -32,8 +33,6 @@ export const APP_EXPLANATIONS = [
       " You can edit and leave comments for recipes while cooking, so whenever you want to change your recipes, you can easily manage it.",
   },
 ];
-
-export const MESSAGE_TIMEOUT = 3; //seconds
 
 export type TYPE_RECIPE = {
   // id: string;

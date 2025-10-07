@@ -6,7 +6,7 @@ import {
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
   PASSWORD_REGEX,
-} from "../config";
+} from "./config";
 
 export const recipeSchema = z.object({
   recipeId: z.string().optional(), //only for recipe in user info

@@ -12,9 +12,9 @@ import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
-} from "./config";
-import { getData } from "./helper";
-import { AccessTokenContext } from "./context";
+} from "./lib/config";
+import { getData } from "@/app/lib/helper";
+import { AccessTokenContext } from "./lib/context";
 
 export default function Home() {
   const [showLogin, setShowLogin] = useState(false);
@@ -330,9 +330,7 @@ function OverlayLogin({
         body: JSON.stringify(accountInfo),
       });
 
-      userContext?.login(data.accessToken);
-
-      console.log(data);
+      userContext?.firstLogin(data.accessToken);
     } catch (err) {
       throw err;
     }
