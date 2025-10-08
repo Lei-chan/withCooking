@@ -53,6 +53,8 @@ export default function RootLayout({
     [accessToken, isMessageVisible, firstLogin, login, logout]
   );
 
+  console.log(accessToken);
+
   return (
     <html lang="en">
       <body>

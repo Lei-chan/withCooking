@@ -134,11 +134,13 @@ export async function PUT(req: NextRequest) {
     }
 
     const user = await User.findById(id);
-    const recipesNoRecipeToUpdate = user.recipes.length
-      ? user.recipes.filter((recipe: any) => recipe._id !== body._id)
+
+    //recipe id is inside _doc
+    const recipesForNotUpdate = user.recipes.length
+      ? user.recipes.filter((recipe: any) => recipe._id !== body._doc._id)
       : [];
     const newRecipes = user.recipes.length
-      ? [...recipesNoRecipeToUpdate, body]
+      ? [...recipesForNotUpdate, body]
       : [body];
 
     const updatedUser = await User.findByIdAndUpdate(

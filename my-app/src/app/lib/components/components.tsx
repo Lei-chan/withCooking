@@ -1,8 +1,10 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useCallback, useContext, useEffect } from "react";
 import clsx from "clsx";
 import styles from "./component.module.css";
 import { useState } from "react";
+import { AccessTokenContext } from "../context";
+import { redirect, RedirectType } from "next/navigation";
 
 export function MessageContainer({
   message,
@@ -47,6 +49,7 @@ export function OverlayMessage({
   content: "welcome" | "logout";
   toggleLogout?: () => void;
 }) {
+  const userContext = useContext(AccessTokenContext);
   const [isVisible, setIsVisible] = useState(true);
 
   function getMessage() {
@@ -72,6 +75,13 @@ export function OverlayMessage({
   //only for welcome message
   function handleClose() {
     setIsVisible(false);
+  }
+
+  //user log out
+  function handleLogout() {
+    userContext?.logout();
+
+    redirect("/", RedirectType.replace);
   }
 
   return (
@@ -123,7 +133,9 @@ export function OverlayMessage({
         </button>
         {getMessage()}
         {option === "question" && (
-          <button className={styles.btn__question}>I'm sure</button>
+          <button className={styles.btn__question} onClick={handleLogout}>
+            I'm sure
+          </button>
         )}
       </div>
     </div>

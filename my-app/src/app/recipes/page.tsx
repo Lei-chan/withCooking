@@ -14,7 +14,7 @@ import {
   getOrderedRecipes,
   getFilteredRecipes,
   calcNumberOfPages,
-} from "../helper";
+} from "@/app/lib/helper";
 import React, { useContext, useEffect, useState } from "react";
 import { TYPE_RECIPE } from "../lib/config";
 import { AccessTokenContext } from "../lib/context";

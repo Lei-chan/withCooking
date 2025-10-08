@@ -148,7 +148,6 @@ export async function PATCH(req: NextRequest) {
     await connectDB();
 
     let { id, newAccessToken } = await authenticateToken(req);
-    // let newAccessToken;
 
     //try to refresh accessToken when access token is expired
     if (!id) {
@@ -250,11 +249,7 @@ export async function DELETE(req: NextRequest) {
   try {
     await connectDB();
 
-    // const body = await req.json();
-    // const { password } = body;
-
     let { id, newAccessToken } = await authenticateToken(req);
-    // let newAccessToken;
 
     //try to refresh accessToken when access token is expired
     if (!id) {

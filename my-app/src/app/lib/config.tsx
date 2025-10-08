@@ -35,7 +35,7 @@ export const APP_EXPLANATIONS = [
 ];
 
 export type TYPE_RECIPE = {
-  // id: string;
+  _id?: string;
   favorite: boolean;
   region: "metric" | "us" | "japan" | "australia" | "metricCup";
   mainImage: TYPE_FILE | undefined;
@@ -73,7 +73,7 @@ export type TYPE_INSTRUCTION = {
   image: TYPE_FILE | undefined;
 };
 
-export type TYPE_INGREDIENTS = TYPE_INGREDIENT[];
+export type TYPE_INGREDIENTS = TYPE_INGREDIENT[] | [];
 
 export type TYPE_INGREDIENT = {
   ingredient: string;

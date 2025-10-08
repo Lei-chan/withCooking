@@ -22,8 +22,8 @@ export function createMessage(
 
   if (isPending) return "Loading your recipes...";
 
-  if (!numberOfUserRecipes) return;
-  ("No recipes created yet. Let't start by creating a recipe :)");
+  if (!numberOfUserRecipes)
+    return "No recipes created yet. Let't start by creating a recipe :)";
 
   if (!numberOfCurPageRecipes)
     return "No recipes found. Please try again with a different keyword :)";
@@ -105,23 +105,6 @@ export function getTemperatures(
 
   return newTemps.join(" / ");
 }
-
-// export function getUnit(ingredient: {
-//   ingredient: string;
-//   amount: number;
-//   unit: string;
-//   customUnit: string;
-// }) {
-//   let unit;
-//   if (ingredient.unit === "noUnit") {
-//     unit = "";
-//   } else if (ingredient.unit === "other") {
-//     unit = ingredient.customUnit;
-//   } else {
-//     unit = ingredient.unit;
-//   }
-//   return unit;
-// }
 
 export const validatePassword = (input: string) => {
   const passwordRegex = PASSWORD_REGEX;

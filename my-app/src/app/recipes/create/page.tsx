@@ -12,7 +12,7 @@ import {
   getImageURL,
   getFileData,
   getRegion,
-} from "@/app/helper";
+} from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
   NUMBER_OF_TEMPERATURES,
@@ -22,11 +22,7 @@ import {
 import { AccessTokenContext } from "@/app/lib/context";
 import { redirect, RedirectType } from "next/navigation";
 
-export default function CreateRecipe({
-  recipes,
-}: {
-  recipes: TYPE_RECIPE[] | undefined;
-}) {
+export default function CreateRecipe() {
   const userContext = useContext(AccessTokenContext);
   const [favorite, setFavorite] = useState(false);
   const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();

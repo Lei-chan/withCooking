@@ -1,4 +1,7 @@
+import news from "../lib/models/news";
+
 export default function News() {
+  // console.log(new Date().toISOString());
   return (
     <div
       style={{
@@ -37,19 +40,23 @@ export default function News() {
             height: "100%",
             overflowY: "scroll",
             overflowX: "hidden",
-            scrollbarColor: "#ffb35cff #fffed6ff",
+            scrollbarColor: "#ffe987ff #fffed6ff",
           }}
         >
-          <List />
-          <List />
-          <List />
+          {news.map((news, i) => (
+            <List key={i} news={news} />
+          ))}
         </ul>
       </div>
     </div>
   );
 }
 
-function List() {
+function List({
+  news,
+}: {
+  news: { date: string; title: string; content: string; new: boolean };
+}) {
   return (
     <li
       style={{
@@ -61,6 +68,7 @@ function List() {
         height: "fit-content",
         padding: "3%",
         borderBottom: "thin solid #b3f8dbff",
+        pointerEvents: "none",
       }}
     >
       <div
@@ -73,19 +81,21 @@ function List() {
           alignItems: "center",
         }}
       >
-        <span
-          style={{
-            backgroundColor: "#9b00a0ff",
-            color: "orange",
-            marginRight: "2%",
-            fontSize: "1.1vw",
-            letterSpacing: "0.05vw",
-            padding: "0.6% 0.8%",
-            borderRadius: "50%",
-          }}
-        >
-          New
-        </span>
+        {news.new && (
+          <span
+            style={{
+              backgroundColor: "#9b00a0ff",
+              color: "orange",
+              marginRight: "2%",
+              fontSize: "1.1vw",
+              letterSpacing: "0.05vw",
+              padding: "0.6% 0.8%",
+              borderRadius: "50%",
+            }}
+          >
+            New
+          </span>
+        )}
         <h4
           style={{
             fontSize: "1.3vw",
@@ -94,10 +104,10 @@ function List() {
             textDecoration: "blueviolet underline",
           }}
         >
-          withCooking is now released!
+          {news.title}
         </h4>
         <span style={{ position: "absolute", right: "2%", top: "-40%" }}>
-          2025/10/10
+          {Intl.DateTimeFormat(navigator.language).format(new Date(news.date))}
         </span>
       </div>
       <p
@@ -112,10 +122,7 @@ function List() {
           textOverflow: "clip",
         }}
       >
-        withCooking was released today! ThanlwithCooking was released
-        today!ThanlwithCooking was released today! ThanlwithCooking was released
-        today! ThanlwithCooking was released today! ThanlwithCooking was
-        released today! ThanlwithCooking was released today! Thanl
+        {news.content}
       </p>
     </li>
   );

@@ -340,11 +340,16 @@ export async function PUT(req: NextRequest) {
       new: true,
     }).select("-__v");
 
+    const strucaturedRecipe = { ...newRecipe };
+    strucaturedRecipe.mainImage = body.mainImage;
+    strucaturedRecipe.instructions = body.instructions;
+    strucaturedRecipe.memoryImages = body.memoryImages;
+
     return NextResponse.json(
       {
         success: true,
         message: "Recipe updated successfully",
-        data: newRecipe,
+        data: strucaturedRecipe,
       },
       { status: 200 }
     );
