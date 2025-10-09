@@ -19,7 +19,7 @@ import {
   TYPE_RECIPE,
   TYPE_FILE,
 } from "@/app/lib/config";
-import { AccessTokenContext } from "@/app/lib/context";
+import { AccessTokenContext } from "@/app/lib/providers";
 import { redirect, RedirectType } from "next/navigation";
 
 export default function CreateRecipe() {

@@ -8,15 +8,19 @@ import { redirect, RedirectType } from "next/navigation";
 import { useInView } from "react-intersection-observer";
 import {
   APP_EXPLANATIONS,
+  MEDIA,
   PASSWORD_MIN_DIGIT,
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
 } from "./lib/config";
 import { getData } from "@/app/lib/helper";
-import { AccessTokenContext } from "./lib/context";
+import { UserContext, MediaContext } from "./lib/providers";
 
 export default function Home() {
+  const mediaContext = useContext(MediaContext);
+  const userContext = useContext(UserContext);
+
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
 
@@ -64,6 +68,7 @@ export default function Home() {
         }}
       >
         <Buttons
+          mediaContext={mediaContext}
           onLoginClick={handleToggleLogin}
           onSignupClick={handleToggleSignup}
         />
@@ -82,11 +87,41 @@ export default function Home() {
           <Image
             src="/withCooking-title.gif"
             alt="withCooking"
-            width={700}
-            height={200}
+            width={
+              mediaContext === "mobile"
+                ? 300
+                : mediaContext === "tablet"
+                ? 450
+                : mediaContext === "desktop"
+                ? 600
+                : 900
+            }
+            height={
+              mediaContext === "mobile"
+                ? 100
+                : mediaContext === "tablet"
+                ? 150
+                : mediaContext === "desktop"
+                ? 180
+                : 250
+            }
             priority
           ></Image>
-          <p className={styles.description}>
+          <p
+            className={styles.description}
+            style={{
+              width: "100%",
+              lineHeight: "150%",
+              fontSize:
+                mediaContext === "mobile"
+                  ? "3.2vw"
+                  : mediaContext === "tablet"
+                  ? "2.4vw"
+                  : mediaContext === "desktop"
+                  ? "2vw"
+                  : "2vw",
+            }}
+          >
             In this app, all necessary and useful tools for cooking are
             included.
             <br />
@@ -104,21 +139,32 @@ export default function Home() {
             backgroundImage:
               "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.185))",
             color: " #ff8800ff",
-            fontSize: "1.4vw",
             letterSpacing: "0.05vw",
+            fontSize:
+              mediaContext === "mobile"
+                ? "3vw"
+                : mediaContext === "tablet"
+                ? "2vw"
+                : mediaContext === "desktop"
+                ? "1.6vw"
+                : "1.6vw",
           }}
         >
           <p>Scroll for more details</p>
           <p>&darr;</p>
         </div>
       </div>
-      <BottomHalf />
+      <BottomHalf mediaContext={mediaContext} />
       <OverlayLogin
+        mediaContext={mediaContext}
+        userContext={userContext}
         show={showLogin ? true : false}
         onClickX={handleToggleLogin}
         onClickOutside={handleToggleLogin}
       />
       <OverlayCreateAccount
+        mediaContext={mediaContext}
+        userContext={userContext}
         show={showSignup ? true : false}
         onClickX={handleToggleSignup}
         onClickOutside={handleToggleSignup}
@@ -128,9 +174,11 @@ export default function Home() {
 }
 
 function Buttons({
+  mediaContext,
   onLoginClick,
   onSignupClick,
 }: {
+  mediaContext: MEDIA;
   onLoginClick: () => void;
   onSignupClick: () => void;
 }) {
@@ -144,21 +192,54 @@ function Buttons({
         alignItems: "center",
         justifyContent: "center",
         right: "0%",
-        width: "20%",
+        width:
+          mediaContext === "mobile"
+            ? "45%"
+            : mediaContext === "tablet"
+            ? "30%"
+            : mediaContext === "desktop"
+            ? "25%"
+            : "20%",
         aspectRatio: "1 / 0.25",
       }}
     >
-      <button className={styles.btn__login} onClick={onLoginClick}>
+      <button
+        className={styles.btn__login}
+        style={{
+          fontSize:
+            mediaContext === "mobile"
+              ? "5vw"
+              : mediaContext === "tablet"
+              ? "3vw"
+              : mediaContext === "desktop"
+              ? "2vw"
+              : "1.7vw",
+        }}
+        onClick={onLoginClick}
+      >
         Login
       </button>
-      <button className={styles.btn__signup} onClick={onSignupClick}>
+      <button
+        className={styles.btn__signup}
+        style={{
+          fontSize:
+            mediaContext === "mobile"
+              ? "5vw"
+              : mediaContext === "tablet"
+              ? "3vw"
+              : mediaContext === "desktop"
+              ? "2vw"
+              : "1.7vw",
+        }}
+        onClick={onSignupClick}
+      >
         Sign up
       </button>
     </div>
   );
 }
 
-function BottomHalf() {
+function BottomHalf({ mediaContext }: { mediaContext: string }) {
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.02,
@@ -168,15 +249,33 @@ function BottomHalf() {
     <div
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
     >
-      <Details />
+      <Details mediaContext={mediaContext} />
       <h3
         ref={ref}
-        className={clsx(
-          styles.last_comment,
-          inView && styles.appear_slow__comment
-        )}
+        style={{
+          letterSpacing: "0.15vw",
+          wordSpacing: "0.3vw",
+          fontStyle: "italic",
+          margin: "8%",
+          borderBottom: "thin solid red",
+          width: "fit-content",
+          transition: "all 1.5s",
+          opacity: inView ? "1" : "0",
+          transform: inView ? "scale(100%)" : "scale(90%)",
+        }}
       >
-        Let's start <span>withCooking</span> by signing up for free
+        Let's start{" "}
+        <span
+          style={{
+            backgroundImage:
+              "linear-gradient(150deg,rgb(252, 255, 99) 10%,rgb(255, 115, 0))",
+            padding: "1% 0%",
+            borderRadius: "100% 10%",
+          }}
+        >
+          withCooking
+        </span>{" "}
+        by signing up for free
       </h3>
       <footer className={styles.footer}>
         <Link href="https://www.instagram.com/leichanweb?igsh=NzJmb3Axc3ZvNWN6&utm_source=qr">
@@ -195,36 +294,74 @@ function BottomHalf() {
   );
 }
 
-function Details() {
+function Details({ mediaContext }: { mediaContext: string }) {
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.02,
   });
 
   return (
-    <div className={styles.container__details}>
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        marginTop: "10%",
+        padding: "7% 5%",
+        backgroundImage: "linear-gradient(#ffffee, #fff5d6 8%, #feffc4)",
+      }}
+    >
       <h1
         ref={ref}
         className={styles.heading}
         style={{
+          position: "absolute",
+          top: "-3%",
+          left: "2%",
+          backgroundImage:
+            "linear-gradient(150deg, rgb(255, 230, 0) 10%, rgb(255, 102, 0))",
+          width: "fit-content",
+          height: "fit-content",
+          letterSpacing: "0.15vw",
+          wordSpacing: "0.3vw",
+          padding: "2% 3.5%",
+          color: "rgb(119, 87, 0)",
+          transition: "all 1s",
+          boxShadow: "rgba(0, 0, 0, 0.301) 3px 3px 8px",
           transform: !inView
             ? "translateX(-100%) skewX(-17deg)"
             : "translateX(0%) skewX(-17deg)",
+          fontSize:
+            mediaContext === "mobile"
+              ? "4vw"
+              : mediaContext === "tablet"
+              ? "3vw"
+              : mediaContext === "desktop"
+              ? "2.6vw"
+              : "2.6vw",
         }}
       >
         Manage your favorite recipes in one app
       </h1>
       {APP_EXPLANATIONS.map((explanation, i) => (
-        <Explanation key={i} explanation={explanation} i={i} />
+        <Explanation
+          key={i}
+          mediaContext={mediaContext}
+          explanation={explanation}
+          i={i}
+        />
       ))}
     </div>
   );
 }
 
 function Explanation({
+  mediaContext,
   explanation,
   i,
 }: {
+  mediaContext: string;
   explanation: {
     title: string;
     image: string;
@@ -237,40 +374,155 @@ function Explanation({
   const checkIsEven = () => (i % 2 === 0 ? true : false);
   const isEven = checkIsEven();
 
+  function transform() {
+    let transform;
+    if (!inView && isEven) return "translateX(100%)";
+    if (!inView && !isEven) return "translateX(-100%)";
+    if (inView && isEven) {
+      return mediaContext === "mobile"
+        ? "translateX(0%)"
+        : mediaContext === "tablet"
+        ? "translateX(-10%)"
+        : mediaContext === "desktop"
+        ? "translateX(-10%)"
+        : "translateX(-10%)";
+    }
+
+    if (inView && !isEven) {
+      return mediaContext === "mobile"
+        ? "translateX(0%)"
+        : mediaContext === "tablet"
+        ? "translateX(10%)"
+        : mediaContext === "desktop"
+        ? "translateX(10%)"
+        : "translateX(10%)";
+    }
+  }
+
   ///even number details appear from right, odd number from left
   return (
     <div
       ref={ref}
-      className={clsx(
-        styles.details,
-        !inView && isEven && styles.original_position__right,
-        !inView && !isEven && styles.original_position__left,
-        inView && isEven && styles.slide_in__right,
-        inView && !isEven && styles.slide_in__left
-      )}
+      style={{
+        position: "relative",
+        width: "80%",
+        height: "fit-content",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: "8%",
+        marginTop:
+          mediaContext === "mobile"
+            ? "10%"
+            : mediaContext === "tablet"
+            ? "10%"
+            : mediaContext === "desktop"
+            ? "7%"
+            : "7%",
+        padding: "4%",
+        backgroundColor: "#fffbe6",
+        textAlign: "left",
+        borderRadius: "1% / 2.3%",
+        boxShadow: "rgba(0, 0, 0, 0.301) 5px 5px 10px",
+        transition: "all 1s",
+        transform:
+          !inView && isEven
+            ? "translateX(100%)"
+            : !inView && !isEven
+            ? "translateX(-100%)"
+            : inView && isEven
+            ? "translateX(-10%)"
+            : "translateX(10%)",
+      }}
     >
-      <h2>{explanation.title}</h2>
+      <h2
+        style={{
+          position: "absolute",
+          backgroundImage:
+            "linear-gradient(150deg,rgb(198, 233, 1) 5%,rgb(129, 199, 0))",
+          width: "fit-content",
+          height: "fit-content",
+          letterSpacing: "0.15vw",
+          padding: "0.6% 3%",
+          transform: "skewX(-17deg)",
+          color: "aliceblue",
+          whiteSpace: "nowrap",
+          top: "-8%",
+          left:
+            mediaContext === "mobile"
+              ? "40%"
+              : mediaContext === "tablet"
+              ? "53%"
+              : mediaContext === "desktop"
+              ? "56%"
+              : "56%",
+          fontSize:
+            mediaContext === "mobile"
+              ? "5vw"
+              : mediaContext === "tablet"
+              ? "3vw"
+              : mediaContext === "desktop"
+              ? "2.6vw"
+              : "2.6vw",
+        }}
+      >
+        {explanation.title}
+      </h2>
       <Image
-        src={explanation.image || "/grey-img.png"}
+        src={explanation.image}
         alt={`${explanation.title} image`}
-        width={604}
-        height={460}
+        width={
+          mediaContext === "mobile"
+            ? 280
+            : mediaContext === "tablet"
+            ? 604
+            : mediaContext === "desktop"
+            ? 604
+            : 604
+        }
+        height={
+          mediaContext === "mobile"
+            ? 100
+            : mediaContext === "tablet"
+            ? 460
+            : mediaContext === "desktop"
+            ? 460
+            : 460
+        }
       ></Image>
-      <p>{explanation.explanation}</p>
+      <p
+        style={{
+          fontSize:
+            mediaContext === "mobile"
+              ? "3vw"
+              : mediaContext === "tablet"
+              ? "3vw"
+              : mediaContext === "desktop"
+              ? "2.6vw"
+              : "2.6vw",
+          letterSpacing: "0.06vw",
+          lineHeight: "140%",
+        }}
+      >
+        {explanation.explanation}
+      </p>
     </div>
   );
 }
 
 function OverlayLogin({
+  mediaContext,
+  userContext,
   show,
   onClickX,
   onClickOutside,
 }: {
+  mediaContext: string;
+  userContext: any;
   show: Boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
-  const userContext = useContext(AccessTokenContext);
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -417,15 +669,18 @@ function OverlayLogin({
 }
 
 function OverlayCreateAccount({
+  mediaContext,
+  userContext,
   show,
   onClickX,
   onClickOutside,
 }: {
+  mediaContext: string;
+  userContext: any;
   show: Boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
-  const userContext = useContext(AccessTokenContext);
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");

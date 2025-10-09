@@ -8,7 +8,7 @@ import {
 } from "../lib/config";
 import { getData } from "@/app/lib/helper";
 import { useEffect, useState, useContext } from "react";
-import { AccessTokenContext } from "../lib/context";
+import { AccessTokenContext } from "../lib/providers";
 import { redirect, RedirectType } from "next/navigation";
 
 export default function Account() {

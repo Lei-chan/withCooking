@@ -1,11 +1,9 @@
-"use client";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { useState, useCallback, useMemo } from "react";
-import { AccessTokenContext } from "./lib/context";
-import { wait } from "@/app/lib/helper";
-import { MESSAGE_TIMEOUT } from "./lib/config";
+import dynamic from "next/dynamic";
+import { Providers } from "./lib/providers";
+
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
 //   subsets: ["latin"],
@@ -16,7 +14,7 @@ import { MESSAGE_TIMEOUT } from "./lib/config";
 //   subsets: ["latin"],
 // });
 
-const metadata: Metadata = {
+export const metadata: Metadata = {
   title: "withCooking",
   description: "Application where users can use many useful tools for cooking!",
 };
@@ -26,39 +24,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [accessToken, setAccessToken] = useState("");
-  const [isMessageVisible, setIsMessageVisible] = useState(false);
-
-  const firstLogin = useCallback(async (accessToken: string) => {
-    setAccessToken(accessToken);
-    await showMessage();
-  }, []);
-
-  async function showMessage() {
-    setIsMessageVisible(true);
-    await wait(MESSAGE_TIMEOUT);
-    setIsMessageVisible(false);
-  }
-
-  const login = useCallback((accessToken: string) => {
-    setAccessToken(accessToken);
-  }, []);
-
-  const logout = useCallback(() => {
-    setAccessToken("");
-  }, []);
-
-  const contextValue = useMemo(
-    () => ({ accessToken, isMessageVisible, firstLogin, login, logout }),
-    [accessToken, isMessageVisible, firstLogin, login, logout]
-  );
-
-  console.log(accessToken);
-
   return (
     <html lang="en">
       <body>
-        <AccessTokenContext value={contextValue}>{children}</AccessTokenContext>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

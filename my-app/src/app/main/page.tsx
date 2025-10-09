@@ -6,7 +6,7 @@ import clsx from "clsx";
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
-import { AccessTokenContext } from "../lib/context";
+import { AccessTokenContext } from "../lib/providers";
 import {
   getData,
   getSize,

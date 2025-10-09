@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useEffect } from "react";
 import clsx from "clsx";
 import styles from "./component.module.css";
 import { useState } from "react";
-import { AccessTokenContext } from "../context";
+import { AccessTokenContext } from "../providers";
 import { redirect, RedirectType } from "next/navigation";
 
 export function MessageContainer({

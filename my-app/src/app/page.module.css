@@ -10,7 +10,6 @@
 .btn__login,
 .btn__signup {
   font-family: "Playfair Display", serif;
-  font-size: 1.5vw;
   background: none;
   border: none;
 }
@@ -26,7 +25,6 @@
 
 .description {
   width: 100%;
-  font-size: 1.5vw;
   line-height: 150%;
   animation: 3s appear-slow__description;
 }
@@ -117,35 +115,6 @@
   text-align: left;
   border-radius: 1% / 2.3%;
   box-shadow: rgba(0, 0, 0, 0.301) 5px 5px 10px;
-
-  h2 {
-    position: absolute;
-    background-image: linear-gradient(
-      150deg,
-      rgb(198, 233, 1) 5%,
-      rgb(129, 199, 0)
-    );
-    width: fit-content;
-    height: fit-content;
-    font-size: 2.7vw;
-    letter-spacing: 0.15vw;
-    padding: 0.6% 3%;
-    transform: skewX(-17deg);
-    color: aliceblue;
-    top: -8%;
-    left: 56%;
-  }
-
-  img {
-    width: 45%;
-    height: 45%;
-  }
-
-  p {
-    font-size: 1.6vw;
-    letter-spacing: 0.06vw;
-    line-height: 140%;
-  }
 }
 
 .original_position__right {

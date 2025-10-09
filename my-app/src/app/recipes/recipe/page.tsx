@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
 import React, { useEffect, useState, useContext } from "react";
-import { AccessTokenContext } from "@/app/lib/context";
+import { AccessTokenContext } from "@/app/lib/providers";
 import {
   wait,
   getData,
