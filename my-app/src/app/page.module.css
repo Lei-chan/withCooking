@@ -9,7 +9,6 @@
 
 .btn__login,
 .btn__signup {
-  font-family: "Playfair Display", serif;
   background: none;
   border: none;
 }
@@ -29,161 +28,17 @@
   animation: 3s appear-slow__description;
 }
 
-/* @keyframes appear-slow__comment {
-  from {
-    opacity: 0;
-    transform: scale(90%);
-  }
-  to {
-    opacity: 1;
-    transform: scale(100%);
-  }
-} */
-
-.last_comment {
-  font-size: 2.6vw;
-  letter-spacing: 0.15vw;
-  word-spacing: 0.3vw;
-  font-style: italic;
-  margin: 8%;
-  border-bottom: thin solid red;
-  width: fit-content;
-  opacity: 0;
-  transform: scale(90%);
-  transition: all 1.5s;
-  span {
-    background-image: linear-gradient(
-      150deg,
-      rgb(252, 255, 99) 10%,
-      rgb(255, 115, 0)
-    );
-    padding: 1% 0%;
-    border-radius: 100% 10%;
-  }
-}
-
-.appear_slow__comment {
-  opacity: 1;
-  transform: scale(100%);
-}
-
-.container__details {
+.link__footer {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 10%;
-  padding: 7% 5%;
-  background-image: linear-gradient(#ffffee, #fff5d6 8%, #feffc4);
+  font-size: 0.01px;
 }
 
-.heading {
-  position: absolute;
-  top: -3%;
-  left: 2%;
-  background-image: linear-gradient(
-    150deg,
-    rgb(255, 230, 0) 10%,
-    rgb(255, 102, 0)
-  );
-  width: fit-content;
-  height: fit-content;
-  font-size: 2.7vw;
-  letter-spacing: 0.15vw;
-  word-spacing: 0.3vw;
-  padding: 2% 3.5%;
-  color: rgb(119, 87, 0);
-  transition: all 1s;
-  box-shadow: rgba(0, 0, 0, 0.301) 3px 3px 8px;
-}
-
-.slide_in__heading {
-  transform: translateX(0%) skewX(-17deg);
-}
-
-.details {
-  position: relative;
-  width: 80%;
-  height: fit-content;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8%;
-  margin-top: 7%;
-  padding: 4%;
-  background-color: #fffbe6;
-  text-align: left;
-  border-radius: 1% / 2.3%;
-  box-shadow: rgba(0, 0, 0, 0.301) 5px 5px 10px;
-}
-
-.original_position__right {
-  transform: translateX(100%);
-}
-
-.original_position__left {
-  transform: translateX(-100%);
-}
-
-.slide_in__right {
-  transform: translateX(0%);
-  transition: all 1s;
-  right: -10%;
-}
-
-.slide_in__left {
-  transform: translateX(0%);
-  transition: all 1s;
-  left: -10%;
-}
-
-.footer {
-  width: 100%;
-  padding-top: 1.6%;
-  aspect-ratio: 1 / 0.11;
-  background-image: linear-gradient(rgb(255, 208, 0), orange);
-
-  Link {
-    position: relative;
-    font-size: 0.01px;
-  }
-
-  button {
-    width: 4%;
-    aspect-ratio: 1;
-    background: none;
-    border: none;
-    background-repeat: no-repeat;
-    background-size: contain;
-  }
-
-  .btn__instagram {
-    background-image: url("/instagram.png");
-    margin-right: 2%;
-  }
-
-  .btn__github {
-    background-image: url("/github.svg");
-    margin-right: 1.7%;
-  }
-
-  .btn__feedback {
-    background-image: url("/feedback.png");
-  }
-
-  .attribution {
-    color: rgb(55, 0, 107);
-    font-size: 1.1vw;
-    letter-spacing: 0.05vw;
-    margin-top: 0.8%;
-  }
-
-  .copyright {
-    color: rgb(127, 0, 247);
-    font-size: 1.2vw;
-    letter-spacing: 0.05vw;
-    word-spacing: 0.2vw;
-  }
+.link__button {
+  aspect-ratio: 1;
+  background: none;
+  border: none;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 
 .overlay__login,
@@ -191,7 +46,7 @@
   position: fixed;
   top: 0%;
   left: 0%;
-  width: 100%;
+  width: 100vw;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.384);
   backdrop-filter: blur(3px);
@@ -201,112 +56,75 @@
   text-align: center;
   align-items: center;
   justify-content: center;
+  padding: 3%;
   transition: all 0.5s;
 
   .warning {
-    font-size: 1.4vw;
     letter-spacing: 0.1vw;
     padding: 0.6%;
     border-radius: 1% / 12%;
-    /* background-color: orangered; */
     color: rgb(240, 255, 246);
     margin-bottom: 1%;
   }
 
-  .warning__login {
-    width: 35%;
-  }
+  .btn__x {
+    position: absolute;
+    border: none;
+    background: none;
+    right: 3%;
+    color: rgb(131, 105, 0);
 
-  .warning__create_account {
-    width: 38%;
+    &:hover {
+      color: rgb(255, 94, 0);
+    }
   }
 
   form {
     position: relative;
     box-shadow: 5px 5px 30px rgba(0, 0, 0, 0.404);
 
-    .btn__x {
-      position: absolute;
-      border: none;
-      background: none;
-      top: 0%;
-      right: 3%;
-      font-size: 2.3vw;
-      color: rgb(131, 105, 0);
-
-      &:hover {
-        color: rgb(255, 94, 0);
-      }
-    }
-
     h2 {
-      font-size: 2.5vw;
       letter-spacing: 0.15vw;
       margin-bottom: 6.7%;
       color: rgb(131, 105, 0);
     }
 
-    .input_wrapper {
-      position: relative;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      width: 65%;
-      aspect-ratio: 1 / 0.1;
+    .btn__eye,
+    .btn__eye_off {
+      position: absolute;
+      aspect-ratio: 1;
+      background: none;
+      border: none;
+      background-repeat: no-repeat;
+      background-size: contain;
+      right: 2%;
+    }
 
-      input {
-        width: 100%;
-        height: 100%;
-        border-radius: 2% / 20%;
-        font-size: 1.3vw;
-        letter-spacing: 0.1vw;
-        text-align: center;
-        padding-bottom: 1%;
-      }
+    .btn__eye {
+      background-image: url("/eye.png");
+    }
 
-      .btn__eye,
-      .btn__eye_off {
-        position: absolute;
-        width: 9%;
-        aspect-ratio: 1;
-        background: none;
-        border: none;
-        background-repeat: no-repeat;
-        background-size: contain;
-        right: 2%;
-      }
-
-      .btn__eye {
-        background-image: url("/eye.png");
-      }
-
-      .btn__eye_off {
-        background-image: url("/eye-off.png");
-      }
+    .btn__eye_off {
+      background-image: url("/eye-off.png");
     }
   }
 
-  .form__login {
-    background-image: linear-gradient(rgb(255, 217, 0), orange);
-    width: 35%;
-    aspect-ratio: 1 / 0.6;
-    border-radius: 2% / calc(2% + 2% * 0.6);
-    padding-top: 1.6%;
-
-    .input_wrapper {
-      margin: 5.5% auto;
-    }
+  .input {
+    width: 100%;
+    height: 100%;
+    border-radius: 2% / 20%;
+    letter-spacing: 0.1vw;
+    text-align: center;
+    padding-bottom: 1%;
   }
 
   .btn__submit_login {
-    font-size: 1.3vw;
     letter-spacing: 0.1vw;
     padding: 1% 1.5% 1.2% 1.5%;
     background-image: linear-gradient(rgb(241, 84, 255), rgb(201, 0, 228));
     border: none;
     border-radius: 5%/10%;
     color: aliceblue;
-    margin-top: 2%;
     transition: all 0.3s;
 
     &:hover {
@@ -315,53 +133,18 @@
     }
   }
 
-  .form__create_account {
-    background-image: linear-gradient(rgb(221, 255, 96), rgb(114, 221, 43));
-    width: 38%;
-    aspect-ratio: 1 / 0.9;
-    border-radius: 2%;
-    padding-top: 2%;
+  .btn__signup {
+    letter-spacing: 0.1vw;
+    padding: 1% 1.5%;
+    background-image: linear-gradient(rgb(255, 174, 0), rgb(233, 124, 0));
+    border: none;
+    border-radius: 5%/10%;
+    color: aliceblue;
+    transition: all 0.3s;
 
-    h3 {
-      font-size: 1.4vw;
-      letter-spacing: 0.08vw;
-    }
-
-    .requirements__password {
-      background-image: linear-gradient(
-        rgba(251, 255, 0, 0.664),
-        rgba(255, 230, 0, 0.644)
-      );
-      width: 70%;
-      height: fit-content;
-      font-size: 1.2vw;
-      letter-spacing: 0.05vw;
-      padding: 1%;
-      margin: 2% auto;
-      border-radius: 1% / 6%;
-    }
-
-    .input_wrapper {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      margin: 4% auto 6% auto;
-    }
-
-    .btn__signup {
-      font-size: 1.3vw;
-      letter-spacing: 0.1vw;
-      padding: 1% 1.5%;
-      background-image: linear-gradient(rgb(255, 174, 0), rgb(233, 124, 0));
-      border: none;
-      border-radius: 5%/10%;
-      color: aliceblue;
-      transition: all 0.3s;
-
-      &:hover {
-        transform: translateY(-1px);
-        background-image: linear-gradient(rgb(255, 208, 0), rgb(255, 145, 0));
-      }
+    &:hover {
+      transform: translateY(-1px);
+      background-image: linear-gradient(rgb(255, 208, 0), rgb(255, 145, 0));
     }
   }
 }

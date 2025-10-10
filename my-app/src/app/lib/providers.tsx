@@ -2,7 +2,16 @@
 import dynamic from "next/dynamic";
 import { createContext, useState, useCallback, useMemo } from "react";
 import { wait } from "./helper";
-import { MEDIA, MESSAGE_TIMEOUT } from "./config";
+import {
+  MAX_DESKTOP,
+  MAX_MOBILE,
+  MAX_TABLET,
+  MEDIA,
+  MESSAGE_TIMEOUT,
+  MIN_BIG,
+  MIN_DESKTOP,
+  MIN_TABLET,
+} from "./config";
 import { useMediaQuery } from "react-responsive";
 import { is } from "zod/locales";
 
@@ -20,10 +29,16 @@ export const UserContext = createContext<{
 
 export function Providers({ children }: { children: React.ReactNode }) {
   //media
-  const isMobile = useMediaQuery({ maxWidth: 479 });
-  const isTablet = useMediaQuery({ minWidth: 480, maxWidth: 768 });
-  const isDesktop = useMediaQuery({ minWidth: 769, maxWidth: 1439 });
-  const isBig = useMediaQuery({ minWidth: 1440 });
+  const isMobile = useMediaQuery({ maxWidth: MAX_MOBILE });
+  const isTablet = useMediaQuery({
+    minWidth: MIN_TABLET,
+    maxWidth: MAX_TABLET,
+  });
+  const isDesktop = useMediaQuery({
+    minWidth: MIN_DESKTOP,
+    maxWidth: MAX_DESKTOP,
+  });
+  const isBig = useMediaQuery({ minWidth: MIN_BIG });
 
   function getMedia() {
     if (isMobile) return "mobile";

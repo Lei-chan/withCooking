@@ -8,7 +8,10 @@ import { redirect, RedirectType } from "next/navigation";
 import { useInView } from "react-intersection-observer";
 import {
   APP_EXPLANATIONS,
+  MAX_MOBILE,
+  MAX_TABLET,
   MEDIA,
+  MIN_TABLET,
   PASSWORD_MIN_DIGIT,
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_LOWERCASE,
@@ -20,6 +23,102 @@ import { UserContext, MediaContext } from "./lib/providers";
 export default function Home() {
   const mediaContext = useContext(MediaContext);
   const userContext = useContext(UserContext);
+
+  //design
+  const warningFontSize =
+    mediaContext === "mobile"
+      ? "4.5vw"
+      : mediaContext === "tablet"
+      ? "2.5vw"
+      : mediaContext === "desktop"
+      ? "1.5vw"
+      : "1.3vw";
+  const inputWrapperDesign = {
+    width:
+      mediaContext === "mobile"
+        ? "72%"
+        : mediaContext === "tablet"
+        ? "68%"
+        : "65%",
+    aspectRatio: mediaContext === "mobile" ? "1 / 0.12" : "1 / 0.1",
+    position: "relative",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    margin: "4% auto 6% auto",
+  };
+  const inputFontSize =
+    mediaContext === "mobile"
+      ? "4.5vw"
+      : mediaContext === "tablet"
+      ? "2.5vw"
+      : mediaContext === "desktop"
+      ? "1.6vw"
+      : "1.4vw";
+  const btnXDesign = {
+    top:
+      mediaContext === "mobile"
+        ? "-1%"
+        : mediaContext === "tablet"
+        ? "-1%"
+        : "0%",
+    fontSize:
+      mediaContext === "mobile"
+        ? "7vw"
+        : mediaContext === "tablet"
+        ? "4vw"
+        : mediaContext === "desktop"
+        ? "2.5vw"
+        : "2.2vw",
+  };
+  const headingDesign = {
+    fontSize:
+      mediaContext === "mobile"
+        ? "7vw"
+        : mediaContext === "tablet"
+        ? "3.8vw"
+        : mediaContext === "desktop"
+        ? "2.6vw"
+        : "2.1vw",
+  };
+  const eyeOnDesign = {
+    width:
+      mediaContext === "mobile"
+        ? "12%"
+        : mediaContext === "tablet"
+        ? "10%"
+        : mediaContext === "desktop"
+        ? "9.3%"
+        : "9%",
+  };
+  const eyeOffDesign = {
+    width:
+      mediaContext === "mobile"
+        ? "11%"
+        : mediaContext === "tablet"
+        ? "9%"
+        : mediaContext === "desktop"
+        ? "8.3%"
+        : "8%",
+  };
+  const btnSubmitDesign = {
+    fontSize:
+      mediaContext === "mobile"
+        ? "4.3vw"
+        : mediaContext === "tablet"
+        ? "2.6vw"
+        : mediaContext === "desktop"
+        ? "1.6vw"
+        : "1.4vw",
+    marginTop:
+      mediaContext === "mobile"
+        ? "0"
+        : mediaContext === "tablet"
+        ? "1%"
+        : mediaContext === "desktop"
+        ? "2%"
+        : "2%",
+  };
 
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -50,6 +149,8 @@ export default function Home() {
   return (
     <div
       style={{
+        width: "100%",
+        height: "fit-content",
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
@@ -114,7 +215,7 @@ export default function Home() {
               lineHeight: "150%",
               fontSize:
                 mediaContext === "mobile"
-                  ? "3.2vw"
+                  ? "4vw"
                   : mediaContext === "tablet"
                   ? "2.4vw"
                   : mediaContext === "desktop"
@@ -142,7 +243,7 @@ export default function Home() {
             letterSpacing: "0.05vw",
             fontSize:
               mediaContext === "mobile"
-                ? "3vw"
+                ? "4vw"
                 : mediaContext === "tablet"
                 ? "2vw"
                 : mediaContext === "desktop"
@@ -158,6 +259,14 @@ export default function Home() {
       <OverlayLogin
         mediaContext={mediaContext}
         userContext={userContext}
+        warningFontSize={warningFontSize}
+        inputWrapperDesign={inputWrapperDesign}
+        inputFontSize={inputFontSize}
+        btnXDesign={btnXDesign}
+        headingDesign={headingDesign}
+        eyeOnDesign={eyeOnDesign}
+        eyeOffDesign={eyeOffDesign}
+        btnSubmitDesign={btnSubmitDesign}
         show={showLogin ? true : false}
         onClickX={handleToggleLogin}
         onClickOutside={handleToggleLogin}
@@ -165,6 +274,14 @@ export default function Home() {
       <OverlayCreateAccount
         mediaContext={mediaContext}
         userContext={userContext}
+        warningFontSize={warningFontSize}
+        inputWrapperDesign={inputWrapperDesign}
+        inputFontSize={inputFontSize}
+        btnXDesign={btnXDesign}
+        headingDesign={headingDesign}
+        eyeOnDesign={eyeOnDesign}
+        eyeOffDesign={eyeOffDesign}
+        btnSubmitDesign={btnSubmitDesign}
         show={showSignup ? true : false}
         onClickX={handleToggleSignup}
         onClickOutside={handleToggleSignup}
@@ -259,6 +376,12 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
           margin: "8%",
           borderBottom: "thin solid red",
           width: "fit-content",
+          fontSize:
+            mediaContext === "mobile"
+              ? "6vw"
+              : mediaContext === "tablet"
+              ? "4vw"
+              : "2.8vw",
           transition: "all 1.5s",
           opacity: inView ? "1" : "0",
           transform: inView ? "scale(100%)" : "scale(90%)",
@@ -275,20 +398,114 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
         >
           withCooking
         </span>{" "}
-        by signing up for free
+        by {(mediaContext === "mobile" || mediaContext === "tablet") && <br />}
+        signing up for free
       </h3>
-      <footer className={styles.footer}>
-        <Link href="https://www.instagram.com/leichanweb?igsh=NzJmb3Axc3ZvNWN6&utm_source=qr">
-          <button className={styles.btn__instagram}></button>
+      <footer
+        style={{
+          width: "100%",
+          padding:
+            mediaContext === "mobile"
+              ? "3% 0 1% 0"
+              : mediaContext === "tablet"
+              ? "2.5% 0 1% 0"
+              : "1.6% 0",
+          aspectRatio: "1 / 0.11",
+          backgroundImage: "linear-gradient(rgb(255, 208, 0), orange)",
+        }}
+      >
+        <Link
+          className={styles.link__footer}
+          href="https://www.instagram.com/leichanweb?igsh=NzJmb3Axc3ZvNWN6&utm_source=qr"
+        >
+          <button
+            className={styles.link__button}
+            style={{
+              backgroundImage: 'url("/instagram.png")',
+              marginRight:
+                mediaContext === "mobile"
+                  ? "4%"
+                  : mediaContext === "tablet"
+                  ? "3%"
+                  : "2%",
+              width:
+                mediaContext === "mobile"
+                  ? "8%"
+                  : mediaContext === "tablet"
+                  ? "7%"
+                  : "4%",
+            }}
+          ></button>
         </Link>
-        <Link href="https://github.com/Lei-chan">
-          <button className={styles.btn__github}></button>
+        <Link
+          className={styles.link__footer}
+          href="https://github.com/Lei-chan"
+        >
+          <button
+            className={styles.link__button}
+            style={{
+              backgroundImage: 'url("/github.svg")',
+              marginRight:
+                mediaContext === "mobile"
+                  ? "3.5%"
+                  : mediaContext === "tablet"
+                  ? "2.7%"
+                  : "1.7%",
+              width:
+                mediaContext === "mobile"
+                  ? "8%"
+                  : mediaContext === "tablet"
+                  ? "7%"
+                  : "4%",
+            }}
+          ></button>
         </Link>
-        <Link href="">
-          <button className={styles.btn__feedback}></button>
+        <Link className={styles.link__footer} href="">
+          <button
+            className={styles.link__button}
+            style={{
+              backgroundImage: 'url("/feedback.png")',
+              width:
+                mediaContext === "mobile"
+                  ? "7%"
+                  : mediaContext === "tablet"
+                  ? "7%"
+                  : mediaContext === "desktop"
+                  ? "4%"
+                  : "4%",
+            }}
+          ></button>
         </Link>
-        <p className={styles.attribution}>Designed by Freepik</p>
-        <p className={styles.copyright}>© 2025 Lei-chan</p>
+        <p
+          style={{
+            color: "rgb(55, 0, 107)",
+            letterSpacing: "0.05vw",
+            marginTop: "0.8%",
+            fontSize:
+              mediaContext === "mobile"
+                ? "3.5vw"
+                : mediaContext === "tablet"
+                ? "2.5vw"
+                : "1.5vw",
+          }}
+        >
+          Designed by Freepik
+        </p>
+        <p
+          style={{
+            color: "rgb(127, 0, 247)",
+            letterSpacing: "0.05vw",
+            wordSpacing: "0.2vw",
+            fontSize:
+              mediaContext === "mobile"
+                ? "3.5vw"
+                : mediaContext === "tablet"
+                ? "2.5vw"
+                : "1.5vw",
+          }}
+        >
+          © 2025 Lei-chan
+        </p>
       </footer>
     </div>
   );
@@ -307,42 +524,59 @@ function Details({ mediaContext }: { mediaContext: string }) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        marginTop: "10%",
-        padding: "7% 5%",
+        width: "100%",
+        marginTop:
+          mediaContext === "mobile"
+            ? "25%"
+            : mediaContext === "tablet"
+            ? "16%"
+            : mediaContext === "desktop"
+            ? "13%"
+            : "10%",
+        padding:
+          mediaContext === "mobile"
+            ? "7% 0 20% 0"
+            : mediaContext === "tablet"
+            ? "6% 0"
+            : "4% 0",
         backgroundImage: "linear-gradient(#ffffee, #fff5d6 8%, #feffc4)",
       }}
     >
       <h1
         ref={ref}
-        className={styles.heading}
         style={{
           position: "absolute",
           top: "-3%",
-          left: "2%",
+          left:
+            mediaContext === "mobile"
+              ? "5%"
+              : mediaContext === "tablet"
+              ? "3%"
+              : "2%",
           backgroundImage:
             "linear-gradient(150deg, rgb(255, 230, 0) 10%, rgb(255, 102, 0))",
           width: "fit-content",
           height: "fit-content",
           letterSpacing: "0.15vw",
           wordSpacing: "0.3vw",
+          lineHeight: "130%",
           padding: "2% 3.5%",
           color: "rgb(119, 87, 0)",
           transition: "all 1s",
           boxShadow: "rgba(0, 0, 0, 0.301) 3px 3px 8px",
           transform: !inView
-            ? "translateX(-100%) skewX(-17deg)"
+            ? "translateX(-98%) skewX(-17deg)"
             : "translateX(0%) skewX(-17deg)",
           fontSize:
             mediaContext === "mobile"
-              ? "4vw"
+              ? "6vw"
               : mediaContext === "tablet"
-              ? "3vw"
-              : mediaContext === "desktop"
-              ? "2.6vw"
+              ? "3.9vw"
               : "2.6vw",
         }}
       >
-        Manage your favorite recipes in one app
+        Manage your favorite recipes{mediaContext === "mobile" && <br />} in one
+        app
       </h1>
       {APP_EXPLANATIONS.map((explanation, i) => (
         <Explanation
@@ -370,33 +604,40 @@ function Explanation({
   i: number;
 }) {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.02 });
+  const [transform, setTransform] = useState("");
 
   const checkIsEven = () => (i % 2 === 0 ? true : false);
   const isEven = checkIsEven();
 
-  function transform() {
-    let transform;
-    if (!inView && isEven) return "translateX(100%)";
-    if (!inView && !isEven) return "translateX(-100%)";
+  useEffect(() => {
+    const nextTransform = getTransform(inView, isEven);
+    setTransform(nextTransform);
+  }, [inView, isEven]);
+
+  function getTransform(inView: any, isEven: boolean) {
+    if (!inView && isEven) return "translateX(98%)";
+    if (!inView && !isEven) return "translateX(-98%)";
     if (inView && isEven) {
       return mediaContext === "mobile"
         ? "translateX(0%)"
         : mediaContext === "tablet"
-        ? "translateX(-10%)"
+        ? "translateX(3%)"
         : mediaContext === "desktop"
-        ? "translateX(-10%)"
-        : "translateX(-10%)";
+        ? "translateX(8%)"
+        : "translateX(15%)";
     }
 
     if (inView && !isEven) {
       return mediaContext === "mobile"
         ? "translateX(0%)"
         : mediaContext === "tablet"
-        ? "translateX(10%)"
+        ? "translateX(-3%)"
         : mediaContext === "desktop"
-        ? "translateX(10%)"
-        : "translateX(10%)";
+        ? "translateX(-8%)"
+        : "translateX(-15%)";
     }
+
+    return "";
   }
 
   ///even number details appear from right, odd number from left
@@ -405,34 +646,42 @@ function Explanation({
       ref={ref}
       style={{
         position: "relative",
-        width: "80%",
+        width:
+          mediaContext === "mobile"
+            ? "94%"
+            : mediaContext === "tablet"
+            ? "90%"
+            : mediaContext === "desktop"
+            ? "80%"
+            : "70%",
         height: "fit-content",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        gap: "8%",
+        justifyContent: "center",
+        gap: "5%",
         marginTop:
           mediaContext === "mobile"
-            ? "10%"
+            ? "15%"
             : mediaContext === "tablet"
             ? "10%"
             : mediaContext === "desktop"
             ? "7%"
             : "7%",
-        padding: "4%",
+        padding:
+          mediaContext === "mobile"
+            ? "8% 2%"
+            : mediaContext === "tablet"
+            ? "8% 4%"
+            : mediaContext === "desktop"
+            ? "8% 2%"
+            : "4%",
         backgroundColor: "#fffbe6",
         textAlign: "left",
         borderRadius: "1% / 2.3%",
         boxShadow: "rgba(0, 0, 0, 0.301) 5px 5px 10px",
         transition: "all 1s",
-        transform:
-          !inView && isEven
-            ? "translateX(100%)"
-            : !inView && !isEven
-            ? "translateX(-100%)"
-            : inView && isEven
-            ? "translateX(-10%)"
-            : "translateX(10%)",
+        transform: transform,
       }}
     >
       <h2
@@ -447,59 +696,74 @@ function Explanation({
           transform: "skewX(-17deg)",
           color: "aliceblue",
           whiteSpace: "nowrap",
-          top: "-8%",
-          left:
+          top: "-4vh",
+          right:
             mediaContext === "mobile"
-              ? "40%"
+              ? "2%"
               : mediaContext === "tablet"
-              ? "53%"
+              ? "2%"
               : mediaContext === "desktop"
-              ? "56%"
-              : "56%",
+              ? "2%"
+              : "2%",
           fontSize:
             mediaContext === "mobile"
-              ? "5vw"
+              ? "6vw"
               : mediaContext === "tablet"
-              ? "3vw"
+              ? "4vw"
               : mediaContext === "desktop"
-              ? "2.6vw"
+              ? "3vw"
               : "2.6vw",
         }}
       >
         {explanation.title}
       </h2>
-      <Image
-        src={explanation.image}
-        alt={`${explanation.title} image`}
-        width={
-          mediaContext === "mobile"
-            ? 280
-            : mediaContext === "tablet"
-            ? 604
-            : mediaContext === "desktop"
-            ? 604
-            : 604
-        }
-        height={
-          mediaContext === "mobile"
-            ? 100
-            : mediaContext === "tablet"
-            ? 460
-            : mediaContext === "desktop"
-            ? 460
-            : 460
-        }
-      ></Image>
+      <div
+        style={{
+          position: "relative",
+          width: "50%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Image
+          // fill
+          src={explanation.image}
+          alt={`${explanation.title} image`}
+          width={
+            mediaContext === "mobile"
+              ? 140
+              : mediaContext === "tablet"
+              ? 300
+              : mediaContext === "desktop"
+              ? 350
+              : 400
+          }
+          height={
+            mediaContext === "mobile"
+              ? 140 * 0.7
+              : mediaContext === "tablet"
+              ? 300 * 0.7
+              : mediaContext === "desktop"
+              ? 350 * 0.7
+              : 400 * 0.7
+          }
+        ></Image>
+      </div>
       <p
         style={{
+          width: "43%",
+          height: "fit-content",
           fontSize:
             mediaContext === "mobile"
-              ? "3vw"
+              ? "4vw"
               : mediaContext === "tablet"
-              ? "3vw"
+              ? "2.7vw"
               : mediaContext === "desktop"
-              ? "2.6vw"
-              : "2.6vw",
+              ? "2vw"
+              : "1.7vw",
           letterSpacing: "0.06vw",
           lineHeight: "140%",
         }}
@@ -509,20 +773,44 @@ function Explanation({
     </div>
   );
 }
-
 function OverlayLogin({
   mediaContext,
   userContext,
+  warningFontSize,
+  inputWrapperDesign,
+  inputFontSize,
+  btnXDesign,
+  headingDesign,
+  eyeOnDesign,
+  eyeOffDesign,
+  btnSubmitDesign,
   show,
   onClickX,
   onClickOutside,
 }: {
   mediaContext: string;
   userContext: any;
+  warningFontSize: string;
+  inputWrapperDesign: object;
+  inputFontSize: string;
+  btnXDesign: object;
+  headingDesign: object;
+  eyeOnDesign: object;
+  eyeOffDesign: object;
+  btnSubmitDesign: object;
   show: Boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
+  //design
+  const formWidth =
+    mediaContext === "mobile"
+      ? "85%"
+      : mediaContext === "tablet"
+      ? "50%"
+      : mediaContext === "desktop"
+      ? "35%"
+      : "30%";
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -587,6 +875,7 @@ function OverlayLogin({
       throw err;
     }
   }
+
   return (
     <div
       className={styles.overlay__login}
@@ -600,44 +889,59 @@ function OverlayLogin({
       }}
     >
       <p
-        className={clsx(
-          styles.warning,
-          styles.warning__login,
-          !error && !isPending && styles.hidden
-        )}
+        className={styles.warning}
         style={{
+          width: formWidth,
           backgroundColor: error ? "orangered" : "rgba(255, 160, 16, 1)",
+          display: !error && !isPending ? "none" : "block",
+          fontSize: warningFontSize,
         }}
       >
         {error ? error : "Loging in..."}
       </p>
-      <form className={styles.form__login} onSubmit={handleSubmit}>
-        <button className={styles.btn__x} type="button" onClick={onClickX}>
+      <form
+        style={{
+          width: formWidth,
+          backgroundImage: "linear-gradient(rgb(255, 217, 0), orange)",
+          aspectRatio: "1 / 0.6",
+          borderRadius: "2% / calc(2% + 2% * 0.6)",
+          paddingTop: "1.6%",
+        }}
+        onSubmit={handleSubmit}
+      >
+        <button
+          className={styles.btn__x}
+          style={btnXDesign}
+          type="button"
+          onClick={onClickX}
+        >
           &times;
         </button>
-        <h2>Login</h2>
-        <div className={styles.input_wrapper}>
+        <h2 style={headingDesign}>Login</h2>
+        <div className={styles.input_wrapper} style={inputWrapperDesign}>
           <input
-            id={styles.input__login_username}
+            className={styles.input}
             style={{
               borderColor:
                 errorFields === "email" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
+              fontSize: inputFontSize,
             }}
             name="email"
             type="email"
             placeholder="email"
           />
         </div>
-        <div className={styles.input_wrapper}>
+        <div className={styles.input_wrapper} style={inputWrapperDesign}>
           <input
-            id={styles.input__login_password}
+            className={styles.input}
             style={{
               borderColor:
                 errorFields === "password" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
+              fontSize: inputFontSize,
             }}
             type={!isPasswordVisible ? "password" : "text"}
             name="password"
@@ -648,6 +952,7 @@ function OverlayLogin({
               styles.btn__eye,
               isPasswordVisible && styles.hidden
             )}
+            style={eyeOnDesign}
             type="button"
             onClick={handleTogglePassword}
           ></button>
@@ -656,11 +961,16 @@ function OverlayLogin({
               styles.btn__eye_off,
               !isPasswordVisible && styles.hidden
             )}
+            style={eyeOffDesign}
             type="button"
             onClick={handleTogglePassword}
           ></button>
         </div>
-        <button className={styles.btn__submit_login} type="submit">
+        <button
+          className={styles.btn__submit_login}
+          style={btnSubmitDesign}
+          type="submit"
+        >
           Log in
         </button>
       </form>
@@ -671,16 +981,53 @@ function OverlayLogin({
 function OverlayCreateAccount({
   mediaContext,
   userContext,
+  warningFontSize,
+  inputWrapperDesign,
+  inputFontSize,
+  btnXDesign,
+  headingDesign,
+  eyeOnDesign,
+  eyeOffDesign,
+  btnSubmitDesign,
   show,
   onClickX,
   onClickOutside,
 }: {
   mediaContext: string;
   userContext: any;
+  warningFontSize: string;
+  inputWrapperDesign: object;
+  inputFontSize: string;
+  btnXDesign: object;
+  headingDesign: object;
+  eyeOnDesign: object;
+  eyeOffDesign: object;
+  btnSubmitDesign: object;
   show: Boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
+  //design
+  const formWidth =
+    mediaContext === "mobile"
+      ? "80%"
+      : mediaContext === "tablet"
+      ? "50%"
+      : mediaContext === "desktop"
+      ? "39%"
+      : "39%";
+  const h4Design = {
+    fontSize:
+      mediaContext === "mobile"
+        ? "4.5vw"
+        : mediaContext === "tablet"
+        ? "2.7vw"
+        : mediaContext === "desktop"
+        ? "1.55vw"
+        : "1.5vw",
+    letterSpacing: "0.08vw",
+  };
+
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
@@ -711,21 +1058,6 @@ function OverlayCreateAccount({
         return setError("※Please fill both fields");
       }
 
-      // if (!trimmedEmail) {
-      //   setErrorFields("email");
-      //   return setErrorMsg("※Please fill the field");
-      // }
-
-      // if (!trimmedPassword) {
-      //   setErrorFields("password");
-      //   return setErrorMsg("※Please fill the field");
-      // }
-
-      // if (!validatePassword(trimmedPassword)) {
-      //   setErrorFields("password");
-      //   return setErrorMsg("※Please set password that meets the requirements.");
-      // }
-
       await createAccount({ email: trimmedEmail, password: trimmedPassword });
     } catch (err: any) {
       setError(err.message);
@@ -753,8 +1085,6 @@ function OverlayCreateAccount({
       });
 
       userContext?.login(data.accessToken);
-
-      console.log(data);
     } catch (err: any) {
       throw err;
     }
@@ -774,52 +1104,124 @@ function OverlayCreateAccount({
       }}
     >
       <p
-        className={clsx(
-          styles.warning,
-          styles.warning__login,
-          !error && !isPending && styles.hidden
-        )}
+        className={styles.warning}
         style={{
           backgroundColor: error ? "orangered" : "rgba(255, 160, 16, 1)",
+          display: !error && !isPending ? "none" : "block",
+          width: formWidth,
+          fontSize: warningFontSize,
         }}
       >
         {error ? error : "Creating your account..."}
       </p>
-      <form className={styles.form__create_account} onSubmit={handleSubmit}>
-        <button className={styles.btn__x} type="button" onClick={onClickX}>
+      <form
+        style={{
+          backgroundImage:
+            "linear-gradient(rgb(221, 255, 96), rgb(114, 221, 43))",
+          // aspectRatio: "1 / 0.9",
+          height: "fit-content",
+          borderRadius: "2%",
+          padding:
+            mediaContext === "mobile"
+              ? "3% 2% 6% 2%"
+              : mediaContext === "tablet"
+              ? "3% 2% 4% 2%"
+              : "2% 1%",
+          width: formWidth,
+        }}
+        onSubmit={handleSubmit}
+      >
+        <button
+          className={styles.btn__x}
+          style={btnXDesign}
+          type="button"
+          onClick={onClickX}
+        >
           &times;
         </button>
-        <h2>Sign-up</h2>
-        <h3>Please enter your email address</h3>
-        <div className={styles.input_wrapper}>
+        <h2 style={headingDesign}>Sign-up</h2>
+        <h4 style={h4Design}>Please enter your email address</h4>
+        <div
+          style={{
+            ...inputWrapperDesign,
+            height:
+              mediaContext === "mobile"
+                ? "8%"
+                : mediaContext === "tablet"
+                ? "7%"
+                : mediaContext === "desktop"
+                ? "7%"
+                : "5%",
+          }}
+        >
           <input
-            id={styles.input__signup_username}
+            className={styles.input}
             style={{
               borderColor:
                 errorFields === "email" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
+              fontSize: inputFontSize,
             }}
             name="email"
             type="email"
             placeholder="email"
           ></input>
         </div>
-        <h3>Please enter password you want to use</h3>
-        <p className={styles.requirements__password}>
+        <h4 style={h4Design}>Please enter password you want to use</h4>
+        <p
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(251, 255, 0, 0.664), rgba(255, 230, 0, 0.644))",
+            width:
+              mediaContext === "mobile"
+                ? "80%"
+                : mediaContext === "tablet"
+                ? "80%"
+                : mediaContext === "desktop"
+                ? "75%"
+                : "70%",
+            height: "fit-content",
+            letterSpacing: "0.05vw",
+            padding: "1%",
+            margin: "2% auto",
+            borderRadius: "1% / 6%",
+            fontSize:
+              mediaContext === "mobile"
+                ? "4.3vw"
+                : mediaContext === "tablet"
+                ? "2.5vw"
+                : mediaContext === "desktop"
+                ? "1.4vw"
+                : "2vw",
+          }}
+        >
           Use {PASSWORD_MIN_LENGTH} letters at minimum, including at least
           <br />
           {PASSWORD_MIN_UPPERCASE} uppercase, {PASSWORD_MIN_LOWERCASE}{" "}
           lowercase, and {PASSWORD_MIN_DIGIT} digit
         </p>
-        <div className={styles.input_wrapper}>
+        <div
+          style={{
+            ...inputWrapperDesign,
+            height:
+              mediaContext === "mobile"
+                ? "8%"
+                : mediaContext === "tablet"
+                ? "7%"
+                : mediaContext === "desktop"
+                ? "7%"
+                : "5%",
+          }}
+        >
           <input
-            id={styles.input__signup_password}
+            className={styles.input}
             style={{
               borderColor:
                 errorFields === "password" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
+              fontSize: inputFontSize,
             }}
             name="password"
             type={!isPasswordVisible ? "password" : "text"}
@@ -830,6 +1232,7 @@ function OverlayCreateAccount({
               styles.btn__eye,
               isPasswordVisible && styles.hidden
             )}
+            style={eyeOnDesign}
             type="button"
             onClick={handleTogglePassword}
           ></button>
@@ -838,11 +1241,16 @@ function OverlayCreateAccount({
               styles.btn__eye_off,
               !isPasswordVisible && styles.hidden
             )}
+            style={eyeOffDesign}
             type="button"
             onClick={handleTogglePassword}
           ></button>
         </div>
-        <button className={styles.btn__signup} type="submit">
+        <button
+          className={styles.btn__signup}
+          style={btnSubmitDesign}
+          type="submit"
+        >
           Sign up
         </button>
       </form>
