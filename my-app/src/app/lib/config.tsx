@@ -42,7 +42,15 @@ export const APP_EXPLANATIONS = [
   },
 ];
 
-export type MEDIA = "mobile" | "tablet" | "desktop" | "big";
+export type TYPE_MEDIA = "mobile" | "tablet" | "desktop" | "big";
+
+export type TYPE_USER_CONTEXT = {
+  accessToken: string;
+  isMessageVisible: boolean;
+  firstLogin: (accessToken: string) => void;
+  login: (accessToken: string) => void;
+  logout: () => void;
+} | null;
 
 export type TYPE_RECIPE = {
   _id?: string;

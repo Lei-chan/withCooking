@@ -19,11 +19,11 @@ import {
   TYPE_RECIPE,
   TYPE_FILE,
 } from "@/app/lib/config";
-import { AccessTokenContext } from "@/app/lib/providers";
+import { UserContext } from "@/app/lib/providers";
 import { redirect, RedirectType } from "next/navigation";
 
 export default function CreateRecipe() {
-  const userContext = useContext(AccessTokenContext);
+  const userContext = useContext(UserContext);
   const [favorite, setFavorite] = useState(false);
   const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
   const [instructionImages, setInstructionImages] = useState<
@@ -239,7 +239,7 @@ export default function CreateRecipe() {
         backgroundImage:
           "linear-gradient(rgba(255, 241, 117, 1), rgba(255, 190, 117, 1))",
         width: "100%",
-        height: "100%",
+        height: "fit-content",
         padding: "2% 0",
       }}
     >

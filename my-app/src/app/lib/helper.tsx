@@ -66,11 +66,14 @@ export function getNextSlideIndex(curSlide: number, maxSlideIndex: number) {
 export async function uploadRecipe(recipe: TYPE_RECIPE, userContext: any) {
   try {
     const recipeId = window.location.hash.slice(1);
+    //remove _id to avoid trying to update immutable field
+    const { _id, ...others } = recipe;
+
     ///store new recipe in recipes database and user info database
     const recipeData = await getData(`/api/recipes?id=${recipeId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(recipe),
+      body: JSON.stringify(others),
     });
 
     recipeData.newAccessToken && userContext?.login(recipeData.newAccessToken);

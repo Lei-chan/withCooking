@@ -1,15 +1,3 @@
-.page__main {
-  width: 100vw;
-  height: 100vh;
-}
-
-.container__cooking {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  height: 100%;
-}
-
 .container__search {
   display: flex;
   flex-direction: row;
@@ -35,9 +23,9 @@
 .no_results {
   position: relative;
   color: rgb(197, 118, 0);
-  font-size: 1.5vw;
   letter-spacing: 0.07vw;
   top: 50%;
+  padding: 0 4%;
 }
 
 .recipe_preview {
@@ -79,22 +67,21 @@
 
 .container__author_servings,
 .container__units {
+  position: relative;
   width: 100%;
   height: 50%;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 2%;
   letter-spacing: 0.05vw;
   padding: 0.5% 0;
 }
 
 .icons__brief_explanation {
-  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   background-color: #ce3a00e7;
   border-radius: 50%;
   height: fit-content;
@@ -115,6 +102,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  width: 40%;
+  min-height: 280%;
+  height: fit-content;
   background-image: url(/fukidashi.svg);
   background-repeat: no-repeat;
   background-size: cover;
@@ -124,12 +115,11 @@
 }
 
 .p__fukidashi {
-  width: 90%;
-  height: 70%;
+  width: 100%;
+  height: fit-content;
   white-space: wrap;
   letter-spacing: 0.02vw;
-  text-align: left;
-  padding: 5% 5% 10% 5%;
+  padding: 5%;
 }
 
 .header {
@@ -287,6 +277,7 @@
 .search_results {
   width: 100%;
   height: 80%;
+  text-align: center;
   list-style: none;
 }
 
@@ -298,41 +289,8 @@
   right: 2%;
 }
 
-.container__dropdown {
-  position: absolute;
-  top: 1%;
-  right: 3%;
-  width: 19%;
-  aspect-ratio: 1 / 1.8;
-  z-index: 10;
-
-  .btn__dropdown {
-    pointer-events: all;
-    width: 22%;
-    aspect-ratio: 1;
-    background: none;
-    border: none;
-    background-image: url("/dropdown.svg");
-    background-repeat: no-repeat;
-    background-size: 65%;
-    background-position: center;
-    margin-left: 90%;
-  }
-
-  ul {
-    width: 100%;
-    height: 100%;
-    list-style-type: none;
-    text-align: center;
-    border-radius: 1.8% / 1%;
-    box-shadow: rgba(0, 0, 0, 0.315) 4px 4px 10px;
-    overflow: hidden;
-    transition: all 0.4s;
-
-    a {
-      text-decoration: none;
-    }
-  }
+.link__dropdown {
+  text-decoration: none;
 }
 
 .list {
@@ -343,7 +301,6 @@
   padding-left: 20%;
   background-image: linear-gradient(rgb(254, 255, 167), rgb(255, 232, 103));
   height: calc(100% / 7);
-  font-size: 1.5vw;
   letter-spacing: 0.1vw;
   color: rgb(89, 1, 172);
 }
@@ -351,37 +308,24 @@
   background-image: linear-gradient(rgb(255, 217, 0));
 }
 
-.section__timers {
+.container__timer {
   position: relative;
-  background-image: linear-gradient(rgb(255, 217, 0), rgb(255, 166, 1));
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  scrollbar-color: rgb(255, 199, 125) rgb(212, 120, 0);
-  text-align: center;
-  padding: 3% 0 1% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80%;
+  aspect-ratio: 1 / 0.8;
+  border-radius: 2%;
+  margin-bottom: 5%;
+}
 
-  .container__timer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 80%;
-    aspect-ratio: 1 / 0.8;
-    border-radius: 2%;
-    margin-bottom: 5%;
-  }
-
-  button {
-    border-radius: 50%;
-    border: none;
-  }
-
-  input {
-    text-align: center;
-  }
+.btn__timer {
+  border-radius: 50%;
+  border: none;
 }
 
 .input__time {
+  text-align: center;
   width: 29%;
   aspect-ratio: 1 / 0.8;
 }

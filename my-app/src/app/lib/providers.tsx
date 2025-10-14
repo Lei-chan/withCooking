@@ -6,26 +6,20 @@ import {
   MAX_DESKTOP,
   MAX_MOBILE,
   MAX_TABLET,
-  MEDIA,
+  TYPE_MEDIA,
   MESSAGE_TIMEOUT,
   MIN_BIG,
   MIN_DESKTOP,
   MIN_TABLET,
+  TYPE_USER_CONTEXT,
 } from "./config";
 import { useMediaQuery } from "react-responsive";
-import { is } from "zod/locales";
 
 //mediaContext
-export const MediaContext = createContext<MEDIA>("desktop");
+export const MediaContext = createContext<TYPE_MEDIA>("desktop");
 
 //userContext
-export const UserContext = createContext<{
-  accessToken: string;
-  isMessageVisible: boolean;
-  firstLogin: (accessToken: string) => void;
-  login: (accessToken: string) => void;
-  logout: () => void;
-} | null>(null);
+export const UserContext = createContext<TYPE_USER_CONTEXT>(null);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   //media

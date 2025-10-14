@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useEffect } from "react";
 import clsx from "clsx";
 import styles from "./component.module.css";
 import { useState } from "react";
-import { AccessTokenContext } from "../providers";
+import { MediaContext, UserContext } from "../providers";
 import { redirect, RedirectType } from "next/navigation";
 
 export function MessageContainer({
@@ -49,8 +49,16 @@ export function OverlayMessage({
   content: "welcome" | "logout";
   toggleLogout?: () => void;
 }) {
-  const userContext = useContext(AccessTokenContext);
+  const mediaContext = useContext(MediaContext);
+  const userContext = useContext(UserContext);
   const [isVisible, setIsVisible] = useState(true);
+
+  const fontSize =
+    mediaContext === "mobile"
+      ? "4.4vw"
+      : mediaContext === "tablet"
+      ? "3vw"
+      : "1.6vw";
 
   function getMessage() {
     let message;
@@ -108,13 +116,18 @@ export function OverlayMessage({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          width: "30%",
+          width:
+            mediaContext === "mobile"
+              ? "85%"
+              : mediaContext === "tablet"
+              ? "67%"
+              : "30%",
           height: "fit-content",
           minHeight: "30%",
           textAlign: "center",
           backgroundImage:
             "linear-gradient(rgba(255, 235, 221, 1), rgba(255, 240, 172, 1))",
-          fontSize: "1.6vw",
+          fontSize: fontSize,
           letterSpacing: "0.08vw",
           lineHeight: option === "message" ? "150%" : "130%",
           padding: "2%",
@@ -124,6 +137,7 @@ export function OverlayMessage({
       >
         <button
           className={styles.btn__x}
+          style={{ fontSize: fontSize }}
           onClick={() => {
             content === "welcome" && handleClose();
             content === "logout" && toggleLogout && toggleLogout();
@@ -133,7 +147,11 @@ export function OverlayMessage({
         </button>
         {getMessage()}
         {option === "question" && (
-          <button className={styles.btn__question} onClick={handleLogout}>
+          <button
+            className={styles.btn__question}
+            style={{ fontSize: `calc(${fontSize} * 0.75)` }}
+            onClick={handleLogout}
+          >
             I'm sure
           </button>
         )}

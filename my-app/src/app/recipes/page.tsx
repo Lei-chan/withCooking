@@ -17,10 +17,10 @@ import {
 } from "@/app/lib/helper";
 import React, { useContext, useEffect, useState } from "react";
 import { TYPE_RECIPE } from "../lib/config";
-import { AccessTokenContext } from "../lib/providers";
+import { UserContext } from "../lib/providers";
 
 export default function Recipes() {
-  const userContext = useContext(AccessTokenContext);
+  const userContext = useContext(UserContext);
   const RECIPES_PER_PAGE = 30;
   const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);

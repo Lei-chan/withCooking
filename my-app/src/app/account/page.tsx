@@ -5,14 +5,15 @@ import {
   PASSWORD_MIN_UPPERCASE,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_DIGIT,
+  TYPE_USER_CONTEXT,
 } from "../lib/config";
 import { getData } from "@/app/lib/helper";
 import { useEffect, useState, useContext } from "react";
-import { AccessTokenContext } from "../lib/providers";
+import { UserContext } from "../lib/providers";
 import { redirect, RedirectType } from "next/navigation";
 
 export default function Account() {
-  const userContext = useContext(AccessTokenContext);
+  const userContext = useContext(UserContext);
   const [data, setData] = useState<{ email: string; createdAt: string }>();
 
   async function getUser() {
@@ -86,18 +87,23 @@ export default function Account() {
             padding: "1% 0",
           }}
         >
-          <Email email={data.email} />
-          <Password />
+          <Email userContext={userContext} email={data.email} />
+          <Password userContext={userContext} />
           <Since since={data.createdAt} />
-          <CloseAccount />
+          <CloseAccount userContext={userContext} />
         </div>
       )}
     </div>
   );
 }
 
-function Email({ email }: { email: string }) {
-  const userContext = useContext(AccessTokenContext);
+function Email({
+  userContext,
+  email,
+}: {
+  userContext: TYPE_USER_CONTEXT;
+  email: string;
+}) {
   const [change, setChange] = useState(false);
   const [value, setValue] = useState(email);
   const [error, setError] = useState<string>();
@@ -197,8 +203,7 @@ function Email({ email }: { email: string }) {
   );
 }
 
-function Password() {
-  const userContext = useContext(AccessTokenContext);
+function Password({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
   const [change, setChange] = useState(false);
   const [errorField, setErrorField] = useState<"current" | "new" | "both" | "">(
     ""
@@ -372,8 +377,7 @@ function Since({ since }: { since: string }) {
   );
 }
 
-function CloseAccount() {
-  const userContext = useContext(AccessTokenContext);
+function CloseAccount({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
   const [close, setClose] = useState(false);
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);

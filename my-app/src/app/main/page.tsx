@@ -6,7 +6,7 @@ import clsx from "clsx";
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
-import { AccessTokenContext } from "../lib/providers";
+import { MediaContext, UserContext } from "../lib/providers";
 import {
   getData,
   getSize,
@@ -32,11 +32,14 @@ import {
   TYPE_INGREDIENT,
   TYPE_INGREDIENTS,
   SLIDE_TRANSITION_SEC,
+  TYPE_USER_CONTEXT,
+  TYPE_MEDIA,
 } from "../lib/config";
 import { MessageContainer, OverlayMessage } from "../lib/components/components";
 
 export default function MAIN() {
-  const userContext = useContext(AccessTokenContext);
+  const mediaContext = useContext(MediaContext);
+  const userContext = useContext(UserContext);
 
   const searchRef = useRef(null);
 
@@ -46,24 +49,32 @@ export default function MAIN() {
   const [isDraggingX, setIsDraggingX] = useState(false);
   const [isDraggingY, setIsDraggingY] = useState(false);
   const [recipeWidth, setRecipeWidth] = useState(
-    window.innerWidth * 0.5 + "px"
+    mediaContext === "mobile"
+      ? window.innerWidth + "px"
+      : mediaContext === "tablet"
+      ? window.innerWidth * 0.75 + "px"
+      : window.innerWidth * 0.5 + "px"
   );
   const [timerHeight, setTimerHeight] = useState(
     window.innerHeight * 0.65 + "px"
   );
-  const timerNoteWidth = window.innerWidth - parseFloat(recipeWidth) + "px";
+  const timerNoteWidth =
+    mediaContext === "mobile"
+      ? window.innerWidth + "px"
+      : window.innerWidth - parseFloat(recipeWidth) + "px";
 
   function handleMouseDownX() {
     setIsDraggingX(true);
   }
 
   function handleMouseDownY() {
+    if (mediaContext === "mobile") return;
     setIsDraggingY(true);
   }
 
   function handleMouseUp() {
     setIsDraggingX(false);
-    setIsDraggingY(false);
+    mediaContext !== "mobile" && setIsDraggingY(false);
   }
 
   function handleMouseMoveRecipe(e: React.MouseEvent<HTMLDivElement>) {
@@ -106,9 +117,11 @@ export default function MAIN() {
     setIsMessageVisible(!isMessageVisible);
   }
 
+  console.log(mediaContext);
+
   return (
     <div
-      className={styles.page__main}
+      style={{ width: "100vw", height: "100vh" }}
       onClick={handleCloseDropdownSearch}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMoveRecipe}
@@ -123,25 +136,41 @@ export default function MAIN() {
           toggleLogout={handleToggleLogout}
         />
       )}
-      <div className={styles.container__cooking}>
+      <div
+        style={
+          mediaContext === "mobile"
+            ? { width: "100%", height: "100%" }
+            : {
+                display: "flex",
+                flexDirection: "row",
+                width: "100%",
+                height: "100%",
+              }
+        }
+      >
         <Search
+          mediaContext={mediaContext}
+          userContext={userContext}
           isSearchVisible={isSearchVisible}
           searchRef={searchRef}
           onClickSearch={handleToggleSearch}
         />
-        <div
-          style={{
-            position: "absolute",
-            top: "0",
-            left: `calc(${recipeWidth} - 1.5%)`,
-            width: "2%",
-            height: "100%",
-            cursor: "ew-resize",
-            zIndex: "5",
-          }}
-          onMouseDown={handleMouseDownX}
-        ></div>
+        {mediaContext !== "mobile" && (
+          <div
+            style={{
+              position: "absolute",
+              top: "0",
+              left: `calc(${recipeWidth} - 1.5%)`,
+              width: "2%",
+              height: "100%",
+              cursor: "ew-resize",
+              zIndex: "5",
+            }}
+            onMouseDown={handleMouseDownX}
+          ></div>
+        )}
         <DropdownMenu
+          mediaContext={mediaContext}
           isDropdownVisible={isDropdownVisible}
           onClickDropdown={handleToggleDropdown}
           onClickLogout={handleToggleLogout}
@@ -159,14 +188,21 @@ export default function MAIN() {
             scrollbarColor: "rgb(255, 255, 232) rgb(253, 231, 157)",
           }}
         >
-          <Recipe recipeWidth={recipeWidth} />
+          <Recipe
+            mediaContext={mediaContext}
+            userContext={userContext}
+            recipeWidth={recipeWidth}
+          />
         </section>
 
         <section
           style={{
             display: "grid",
             gridTemplateRows: `${timerHeight} calc(100% - ${timerHeight})`,
-            width: `calc(100% - ${recipeWidth})`,
+            width:
+              mediaContext === "mobile"
+                ? "100%"
+                : `calc(100% - ${recipeWidth})`,
             height: "100%",
           }}
         >
@@ -182,8 +218,8 @@ export default function MAIN() {
             }}
             onMouseDown={handleMouseDownY}
           ></div>
-          <Timers timerWidth={timerNoteWidth} />
-          <Note noteWidth={timerNoteWidth} />
+          <Timers mediaContext={mediaContext} timerWidth={timerNoteWidth} />
+          <Note mediaContext={mediaContext} noteWidth={timerNoteWidth} />
         </section>
       </div>
     </div>
@@ -191,23 +227,27 @@ export default function MAIN() {
 }
 
 function Search({
-  // recipeWidth,
-  // fontSize,
+  mediaContext,
+  userContext,
   isSearchVisible,
   searchRef,
   onClickSearch,
 }: {
-  // recipeWidth: string;
-  // fontSize: string;
+  mediaContext: TYPE_MEDIA;
+  userContext: TYPE_USER_CONTEXT;
   isSearchVisible: boolean;
   searchRef: any;
   onClickSearch: () => void;
 }) {
   const RECIPES_PER_PAGE = 6;
-  const searchMenuSize = window.innerWidth * 0.25 + "px";
-  const fontSize = parseFloat(searchMenuSize) * 0.05 + "px";
-
-  const userContext = useContext(AccessTokenContext);
+  const searchMenuSize =
+    window.innerWidth * (mediaContext === "mobile" ? 0.7 : 0.25) + "px";
+  const fontSize =
+    parseFloat(searchMenuSize) * (mediaContext === "mobile" ? 0.07 : 0.05) +
+    "px";
+  const mainImageSize =
+    parseFloat(searchMenuSize) * (mediaContext === "mobile" ? 0.25 : 0.2) +
+    "px";
 
   const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
@@ -335,14 +375,14 @@ function Search({
         <form className={styles.container__search} onSubmit={handleSubmit}>
           <input
             id={styles.input__search}
-            style={{ fontSize: fontSize }}
+            style={{ fontSize: `calc(${fontSize} * 0.9)` }}
             type="search"
             placeholder="Search your recipe"
             onChange={handleChangeInput}
           ></input>
           <button
             className={styles.btn__search}
-            style={{ fontSize: `calc(${fontSize} * 0.8)` }}
+            style={{ fontSize: `calc(${fontSize} * 0.7)` }}
             type="submit"
           >
             Search
@@ -350,7 +390,9 @@ function Search({
         </form>
         <ul className={styles.search_results}>
           {message ? (
-            <p className={styles.no_results}>{message}</p>
+            <p className={styles.no_results} style={{ fontSize: fontSize }}>
+              {message}
+            </p>
           ) : (
             curPageRecipes.map((recipe, i) => (
               <li
@@ -363,15 +405,15 @@ function Search({
                     style={{ borderRadius: "50%" }}
                     src={recipe.mainImage.data}
                     alt="main image"
-                    width={parseFloat(searchMenuSize) * 0.2}
-                    height={parseFloat(searchMenuSize) * 0.2}
+                    width={parseFloat(mainImageSize)}
+                    height={parseFloat(mainImageSize)}
                   ></Image>
                 ) : (
                   <div
                     style={{
                       backgroundColor: "grey",
-                      width: `${parseFloat(searchMenuSize) * 0.2}px`,
-                      height: `${parseFloat(searchMenuSize) * 0.2}px`,
+                      width: mainImageSize,
+                      height: mainImageSize,
                       borderRadius: "50%",
                     }}
                   ></div>
@@ -381,8 +423,8 @@ function Search({
                   <Image
                     src="/star-on.png"
                     alt="favorite icon"
-                    width={parseFloat(searchMenuSize) * 0.06}
-                    height={parseFloat(searchMenuSize) * 0.06}
+                    width={parseFloat(mainImageSize) * 0.3}
+                    height={parseFloat(mainImageSize) * 0.3}
                   ></Image>
                 )}
               </li>
@@ -425,29 +467,63 @@ function Search({
 }
 
 function DropdownMenu({
+  mediaContext,
   isDropdownVisible,
   onClickDropdown,
   onClickLogout,
 }: {
+  mediaContext: TYPE_MEDIA;
   isDropdownVisible: boolean;
   onClickDropdown: () => void;
   onClickLogout: () => void;
 }) {
+  const fontSize = mediaContext === "mobile" ? "4vw" : "2vw";
   return (
     <div
-      className={styles.container__dropdown}
-      style={{ pointerEvents: !isDropdownVisible ? "none" : "all" }}
+      style={{
+        position: "absolute",
+        top: mediaContext === "mobile" ? "0%" : "1%",
+        right: "3%",
+        aspectRatio: "1 / 1.8",
+        zIndex: "10",
+        width: mediaContext === "mobile" ? "60%" : "20%",
+        pointerEvents: !isDropdownVisible ? "none" : "all",
+      }}
     >
       <button
-        className={styles.btn__dropdown}
+        style={{
+          pointerEvents: "all",
+          width: mediaContext === "mobile" ? "16%" : "22%",
+          aspectRatio: "1",
+          background: "none",
+          border: "none",
+          backgroundImage: 'url("/dropdown.svg")',
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "65%",
+          backgroundPosition: "center",
+          marginLeft: "90%",
+        }}
         type="button"
         onClick={onClickDropdown}
       ></button>
       <ul
-        className={clsx(styles.dropdown_menu)}
-        style={{ opacity: !isDropdownVisible ? 0 : 1 }}
+        style={{
+          width: "100%",
+          height: "100%",
+          listStyleType: "none",
+          textAlign: "center",
+          borderRadius: "1.8% / 1%",
+          boxShadow: "rgba(0, 0, 0, 0.315) 4px 4px 10px",
+          overflow: "hidden",
+          transition: "all 0.4s",
+          fontSize: fontSize,
+          opacity: !isDropdownVisible ? 0 : 1,
+        }}
       >
-        <Link href="http://localhost:3000/recipes">
+        <Link
+          className={styles.link__dropdown}
+          href="http://localhost:3000/recipes"
+        >
           <li className={styles.list}>
             <Image
               src={"/recipes.svg"}
@@ -458,7 +534,10 @@ function DropdownMenu({
             <span>Recipes</span>
           </li>
         </Link>
-        <Link href="http://localhost:3000/converter">
+        <Link
+          className={styles.link__dropdown}
+          href="http://localhost:3000/converter"
+        >
           <li className={styles.list}>
             <Image
               src={"/convert.svg"}
@@ -469,7 +548,10 @@ function DropdownMenu({
             <span>Converter</span>
           </li>
         </Link>
-        <Link href="http://localhost:3000/account">
+        <Link
+          className={styles.link__dropdown}
+          href="http://localhost:3000/account"
+        >
           <li className={styles.list}>
             <Image
               src={"/account.svg"}
@@ -480,7 +562,10 @@ function DropdownMenu({
             <span>Account</span>
           </li>
         </Link>
-        <Link href="http://localhost:3000/news">
+        <Link
+          className={styles.link__dropdown}
+          href="http://localhost:3000/news"
+        >
           <li className={styles.list}>
             <Image
               src={"/news.svg"}
@@ -491,7 +576,10 @@ function DropdownMenu({
             <span>News</span>
           </li>
         </Link>
-        <Link href="http://localhost:3000/how-to-use">
+        <Link
+          className={styles.link__dropdown}
+          href="http://localhost:3000/how-to-use"
+        >
           <li className={styles.list}>
             <Image
               src={"/howtouse.svg"}
@@ -502,7 +590,10 @@ function DropdownMenu({
             <span>How to use</span>
           </li>
         </Link>
-        <Link href="http://localhost:3000/feedback">
+        <Link
+          className={styles.link__dropdown}
+          href="http://localhost:3000/feedback"
+        >
           <li className={styles.list}>
             <Image
               src={"/feedback.svg"}
@@ -528,12 +619,28 @@ function DropdownMenu({
 }
 
 //prettier ignore
-function Recipe({ recipeWidth }: { recipeWidth: string }) {
-  const userContext = useContext(AccessTokenContext);
-
+function Recipe({
+  mediaContext,
+  userContext,
+  recipeWidth,
+}: {
+  mediaContext: TYPE_MEDIA;
+  userContext: TYPE_USER_CONTEXT;
+  recipeWidth: string;
+}) {
   ///design
-  const fontSize = getSize(recipeWidth, 0.026, "1.2vw");
-  const headerSize = getSize(recipeWidth, 0.033, "1.5vw");
+  const fontSize =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.045, "4.5vw")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.03, "2.7vw")
+      : getSize(recipeWidth, 0.026, "1.2vw");
+  const headerSize =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.05, "5vw")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.04, "3.5vw")
+      : getSize(recipeWidth, 0.033, "1.5vw");
   const marginTop = getSize(recipeWidth, 0.11, "30px");
 
   //don't modify recipe value unless the recipe is changed
@@ -649,7 +756,7 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
             color: "white",
             padding: "0.7% 1%",
             borderRadius: "5px",
-            fontSize: "1.4vw",
+            fontSize: `calc(${fontSize} * 0.9)`,
             letterSpacing: "0.07vw",
             marginBottom: "1%",
           }}
@@ -664,7 +771,7 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
       favorite === undefined ? (
         <MessageContainer
           message={isLoading ? "Loading your recipe..." : message}
-          fontSize={"1.6vw"}
+          fontSize={`calc(${fontSize} * 1.3)`}
           letterSpacing={"0.05vw"}
           wordSpacing={"0.3vw"}
         />
@@ -680,17 +787,26 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            padding: "3% 0",
+            padding:
+              mediaContext === "mobile"
+                ? "10% 0"
+                : mediaContext === "tablet"
+                ? "6% 0"
+                : "3% 0",
             color: "rgb(60, 0, 116)",
           }}
         >
           <ImageTitle
+            mediaContext={mediaContext}
             recipeWidth={recipeWidth}
+            fontSize={fontSize}
             image={recipe.mainImage}
             title={recipe.title}
           />
           <BriefExplanation
+            mediaContext={mediaContext}
             recipeWidth={recipeWidth}
+            fontSize={fontSize}
             curRecipe={curRecipe}
             servingsValue={servingsValue}
             favorite={favorite}
@@ -700,6 +816,7 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
             onClickFavorite={handleClickFavorite}
           />
           <Ingredients
+            mediaContext={mediaContext}
             fontSize={fontSize}
             headerSize={headerSize}
             servingsValue={servingsValue}
@@ -707,6 +824,7 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
             ingredientsUnit={ingredientsUnit}
           />
           <Instructions
+            mediaContext={mediaContext}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -714,12 +832,14 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
             instructions={recipe.instructions}
           />
           <AboutThisRecipe
+            mediaContext={mediaContext}
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
             description={recipe.description}
           />
           <Memories
+            mediaContext={mediaContext}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -727,6 +847,7 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
             images={recipe.memoryImages}
           />
           <Comments
+            mediaContext={mediaContext}
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
@@ -809,16 +930,26 @@ function Recipe({ recipeWidth }: { recipeWidth: string }) {
 }
 
 function ImageTitle({
+  mediaContext,
+  recipeWidth,
+  fontSize,
   image,
   title,
-  recipeWidth,
 }: {
+  mediaContext: TYPE_MEDIA;
+  recipeWidth: string;
+  fontSize: string;
   image: TYPE_FILE | undefined;
   title: string;
-  recipeWidth: string;
 }) {
-  const width = getSize(recipeWidth, 0.65, "440px");
-  const height = parseInt(width) * 0.6 + "px";
+  const width =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.8, "250px")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.72, "400px")
+      : getSize(recipeWidth, 0.65, "440px");
+  const height =
+    parseInt(width) * (mediaContext === "mobile" ? 0.65 : 0.6) + "px";
 
   return (
     <div
@@ -865,7 +996,7 @@ function ImageTitle({
           style={{
             width: "100%",
             height: "100%",
-            fontSize: `calc(${width} * 0.06)`,
+            fontSize: `calc(${fontSize} * 1.5)`,
             letterSpacing: "0.1vw",
             textAlign: "center",
           }}
@@ -878,7 +1009,9 @@ function ImageTitle({
 }
 
 function BriefExplanation({
+  mediaContext,
   recipeWidth,
+  fontSize,
   curRecipe,
   servingsValue,
   ingredientsUnit,
@@ -887,7 +1020,9 @@ function BriefExplanation({
   onChangeIngredientsUnit,
   onClickFavorite,
 }: {
+  mediaContext: TYPE_MEDIA;
   recipeWidth: string;
+  fontSize: string;
   curRecipe: TYPE_RECIPE;
   servingsValue: number;
   ingredientsUnit: string;
@@ -897,9 +1032,9 @@ function BriefExplanation({
   onClickFavorite: () => void;
 }) {
   const width = getSize(recipeWidth, 0.9, "90%");
-  const iconSize = getSize(recipeWidth, 0.02, "20");
-  const fontFukidashiSize = getSize(recipeWidth, 0.02, "1.2vw");
-  const fontSize = getSize(recipeWidth, 0.025, "1.2vw");
+  const fontSizeBrief = parseFloat(fontSize) * 0.9 + "px";
+  const iconSize = parseFloat(fontSizeBrief);
+  const fontFukidashiSize = `calc(${fontSizeBrief} * 0.9)`;
 
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
   const [author, setAuthour] = useState(curRecipe.author);
@@ -975,12 +1110,7 @@ function BriefExplanation({
         width: width,
         aspectRatio: "1/0.1",
         gap: "3%",
-        margin: "6% 0 5% 0 ",
-        // margin: recipeWidth.includes("px")
-        //   ? `${parseInt(recipeWidth) * 0.07}px 0 ${
-        //       parseInt(recipeWidth) * 0.07
-        //     }px 0`
-        //   : "50px 0 28px 0",
+        margin: mediaContext === "mobile" ? "10% 0 5% 0" : "6% 0 5% 0 ",
       }}
     >
       <div
@@ -993,78 +1123,81 @@ function BriefExplanation({
           maxWidth: "91%",
           height: "100%",
           whiteSpace: "nowrap",
-          padding: "3%",
+          padding: mediaContext === "mobile" ? "5% 3%" : "3%",
           backgroundColor: "rgb(255, 217, 0)",
           borderRadius: "1% / 7%",
           gap: "20%",
           boxShadow: "rgba(0, 0, 0, 0.27) 3px 3px 5px",
         }}
       >
-        <div className={styles.container__author_servings}>
+        <div
+          className={styles.container__author_servings}
+          style={{ gap: mediaContext === "mobile" ? "6%" : "2%" }}
+        >
+          <div
+            className={styles.container__fukidashi}
+            style={{
+              top: "-275%",
+              left: "0%",
+              opacity: !mouseOver[0] ? 0 : 1,
+            }}
+          >
+            <p
+              className={styles.p__fukidashi}
+              style={{
+                fontSize: fontFukidashiSize,
+              }}
+            >
+              Author of the recipe
+            </p>
+          </div>
           <div
             className={styles.icons__brief_explanation}
             data-icon="0"
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
           >
-            <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                top: "-230%",
-                left: "-280%",
-                opacity: !mouseOver[0] ? 0 : 1,
-              }}
-            >
-              <p
-                className={styles.p__fukidashi}
-                style={{ fontSize: fontFukidashiSize }}
-              >
-                Author of the recipe
-              </p>
-            </div>
             <Image
               src={"/person.svg"}
               alt="person icon"
-              width={parseInt(iconSize)}
-              height={parseInt(iconSize)}
+              width={iconSize}
+              height={iconSize}
             ></Image>
           </div>
-          <span style={{ width: "19%", fontSize: fontSize }}>{author}</span>
+          <span style={{ width: "19%", fontSize: fontSizeBrief }}>
+            {author}
+          </span>
+          <div
+            className={styles.container__fukidashi}
+            style={{
+              top: "-290%",
+              left: "30%",
+              opacity: !mouseOver[1] ? 0 : 1,
+            }}
+          >
+            <p
+              className={styles.p__fukidashi}
+              style={{ fontSize: fontFukidashiSize }}
+            >
+              Number of servings of the recipe
+            </p>
+          </div>
           <div
             className={styles.icons__brief_explanation}
             data-icon="1"
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
           >
-            <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                top: "-280%",
-                left: "-380%",
-                opacity: !mouseOver[1] ? 0 : 1,
-              }}
-            >
-              <p
-                className={styles.p__fukidashi}
-                style={{ fontSize: fontFukidashiSize }}
-              >
-                Number of servings of the recipe
-              </p>
-            </div>
             <Image
               src={"/servings.svg"}
               alt="servings icon"
-              width={parseInt(iconSize)}
-              height={parseInt(iconSize)}
+              width={iconSize}
+              height={iconSize}
             ></Image>
           </div>
           <input
             className={styles.input__brief_explanation}
-            style={{ width: "17%", fontSize: fontSize }}
+            style={{ width: "17%", fontSize: fontSizeBrief }}
             type="number"
             min="1"
             max={MAX_SERVINGS}
@@ -1073,44 +1206,45 @@ function BriefExplanation({
             value={servingsValue}
             onChange={onChangeServings}
           />
-          <span style={{ width: "20%", fontSize: fontSize }}>
+          <span style={{ width: "20%", fontSize: fontSizeBrief }}>
             {servingsUnit !== "other" ? servingsUnit : servingsCustomUnit}
           </span>
         </div>
-        <div className={styles.container__units}>
+        <div
+          className={styles.container__units}
+          style={{ gap: mediaContext === "mobile" ? "5%" : "2%" }}
+        >
+          <div
+            className={styles.container__fukidashi}
+            style={{
+              top: "-280%",
+              left: "0%",
+              opacity: !mouseOver[2] ? 0 : 1,
+            }}
+          >
+            <p
+              className={styles.p__fukidashi}
+              style={{ fontSize: fontFukidashiSize }}
+            >
+              Unit system you prefer
+            </p>
+          </div>
           <div
             className={styles.icons__brief_explanation}
             data-icon="2"
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
           >
-            <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                top: "-260%",
-                left: "-300%",
-                opacity: !mouseOver[2] ? 0 : 1,
-              }}
-            >
-              <p
-                className={styles.p__fukidashi}
-                style={{ fontSize: fontFukidashiSize }}
-              >
-                Unit system you prefer
-              </p>
-            </div>
             <Image
               src={"/scale.svg"}
               alt="ingredient units icon"
-              width={parseInt(iconSize)}
-              height={parseInt(iconSize)}
+              width={iconSize}
+              height={iconSize}
             ></Image>
           </div>
           <select
             className={styles.input__brief_explanation}
-            style={{ width: "25%", fontSize: fontSize }}
+            style={{ width: "25%", fontSize: fontSizeBrief }}
             name="region"
             value={ingredientsUnit}
             onChange={onChangeIngredientsUnit}
@@ -1124,39 +1258,37 @@ function BriefExplanation({
           </select>
 
           <div
+            className={styles.container__fukidashi}
+            style={{
+              top: "-275%",
+              left: "30%",
+              opacity: !mouseOver[3] ? 0 : 1,
+            }}
+          >
+            <p
+              className={styles.p__fukidashi}
+              style={{ fontSize: fontFukidashiSize }}
+            >
+              Temperatures used in the recipe
+            </p>
+          </div>
+          <div
             className={styles.icons__brief_explanation}
             data-icon="3"
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
           >
-            <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "fit-content",
-                height: "fit-content",
-                top: "-300%",
-                left: "-370%",
-                opacity: !mouseOver[3] ? 0 : 1,
-              }}
-            >
-              <p
-                className={styles.p__fukidashi}
-                style={{ fontSize: fontFukidashiSize }}
-              >
-                Temperatures used in the recipe
-              </p>
-            </div>
             <Image
               src={"/temperature.svg"}
               alt="ingredient units icon"
-              width={parseInt(iconSize)}
-              height={parseInt(iconSize)}
+              width={iconSize}
+              height={iconSize}
             ></Image>
           </div>
-          <span style={{ fontSize: fontSize }}>{temperaturs}</span>
+          <span style={{ fontSize: fontSizeBrief }}>{temperaturs}</span>
           <select
             className={styles.input__brief_explanation}
-            style={{ width: "8%", fontSize: fontSize }}
+            style={{ width: "fit-content", fontSize: fontSizeBrief }}
             name="temperatureUnit"
             value={temperatureUnit}
             onChange={(e) => handleChangeInput(e, 0)}
@@ -1172,7 +1304,7 @@ function BriefExplanation({
           backgroundImage: !favorite
             ? 'url("/star-off.png")'
             : 'url("/star-on.png")',
-          width: "4.5%",
+          width: mediaContext === "mobile" ? "7%" : "4.5%",
           aspectRatio: "1",
           backgroundRepeat: "no-repeat",
           backgroundSize: "100%",
@@ -1186,12 +1318,14 @@ function BriefExplanation({
 }
 
 function Ingredients({
+  mediaContext,
   fontSize,
   headerSize,
   servingsValue,
   ingredients,
   ingredientsUnit,
 }: {
+  mediaContext: TYPE_MEDIA;
   fontSize: string;
   headerSize: string;
   servingsValue: number;
@@ -1216,14 +1350,20 @@ function Ingredients({
         overflowX: "auto",
       }}
     >
-      <h2 className={styles.header} style={{ fontSize: headerSize }}>
+      <h2
+        className={styles.header}
+        style={{
+          fontSize: headerSize,
+          marginBottom: `calc(${headerSize} * 0.5)`,
+        }}
+      >
         Ingredients
       </h2>
       <div
         style={{
           width: "100%",
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: mediaContext === "mobile" ? "1fr" : "1fr 1fr",
           justifyItems: "left",
           marginTop: "2%",
           wordSpacing: "0.1vw",
@@ -1324,12 +1464,14 @@ function IngLine({
 }
 
 function Instructions({
+  mediaContext,
   recipeWidth,
   fontSize,
   headerSize,
   marginTop,
   instructions,
 }: {
+  mediaContext: TYPE_MEDIA;
   recipeWidth: string;
   fontSize: string;
   headerSize: string;
@@ -1341,7 +1483,7 @@ function Instructions({
       style={{
         position: "relative",
         marginTop: marginTop,
-        width: "80%",
+        width: mediaContext === "mobile" ? "90%" : "80%",
         height: "fit-content",
       }}
     >
@@ -1354,6 +1496,7 @@ function Instructions({
       {instructions.map((inst, i) => (
         <Instruction
           key={i}
+          mediaContext={mediaContext}
           recipeWidth={recipeWidth}
           fontSize={fontSize}
           instruction={inst}
@@ -1365,22 +1508,38 @@ function Instructions({
 }
 
 function Instruction({
+  mediaContext,
   recipeWidth,
   fontSize,
   instruction,
   i,
 }: {
+  mediaContext: TYPE_MEDIA;
   recipeWidth: string;
   fontSize: string;
   instruction: { instruction: string; image: TYPE_FILE | undefined };
   i: number;
 }) {
-  const [imageWidth, setImageWidth] = useState("140px");
-  const [imageHeight, setImageHeaight] = useState("100px");
+  const [imageWidth, setImageWidth] = useState(
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.27, "100px")
+      : getSize(recipeWidth, 0.22, "140px")
+  );
+  const [imageHeight, setImageHeaight] = useState(
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.2, "70px")
+      : getSize(recipeWidth, 0.15, "100px")
+  );
 
   useEffect(() => {
-    const imageWidth = getSize(recipeWidth, 0.22, "140px");
-    const imageHeight = getSize(recipeWidth, 0.15, "100px");
+    const imageWidth =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.27, "100px")
+        : getSize(recipeWidth, 0.22, "140px");
+    const imageHeight =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.2, "70px")
+        : getSize(recipeWidth, 0.15, "100px");
 
     setImageWidth(imageWidth);
     setImageHeaight(imageHeight);
@@ -1450,11 +1609,13 @@ function Instruction({
 }
 
 function AboutThisRecipe({
+  mediaContext,
   fontSize,
   headerSize,
   marginTop,
   description,
 }: {
+  mediaContext: TYPE_MEDIA;
   fontSize: string;
   headerSize: string;
   marginTop: string;
@@ -1481,9 +1642,10 @@ function AboutThisRecipe({
       <div
         style={{
           backgroundColor: description ? "rgb(255, 247, 133)" : "transparent",
-          width: "85%",
+          width: mediaContext === "mobile" ? "90%" : "85%",
           aspectRatio: "1/0.28",
-          fontSize: `calc(${fontSize} * 0.9)`,
+          fontSize:
+            mediaContext === "mobile" ? fontSize : `calc(${fontSize} * 0.9)`,
           letterSpacing: "0.03vw",
           padding: "1.2% 1.5%",
           overflowY: "auto",
@@ -1507,12 +1669,14 @@ function AboutThisRecipe({
 }
 
 function Memories({
+  mediaContext,
   recipeWidth,
   fontSize,
   headerSize,
   marginTop,
   images,
 }: {
+  mediaContext: TYPE_MEDIA;
   recipeWidth: string;
   fontSize: string;
   headerSize: string;
@@ -1522,7 +1686,10 @@ function Memories({
   const MAX_SLIDE = images.length - 1;
 
   //design
-  const width = getSize(recipeWidth, 0.5, "400px");
+  const width =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.9, "300px")
+      : getSize(recipeWidth, 0.5, "400px");
   const height = parseInt(width) * 0.55 + "px";
 
   const [timeourId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -1549,7 +1716,7 @@ function Memories({
       style={{
         position: "relative",
         marginTop: marginTop,
-        width: "60%",
+        width: mediaContext === "mobile" ? "90%" : "60%",
         height: images.length
           ? `calc(${headerSize} * 2 + ${height})`
           : `calc(${height} * 0.8)`,
@@ -1669,11 +1836,13 @@ function MemoryImg({
 }
 
 function Comments({
+  mediaContext,
   fontSize,
   headerSize,
   marginTop,
   comments,
 }: {
+  mediaContext: TYPE_MEDIA;
   fontSize: string;
   headerSize: string;
   marginTop: string;
@@ -1683,8 +1852,9 @@ function Comments({
     <div
       style={{
         marginTop: marginTop,
-        width: "70%",
-        height: comments ? "200px" : "150px",
+        width: mediaContext === "mobile" ? "90%" : "70%",
+        aspectRatio: comments ? "1/0.5" : "1/0.3",
+        // height: comments ? "200px" : "150px",
       }}
     >
       <h2
@@ -1707,7 +1877,8 @@ function Comments({
           style={{
             width: "100%",
             height: "100%",
-            fontSize: `calc(${fontSize} * 0.9)`,
+            fontSize:
+              mediaContext === "mobile" ? fontSize : `calc(${fontSize} * 0.9)`,
             letterSpacing: comments ? "0.05vw" : "0.03vw",
             padding: comments ? "3%" : "0",
             overflowY: "auto",
@@ -1721,9 +1892,18 @@ function Comments({
   );
 }
 
-function Timers({ timerWidth }: { timerWidth: string }) {
+function Timers({
+  mediaContext,
+  timerWidth,
+}: {
+  mediaContext: TYPE_MEDIA;
+  timerWidth: string;
+}) {
   const MAX_TIMERS = 10;
-  const fontSize = getSize(timerWidth, 0.027, "1.2vw");
+  const fontSize =
+    mediaContext === "mobile"
+      ? getSize(timerWidth, 0.045, "3.5vw")
+      : getSize(timerWidth, 0.027, "1.2vw");
 
   const [timerKeys, setTimerKeys] = useState(
     Array(1)
@@ -1744,7 +1924,21 @@ function Timers({ timerWidth }: { timerWidth: string }) {
   };
 
   return (
-    <section className={styles.section__timers}>
+    <section
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        backgroundImage: "linear-gradient(rgb(255, 217, 0), rgb(255, 166, 1))",
+        width: "100%",
+        height: "100%",
+        overflowY: "auto",
+        scrollbarColor: "rgb(255, 199, 125) rgb(212, 120, 0)",
+        textAlign: "center",
+        padding: "3% 0 1% 0",
+      }}
+    >
       <h2
         style={{
           fontSize: `calc(${fontSize} * 1.4)`,
@@ -1757,9 +1951,10 @@ function Timers({ timerWidth }: { timerWidth: string }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: mediaContext === "mobile" ? "1fr" : "1fr 1fr",
+          rowGap: mediaContext === "mobile" ? "3%" : "0",
           justifyItems: "center",
-          width: "100%",
+          width: mediaContext === "mobile" ? "90%" : "100%",
           height: "fit-content",
           fontSize: fontSize,
         }}
@@ -1778,6 +1973,7 @@ function Timers({ timerWidth }: { timerWidth: string }) {
             style={{ justifyContent: "center" }}
           >
             <button
+              className={styles.btn__timer}
               style={{
                 width: "fit-content",
                 aspectRatio: "1",
@@ -1995,7 +2191,6 @@ function Timer({
     <form
       className={styles.container__timer}
       style={{
-        position: "relative",
         backgroundColor: "rgb(255, 245, 199)",
         gap: "8%",
         boxShadow: "rgba(0, 0, 0, 0.267) 3px 3px 8px",
@@ -2005,13 +2200,12 @@ function Timer({
     >
       <audio loop ref={audioRef} src="/timerAlerm.mp3"></audio>
       <button
+        className={styles.btn__timer}
         style={{
           position: "absolute",
           backgroundColor: "orange",
           width: "7%",
           aspectRatio: "1",
-          borderRadius: "50%",
-          border: "none",
           top: "2%",
           right: "1%",
           fontWeight: "bold",
@@ -2029,6 +2223,7 @@ function Timer({
         style={{
           width: "80%",
           height: "16%",
+          textAlign: "center",
           marginTop: "8%",
           borderRadius: "2% / 18%",
           borderColor: "orange",
@@ -2147,7 +2342,13 @@ function Timer({
   );
 }
 
-function Note({ noteWidth }: { noteWidth: string }) {
+function Note({
+  mediaContext,
+  noteWidth,
+}: {
+  mediaContext: TYPE_MEDIA;
+  noteWidth: string;
+}) {
   return (
     <textarea
       style={{
@@ -2158,8 +2359,11 @@ function Note({ noteWidth }: { noteWidth: string }) {
         width: "100%",
         overflowY: "auto",
         scrollbarColor: "rgb(255, 250, 209) rgb(255, 231, 92)",
-        fontSize: getSize(noteWidth, 0.03, "1.3vw"),
-        letterSpacing: "0.05vw",
+        fontSize:
+          mediaContext === "mobile"
+            ? getSize(noteWidth, 0.047, "4vw")
+            : getSize(noteWidth, 0.03, "1.3vw"),
+        letterSpacing: mediaContext === "mobile" ? "0.1vw" : "0.05vw",
         padding: "2% 2.8%",
         zIndex: "1",
       }}

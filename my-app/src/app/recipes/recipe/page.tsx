@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
 import React, { useEffect, useState, useContext } from "react";
-import { AccessTokenContext } from "@/app/lib/providers";
+import { UserContext } from "@/app/lib/providers";
 import {
   wait,
   getData,
@@ -36,7 +36,7 @@ import { nanoid } from "nanoid";
 import fracty from "fracty";
 
 export default function Recipe() {
-  const userContext = useContext(AccessTokenContext);
+  const userContext = useContext(UserContext);
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE>();
   //use curRecipe to modify the recipe value
@@ -366,7 +366,7 @@ export default function Recipe() {
         backgroundImage:
           "linear-gradient(rgba(255, 253, 117, 1), rgba(225, 255, 117, 1))",
         width: "100%",
-        height: "100%",
+        height: "fit-content",
         padding: "2% 0",
       }}
     >

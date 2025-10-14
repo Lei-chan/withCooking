@@ -6,7 +6,6 @@
   top: 2%;
   right: 1%;
   font-weight: bold;
-  font-size: 1.6vw;
   color: navy;
 }
 
@@ -18,7 +17,6 @@
   position: relative;
   bottom: -18%;
   width: fit-content;
-  font-size: 1.2vw;
   background-color: orange;
   border: none;
   padding: 0.6% 1%;
