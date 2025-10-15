@@ -46,6 +46,7 @@ export type TYPE_MEDIA = "mobile" | "tablet" | "desktop" | "big";
 
 export type TYPE_USER_CONTEXT = {
   accessToken: string;
+  recipes: any[] | null;
   isMessageVisible: boolean;
   firstLogin: (accessToken: string) => void;
   login: (accessToken: string) => void;

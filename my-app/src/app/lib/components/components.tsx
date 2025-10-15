@@ -5,6 +5,7 @@ import styles from "./component.module.css";
 import { useState } from "react";
 import { MediaContext, UserContext } from "../providers";
 import { redirect, RedirectType } from "next/navigation";
+import { TYPE_MEDIA } from "../config";
 
 export function MessageContainer({
   message,
@@ -161,21 +162,38 @@ export function OverlayMessage({
 }
 
 export function PaginationButtons({
+  mediaContext,
+  fontSize,
   styles,
   curPage,
   numberOfPages,
   onClickPagination,
 }: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
   styles: any;
   curPage: number;
   numberOfPages: number;
   onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
+  const fontSizePagination =
+    mediaContext === "mobile"
+      ? fontSize
+      : mediaContext === "tablet"
+      ? `calc(${fontSize} * 0.9)`
+      : `calc(${fontSize} * 0.8)`;
+  const padding =
+    mediaContext === "mobile"
+      ? "1% 2%"
+      : mediaContext === "tablet"
+      ? "0.7% 1.2%"
+      : "0.5% 1%";
   return (
     <div className={styles.container__pagination}>
       {curPage > 1 && (
         <button
           className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
+          style={{ fontSize: fontSizePagination, padding }}
           value="decrease"
           onClick={onClickPagination}
         >
@@ -187,6 +205,7 @@ export function PaginationButtons({
       {numberOfPages > curPage && (
         <button
           className={clsx(styles.btn__pagination, styles.btn__pagination_right)}
+          style={{ fontSize: fontSizePagination, padding }}
           value="increase"
           onClick={onClickPagination}
         >

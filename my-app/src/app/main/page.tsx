@@ -52,8 +52,8 @@ export default function MAIN() {
     mediaContext === "mobile"
       ? window.innerWidth + "px"
       : mediaContext === "tablet"
-      ? window.innerWidth * 0.75 + "px"
-      : window.innerWidth * 0.5 + "px"
+      ? window.innerWidth * 0.65 + "px"
+      : window.innerWidth * 0.55 + "px"
   );
   const [timerHeight, setTimerHeight] = useState(
     window.innerHeight * 0.65 + "px"
@@ -241,13 +241,28 @@ function Search({
 }) {
   const RECIPES_PER_PAGE = 6;
   const searchMenuSize =
-    window.innerWidth * (mediaContext === "mobile" ? 0.7 : 0.25) + "px";
+    window.innerWidth *
+      (mediaContext === "mobile"
+        ? 0.7
+        : mediaContext === "tablet"
+        ? 0.5
+        : mediaContext === "desktop" && window.innerWidth <= 1100
+        ? 0.35
+        : 0.28) +
+    "px";
   const fontSize =
-    parseFloat(searchMenuSize) * (mediaContext === "mobile" ? 0.07 : 0.05) +
+    parseFloat(searchMenuSize) *
+      (mediaContext === "mobile"
+        ? 0.07
+        : mediaContext === "tablet"
+        ? 0.06
+        : 0.055) +
     "px";
   const mainImageSize =
     parseFloat(searchMenuSize) * (mediaContext === "mobile" ? 0.25 : 0.2) +
     "px";
+  //
+  // const mainImageSize = window.innerHeight / (RECIPES_PER_PAGE + 2);
 
   const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
@@ -262,11 +277,12 @@ function Search({
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    (async () => {
-      const userRecipes = await getRecipes();
-      setNumberOfUserRecipes(userRecipes?.length || 0);
-    })();
-  }, []);
+    setIsPending(true);
+    if (!userContext?.recipes) return;
+    const userRecipes = getRecipes();
+    setNumberOfUserRecipes(userRecipes?.length || 0);
+    setIsPending(false);
+  }, [userContext?.recipes]);
 
   //when curPage changes, change curRecipes too
   useEffect(() => {
@@ -291,34 +307,64 @@ function Search({
     setMessage(message);
   }, [error, isPending, numberOfUserRecipes, curPageRecipes.length]);
 
-  async function getRecipes(keyword: string = "") {
-    try {
-      setIsPending(true);
+  function getRecipes(keyword: string = "") {
+    setIsPending(true);
 
-      const structuredKeyword = keyword.toLowerCase().trim();
-      const data = await getData(
-        `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
-        {
-          method: "GET",
-          headers: { authorization: `Bearer ${userContext?.accessToken}` },
-        }
-      );
+    const structuredKeyword = keyword.toLowerCase().trim();
+    const recipes = userContext?.recipes;
+    if (!recipes) return [];
 
-      const orderedRecipes = getOrderedRecipes(data.data);
-      setCurPage(1);
-      setRecipes(orderedRecipes);
-      setCurPageRecipes(getRecipesPerPage(orderedRecipes, RECIPES_PER_PAGE, 1));
-      setNumberOfPages(calcNumberOfPages(orderedRecipes, RECIPES_PER_PAGE));
-      data.newAccessToken && userContext?.login(data.newAccessToken);
+    const filteredRecipes = structuredKeyword
+      ? getFilteredRecipes(recipes, structuredKeyword)
+      : recipes;
 
-      setIsPending(false);
-      return orderedRecipes;
-    } catch (err: any) {
-      setIsPending(false);
-      setError(`Server error while getting recipes 🙇‍♂️ ${err.message}`);
-      console.error("Error while getting recipes", err.message);
-    }
+    // const data = await getData(
+    //   `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
+    //   {
+    //     method: "GET",
+    //     headers: { authorization: `Bearer ${userContext?.accessToken}` },
+    //   }
+    // );
+    // console.log(data);
+
+    // const orderedRecipes = getOrderedRecipes(data.data);
+    setCurPage(1);
+    setRecipes(filteredRecipes);
+    setCurPageRecipes(getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, 1));
+    setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
+
+    setIsPending(false);
+    return filteredRecipes;
   }
+
+  // async function getRecipes(keyword: string = "") {
+  //   try {
+  //     setIsPending(true);
+
+  //     const structuredKeyword = keyword.toLowerCase().trim();
+  //     const data = await getData(
+  //       `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
+  //       {
+  //         method: "GET",
+  //         headers: { authorization: `Bearer ${userContext?.accessToken}` },
+  //       }
+  //     );
+
+  //     const orderedRecipes = getOrderedRecipes(data.data);
+  //     setCurPage(1);
+  //     setRecipes(orderedRecipes);
+  //     setCurPageRecipes(getRecipesPerPage(orderedRecipes, RECIPES_PER_PAGE, 1));
+  //     setNumberOfPages(calcNumberOfPages(orderedRecipes, RECIPES_PER_PAGE));
+  //     data.newAccessToken && userContext?.login(data.newAccessToken);
+
+  //     setIsPending(false);
+  //     return orderedRecipes;
+  //   } catch (err: any) {
+  //     setIsPending(false);
+  //     setError(`Server error while getting recipes 🙇‍♂️ ${err.message}`);
+  //     console.error("Error while getting recipes", err.message);
+  //   }
+  // }
 
   const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
     if (timeoutId) clearTimeout(timeoutId);
@@ -329,7 +375,7 @@ function Search({
       if (!keyword) return;
       setCurPage(1);
 
-      await getRecipes(keyword);
+      getRecipes(keyword);
     }, 600);
 
     setTimeoutId(id);
@@ -389,9 +435,9 @@ function Search({
           </button>
         </form>
         <ul className={styles.search_results}>
-          {message ? (
+          {message || isPending ? (
             <p className={styles.no_results} style={{ fontSize: fontSize }}>
-              {message}
+              {message || "Loading..."}
             </p>
           ) : (
             curPageRecipes.map((recipe, i) => (
@@ -477,23 +523,39 @@ function DropdownMenu({
   onClickDropdown: () => void;
   onClickLogout: () => void;
 }) {
-  const fontSize = mediaContext === "mobile" ? "4vw" : "2vw";
+  const fontSize =
+    mediaContext === "mobile"
+      ? "4vw"
+      : mediaContext === "tablet"
+      ? "2.7vw"
+      : "1.8vw";
   return (
     <div
       style={{
         position: "absolute",
-        top: mediaContext === "mobile" ? "0%" : "1%",
+        top:
+          mediaContext === "mobile" || mediaContext === "tablet" ? "0%" : "1%",
         right: "3%",
         aspectRatio: "1 / 1.8",
         zIndex: "10",
-        width: mediaContext === "mobile" ? "60%" : "20%",
+        width:
+          mediaContext === "mobile"
+            ? "60%"
+            : mediaContext === "tablet"
+            ? "38%"
+            : "20%",
         pointerEvents: !isDropdownVisible ? "none" : "all",
       }}
     >
       <button
         style={{
           pointerEvents: "all",
-          width: mediaContext === "mobile" ? "16%" : "22%",
+          width:
+            mediaContext === "mobile"
+              ? "16%"
+              : mediaContext === "tablet"
+              ? "19%"
+              : "22%",
           aspectRatio: "1",
           background: "none",
           border: "none",
@@ -501,7 +563,10 @@ function DropdownMenu({
           backgroundRepeat: "no-repeat",
           backgroundSize: "65%",
           backgroundPosition: "center",
-          marginLeft: "90%",
+          marginLeft:
+            mediaContext !== "desktop" && mediaContext !== "big"
+              ? "90%"
+              : "80%",
         }}
         type="button"
         onClick={onClickDropdown}
@@ -633,14 +698,18 @@ function Recipe({
     mediaContext === "mobile"
       ? getSize(recipeWidth, 0.045, "4.5vw")
       : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.03, "2.7vw")
-      : getSize(recipeWidth, 0.026, "1.2vw");
+      ? getSize(recipeWidth, 0.035, "2.7vw")
+      : mediaContext === "desktop" && window.innerWidth <= 1100
+      ? getSize(recipeWidth, 0.031, "1.5vw")
+      : getSize(recipeWidth, 0.028, "1.3vw");
   const headerSize =
     mediaContext === "mobile"
       ? getSize(recipeWidth, 0.05, "5vw")
       : mediaContext === "tablet"
       ? getSize(recipeWidth, 0.04, "3.5vw")
-      : getSize(recipeWidth, 0.033, "1.5vw");
+      : mediaContext === "desktop" && window.innerWidth <= 1100
+      ? getSize(recipeWidth, 0.035, "1.5vw")
+      : getSize(recipeWidth, 0.032, "1.3vw");
   const marginTop = getSize(recipeWidth, 0.11, "30px");
 
   //don't modify recipe value unless the recipe is changed
@@ -1110,7 +1179,12 @@ function BriefExplanation({
         width: width,
         aspectRatio: "1/0.1",
         gap: "3%",
-        margin: mediaContext === "mobile" ? "10% 0 5% 0" : "6% 0 5% 0 ",
+        margin:
+          mediaContext === "mobile"
+            ? "10% 0 5% 0"
+            : mediaContext === "tablet"
+            ? "8% 0 5% 0"
+            : "6% 0 5% 0 ",
       }}
     >
       <div
@@ -1123,7 +1197,12 @@ function BriefExplanation({
           maxWidth: "91%",
           height: "100%",
           whiteSpace: "nowrap",
-          padding: mediaContext === "mobile" ? "5% 3%" : "3%",
+          padding:
+            mediaContext === "mobile"
+              ? "5% 3%"
+              : mediaContext === "tablet"
+              ? "4% 3%"
+              : "3%",
           backgroundColor: "rgb(255, 217, 0)",
           borderRadius: "1% / 7%",
           gap: "20%",
@@ -1137,7 +1216,12 @@ function BriefExplanation({
           <div
             className={styles.container__fukidashi}
             style={{
-              top: "-275%",
+              top:
+                mediaContext === "mobile"
+                  ? "-275%"
+                  : mediaContext === "tablet"
+                  ? "-295%"
+                  : "-295%",
               left: "0%",
               opacity: !mouseOver[0] ? 0 : 1,
             }}
@@ -1170,7 +1254,12 @@ function BriefExplanation({
           <div
             className={styles.container__fukidashi}
             style={{
-              top: "-290%",
+              top:
+                mediaContext === "mobile"
+                  ? "-290%"
+                  : mediaContext === "tablet"
+                  ? "-300%"
+                  : "-300%",
               left: "30%",
               opacity: !mouseOver[1] ? 0 : 1,
             }}
@@ -1217,7 +1306,12 @@ function BriefExplanation({
           <div
             className={styles.container__fukidashi}
             style={{
-              top: "-280%",
+              top:
+                mediaContext === "mobile"
+                  ? "-280%"
+                  : mediaContext === "tablet"
+                  ? "-295%"
+                  : "-295%",
               left: "0%",
               opacity: !mouseOver[2] ? 0 : 1,
             }}
@@ -1260,7 +1354,12 @@ function BriefExplanation({
           <div
             className={styles.container__fukidashi}
             style={{
-              top: "-275%",
+              top:
+                mediaContext === "mobile"
+                  ? "-275%"
+                  : mediaContext === "tablet"
+                  ? "-295%"
+                  : "-295%",
               left: "30%",
               opacity: !mouseOver[3] ? 0 : 1,
             }}
@@ -1304,7 +1403,12 @@ function BriefExplanation({
           backgroundImage: !favorite
             ? 'url("/star-off.png")'
             : 'url("/star-on.png")',
-          width: mediaContext === "mobile" ? "7%" : "4.5%",
+          width:
+            mediaContext === "mobile"
+              ? "7%"
+              : mediaContext === "tablet"
+              ? "5.5%"
+              : "4.5%",
           aspectRatio: "1",
           backgroundRepeat: "no-repeat",
           backgroundSize: "100%",
@@ -1363,12 +1467,11 @@ function Ingredients({
         style={{
           width: "100%",
           display: "grid",
-          gridTemplateColumns: mediaContext === "mobile" ? "1fr" : "1fr 1fr",
+          gridTemplateColumns: mediaContext === "mobile" ? "auto" : "auto auto",
           justifyItems: "left",
           marginTop: "2%",
           wordSpacing: "0.1vw",
-          columnGap: "5%",
-          paddingLeft: "0",
+          columnGap: mediaContext === "tablet" ? "0" : "5%",
         }}
       >
         {ingredients.map((ing, i) => (
@@ -1644,8 +1747,7 @@ function AboutThisRecipe({
           backgroundColor: description ? "rgb(255, 247, 133)" : "transparent",
           width: mediaContext === "mobile" ? "90%" : "85%",
           aspectRatio: "1/0.28",
-          fontSize:
-            mediaContext === "mobile" ? fontSize : `calc(${fontSize} * 0.9)`,
+          fontSize,
           letterSpacing: "0.03vw",
           padding: "1.2% 1.5%",
           overflowY: "auto",
@@ -1689,7 +1791,9 @@ function Memories({
   const width =
     mediaContext === "mobile"
       ? getSize(recipeWidth, 0.9, "300px")
-      : getSize(recipeWidth, 0.5, "400px");
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.65, "400px")
+      : getSize(recipeWidth, 0.55, "400px");
   const height = parseInt(width) * 0.55 + "px";
 
   const [timeourId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -1716,7 +1820,12 @@ function Memories({
       style={{
         position: "relative",
         marginTop: marginTop,
-        width: mediaContext === "mobile" ? "90%" : "60%",
+        width:
+          mediaContext === "mobile"
+            ? "90%"
+            : mediaContext === "tablet"
+            ? "65%"
+            : "55%",
         height: images.length
           ? `calc(${headerSize} * 2 + ${height})`
           : `calc(${height} * 0.8)`,
@@ -1759,13 +1868,23 @@ function Memories({
           <div
             style={{
               position: "absolute",
-              width: "70%",
+              width:
+                mediaContext === "mobile"
+                  ? "85%"
+                  : mediaContext === "tablet"
+                  ? "80%"
+                  : "70%",
               height: "5%",
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              gap: "1.7%",
+              gap:
+                mediaContext === "mobile"
+                  ? "2.5%"
+                  : mediaContext === "tablet"
+                  ? "2.5%"
+                  : "1.8%",
               bottom: "5%",
             }}
           >
@@ -1775,7 +1894,12 @@ function Memories({
                 key={i}
                 style={{
                   opacity: "0.6",
-                  width: "2.5%",
+                  width:
+                    mediaContext === "mobile"
+                      ? "4%"
+                      : mediaContext === "tablet"
+                      ? "3.5%"
+                      : "3%",
                   aspectRatio: "1",
                   backgroundColor:
                     curImage === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
@@ -1852,7 +1976,12 @@ function Comments({
     <div
       style={{
         marginTop: marginTop,
-        width: mediaContext === "mobile" ? "90%" : "70%",
+        width:
+          mediaContext === "mobile"
+            ? "90%"
+            : mediaContext === "tablet"
+            ? "80%"
+            : "70%",
         aspectRatio: comments ? "1/0.5" : "1/0.3",
         // height: comments ? "200px" : "150px",
       }}
@@ -1877,8 +2006,7 @@ function Comments({
           style={{
             width: "100%",
             height: "100%",
-            fontSize:
-              mediaContext === "mobile" ? fontSize : `calc(${fontSize} * 0.9)`,
+            fontSize,
             letterSpacing: comments ? "0.05vw" : "0.03vw",
             padding: comments ? "3%" : "0",
             overflowY: "auto",
@@ -1903,7 +2031,11 @@ function Timers({
   const fontSize =
     mediaContext === "mobile"
       ? getSize(timerWidth, 0.045, "3.5vw")
-      : getSize(timerWidth, 0.027, "1.2vw");
+      : mediaContext === "tablet"
+      ? getSize(timerWidth, 0.07, "2.7vw")
+      : mediaContext === "desktop" && window.innerWidth <= 1100
+      ? getSize(timerWidth, 0.035, "1.5vw")
+      : getSize(timerWidth, 0.031, "1.3vw");
 
   const [timerKeys, setTimerKeys] = useState(
     Array(1)
@@ -1951,10 +2083,20 @@ function Timers({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: mediaContext === "mobile" ? "1fr" : "1fr 1fr",
-          rowGap: mediaContext === "mobile" ? "3%" : "0",
+          gridTemplateColumns:
+            mediaContext === "mobile" || mediaContext === "tablet"
+              ? "1fr"
+              : "1fr 1fr",
+          rowGap: mediaContext === "mobile" ? "3%" : "1%",
           justifyItems: "center",
-          width: mediaContext === "mobile" ? "90%" : "100%",
+          width:
+            mediaContext === "mobile"
+              ? "90%"
+              : mediaContext === "tablet"
+              ? "100%"
+              : mediaContext === "desktop" && window.innerWidth <= 1100
+              ? "95%"
+              : "90%",
           height: "fit-content",
           fontSize: fontSize,
         }}
@@ -1962,6 +2104,7 @@ function Timers({
         {timerKeys.map((keyObj, i) => (
           <Timer
             key={keyObj.id}
+            mediaContext={mediaContext}
             fontSize={fontSize}
             index={i}
             onClickDelete={handleDeleteTimers}
@@ -1970,7 +2113,10 @@ function Timers({
         {timerKeys.length === MAX_TIMERS || (
           <div
             className={styles.container__timer}
-            style={{ justifyContent: "center" }}
+            style={{
+              justifyContent: "center",
+              width: mediaContext === "mobile" ? "80%" : "90%",
+            }}
           >
             <button
               className={styles.btn__timer}
@@ -1997,10 +2143,12 @@ function Timers({
 }
 
 function Timer({
+  mediaContext,
   fontSize,
   index,
   onClickDelete,
 }: {
+  mediaContext: TYPE_MEDIA;
   fontSize: string;
   index: number;
   onClickDelete: (i: number) => void;
@@ -2192,6 +2340,7 @@ function Timer({
       className={styles.container__timer}
       style={{
         backgroundColor: "rgb(255, 245, 199)",
+        width: mediaContext === "mobile" ? "80%" : "90%",
         gap: "8%",
         boxShadow: "rgba(0, 0, 0, 0.267) 3px 3px 8px",
       }}
@@ -2204,12 +2353,12 @@ function Timer({
         style={{
           position: "absolute",
           backgroundColor: "orange",
-          width: "7%",
+          width: mediaContext === "mobile" ? "7%" : "8%",
           aspectRatio: "1",
-          top: "2%",
+          top: mediaContext !== "tablet" ? "2%" : "1%",
           right: "1%",
           fontWeight: "bold",
-          fontSize: `calc(${fontSize} * 0.7)`,
+          fontSize: `calc(${fontSize} * 0.9)`,
         }}
         type="button"
         onClick={() => {
@@ -2362,8 +2511,15 @@ function Note({
         fontSize:
           mediaContext === "mobile"
             ? getSize(noteWidth, 0.047, "4vw")
+            : mediaContext === "tablet"
+            ? getSize(noteWidth, 0.07, "2.7vw")
+            : mediaContext === "desktop" && window.innerWidth <= 1100
+            ? getSize(noteWidth, 0.04, "1.5vw")
             : getSize(noteWidth, 0.03, "1.3vw"),
-        letterSpacing: mediaContext === "mobile" ? "0.1vw" : "0.05vw",
+        letterSpacing:
+          mediaContext === "mobile" || mediaContext === "tablet"
+            ? "0.1vw"
+            : "0.05vw",
         padding: "2% 2.8%",
         zIndex: "1",
       }}

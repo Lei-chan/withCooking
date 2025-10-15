@@ -13,8 +13,10 @@ export async function GET(req: NextRequest) {
     const bucket = getGridFSBucket();
 
     const searchParams = req.nextUrl.searchParams;
+    const startIndex = searchParams.get("startIndex");
+    const endIndex = searchParams.get("endIndex");
 
-    const keyword = searchParams.get("keyword");
+    // const keyword = searchParams.get("keyword");
 
     let { id, newAccessToken } = await authenticateToken(req);
 
@@ -27,24 +29,25 @@ export async function GET(req: NextRequest) {
 
     const user = await User.findById(id);
     const recipes = user.recipes || [];
+    const slicedRecipes = recipes.slice(startIndex, endIndex);
 
-    const filteredRecipes =
-      keyword && recipes
-        ? recipes.filter((recipe: any) => {
-            const structuredKeyword = keyword.trim().toLowerCase();
+    // const filteredRecipes =
+    //   keyword && recipes
+    //     ? recipes.filter((recipe: any) => {
+    //         const structuredKeyword = keyword.trim().toLowerCase();
 
-            return (
-              recipe.title.toLowerCase().includes(structuredKeyword) ||
-              recipe.ingredients.find((ing: any) =>
-                ing.ingredient.toLowerCase().includes(structuredKeyword)
-              )
-            );
-          })
-        : recipes;
+    //         return (
+    //           recipe.title.toLowerCase().includes(structuredKeyword) ||
+    //           recipe.ingredients.find((ing: any) =>
+    //             ing.ingredient.toLowerCase().includes(structuredKeyword)
+    //           )
+    //         );
+    //       })
+    //     : recipes;
 
-    const mainImages = filteredRecipes.length
+    const mainImages = slicedRecipes.length
       ? await Promise.all(
-          filteredRecipes.map((recipe: any) =>
+          slicedRecipes.map((recipe: any) =>
             recipe.mainImage
               ? downloadFile(bucket, recipe.mainImage)
               : Promise.resolve(undefined)
@@ -52,10 +55,15 @@ export async function GET(req: NextRequest) {
         )
       : [];
 
-    const recipesWithMainImage = filteredRecipes.length
-      ? filteredRecipes.map((recipe: any, i: number) => {
-          const newRecipe = { ...recipe };
-          newRecipe.mainImage = mainImages[i];
+    const recipesForPreview = slicedRecipes.length
+      ? slicedRecipes.map((recipe: any, i: number) => {
+          const newRecipe = {
+            _id: recipe._id,
+            title: recipe.title,
+            mainImage: mainImages[i],
+            favorite: recipe.favorite,
+            ingredients: recipe.ingredients,
+          };
           return newRecipe;
         })
       : [];
@@ -63,7 +71,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: recipesWithMainImage,
+        data: recipesForPreview,
+        numberOfRecipes: recipes.length,
         newAccessToken,
       },
       { status: 200 }
