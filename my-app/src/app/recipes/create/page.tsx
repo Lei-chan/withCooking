@@ -3,6 +3,7 @@ import styles from "./page.module.css";
 import Image from "next/image";
 import clsx from "clsx";
 import React, { useContext, useEffect, useState } from "react";
+import Resizer from "react-image-file-resizer";
 import { nanoid } from "nanoid";
 import {
   calcTransitionXSlider,
@@ -12,6 +13,7 @@ import {
   getImageURL,
   getFileData,
   getRegion,
+  getImageFileData,
 } from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
@@ -319,15 +321,24 @@ function ImageTitle({
   onChangeImage: (image: TYPE_FILE) => void;
   deleteImage: () => void;
 }) {
-  async function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
-    try {
-      const files = e.currentTarget.files;
-      if (!files) return;
+  function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.currentTarget.files;
+    if (!files) return;
 
-      onChangeImage(await getFileData(files[0]));
-    } catch (err: any) {
-      console.error(err.message);
-    }
+    // onChangeImage(await getFileData(files[0]));
+    Resizer.imageFileResizer(
+      files[0],
+      440,
+      264,
+      "WEBP",
+      100,
+      0,
+      (uri) => {
+        const fileData = getImageFileData(files[0], uri);
+        onChangeImage(fileData);
+      },
+      "base64"
+    );
   }
 
   return (

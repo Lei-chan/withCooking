@@ -24,6 +24,7 @@ import {
   updateIngsForServings,
   getReadableIngUnit,
   getNextSlideIndex,
+  getUserRecipes,
 } from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
@@ -264,9 +265,10 @@ function Search({
   //
   // const mainImageSize = window.innerHeight / (RECIPES_PER_PAGE + 2);
 
-  const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
-  const [curPageRecipes, setCurPageRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  //to modify recipes
+  // const [filteredRecipes, setFilteredRecipes] = useState<any[] | []>([]);
+  // const [curPageRecipes, setCurPageRecipes] = useState<any[] | []>([]);
   const [numberOfPages, setNumberOfPages] = useState<number>(0);
   const [curPage, setCurPage] = useState<number>(1);
 
@@ -274,68 +276,157 @@ function Search({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  // const [startIndex, setStartIndex] = useState(0);
+  const [numberOfRecipes, setNumberOfRecipes] = useState(
+    userContext?.numberOfRecipes || null
+  );
+  const [keyword, setKeyword] = useState("");
 
+  // const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  //fetch recipes
   useEffect(() => {
-    setIsPending(true);
-    if (!userContext?.recipes) return;
-    const userRecipes = getRecipes();
-    setNumberOfUserRecipes(userRecipes?.length || 0);
-    setIsPending(false);
-  }, [userContext?.recipes]);
+    //when numberOfRecipes is null or there're already recipes => return
+    // if (numberOfRecipes === null || recipes.length) return;
+    (async () => {
+      setIsPending(true);
+      await setUserRecipes();
+      setIsPending(false);
+    })();
+  }, [numberOfRecipes]);
+
+  //set numberOfRecipes
+  useEffect(() => {
+    if (userContext?.numberOfRecipes === null || !userContext) return;
+    setNumberOfRecipes(userContext.numberOfRecipes);
+    setNumberOfPages(Math.ceil(userContext.numberOfRecipes / RECIPES_PER_PAGE));
+  }, [userContext?.numberOfRecipes]);
+
+  //6 recipes per fetch
+  async function setUserRecipes(keyword: string = "") {
+    try {
+      if (!numberOfRecipes) return;
+
+      const RECIPES_PER_FETCH = 6;
+
+      const data = await getUserRecipes(
+        userContext?.accessToken,
+        (curPage - 1) * RECIPES_PER_FETCH,
+        RECIPES_PER_FETCH,
+        keyword
+      );
+
+      setRecipes(data.data);
+
+      data.newAccessToken && userContext?.login(data.newAccessToken);
+
+      // const timesToFetch = numberOfRecipes
+      //   ? Math.ceil(numberOfRecipes / RECIPES_PER_FETCH)
+      //   : 0;
+      // if (!timesToFetch) return;
+
+      // const dataArr = await Promise.all(
+      //   Array(timesToFetch)
+      //     .fill("")
+      //     .map((_, i) =>
+      //       getUserRecipes(
+      //         userContext?.accessToken,
+      //         i * RECIPES_PER_FETCH,
+      //         RECIPES_PER_FETCH
+      //       )
+      //     )
+      // );
+
+      // console.log(dataArr);
+      // let newAccessToken;
+      // const recipes = dataArr.flatMap((data: any) => {
+      //   if (data.newAccessToken) newAccessToken = data.newAccessToken;
+
+      //   return data.data;
+      // });
+      // const data = await getUserRecipes(
+      //   userContext?.accessToken,
+      //   startIndex,
+      //   6
+      // );
+
+      // setRecipes((prev) => {
+      //   const newRecipes = prev ? [...prev, ...recipes] : recipes;
+      //   return newRecipes.length ? getOrderedRecipes(newRecipes) : [];
+      // });
+    } catch (err: any) {
+      console.error("Error while getting recipes", err.message);
+    }
+  }
+
+  // useEffect(() => {
+  //   if (!recipes.length) return;
+  //   setCurPage(1);
+  //   setFilteredRecipes(recipes);
+  //   // setNumberOfRecipes(recipes.length);
+  //   // setCurPageRecipes(getRecipesPerPage(recipes, RECIPES_PER_PAGE, 1));
+  //   // setNumberOfPages(calcNumberOfPages(recipes, RECIPES_PER_PAGE));
+  // }, [recipes]);
+
+  // useEffect(() => {
+  //   console.log(startIndex, numberOfRecipes);
+  //   if (startIndex >= numberOfRecipes) return;
+  //   (async () => {
+  //     await setUserRecipes();
+  //   })();
+  // }, [startIndex, numberOfRecipes]);
 
   //when curPage changes, change curRecipes too
   useEffect(() => {
-    if (!recipes) return;
+    // if (!filteredRecipes) return;
 
-    const recipesPerPage = getRecipesPerPage(
-      recipes,
-      RECIPES_PER_PAGE,
-      curPage
-    );
+    // const recipesPerPage = getRecipesPerPage(
+    //   filteredRecipes,
+    //   RECIPES_PER_PAGE,
+    //   curPage
+    // );
     //set recipes for current page
-    setCurPageRecipes(recipesPerPage);
-  }, [curPage]);
+    // setCurPageRecipes(recipesPerPage);
+
+    (async () => {
+      setIsPending(true);
+      await setUserRecipes();
+      setIsPending(false);
+    })();
+  }, [curPage, keyword]);
 
   useEffect(() => {
     const message = createMessage(
       error,
       isPending,
-      numberOfUserRecipes,
-      curPageRecipes.length
+      numberOfRecipes,
+      // curPageRecipes.length
+      recipes.length
     ) as string;
     setMessage(message);
-  }, [error, isPending, numberOfUserRecipes, curPageRecipes.length]);
+  }, [error, isPending, numberOfRecipes, recipes.length]);
 
-  function getRecipes(keyword: string = "") {
-    setIsPending(true);
+  // useEffect(()=>{
+  //  if(!keyword) return;
 
-    const structuredKeyword = keyword.toLowerCase().trim();
-    const recipes = userContext?.recipes;
-    if (!recipes) return [];
+  // }, [keyword]);
 
-    const filteredRecipes = structuredKeyword
-      ? getFilteredRecipes(recipes, structuredKeyword)
-      : recipes;
+  // async function SetFilteredRecipes(keyword: string = "") {
+  //     const structuredKeyword = keyword.toLowerCase().trim();
 
-    // const data = await getData(
-    //   `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
-    //   {
-    //     method: "GET",
-    //     headers: { authorization: `Bearer ${userContext?.accessToken}` },
-    //   }
-    // );
-    // console.log(data);
+  //     setKeyword(structuredKeyword);
+  //     setCurPage(1);
 
-    // const orderedRecipes = getOrderedRecipes(data.data);
-    setCurPage(1);
-    setRecipes(filteredRecipes);
-    setCurPageRecipes(getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, 1));
-    setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
+  //     // const data = await setUserRecipes(structuredKeyword);
+  //     // const filteredRecipes =
+  //     //   structuredKeyword && recipes.length
+  //     //     ? getFilteredRecipes(recipes, structuredKeyword)
+  //     //     : recipes;
 
-    setIsPending(false);
-    return filteredRecipes;
-  }
+  //     // setFilteredRecipes(filteredRecipes);
+  //     // setCurPageRecipes(getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, 1));
+  //     // setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
+  // }
 
   // async function getRecipes(keyword: string = "") {
   //   try {
@@ -366,24 +457,34 @@ function Search({
   //   }
   // }
 
-  const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
-    if (timeoutId) clearTimeout(timeoutId);
-
-    const keyword = e.currentTarget.value.trim().toLowerCase();
-
-    const id = setTimeout(async () => {
-      if (!keyword) return;
-      setCurPage(1);
-
-      getRecipes(keyword);
-    }, 600);
-
-    setTimeoutId(id);
-  };
+  // const handleChangeInput = function (e: React.ChangeEvent<HTMLInputElement>) {
+  // if (timeoutId) clearTimeout(timeoutId);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    const keywordData = new FormData(e.currentTarget).get("keyword");
+    if (!keywordData) return;
+
+    const structuredKeyword = String(keywordData).trim().toLowerCase();
+    console.log(structuredKeyword);
+
+    setKeyword(structuredKeyword);
+    setCurPage(1);
+
+    // const id = setTimeout(async () => {
+    //   if (!keyword) return;
+    //   setCurPage(1);
+
+    //   setFilteredRecipes(keyword);
+    // }, 600);
+
+    // setTimeoutId(id);
   }
+
+  // function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  //   e.preventDefault();
+  // }
 
   //I'm gonna make it work for arrow keydown event later too!
   function handlePagination(e: React.MouseEvent<HTMLButtonElement>) {
@@ -422,9 +523,10 @@ function Search({
           <input
             id={styles.input__search}
             style={{ fontSize: `calc(${fontSize} * 0.9)` }}
+            name="keyword"
             type="search"
             placeholder="Search your recipe"
-            onChange={handleChangeInput}
+            // onChange={handleChangeInput}
           ></input>
           <button
             className={styles.btn__search}
@@ -440,7 +542,7 @@ function Search({
               {message || "Loading..."}
             </p>
           ) : (
-            curPageRecipes.map((recipe, i) => (
+            recipes.map((recipe, i) => (
               <li
                 key={i}
                 className={styles.recipe_preview}

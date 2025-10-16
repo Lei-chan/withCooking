@@ -10,7 +10,7 @@ import {
   APP_EXPLANATIONS,
   MAX_MOBILE,
   MAX_TABLET,
-  MEDIA,
+  TYPE_MEDIA,
   MIN_TABLET,
   PASSWORD_MIN_DIGIT,
   PASSWORD_MIN_LENGTH,
@@ -295,7 +295,7 @@ function Buttons({
   onLoginClick,
   onSignupClick,
 }: {
-  mediaContext: MEDIA;
+  mediaContext: TYPE_MEDIA;
   onLoginClick: () => void;
   onSignupClick: () => void;
 }) {
@@ -870,7 +870,7 @@ function OverlayLogin({
         body: JSON.stringify(accountInfo),
       });
 
-      userContext?.firstLogin(data.accessToken);
+      userContext?.firstLogin(data.accessToken, data.data.numberOfRecipes);
     } catch (err) {
       throw err;
     }
@@ -1084,7 +1084,7 @@ function OverlayCreateAccount({
         body: JSON.stringify(accountInfo),
       });
 
-      userContext?.login(data.accessToken);
+      userContext?.login(data.accessToken, data.data.numberOfRecipes);
     } catch (err: any) {
       throw err;
     }

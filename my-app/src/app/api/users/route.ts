@@ -94,9 +94,10 @@ export async function POST(req: NextRequest) {
         } successfully`,
         data: {
           _id: user._id,
-          email: user.email,
-          recipes: user.recipes,
-          createdAt: user.createdAt,
+          numberOfRecipes: user.recipes?.length || 0,
+          // email: user.email,
+          // recipes: user.recipes,
+          // createdAt: user.createdAt,
         },
         accessToken,
       },

@@ -7,7 +7,7 @@ import {
   useMemo,
   useEffect,
 } from "react";
-import { wait, getData, getOrderedRecipes } from "./helper";
+import { wait, getData, getOrderedRecipes, getUserRecipes } from "./helper";
 import {
   MAX_DESKTOP,
   MAX_MOBILE,
@@ -50,48 +50,69 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const media = getMedia();
 
   //user context
+  // const RECIPES_PER_REQ = 24;
   const [accessToken, setAccessToken] = useState("");
-  const [startIndex, setStartIndex] = useState(0);
-  const [recipes, setRecipes] = useState<any[] | null>(null);
+  // const [startIndex, setStartIndex] = useState(0);
+  // const [recipes, setRecipes] = useState<any[] | null>(null);
+  const [numberOfRecipes, setNumberOfRecipes] = useState(0);
   const [isMessageVisible, setIsMessageVisible] = useState(false);
 
-  const firstLogin = useCallback(async (accessToken: string) => {
-    setAccessToken(accessToken);
-    setUserRecipes(accessToken);
-    await showMessage();
-  }, []);
+  const firstLogin = useCallback(
+    async (accessToken: string, numberOfRecipes: number) => {
+      setAccessToken(accessToken);
+      setNumberOfRecipes(numberOfRecipes);
 
+      //for persisting data
+      localStorage.setItem("numberOfRecipes", numberOfRecipes + "");
+      // setUserRecipes(accessToken);
+      await showMessage();
+    },
+    []
+  );
+
+  //get 24 recipes at a time
+  // async function setUserRecipes(accessToken: string) {
+  //   try {
+  //     const data = await getUserRecipes(
+  //       accessToken,
+  //       startIndex,
+  //       RECIPES_PER_REQ
+  //     );
+
+  //     setNumberOfRecipes(data.numberOfRecipes);
+  //     setRecipes((prev) => {
+  //       const newRecipes = prev ? [...prev, ...data.data] : data.data;
+  //       return newRecipes.length ? getOrderedRecipes(newRecipes) : [];
+  //     });
+  //     setStartIndex((prev) => prev + RECIPES_PER_REQ);
+  //   } catch (err: any) {
+  //     console.error("Error while getting recipes", err.message);
+  //   }
+  // }
+
+  //provokes the next fetch to get more user recipes
+  // useEffect(() => {
+  //   if (startIndex >= numberOfRecipes) return;
+  //   // localStorage.setItem("startIndex", startIndex + "");
+  //   setUserRecipes(accessToken);
+  // }, [startIndex]);
+
+  // //set recipes in localStorage for when user reloads page
+  // useEffect(() => {
+  //   localStorage.setItem("recipes", JSON.stringify(recipes));
+  // }, [recipes]);
+
+  // //set numberOfRecipes in localStorage for when user reloads page
+  // useEffect(() => {
+  //   localStorage.setItem("numberOfRecipes", numberOfRecipes + "");
+  // }, [numberOfRecipes]);
+
+  // //set numberOfRecipes stored in localStorage to state when user reloads page
   useEffect(() => {
-    setUserRecipes(accessToken);
-  }, [startIndex]);
+    const storedNumberOfRecipes = localStorage.getItem("numberOfRecipes");
 
-  //get 6 recipes at a time
-  async function setUserRecipes(accessToken: string) {
-    try {
-      const data = await getData(
-        `/api/users/recipes?startIndex=${startIndex}&endIndex=${
-          startIndex + 6
-        }`,
-        {
-          method: "GET",
-          headers: { authorization: `Bearer ${accessToken}` },
-        }
-      );
-      console.log(data);
-
-      setRecipes((prev) => {
-        const newRecipes = prev ? [...prev, ...data.data] : data.data;
-        return newRecipes.length ? getOrderedRecipes(newRecipes) : [];
-      });
-      //issue
-      setStartIndex((prev) =>
-        prev >= data.numberOfRecipes - 6 ? prev : prev + 6
-      );
-    } catch (err: any) {
-      console.error("Error while getting recipes", err.message);
-    }
-  }
-  console.log(recipes);
+    setNumberOfRecipes(parseInt(storedNumberOfRecipes || "0"));
+  }, []);
 
   async function showMessage() {
     setIsMessageVisible(true);
@@ -101,23 +122,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (accessToken: string) => {
     setAccessToken(accessToken);
-    setUserRecipes(accessToken);
   }, []);
 
   const logout = useCallback(() => {
     setAccessToken("");
+    localStorage.removeItem("numberOfRecipes");
   }, []);
 
   const userContextValue = useMemo(
     () => ({
       accessToken,
-      recipes,
+      // recipes,
+      numberOfRecipes,
       isMessageVisible,
       firstLogin,
       login,
       logout,
     }),
-    [accessToken, recipes, isMessageVisible, firstLogin, login, logout]
+    [accessToken, numberOfRecipes, isMessageVisible, firstLogin, login, logout]
   );
 
   return (

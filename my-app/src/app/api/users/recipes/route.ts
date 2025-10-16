@@ -5,6 +5,7 @@ import { authenticateToken } from "@/app/lib/auth";
 import { refreshAccessToken } from "@/app/lib/auth";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
 import { downloadFile } from "../../recipes/route";
+import { getOrderedRecipes } from "@/app/lib/helper";
 
 //get recipes in user data
 export async function GET(req: NextRequest) {
@@ -15,8 +16,13 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const startIndex = searchParams.get("startIndex");
     const endIndex = searchParams.get("endIndex");
+    const keyword = searchParams.get("keyword");
 
-    // const keyword = searchParams.get("keyword");
+    if (!startIndex || !endIndex) {
+      const err: any = new Error("startIndex and endIndex are required");
+      err.statusCode = 500;
+      throw err;
+    }
 
     let { id, newAccessToken } = await authenticateToken(req);
 
@@ -28,22 +34,26 @@ export async function GET(req: NextRequest) {
     }
 
     const user = await User.findById(id);
-    const recipes = user.recipes || [];
-    const slicedRecipes = recipes.slice(startIndex, endIndex);
+    const recipes = user.recipes ? getOrderedRecipes(user.recipes) : [];
 
-    // const filteredRecipes =
-    //   keyword && recipes
-    //     ? recipes.filter((recipe: any) => {
-    //         const structuredKeyword = keyword.trim().toLowerCase();
+    const filteredRecipes =
+      keyword && recipes.length
+        ? recipes.filter((recipe: any) => {
+            const structuredKeyword = keyword.trim().toLowerCase();
 
-    //         return (
-    //           recipe.title.toLowerCase().includes(structuredKeyword) ||
-    //           recipe.ingredients.find((ing: any) =>
-    //             ing.ingredient.toLowerCase().includes(structuredKeyword)
-    //           )
-    //         );
-    //       })
-    //     : recipes;
+            return (
+              recipe.title.toLowerCase().includes(structuredKeyword) ||
+              recipe.ingredients.find((ing: any) =>
+                ing.ingredient.toLowerCase().includes(structuredKeyword)
+              )
+            );
+          })
+        : recipes;
+
+    const slicedRecipes = filteredRecipes.slice(
+      parseInt(startIndex),
+      parseInt(endIndex)
+    );
 
     const mainImages = slicedRecipes.length
       ? await Promise.all(
@@ -62,7 +72,7 @@ export async function GET(req: NextRequest) {
             title: recipe.title,
             mainImage: mainImages[i],
             favorite: recipe.favorite,
-            ingredients: recipe.ingredients,
+            // ingredients: recipe.ingredients,
           };
           return newRecipe;
         })
@@ -72,7 +82,7 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         data: recipesForPreview,
-        numberOfRecipes: recipes.length,
+        // numberOfRecipes: recipes.length,
         newAccessToken,
       },
       { status: 200 }
@@ -104,6 +114,7 @@ export async function POST(req: NextRequest) {
     const user = await User.findById(id);
 
     const newRecipes = user.recipes.length ? [...user.recipes, body] : [body];
+    // console.log(newRecipes);
 
     const updatedUser = await User.findByIdAndUpdate(
       id,

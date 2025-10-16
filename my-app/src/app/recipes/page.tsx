@@ -15,6 +15,7 @@ import {
   getFilteredRecipes,
   calcNumberOfPages,
   getSize,
+  getUserRecipes,
 } from "@/app/lib/helper";
 import React, { useContext, useEffect, useState } from "react";
 import { TYPE_MEDIA, TYPE_RECIPE } from "../lib/config";
@@ -31,14 +32,18 @@ export default function Recipes() {
       ? 12
       : mediaContext === "tablet" && 650 <= window.innerWidth
       ? 18
-      : mediaContext === "desktop" && window.innerWidth < 900
+      : mediaContext === "tablet" && 650 > window.innerWidth
       ? 24
       : 30;
-  const [numberOfUserRecipes, setNumberOfUserRecipes] = useState(0);
+  const [numberOfRecipes, setNumberOfRecipes] = useState(
+    userContext?.numberOfRecipes || null
+  );
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
-  const [curPageRecipes, setCurPageRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  console.log(numberOfRecipes);
+  // const [curPageRecipes, setCurPageRecipes] = useState<TYPE_RECIPE[] | []>([]);
   const [numberOfPages, setNumberOfPages] = useState<number>(0);
   const [curPage, setCurPage] = useState<number>(1);
+  const [keyword, setKeyword] = useState("");
 
   const [isPending, setIsPending] = useState<boolean>(true);
   const [error, setError] = useState("");
@@ -58,69 +63,152 @@ export default function Recipes() {
       ? "1.5vw"
       : "1.2vw";
 
+  //fetch recipes
   useEffect(() => {
-    setIsPending(true);
-    if (!userContext?.recipes) return;
+    //when numberOfRecipes is null or there're already recipes => return
+    // if (numberOfRecipes === null || recipes.length) return;
+    (async () => {
+      setIsPending(true);
+      await setUserRecipes();
+      setIsPending(false);
+    })();
+  }, [numberOfRecipes]);
 
-    const userRecipes = getRecipes();
-    setNumberOfUserRecipes(userRecipes?.length || 0);
-    setIsPending(false);
-  }, [userContext?.recipes]);
-  console.log(recipes);
-  console.log(userContext?.recipes);
+  //set numberOfRecipes
+  useEffect(() => {
+    if (userContext?.numberOfRecipes === null || !userContext) return;
+    setNumberOfRecipes(userContext.numberOfRecipes);
+    setNumberOfPages(Math.ceil(userContext.numberOfRecipes / RECIPES_PER_PAGE));
+  }, [userContext?.numberOfRecipes]);
+
+  // useEffect(() => {
+  //   setIsPending(true);
+  //   if (!userContext?.recipes) return;
+
+  //   const userRecipes = getRecipes();
+  //   setNumberOfUserRecipes(userRecipes?.length || 0);
+  //   setIsPending(false);
+  // }, [userContext?.recipes]);
+  // console.log(recipes);
+  // console.log(userContext?.recipes);
 
   //when curPage changes, change curRecipes too
-  useEffect(() => {
-    if (!recipes) return;
+  // useEffect(() => {
+  //   if (!recipes) return;
 
-    const recipesPerPage = getRecipesPerPage(
-      recipes,
-      RECIPES_PER_PAGE,
-      curPage
-    );
-    //set recipes for current page
-    setCurPageRecipes(recipesPerPage);
-  }, [curPage]);
+  //   const recipesPerPage = getRecipesPerPage(
+  //     recipes,
+  //     RECIPES_PER_PAGE,
+  //     curPage
+  //   );
+  //   //set recipes for current page
+  //   setCurPageRecipes(recipesPerPage);
+  // }, [curPage]);
 
-  function getRecipes(keyword: string = "") {
-    setIsPending(true);
+  // function getRecipes(keyword: string = "") {
+  //   setIsPending(true);
 
-    const structuredKeyword = keyword.toLowerCase().trim();
-    const recipes = userContext?.recipes;
-    if (!recipes) return [];
+  //   const structuredKeyword = keyword.toLowerCase().trim();
+  //   const recipes = userContext?.recipes;
+  //   if (!recipes) return [];
 
-    const filteredRecipes = structuredKeyword
-      ? getFilteredRecipes(recipes, structuredKeyword)
-      : recipes;
+  //   const filteredRecipes = structuredKeyword
+  //     ? getFilteredRecipes(recipes, structuredKeyword)
+  //     : recipes;
 
-    // const data = await getData(
-    //   `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
-    //   {
-    //     method: "GET",
-    //     headers: { authorization: `Bearer ${userContext?.accessToken}` },
-    //   }
-    // );
-    // console.log(data);
+  //   // const data = await getData(
+  //   //   `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
+  //   //   {
+  //   //     method: "GET",
+  //   //     headers: { authorization: `Bearer ${userContext?.accessToken}` },
+  //   //   }
+  //   // );
+  //   // console.log(data);
 
-    // const orderedRecipes = getOrderedRecipes(data.data);
-    setCurPage(1);
-    setRecipes(filteredRecipes);
-    setCurPageRecipes(getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, 1));
-    setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
+  //   // const orderedRecipes = getOrderedRecipes(data.data);
+  //   setCurPage(1);
+  //   setRecipes(filteredRecipes);
+  //   setCurPageRecipes(getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, 1));
+  //   setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
 
-    setIsPending(false);
-    return filteredRecipes;
+  //   setIsPending(false);
+  //   return filteredRecipes;
+  // }
+  async function setUserRecipes(keyword: string = "") {
+    try {
+      if (!numberOfRecipes) return;
+
+      const data = await getUserRecipes(
+        userContext?.accessToken,
+        (curPage - 1) * RECIPES_PER_PAGE,
+        RECIPES_PER_PAGE,
+        keyword
+      );
+
+      setRecipes(data.data);
+
+      data.newAccessToken && userContext?.login(data.newAccessToken);
+
+      // const timesToFetch = numberOfRecipes
+      //   ? Math.ceil(numberOfRecipes / RECIPES_PER_FETCH)
+      //   : 0;
+      // if (!timesToFetch) return;
+
+      // const dataArr = await Promise.all(
+      //   Array(timesToFetch)
+      //     .fill("")
+      //     .map((_, i) =>
+      //       getUserRecipes(
+      //         userContext?.accessToken,
+      //         i * RECIPES_PER_FETCH,
+      //         RECIPES_PER_FETCH
+      //       )
+      //     )
+      // );
+
+      // console.log(dataArr);
+      // let newAccessToken;
+      // const recipes = dataArr.flatMap((data: any) => {
+      //   if (data.newAccessToken) newAccessToken = data.newAccessToken;
+
+      //   return data.data;
+      // });
+      // const data = await getUserRecipes(
+      //   userContext?.accessToken,
+      //   startIndex,
+      //   6
+      // );
+
+      // setRecipes((prev) => {
+      //   const newRecipes = prev ? [...prev, ...recipes] : recipes;
+      //   return newRecipes.length ? getOrderedRecipes(newRecipes) : [];
+      // });
+    } catch (err: any) {
+      console.error("Error while getting recipes", err.message);
+    }
   }
+
+  useEffect(() => {
+    (async () => {
+      setIsPending(true);
+      await setUserRecipes();
+      setIsPending(false);
+    })();
+  }, [curPage, keyword]);
 
   async function handleSearchRecipes(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const value = new FormData(e.currentTarget).get("input") as string;
-    if (!value) return;
+    const keywordData = new FormData(e.currentTarget).get("keyword");
+    if (!keywordData) return;
 
+    const structuredKeyword = String(keywordData).trim().toLowerCase();
+
+    setKeyword(structuredKeyword);
+    setCurPage(1);
     //get recipe results
     // return getFilteredRecipes(recipes, value);
-    getRecipes(value);
+    // getRecipes(value);
   }
 
   function handlePagination(e: React.MouseEvent<HTMLButtonElement>) {
@@ -148,15 +236,15 @@ export default function Recipes() {
         fontSize={fontSize}
         curPage={curPage}
         numberOfPages={numberOfPages}
-        numberOfCurRecipes={curPageRecipes?.length || 0}
+        numberOfCurRecipes={recipes?.length || 0}
         onSubmitSearch={handleSearchRecipes}
       />
       <RecipeContainer
         mediaContext={mediaContext}
         fontSize={fontSize}
         isPending={isPending}
-        numberOfUserRecipes={numberOfUserRecipes}
-        curPageRecipes={curPageRecipes}
+        numberOfRecipes={numberOfRecipes}
+        recipes={recipes}
         error={error}
       />
       <PaginationButtons
@@ -294,15 +382,15 @@ function RecipeContainer({
   mediaContext,
   fontSize,
   isPending,
-  numberOfUserRecipes,
-  curPageRecipes,
+  numberOfRecipes,
+  recipes,
   error,
 }: {
   mediaContext: TYPE_MEDIA;
   fontSize: string;
   isPending: boolean;
-  numberOfUserRecipes: number;
-  curPageRecipes: TYPE_RECIPE[] | [];
+  numberOfRecipes: number | null;
+  recipes: any[] | [];
   error: string;
 }) {
   const NUMBER_OF_COLUMNS =
@@ -312,7 +400,7 @@ function RecipeContainer({
       ? 2
       : mediaContext === "tablet" && 650 <= window.innerWidth
       ? 3
-      : mediaContext === "desktop" && window.innerWidth < 900
+      : mediaContext === "tablet" && 650 > window.innerWidth
       ? 4
       : 5;
   const RECIPES_PER_COLUMN = 6;
@@ -326,23 +414,23 @@ function RecipeContainer({
     const recipesPerColumnArr = new Array(NUMBER_OF_COLUMNS).fill("");
 
     return recipesPerColumnArr.map((_, i) =>
-      getRecipesPerPage(curPageRecipes, RECIPES_PER_COLUMN, i + 1)
+      getRecipesPerPage(recipes, RECIPES_PER_COLUMN, i + 1)
     );
   };
 
   useEffect(() => {
     setRecipesPerColumn(getRecipesPerColumn());
-  }, [curPageRecipes]);
+  }, [recipes]);
 
   useEffect(() => {
     const message = createMessage(
       error,
       isPending,
-      numberOfUserRecipes,
-      curPageRecipes.length
+      numberOfRecipes,
+      recipes.length
     ) as string;
     setMessage(message);
-  }, [error, isPending, numberOfUserRecipes, curPageRecipes.length]);
+  }, [error, isPending, numberOfRecipes, recipes.length]);
 
   return (
     <div
@@ -459,42 +547,3 @@ function RecipePreview({
     </li>
   );
 }
-
-// function PaginationButtons({
-//   styles,
-//   curPage,
-//   numberOfPages,
-//   onClickPagination,
-// }: {
-//   styles: any;
-//   curPage: number;
-//   numberOfPages: number;
-//   onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
-// }) {
-//   return (
-//     <div className={styles.container__pagination}>
-//       {curPage > 1 && (
-//         <button
-//           className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
-//           value="decrease"
-//           onClick={onClickPagination}
-//         >
-//           {`Page ${curPage - 1}`}
-//           <br />
-//           &larr;
-//         </button>
-//       )}
-//       {numberOfPages > curPage && (
-//         <button
-//           className={clsx(styles.btn__pagination, styles.btn__pagination_right)}
-//           value="increase"
-//           onClick={onClickPagination}
-//         >
-//           {`Page ${curPage + 1}`}
-//           <br />
-//           &rarr;
-//         </button>
-//       )}
-//     </div>
-//   );
-// }

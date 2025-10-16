@@ -1,10 +1,13 @@
 import { nanoid } from "nanoid";
+import Resizer from "react-image-file-resizer";
 import {
   TYPE_RECIPE,
   PASSWORD_REGEX,
   TYPE_INGREDIENT,
   MESSAGE_TIMEOUT,
+  TYPE_FILE,
 } from "./config";
+import { resolve } from "path";
 
 export function wait(second: number = MESSAGE_TIMEOUT) {
   return new Promise((resolve) => {
@@ -15,14 +18,14 @@ export function wait(second: number = MESSAGE_TIMEOUT) {
 export function createMessage(
   error: string,
   isPending: boolean,
-  numberOfUserRecipes: number,
+  numberOfUserRecipes: number | null,
   numberOfCurPageRecipes: number
 ) {
   if (error) return error;
 
   if (isPending) return "Loading your recipes...";
 
-  if (!numberOfUserRecipes)
+  if (numberOfUserRecipes === 0)
     return "No recipes created yet. Let't start by creating a recipe :)";
 
   if (!numberOfCurPageRecipes)
@@ -48,6 +51,29 @@ export const getData = async (path: string, option: object) => {
     throw err;
   }
 };
+
+export async function getUserRecipes(
+  accessToken: any,
+  startIndex: number,
+  recipesPerRequest: number,
+  keyword: string = ""
+) {
+  try {
+    const data = await getData(
+      `/api/users/recipes?startIndex=${startIndex}&endIndex=${
+        startIndex + recipesPerRequest
+      }${keyword ? `&keyword=${keyword}` : ""}`,
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    return data;
+  } catch (err) {
+    throw err;
+  }
+}
 
 export function getSize(
   recipeWidth: string,
@@ -166,6 +192,15 @@ export function convertFileToString(file: File): Promise<string> {
 
     reader.readAsDataURL(file);
   });
+}
+
+export function getImageFileData(file: File, uri: any) {
+  return {
+    data: uri,
+    contentType: "WEBP",
+    filename: file.name,
+    fileSize: file.size,
+  };
 }
 
 export async function getFileData(file: File) {
@@ -2740,7 +2775,7 @@ export const updateConvertion = function (recipe: TYPE_RECIPE) {
   return newRecipe;
 };
 
-export function getOrderedRecipes(recipes: TYPE_RECIPE[]) {
+export function getOrderedRecipes(recipes: any[]) {
   return recipes
     .toSorted((a: any, b: any) => {
       const titleA = a.title.toLowerCase();
