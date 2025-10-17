@@ -141,8 +141,10 @@ export const validatePassword = (input: string) => {
   return passwordRegex.test(input);
 };
 
-export const calcNumberOfPages = (recipes: Object[], recipesPerPage: number) =>
-  Math.ceil(recipes.length / recipesPerPage);
+export const calcNumberOfPages = (
+  recipeLength: number,
+  recipesPerPage: number
+) => Math.ceil(recipeLength / recipesPerPage);
 
 export const getFilteredRecipes = (recipes: any[] | [], value: string) => {
   const structuredValue = value.trim().toLowerCase();

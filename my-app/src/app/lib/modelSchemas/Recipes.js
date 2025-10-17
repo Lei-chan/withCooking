@@ -6,6 +6,7 @@ const RecipeSchema = new mongoose.Schema({
   favorite: Boolean,
   region: String,
   mainImage: {},
+  mainImagePreview: {},
   title: String,
   author: String,
   servings: {

@@ -1,6 +1,7 @@
 "use client";
 import styles from "./page.module.css";
 import Image from "next/image";
+import Resizer from "react-image-file-resizer";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
@@ -21,6 +22,7 @@ import {
   updateIngsForServings,
   updateConvertion,
   getNextSlideIndex,
+  getImageFileData,
 } from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
@@ -47,11 +49,6 @@ export default function Recipe() {
   const [ingredientsUnit, setIngredientsUnit] = useState<
     "metric" | "us" | "japan" | "australia" | "metricCup"
   >();
-  const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
-  const [instructionImages, setInstructionImages] = useState<
-    (TYPE_FILE | undefined)[]
-  >([undefined]);
-  const [memoryImages, setMemoryImages] = useState<TYPE_FILE[]>([]);
 
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
@@ -96,6 +93,10 @@ export default function Recipe() {
     setEdit(!edit);
   }
 
+  function displayError(error: string) {
+    setError(error);
+  }
+
   //only when edit is false
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = +e.currentTarget.value;
@@ -126,11 +127,15 @@ export default function Recipe() {
     setIngredientsUnit(value);
   }
 
-  function handleChangeMainImage(image: TYPE_FILE) {
+  function handleChangeMainImage(
+    mainImageFile: TYPE_FILE,
+    mainImagePreviewFile: TYPE_FILE
+  ) {
     setCurRecipe((prev) => {
       if (!prev) return undefined;
       const newRecipe = { ...prev };
-      newRecipe.mainImage = image;
+      newRecipe.mainImage = mainImageFile;
+      newRecipe.mainImagePreview = mainImagePreviewFile;
       return newRecipe;
     });
   }
@@ -140,6 +145,7 @@ export default function Recipe() {
       if (!prev) return undefined;
       const newRecipe = { ...prev };
       newRecipe.mainImage = undefined;
+      newRecipe.mainImagePreview = undefined;
       return newRecipe;
     });
   }
@@ -310,6 +316,7 @@ export default function Recipe() {
       const newRecipe = {
         favorite: favorite === true ? true : false,
         mainImage: curRecipe?.mainImage,
+        mainImagePreview: curRecipe?.mainImagePreview,
         title: String(formData.get("title"))?.trim() || "",
         author: String(formData.get("author")).trim() || "",
         region: getRegion(ingredients),
@@ -454,6 +461,7 @@ export default function Recipe() {
             title={curRecipe.title}
             onChangeImage={handleChangeMainImage}
             deleteImage={handleDeleteMainImage}
+            displayError={displayError}
           />
           <BriefExplanation
             edit={edit}
@@ -479,6 +487,7 @@ export default function Recipe() {
             onChangeInstruction={handleChangeInstruction}
             onChangeImage={handleChangeInstructionImage}
             deleteImage={handleDeleteInstructionImage}
+            displayError={displayError}
           />
           <AboutThisRecipe edit={edit} curRecipe={curRecipe} />
           <Memories
@@ -486,6 +495,7 @@ export default function Recipe() {
             images={curRecipe.memoryImages}
             onChangeImages={handleChangeMemoryImages}
             deleteImage={handleDeleteMemoryImage}
+            displayError={displayError}
           />
           <Comments edit={edit} curRecipe={curRecipe} />
 
@@ -577,12 +587,17 @@ function ImageTitle({
   title,
   onChangeImage,
   deleteImage,
+  displayError,
 }: {
   edit: boolean;
   image: TYPE_FILE | undefined;
   title: string;
-  onChangeImage: (image: TYPE_FILE) => void;
+  onChangeImage: (
+    mainImageFile: TYPE_FILE,
+    mainImagePreviewFile: TYPE_FILE
+  ) => void;
   deleteImage: () => void;
+  displayError: (error: string) => void;
 }) {
   const [recipeTitle, setRecipeTitle] = useState(title);
 
@@ -591,9 +606,36 @@ function ImageTitle({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      onChangeImage(await getFileData(files[0]));
+      const mainImageFile = (await new Promise((resolve) =>
+        Resizer.imageFileResizer(
+          files[0],
+          440,
+          264,
+          "WEBP",
+          100,
+          0,
+          (uri) => resolve(getImageFileData(files[0], uri)),
+          "base64"
+        )
+      )) as TYPE_FILE;
+
+      const mainImagePreviewFile = (await new Promise((resolve) =>
+        Resizer.imageFileResizer(
+          files[0],
+          50,
+          50,
+          "WEBP",
+          100,
+          0,
+          (uri) => resolve(getImageFileData(files[0], uri)),
+          "base64"
+        )
+      )) as TYPE_FILE;
+
+      onChangeImage(mainImageFile, mainImagePreviewFile);
     } catch (err: any) {
-      console.error(err.message);
+      console.error("Error while resizing main image", err.message);
+      displayError("Server error while uploading image 🙇‍♂️ Please try again!");
     }
   }
 
@@ -1411,6 +1453,7 @@ function Instructions({
   onChangeInstruction,
   onChangeImage,
   deleteImage,
+  displayError,
 }: {
   edit: boolean;
   instructions: { instruction: string; image: TYPE_FILE | undefined }[] | [];
@@ -1419,6 +1462,7 @@ function Instructions({
   onChangeInstruction: (value: string, i: number) => void;
   onChangeImage: (image: TYPE_FILE, index: number) => void;
   deleteImage: (index: number) => void;
+  displayError: (error: string) => void;
 }) {
   //Store key so whenever user delete instruction, other instructions' info will remain the same
   const [recipeInstructions, setRecipeInstructions] = useState(
@@ -1473,6 +1517,7 @@ function Instructions({
           onChangeInstruction={onChangeInstruction}
           onClickDeleteImage={deleteImage}
           onChangeImage={onChangeImage}
+          displayError={displayError}
         />
       ))}
       {edit && (
@@ -1495,20 +1540,20 @@ function Instruction({
   edit,
   i,
   instruction,
-  // image,
   onClickDelete,
   onChangeInstruction,
   onClickDeleteImage,
   onChangeImage,
+  displayError,
 }: {
   edit: boolean;
   i: number;
   instruction: { instruction: string; image: TYPE_FILE | undefined };
-  // image: TYPE_FILE | undefined;
   onClickDelete: (i: number) => void;
   onChangeInstruction: (value: string, i: number) => void;
   onClickDeleteImage: (i: number) => void;
   onChangeImage: (image: TYPE_FILE, i: number) => void;
+  displayError: (error: string) => void;
 }) {
   // const [instructionText, setInstructionText] = useState(
   //   instruction.instruction
@@ -1518,15 +1563,28 @@ function Instruction({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      onChangeImage(await getFileData(files[0]), i);
+      // onChangeImage(await getFileData(files[0]), i);
+      Resizer.imageFileResizer(
+        files[0],
+        140,
+        100,
+        "WEBP",
+        100,
+        0,
+        (uri) => {
+          const fileData = getImageFileData(files[0], uri);
+          onChangeImage(fileData, i);
+        },
+        "base64"
+      );
     } catch (err: any) {
-      console.error(err.message);
+      console.error("Error while resizing instruction image", err.message);
+      displayError("Server error while uploading image 🙇‍♂️ Please try again!");
     }
   }
 
   function handleChangeInstruction(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const value = e.currentTarget.value;
-    // setInstructionText(value);
     onChangeInstruction(value, i);
   }
 
@@ -1753,11 +1811,13 @@ function Memories({
   images,
   onChangeImages,
   deleteImage,
+  displayError,
 }: {
   edit: boolean;
   images: [] | TYPE_FILE[];
   onChangeImages: (imagesArr: TYPE_FILE[]) => void;
   deleteImage: (i: number) => void;
+  displayError: (error: string) => void;
 }) {
   const MAX_SLIDE = images.length - 1;
 
@@ -1785,13 +1845,33 @@ function Memories({
       const files = e.currentTarget.files;
       if (!files) return;
 
-      const convertedFiles = await Promise.all(
-        Array.from(files).map((image) => getFileData(image))
+      const promiseArr = Array.from(files).map(
+        (file) =>
+          new Promise((resolve) =>
+            Resizer.imageFileResizer(
+              file,
+              400,
+              220,
+              "WEBP",
+              100,
+              0,
+              (uri) => resolve(getImageFileData(file, uri)),
+              "base64"
+            )
+          )
       );
+      const imageFiles = (await Promise.all(promiseArr)) as TYPE_FILE[];
 
-      onChangeImages(convertedFiles);
+      onChangeImages(imageFiles);
+
+      // const convertedFiles = await Promise.all(
+      //   Array.from(files).map((image) => getFileData(image))
+      // );
+
+      // onChangeImages(convertedFiles);
     } catch (err: any) {
-      console.error(err.message);
+      console.error("Error while resizing memory images", err.message);
+      displayError("Server error while uploading images 🙇‍♂️ Please try again!");
     }
   }
 

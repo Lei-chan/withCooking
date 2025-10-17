@@ -55,11 +55,20 @@ export async function GET(req: NextRequest) {
       parseInt(endIndex)
     );
 
-    const mainImages = slicedRecipes.length
+    // const mainImages = slicedRecipes.length
+    //   ? await Promise.all(
+    //       slicedRecipes.map((recipe: any) =>
+    //         recipe.mainImage
+    //           ? downloadFile(bucket, recipe.mainImage)
+    //           : Promise.resolve(undefined)
+    //       )
+    //     )
+    //   : [];
+    const mainImagePreviews = slicedRecipes.length
       ? await Promise.all(
           slicedRecipes.map((recipe: any) =>
-            recipe.mainImage
-              ? downloadFile(bucket, recipe.mainImage)
+            recipe.mainImagePreview
+              ? downloadFile(bucket, recipe.mainImagePreview)
               : Promise.resolve(undefined)
           )
         )
@@ -70,9 +79,9 @@ export async function GET(req: NextRequest) {
           const newRecipe = {
             _id: recipe._id,
             title: recipe.title,
-            mainImage: mainImages[i],
+            // mainImage: mainImages[i],
+            mainImagePreview: mainImagePreviews[i],
             favorite: recipe.favorite,
-            // ingredients: recipe.ingredients,
           };
           return newRecipe;
         })
@@ -82,7 +91,7 @@ export async function GET(req: NextRequest) {
       {
         success: true,
         data: recipesForPreview,
-        // numberOfRecipes: recipes.length,
+        numberOfRecipes: filteredRecipes.length,
         newAccessToken,
       },
       { status: 200 }
@@ -102,7 +111,6 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     let { id, newAccessToken } = await authenticateToken(req);
-    // let newAccessToken;
 
     //try to refresh accessToken when access token is expired
     if (!id) {
@@ -114,7 +122,6 @@ export async function POST(req: NextRequest) {
     const user = await User.findById(id);
 
     const newRecipes = user.recipes.length ? [...user.recipes, body] : [body];
-    // console.log(newRecipes);
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
@@ -192,7 +199,6 @@ export async function DELETE(req: NextRequest) {
     const recipeId = searchParams.get("id");
 
     let { id, newAccessToken } = await authenticateToken(req);
-    // let newAccessToken;
 
     //try to refresh accessToken when access token is expired
     if (!id) {

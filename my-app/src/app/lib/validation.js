@@ -13,6 +13,7 @@ export const recipeSchema = z.object({
   favorite: z.boolean(),
   region: z.string(),
   mainImage: z.any(),
+  mainImagePreview: z.any(),
   title: z.string(),
   author: z.string(),
   servings: z.object({

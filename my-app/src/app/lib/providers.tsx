@@ -70,43 +70,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     []
   );
 
-  //get 24 recipes at a time
-  // async function setUserRecipes(accessToken: string) {
-  //   try {
-  //     const data = await getUserRecipes(
-  //       accessToken,
-  //       startIndex,
-  //       RECIPES_PER_REQ
-  //     );
-
-  //     setNumberOfRecipes(data.numberOfRecipes);
-  //     setRecipes((prev) => {
-  //       const newRecipes = prev ? [...prev, ...data.data] : data.data;
-  //       return newRecipes.length ? getOrderedRecipes(newRecipes) : [];
-  //     });
-  //     setStartIndex((prev) => prev + RECIPES_PER_REQ);
-  //   } catch (err: any) {
-  //     console.error("Error while getting recipes", err.message);
-  //   }
-  // }
-
-  //provokes the next fetch to get more user recipes
-  // useEffect(() => {
-  //   if (startIndex >= numberOfRecipes) return;
-  //   // localStorage.setItem("startIndex", startIndex + "");
-  //   setUserRecipes(accessToken);
-  // }, [startIndex]);
-
-  // //set recipes in localStorage for when user reloads page
-  // useEffect(() => {
-  //   localStorage.setItem("recipes", JSON.stringify(recipes));
-  // }, [recipes]);
-
-  // //set numberOfRecipes in localStorage for when user reloads page
-  // useEffect(() => {
-  //   localStorage.setItem("numberOfRecipes", numberOfRecipes + "");
-  // }, [numberOfRecipes]);
-
   // //set numberOfRecipes stored in localStorage to state when user reloads page
   useEffect(() => {
     const storedNumberOfRecipes = localStorage.getItem("numberOfRecipes");
@@ -129,6 +92,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("numberOfRecipes");
   }, []);
 
+  const addNumberOfRecipes = useCallback(() => {
+    setNumberOfRecipes((prev) => {
+      localStorage.setItem("numberOfRecipes", prev + 1 + "");
+      return prev + 1;
+    });
+  }, []);
+
   const userContextValue = useMemo(
     () => ({
       accessToken,
@@ -138,8 +108,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
       firstLogin,
       login,
       logout,
+      addNumberOfRecipes,
     }),
-    [accessToken, numberOfRecipes, isMessageVisible, firstLogin, login, logout]
+    [
+      accessToken,
+      numberOfRecipes,
+      isMessageVisible,
+      firstLogin,
+      login,
+      logout,
+      addNumberOfRecipes,
+    ]
   );
 
   return (

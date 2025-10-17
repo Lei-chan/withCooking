@@ -167,6 +167,7 @@ export function PaginationButtons({
   styles,
   curPage,
   numberOfPages,
+  isPending,
   onClickPagination,
 }: {
   mediaContext: TYPE_MEDIA;
@@ -174,6 +175,7 @@ export function PaginationButtons({
   styles: any;
   curPage: number;
   numberOfPages: number;
+  isPending: boolean;
   onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   const fontSizePagination =
@@ -190,7 +192,7 @@ export function PaginationButtons({
       : "0.5% 1%";
   return (
     <div className={styles.container__pagination}>
-      {curPage > 1 && (
+      {!isPending && curPage > 1 && (
         <button
           className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
           style={{ fontSize: fontSizePagination, padding }}
@@ -202,7 +204,7 @@ export function PaginationButtons({
           &larr;
         </button>
       )}
-      {numberOfPages > curPage && (
+      {!isPending && numberOfPages > curPage && (
         <button
           className={clsx(styles.btn__pagination, styles.btn__pagination_right)}
           style={{ fontSize: fontSizePagination, padding }}

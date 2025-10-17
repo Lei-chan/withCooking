@@ -39,9 +39,11 @@ export default function Recipes() {
     userContext?.numberOfRecipes || null
   );
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
-  console.log(numberOfRecipes);
-  // const [curPageRecipes, setCurPageRecipes] = useState<TYPE_RECIPE[] | []>([]);
-  const [numberOfPages, setNumberOfPages] = useState<number>(0);
+  const [numberOfPages, setNumberOfPages] = useState<number>(
+    userContext?.numberOfRecipes
+      ? calcNumberOfPages(userContext.numberOfRecipes, RECIPES_PER_PAGE)
+      : 0
+  );
   const [curPage, setCurPage] = useState<number>(1);
   const [keyword, setKeyword] = useState("");
 
@@ -63,135 +65,49 @@ export default function Recipes() {
       ? "1.5vw"
       : "1.2vw";
 
-  //fetch recipes
+  // //set numberOfRecipes for the first render
   useEffect(() => {
-    //when numberOfRecipes is null or there're already recipes => return
-    // if (numberOfRecipes === null || recipes.length) return;
+    if (userContext?.numberOfRecipes === null || !userContext) return;
+    setNumberOfRecipes(userContext.numberOfRecipes);
+    setNumberOfPages(
+      calcNumberOfPages(userContext.numberOfRecipes, RECIPES_PER_PAGE)
+    );
     (async () => {
       setIsPending(true);
       await setUserRecipes();
       setIsPending(false);
     })();
-  }, [numberOfRecipes]);
-
-  //set numberOfRecipes
-  useEffect(() => {
-    if (userContext?.numberOfRecipes === null || !userContext) return;
-    setNumberOfRecipes(userContext.numberOfRecipes);
-    setNumberOfPages(Math.ceil(userContext.numberOfRecipes / RECIPES_PER_PAGE));
   }, [userContext?.numberOfRecipes]);
 
-  // useEffect(() => {
-  //   setIsPending(true);
-  //   if (!userContext?.recipes) return;
-
-  //   const userRecipes = getRecipes();
-  //   setNumberOfUserRecipes(userRecipes?.length || 0);
-  //   setIsPending(false);
-  // }, [userContext?.recipes]);
-  // console.log(recipes);
-  // console.log(userContext?.recipes);
-
-  //when curPage changes, change curRecipes too
-  // useEffect(() => {
-  //   if (!recipes) return;
-
-  //   const recipesPerPage = getRecipesPerPage(
-  //     recipes,
-  //     RECIPES_PER_PAGE,
-  //     curPage
-  //   );
-  //   //set recipes for current page
-  //   setCurPageRecipes(recipesPerPage);
-  // }, [curPage]);
-
-  // function getRecipes(keyword: string = "") {
-  //   setIsPending(true);
-
-  //   const structuredKeyword = keyword.toLowerCase().trim();
-  //   const recipes = userContext?.recipes;
-  //   if (!recipes) return [];
-
-  //   const filteredRecipes = structuredKeyword
-  //     ? getFilteredRecipes(recipes, structuredKeyword)
-  //     : recipes;
-
-  //   // const data = await getData(
-  //   //   `/api/users/recipes${keyword ? `?keyword=${structuredKeyword}` : ""}`,
-  //   //   {
-  //   //     method: "GET",
-  //   //     headers: { authorization: `Bearer ${userContext?.accessToken}` },
-  //   //   }
-  //   // );
-  //   // console.log(data);
-
-  //   // const orderedRecipes = getOrderedRecipes(data.data);
-  //   setCurPage(1);
-  //   setRecipes(filteredRecipes);
-  //   setCurPageRecipes(getRecipesPerPage(filteredRecipes, RECIPES_PER_PAGE, 1));
-  //   setNumberOfPages(calcNumberOfPages(filteredRecipes, RECIPES_PER_PAGE));
-
-  //   setIsPending(false);
-  //   return filteredRecipes;
-  // }
-  async function setUserRecipes(keyword: string = "") {
+  async function setUserRecipes(key: string = "") {
     try {
-      if (!numberOfRecipes) return;
+      //If user doesn't have any recipes => return
+      if (!userContext?.numberOfRecipes) return;
 
       const data = await getUserRecipes(
         userContext?.accessToken,
         (curPage - 1) * RECIPES_PER_PAGE,
         RECIPES_PER_PAGE,
-        keyword
+        key
       );
 
       setRecipes(data.data);
+      setNumberOfRecipes(data.numberOfRecipes);
+      setNumberOfPages(
+        calcNumberOfPages(data.numberOfRecipes, RECIPES_PER_PAGE)
+      );
 
       data.newAccessToken && userContext?.login(data.newAccessToken);
-
-      // const timesToFetch = numberOfRecipes
-      //   ? Math.ceil(numberOfRecipes / RECIPES_PER_FETCH)
-      //   : 0;
-      // if (!timesToFetch) return;
-
-      // const dataArr = await Promise.all(
-      //   Array(timesToFetch)
-      //     .fill("")
-      //     .map((_, i) =>
-      //       getUserRecipes(
-      //         userContext?.accessToken,
-      //         i * RECIPES_PER_FETCH,
-      //         RECIPES_PER_FETCH
-      //       )
-      //     )
-      // );
-
-      // console.log(dataArr);
-      // let newAccessToken;
-      // const recipes = dataArr.flatMap((data: any) => {
-      //   if (data.newAccessToken) newAccessToken = data.newAccessToken;
-
-      //   return data.data;
-      // });
-      // const data = await getUserRecipes(
-      //   userContext?.accessToken,
-      //   startIndex,
-      //   6
-      // );
-
-      // setRecipes((prev) => {
-      //   const newRecipes = prev ? [...prev, ...recipes] : recipes;
-      //   return newRecipes.length ? getOrderedRecipes(newRecipes) : [];
-      // });
     } catch (err: any) {
       console.error("Error while getting recipes", err.message);
+      setError("Server error while getting recipes 🙇‍♂️ Please retry again!");
     }
   }
 
   useEffect(() => {
     (async () => {
       setIsPending(true);
-      await setUserRecipes();
+      await setUserRecipes(keyword);
       setIsPending(false);
     })();
   }, [curPage, keyword]);
@@ -200,15 +116,12 @@ export default function Recipes() {
     e.preventDefault();
 
     const keywordData = new FormData(e.currentTarget).get("keyword");
-    if (!keywordData) return;
+    if (!keywordData && keywordData !== "") return;
 
     const structuredKeyword = String(keywordData).trim().toLowerCase();
 
     setKeyword(structuredKeyword);
     setCurPage(1);
-    //get recipe results
-    // return getFilteredRecipes(recipes, value);
-    // getRecipes(value);
   }
 
   function handlePagination(e: React.MouseEvent<HTMLButtonElement>) {
@@ -253,6 +166,7 @@ export default function Recipes() {
         styles={styles}
         curPage={curPage}
         numberOfPages={numberOfPages}
+        isPending={isPending}
         onClickPagination={handlePagination}
       />
     </div>
@@ -342,7 +256,7 @@ function SearchSection({
             fontSize,
           }}
           type="search"
-          name="input"
+          name="keyword"
           placeholder="Search your recipe"
         />
         <button
@@ -447,7 +361,7 @@ function RecipeContainer({
       }}
     >
       {/* when there are no recipes => message, otherwise recipes */}
-      {recipesPerColumn[0].length ? (
+      {!isPending && !error && recipesPerColumn[0].length ? (
         recipesPerColumn.map((recipes, i) => (
           <ul
             key={i}
@@ -455,7 +369,6 @@ function RecipeContainer({
               width: "85%",
               height: "100%",
               zIndex: "1",
-              // backgroundColor: "aqua",
               overflow: "hidden",
             }}
           >
@@ -509,10 +422,10 @@ function RecipePreview({
       id={recipe._id}
       onClick={handleClickPreview}
     >
-      {recipe.mainImage?.data ? (
+      {recipe.mainImagePreview?.data ? (
         <Image
           style={{ borderRadius: "50%" }}
-          src={recipe.mainImage.data}
+          src={recipe.mainImagePreview.data}
           alt="main image"
           width={parseFloat(mainImageSize)}
           height={parseFloat(mainImageSize)}

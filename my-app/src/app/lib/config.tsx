@@ -52,6 +52,7 @@ export type TYPE_USER_CONTEXT = {
   firstLogin: (accessToken: string, numberOfRecipes: number) => void;
   login: (accessToken: string) => void;
   logout: () => void;
+  addNumberOfRecipes: () => void;
 } | null;
 
 export type TYPE_RECIPE = {
@@ -59,6 +60,7 @@ export type TYPE_RECIPE = {
   favorite: boolean;
   region: "metric" | "us" | "japan" | "australia" | "metricCup";
   mainImage: TYPE_FILE | undefined;
+  mainImagePreview?: TYPE_FILE | undefined;
   title: string;
   author: string;
   servings: { servings: number; unit: string; customUnit: string };

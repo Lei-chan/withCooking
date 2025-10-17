@@ -142,6 +142,15 @@ export async function POST(req: NextRequest) {
         })
       : undefined;
 
+    //upload mainImagePreview
+    const mainImagePreview = body.mainImagePreview
+      ? await uploadFile(bucket, body.mainImagePreview, {
+          userId: id,
+          recipeTitle: body.title,
+          section: "mainImagePreview",
+        })
+      : undefined;
+
     //upload instruction images
     const instructionImages = await uploadInstructionImages(
       bucket,
@@ -160,6 +169,7 @@ export async function POST(req: NextRequest) {
 
     const newBody = { ...body };
     newBody.mainImage = mainImage;
+    newBody.mainImagePreview = mainImagePreview;
     newBody.instructions = body.instructions.map(
       (inst: TYPE_INSTRUCTION, i: number) => {
         return { instruction: inst.instruction, image: instructionImages[i] };
@@ -205,6 +215,8 @@ export async function GET(req: NextRequest) {
       ? await downloadFile(bucket, recipe.mainImage)
       : undefined;
 
+    // const mainImagePreview = recipe.mainImagePreview ? await downloadFile(bucket, recipe.mainImagePreview) : undefined;
+
     const instructionImages = await Promise.all(
       recipe.instructions.map(
         (inst: {
@@ -227,6 +239,7 @@ export async function GET(req: NextRequest) {
 
     const newRecipe = { ...recipe };
     newRecipe.mainImage = mainImage;
+    // newRecipe.mainImagePreview = mainImagePreview;
     newRecipe.instructions = recipe.instructions.map(
       (
         inst: { instruction: string; image: TYPE_CONVERTED_FILE | undefined },
@@ -280,6 +293,10 @@ export async function PUT(req: NextRequest) {
     recipe.mainImage &&
       (await bucket.delete(new ObjectId(recipe.mainImage.fileId)));
 
+    //delete existing mainImagePreview from bucket
+    recipe.mainImagePreview &&
+      (await bucket.delete(new ObjectId(recipe.mainImagePreview.fileId)));
+
     //delete existing instruction images from bucket
     await Promise.all(
       recipe.instructions.map(
@@ -311,6 +328,14 @@ export async function PUT(req: NextRequest) {
           section: "mainImage",
         });
 
+    const mainImagePreview = !body.mainImagePreview
+      ? undefined
+      : await uploadFile(bucket, body.mainImagePreview, {
+          userId: id,
+          recipeTitle: body.title,
+          section: "mainImagePreview",
+        });
+
     //upload instruction images
     const instructionImages = await uploadInstructionImages(
       bucket,
@@ -329,6 +354,7 @@ export async function PUT(req: NextRequest) {
 
     const newBody = { ...body };
     newBody.mainImage = mainImage;
+    newBody.mainImagePreview = mainImagePreview;
     newBody.instructions = body.instructions.map(
       (inst: TYPE_INSTRUCTION, i: number) => {
         return { instruction: inst.instruction, image: instructionImages[i] };
@@ -342,6 +368,7 @@ export async function PUT(req: NextRequest) {
 
     const strucaturedRecipe = { ...newRecipe };
     strucaturedRecipe.mainImage = body.mainImage;
+    strucaturedRecipe.mainImagePreview = body.mainImagePreview;
     strucaturedRecipe.instructions = body.instructions;
     strucaturedRecipe.memoryImages = body.memoryImages;
 
