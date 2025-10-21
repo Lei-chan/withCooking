@@ -7,14 +7,38 @@ import {
   PASSWORD_MIN_DIGIT,
   TYPE_USER_CONTEXT,
 } from "../lib/config";
-import { getData } from "@/app/lib/helper";
+import { getData, wait } from "@/app/lib/helper";
 import { useEffect, useState, useContext } from "react";
-import { UserContext } from "../lib/providers";
+import { MediaContext, UserContext } from "../lib/providers";
 import { redirect, RedirectType } from "next/navigation";
+import clsx from "clsx";
 
 export default function Account() {
+  const mediaContext = useContext(MediaContext);
   const userContext = useContext(UserContext);
   const [data, setData] = useState<{ email: string; createdAt: string }>();
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  console.log(mediaContext);
+
+  //design
+  const formWidth =
+    mediaContext === "mobile"
+      ? "84%"
+      : mediaContext === "tablet"
+      ? "60%"
+      : "40%";
+  const fontSize =
+    mediaContext === "mobile"
+      ? "4.7vw"
+      : mediaContext === "tablet"
+      ? "3vw"
+      : mediaContext === "desktop"
+      ? "1.7vw"
+      : "1.4vw";
+  const smallHeaderSize = `calc(${fontSize} * 1.1)`;
+  const inputWidth = mediaContext === "mobile" ? "80%" : "55%";
+  const btnSize = `calc(${fontSize} * 0.9)`;
 
   async function getUser() {
     try {
@@ -30,13 +54,20 @@ export default function Account() {
       //set newAccessToken for context when it's refreshed
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
-      console.error(err.message);
+      console.error("Error while getting user information", err.message);
+      setError("Server error 🙇‍♂️ Please try again!");
     }
   }
 
   useEffect(() => {
     (async () => await getUser())();
   }, []);
+
+  async function displayMessage(message: string) {
+    setMessage(message);
+    await wait();
+    setMessage("");
+  }
 
   return (
     <div
@@ -48,49 +79,89 @@ export default function Account() {
         flexDirection: "column",
         textAlign: "center",
         alignItems: "center",
-        padding: "2%",
+        padding: "2% 0 5% 0",
         overflowX: "hidden",
       }}
     >
       <h1
         style={{
-          fontSize: "2.1vw",
+          fontSize: `calc(${fontSize} * 1.3)`,
           letterSpacing: "0.1vw",
           wordSpacing: "0.3vw",
+          margin: fontSize,
           color: "#0d0081ff",
         }}
       >
         Account Information
       </h1>
+      {(error || message) && (
+        <p
+          style={{
+            width: formWidth,
+            backgroundColor: error ? "orangered" : "#68e204ff",
+            padding: "1% 3%",
+            borderRadius: "2% / 19%",
+            color: "white",
+            fontSize,
+            letterSpacing: "0.07vw",
+          }}
+        >
+          {error || message}
+        </p>
+      )}
       {!data && (
         <div
-          className={styles.loading}
           style={{
             backgroundColor: "#fffdcdff",
-            width: "40%",
-            minHeight: "500px",
-            marginTop: "1.8%",
+            width: formWidth,
+            minHeight: "80%",
+            marginTop: "2%",
             borderRadius: "1.1%/1.4%",
           }}
+          className={styles.loading}
         ></div>
       )}
       {data && (
         <div
           style={{
             backgroundImage: "linear-gradient(#fffedbff, #fffdcdff)",
-            width: "40%",
-            minHeight: "500px",
-            height: "fit-content",
+            width: formWidth,
+            maxHeight: "fit-content",
             marginTop: "1.8%",
             borderRadius: "1.1%/1.4%",
             boxShadow: "#0000007c 3px 3px 10px",
             padding: "1% 0",
           }}
         >
-          <Email userContext={userContext} email={data.email} />
-          <Password userContext={userContext} />
-          <Since since={data.createdAt} />
-          <CloseAccount userContext={userContext} />
+          <Email
+            userContext={userContext}
+            fontSize={fontSize}
+            smallHeaderSize={smallHeaderSize}
+            inputWidth={inputWidth}
+            btnSize={btnSize}
+            email={data.email}
+            displayMessage={displayMessage}
+          />
+          <Password
+            userContext={userContext}
+            fontSize={fontSize}
+            smallHeaderSize={smallHeaderSize}
+            inputWidth={inputWidth}
+            btnSize={btnSize}
+            displayMessage={displayMessage}
+          />
+          <Since
+            fontSize={fontSize}
+            smallHeaderSize={smallHeaderSize}
+            since={data.createdAt}
+          />
+          <CloseAccount
+            userContext={userContext}
+            fontSize={fontSize}
+            smallHeaderSize={smallHeaderSize}
+            btnSize={btnSize}
+            displayMessage={displayMessage}
+          />
         </div>
       )}
     </div>
@@ -99,10 +170,20 @@ export default function Account() {
 
 function Email({
   userContext,
+  fontSize,
+  smallHeaderSize,
+  inputWidth,
+  btnSize,
   email,
+  displayMessage,
 }: {
   userContext: TYPE_USER_CONTEXT;
+  fontSize: string;
+  smallHeaderSize: string;
+  inputWidth: string;
+  btnSize: string;
   email: string;
+  displayMessage: (message: string) => void;
 }) {
   const [change, setChange] = useState(false);
   const [value, setValue] = useState(email);
@@ -123,13 +204,11 @@ function Email({
       const trimmedValue = typeof value === "string" && value.trim();
       if (!trimmedValue) return setError("※ Please fill the field");
 
-      // const newAccountInfo = { ...accountInfo };
-      // newAccountInfo.email = value;
-      // console.log(value);
       ///And change account info
       await updateEmail({ email: trimmedValue });
 
       setChange(false);
+      await displayMessage("Email updated successfully!");
     } catch (err: any) {
       setError(`※${err.message}`);
       console.error(
@@ -171,12 +250,18 @@ function Email({
 
   return (
     <form className={styles.box} onSubmit={handleSubmit}>
-      <h3 className={styles.titles}>Email</h3>
+      <h3 className={styles.titles} style={{ fontSize: smallHeaderSize }}>
+        Email
+      </h3>
       {change ? (
         <>
           <input
-            className={styles.input}
-            style={{ borderColor: error ? "orangered" : "#0000004f" }}
+            className={clsx(styles.input, styles.input__non_password)}
+            style={{
+              width: inputWidth,
+              borderColor: error ? "orangered" : "#0000004f",
+              fontSize,
+            }}
             value={value}
             type="email"
             name="email"
@@ -187,6 +272,7 @@ function Email({
             style={{
               color: error ? "orangered" : "rgba(255, 160, 16, 1)",
               letterSpacing: error ? "0vw" : "0.05vw",
+              fontSize,
             }}
           >
             {error ? error : ""}
@@ -194,16 +280,34 @@ function Email({
           </p>
         </>
       ) : (
-        <p className={styles.content}>{value}</p>
+        <p style={{ fontSize }}>{value}</p>
       )}
-      <button className={styles.btn__change} type="submit">
+      <button
+        className={styles.btn__change}
+        style={{ fontSize: btnSize }}
+        type="submit"
+      >
         {change ? "Submit" : "Change"}
       </button>
     </form>
   );
 }
 
-function Password({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
+function Password({
+  userContext,
+  fontSize,
+  smallHeaderSize,
+  inputWidth,
+  btnSize,
+  displayMessage,
+}: {
+  userContext: TYPE_USER_CONTEXT;
+  fontSize: string;
+  smallHeaderSize: string;
+  inputWidth: string;
+  btnSize: string;
+  displayMessage: (message: string) => void;
+}) {
   const [change, setChange] = useState(false);
   const [errorField, setErrorField] = useState<"current" | "new" | "both" | "">(
     ""
@@ -253,6 +357,7 @@ function Password({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
       await updatePassword({ curPassword, newPassword });
 
       setChange(false);
+      await displayMessage("Password updated successfully!");
     } catch (err: any) {
       setError(err.message);
       setErrorField(err.statusCode === 401 ? "current" : "new");
@@ -290,22 +395,41 @@ function Password({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
 
   return (
     <form className={styles.box} onSubmit={handleSubmit}>
-      <h3 className={styles.titles}>Password</h3>
+      <h3 className={styles.titles} style={{ fontSize: smallHeaderSize }}>
+        Password
+      </h3>
       {change ? (
         <>
-          <p style={{ fontSize: "1.2vw" }}>
+          <p
+            style={{
+              width: "90%",
+              fontSize: `calc(${fontSize} * 0.95)`,
+              // backgroundColor: "blue",
+            }}
+          >
             Use more than {PASSWORD_MIN_LENGTH} characters, including at least
             <br />
             {PASSWORD_MIN_UPPERCASE} uppercase, {PASSWORD_MIN_LOWERCASE}{" "}
             lowercase, and {PASSWORD_MIN_DIGIT} digit
           </p>
-          <PasswordInput passwordType={"current"} errorField={errorField} />
-          <PasswordInput passwordType={"new"} errorField={errorField} />
+          <PasswordInput
+            fontSize={fontSize}
+            inputWidth={inputWidth}
+            passwordType={"current"}
+            errorField={errorField}
+          />
+          <PasswordInput
+            fontSize={fontSize}
+            inputWidth={inputWidth}
+            passwordType={"new"}
+            errorField={errorField}
+          />
           <p
             className={styles.error}
             style={{
               color: error ? "orangered" : "rgba(255, 160, 16, 1)",
               letterSpacing: error ? "0vw" : "0.05vw",
+              fontSize,
             }}
           >
             {error ? error : ""}
@@ -313,9 +437,13 @@ function Password({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
           </p>
         </>
       ) : (
-        <p style={{ fontSize: "1.2vw" }}>Change password from here</p>
+        <p style={{ fontSize }}>Change password from here</p>
       )}
-      <button className={styles.btn__change} type="submit">
+      <button
+        className={styles.btn__change}
+        style={{ fontSize: btnSize }}
+        type="submit"
+      >
         Change
       </button>
     </form>
@@ -323,9 +451,13 @@ function Password({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
 }
 
 function PasswordInput({
+  fontSize,
+  inputWidth,
   passwordType,
   errorField,
 }: {
+  fontSize: string;
+  inputWidth: string;
   passwordType: "current" | "new";
   errorField: "current" | "new" | "both" | "";
 }) {
@@ -337,8 +469,9 @@ function PasswordInput({
 
   return (
     <>
-      <div className={styles.input_wrapper}>
+      <div className={styles.input_wrapper} style={{ width: inputWidth }}>
         <input
+          className={styles.input}
           style={{
             width: "100%",
             height: "100%",
@@ -346,9 +479,8 @@ function PasswordInput({
               passwordType === errorField || errorField === "both"
                 ? "orangered"
                 : "#0000004f",
-            fontSize: "1.2vw",
+            fontSize,
           }}
-          className={styles.input}
           type={inputType}
           minLength={8}
           placeholder={`${passwordType} password`}
@@ -366,18 +498,40 @@ function PasswordInput({
   );
 }
 
-function Since({ since }: { since: string }) {
+function Since({
+  fontSize,
+  smallHeaderSize,
+  since,
+}: {
+  fontSize: string;
+  smallHeaderSize: string;
+  since: string;
+}) {
   return (
     <div className={styles.box}>
-      <h3 className={styles.titles}>Using withCooking Since</h3>
-      <p className={styles.content}>
+      <h3 className={styles.titles} style={{ fontSize: smallHeaderSize }}>
+        Using withCooking Since
+      </h3>
+      <p style={{ fontSize }}>
         {new Intl.DateTimeFormat(navigator.language).format(new Date(since))}
       </p>
     </div>
   );
 }
 
-function CloseAccount({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
+function CloseAccount({
+  userContext,
+  fontSize,
+  smallHeaderSize,
+  btnSize,
+  displayMessage,
+}: {
+  userContext: TYPE_USER_CONTEXT;
+  fontSize: string;
+  smallHeaderSize: string;
+  btnSize: string;
+  displayMessage: (message: string) => void;
+}) {
   const [close, setClose] = useState(false);
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -391,6 +545,9 @@ function CloseAccount({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
 
       await closeAccount();
       setClose(false);
+      await displayMessage(
+        "Thank you for using this app :) I hope to see you again!"
+      );
     } catch (err: any) {
       setError(err.message);
       return console.error(
@@ -424,12 +581,15 @@ function CloseAccount({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
 
   return (
     <form className={styles.box} onSubmit={handleSubmit}>
-      <h3 className={styles.titles}>Close Account</h3>
+      <h3 className={styles.titles} style={{ fontSize: smallHeaderSize }}>
+        Close Account
+      </h3>
       <p
         style={{
-          fontSize: "1.2vw",
+          width: "90%",
           letterSpacing: "0.05vw",
           color: isPending ? "rgba(255, 160, 16, 1)" : "orangered",
+          fontSize,
         }}
       >
         {close && !isPending && !error && (
@@ -441,7 +601,11 @@ function CloseAccount({ userContext }: { userContext: TYPE_USER_CONTEXT }) {
         {isPending && "Closing your account..."}
         {error && error}
       </p>
-      <button className={styles.btn__close} type="submit">
+      <button
+        className={styles.btn__close}
+        style={{ fontSize: btnSize }}
+        type="submit"
+      >
         {!close ? "Close" : "I'm sure"}
       </button>
     </form>

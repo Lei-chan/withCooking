@@ -1,5 +1,4 @@
 "use client";
-import dynamic from "next/dynamic";
 import {
   createContext,
   useState,
@@ -7,7 +6,7 @@ import {
   useMemo,
   useEffect,
 } from "react";
-import { wait, getData, getOrderedRecipes, getUserRecipes } from "./helper";
+import { wait } from "./helper";
 import {
   MAX_DESKTOP,
   MAX_MOBILE,
@@ -50,10 +49,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const media = getMedia();
 
   //user context
-  // const RECIPES_PER_REQ = 24;
   const [accessToken, setAccessToken] = useState("");
-  // const [startIndex, setStartIndex] = useState(0);
-  // const [recipes, setRecipes] = useState<any[] | null>(null);
   const [numberOfRecipes, setNumberOfRecipes] = useState(0);
   const [isMessageVisible, setIsMessageVisible] = useState(false);
 
@@ -102,7 +98,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const userContextValue = useMemo(
     () => ({
       accessToken,
-      // recipes,
       numberOfRecipes,
       isMessageVisible,
       firstLogin,

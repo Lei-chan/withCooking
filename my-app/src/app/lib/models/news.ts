@@ -14,6 +14,12 @@ const news = [
     title: "withCooking!",
     content: "withCooking!",
   },
+  {
+    date: "2025-10-25T11:34:29.072Z",
+    title: "withCooking!",
+    content:
+      "withCooking is now released! Bugs are fixed. withCooking is now released! Bugs are fixed. withCooking is now released! Bugs are fixed. withCooking is now released! Bugs are fixed.",
+  },
 ];
 
 const newsWithNew = news.map((news) => {

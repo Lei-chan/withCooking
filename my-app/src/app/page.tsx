@@ -150,6 +150,7 @@ export default function Home() {
     <div
       style={{
         width: "100%",
+        // height: "100%",
         height: "fit-content",
         display: "flex",
         flexDirection: "column",
@@ -160,7 +161,7 @@ export default function Home() {
     >
       <div
         style={{
-          width: "100%",
+          width: "100vw",
           height: "100vh",
           display: "flex",
           flexDirection: "column",

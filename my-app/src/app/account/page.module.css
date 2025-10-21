@@ -1,6 +1,7 @@
 .box {
   display: flex;
   flex-direction: column;
+  height: fit-content;
   gap: 10px;
   border-bottom: thin solid rgba(0, 0, 0, 0.185);
   padding: 4%;
@@ -25,23 +26,18 @@
 }
 
 .titles {
-  font-size: 1.6vw;
   letter-spacing: 0.07vw;
   color: rgb(177, 128, 24);
 }
 
-.content {
-  font-size: 1.4vw;
-}
-
 .btn__change,
 .btn__close {
-  font-size: 1.1vw;
   border: none;
   color: white;
   width: fit-content;
   height: fit-content;
   margin-top: 1%;
+  /* background-color: #73ff00; */
 
   &:hover {
     transform: translateY(-3%);
@@ -63,9 +59,8 @@
   border-radius: 7%/12%;
 }
 
-.input,
+.input__non_password,
 .input_wrapper {
-  width: 53%;
   aspect-ratio: 1/0.11;
 }
 
@@ -73,7 +68,6 @@
   border-radius: 1.2%/10%;
   border-color: #0000004f;
   padding-left: 1%;
-  font-size: 1.15vw;
   padding-left: 1.5%;
   letter-spacing: 0.05vw;
 }
@@ -88,7 +82,7 @@
 .btn__eye,
 .btn__eye_off {
   position: absolute;
-  width: 9%;
+  width: 10%;
   aspect-ratio: 1;
   background: none;
   border: none;
@@ -103,8 +97,4 @@
 
 .btn__eye_off {
   background-image: url("/eye-off.png");
-}
-
-.error {
-  font-size: 1.2vw;
 }
