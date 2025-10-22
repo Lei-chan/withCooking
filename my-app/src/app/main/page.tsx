@@ -2,7 +2,6 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 import Link from "next/link";
-import clsx from "clsx";
 import React, { useEffect, useRef, useState, useContext } from "react";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
@@ -13,12 +12,7 @@ import {
   createMessage,
   uploadRecipe,
   getTemperatures,
-  getOrderedRecipes,
   calcNumberOfPages,
-  getFilteredRecipes,
-  getRecipesPerPage,
-  convertTempUnits,
-  convertIngUnits,
   calcTransitionXSlider,
   updateConvertion,
   updateIngsForServings,
@@ -35,6 +29,7 @@ import {
   SLIDE_TRANSITION_SEC,
   TYPE_USER_CONTEXT,
   TYPE_MEDIA,
+  TYPE_REGION_UNIT,
 } from "../lib/config";
 import {
   MessageContainer,
@@ -698,9 +693,7 @@ function Recipe({
   const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>();
   const [favorite, setFavorite] = useState<boolean>();
   const [servingsValue, setServingsValue] = useState<number>();
-  const [ingredientsUnit, setIngredientsUnit] = useState<
-    "original" | "metric" | "us" | "japan" | "australia" | "metricCup"
-  >("original");
+  const [regionUnit, setRegionUnit] = useState<TYPE_REGION_UNIT>("original");
 
   const [isLoading, setIsLoading] = useState<boolean>();
   const [error, setError] = useState("");
@@ -753,7 +746,7 @@ function Recipe({
     setCurRecipe(recipe);
     setFavorite(recipe.favorite);
     setServingsValue(recipe.servings.servings);
-    setIngredientsUnit(recipe.region);
+    setRegionUnit(recipe.region);
   }
 
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
@@ -772,17 +765,8 @@ function Recipe({
   function handleChangeIngredientsUnit(
     e: React.ChangeEvent<HTMLSelectElement>
   ) {
-    const value = e.currentTarget.value;
-    if (
-      value !== "metric" &&
-      value !== "us" &&
-      value !== "japan" &&
-      value !== "australia" &&
-      value !== "metricCup"
-    )
-      return;
-
-    setIngredientsUnit(value);
+    const value = e.currentTarget.value as TYPE_REGION_UNIT;
+    setRegionUnit(value);
   }
 
   async function handleClickFavorite() {
@@ -859,7 +843,7 @@ function Recipe({
             curRecipe={curRecipe}
             servingsValue={servingsValue}
             favorite={favorite}
-            ingredientsUnit={ingredientsUnit}
+            regionUnit={regionUnit}
             onChangeServings={handleChangeServings}
             onChangeIngredientsUnit={handleChangeIngredientsUnit}
             onClickFavorite={handleClickFavorite}
@@ -870,7 +854,7 @@ function Recipe({
             headerSize={headerSize}
             servingsValue={servingsValue}
             ingredients={curRecipe.ingredients}
-            ingredientsUnit={ingredientsUnit}
+            regionUnit={regionUnit}
           />
           <Instructions
             mediaContext={mediaContext}
@@ -1063,7 +1047,7 @@ function BriefExplanation({
   fontSize,
   curRecipe,
   servingsValue,
-  ingredientsUnit,
+  regionUnit,
   favorite,
   onChangeServings,
   onChangeIngredientsUnit,
@@ -1074,7 +1058,7 @@ function BriefExplanation({
   fontSize: string;
   curRecipe: TYPE_RECIPE;
   servingsValue: number;
-  ingredientsUnit: string;
+  regionUnit: TYPE_REGION_UNIT;
   favorite: boolean;
   onChangeServings: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onChangeIngredientsUnit: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -1121,8 +1105,7 @@ function BriefExplanation({
   }
 
   function handleChangeInput(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    i: number
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) {
     const target = e.currentTarget;
     const value = target.value;
@@ -1320,7 +1303,7 @@ function BriefExplanation({
             className={styles.input__brief_explanation}
             style={{ width: "25%", fontSize: fontSizeBrief }}
             name="region"
-            value={ingredientsUnit}
+            value={regionUnit}
             onChange={onChangeIngredientsUnit}
           >
             <option value="original">Original</option>
@@ -1370,7 +1353,7 @@ function BriefExplanation({
             style={{ width: "fit-content", fontSize: fontSizeBrief }}
             name="temperatureUnit"
             value={temperatureUnit}
-            onChange={(e) => handleChangeInput(e, 0)}
+            onChange={handleChangeInput}
           >
             <option value="℃">℃</option>
             <option value="℉">℉</option>
@@ -1407,20 +1390,14 @@ function Ingredients({
   headerSize,
   servingsValue,
   ingredients,
-  ingredientsUnit,
+  regionUnit,
 }: {
   mediaContext: TYPE_MEDIA;
   fontSize: string;
   headerSize: string;
   servingsValue: number;
   ingredients: TYPE_INGREDIENTS;
-  ingredientsUnit:
-    | "original"
-    | "metric"
-    | "us"
-    | "japan"
-    | "australia"
-    | "metricCup";
+  regionUnit: TYPE_REGION_UNIT;
 }) {
   return (
     <div
@@ -1460,7 +1437,7 @@ function Ingredients({
             fontSize={fontSize}
             servingsValue={servingsValue}
             ingredient={ing}
-            ingredientsUnit={ingredientsUnit}
+            regionUnit={regionUnit}
           />
         ))}
       </div>
@@ -1472,41 +1449,32 @@ function IngLine({
   fontSize,
   servingsValue,
   ingredient,
-  ingredientsUnit,
+  regionUnit,
 }: {
   fontSize: string;
   servingsValue: number;
   ingredient: TYPE_INGREDIENT;
-  ingredientsUnit:
-    | "original"
-    | "metric"
-    | "us"
-    | "japan"
-    | "australia"
-    | "metricCup";
+  regionUnit: TYPE_REGION_UNIT;
 }) {
   const [newIngredient, setNewIngredient] = useState<{
     amount: number;
     unit: string;
   }>({
     amount: ingredient.amount,
-    unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
+    unit: getReadableIngUnit(ingredient.unit),
   });
 
   useEffect(() => {
     //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
-    const newIngredient =
-      ingredientsUnit === "original" ||
-      !ingredient?.convertion ||
-      !ingredient.convertion[ingredientsUnit]
-        ? {
-            amount: ingredient.amount,
-            unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
-          }
-        : ingredient.convertion[ingredientsUnit];
+    const newIngredient = !ingredient.convertion[regionUnit]
+      ? {
+          amount: ingredient.amount,
+          unit: getReadableIngUnit(ingredient.unit),
+        }
+      : ingredient.convertion[regionUnit];
 
     setNewIngredient(newIngredient);
-  }, [ingredient, servingsValue, ingredientsUnit]);
+  }, [ingredient, servingsValue, regionUnit]);
 
   return (
     <div

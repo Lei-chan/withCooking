@@ -14,19 +14,24 @@ import {
   getFileData,
   getRegion,
   getImageFileData,
+  isRecipeAllowed,
 } from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
   NUMBER_OF_TEMPERATURES,
   TYPE_RECIPE,
   TYPE_FILE,
+  TYPE_INGREDIENT_UNIT,
+  TYPE_SERVINGS_UNIT,
+  TYPE_INGREDIENTS,
+  TYPE_MEDIA,
 } from "@/app/lib/config";
-import { UserContext } from "@/app/lib/providers";
+import { MediaContext, UserContext } from "@/app/lib/providers";
 import { redirect, RedirectType } from "next/navigation";
-import { resolve } from "path";
-import { file } from "zod";
+import { Loading } from "@/app/lib/components/components";
 
 export default function CreateRecipe() {
+  const mediaContext = useContext(MediaContext);
   const userContext = useContext(UserContext);
   const [favorite, setFavorite] = useState(false);
   const [mainImage, setMainImage] = useState<TYPE_FILE | undefined>();
@@ -41,6 +46,12 @@ export default function CreateRecipe() {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  //design
+  const formWidth = mediaContext === "mobile" ? "90%" : "50%";
+  const fontSize = mediaContext === "mobile" ? "4.3vw" : "2vw";
+  const headerSize = `calc(${fontSize} * 1.2)`;
+  const marginTop = `calc(${fontSize} * 2)`;
 
   function displayError(error: string) {
     setError(error);
@@ -105,60 +116,51 @@ export default function CreateRecipe() {
       const formData = new FormData(e.currentTarget);
       const dataArr = [...formData];
 
+      //filter out temp with no input
+      const tempArr = [
+        formData.get("temperature1"),
+        formData.get("temperature2"),
+        formData.get("temperature3"),
+        formData.get("temperature4"),
+      ]
+        .filter((temp) => temp)
+        .map((temp) => parseFloat(String(temp)));
+
       ///ingredients
       const numberOfIngredients = dataArr.filter(
         (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
       ).length;
 
+      //filter out ing line with no ingredine and amount
       const ingredients = new Array(numberOfIngredients)
         .fill("")
         .map((_, i) => {
-          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
-          const unit = formData.get(`ingredient${i + 1}Unit`);
+          const ingredient = String(
+            formData.get(`ingredient${i + 1}Name`)
+          )?.trim();
 
-          if (
-            unit !== "noUnit" &&
-            unit !== "other" &&
-            unit !== "g" &&
-            unit !== "kg" &&
-            unit !== "oz" &&
-            unit !== "lb" &&
-            unit !== "ml" &&
-            unit !== "L" &&
-            unit !== "USCup" &&
-            unit !== "JapaneseCup" &&
-            unit !== "ImperialCup" &&
-            unit !== "riceCup" &&
-            unit !== "tsp" &&
-            unit !== "Tbsp" &&
-            unit !== "AustralianTbsp"
-          )
-            return {
-              ingredient:
-                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-                "",
-              amount,
-              unit: "g",
-              customUnit:
-                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-                "",
-              id: undefined,
-              convertion: undefined,
-            };
+          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
+
+          const unitData = formData.get(
+            `ingredient${i + 1}Unit`
+          ) as TYPE_INGREDIENT_UNIT;
+          const customUnitData = String(
+            formData.get(`ingredient${i + 1}CustomUnit`)
+          )?.trim();
+
+          const unit = unitData !== "other" ? unitData : customUnitData;
 
           return {
-            ingredient:
-              String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
+            id: undefined,
+            ingredient,
             amount,
             unit,
-            customUnit:
-              String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-              "",
-            id: undefined,
             convertion: convertIngUnits(amount, unit),
           };
-        });
+        })
+        .filter((ing) => ing.ingredient || ing.amount);
 
+      //filter out instruction with no instruction and image
       const instructions = new Array(instructionImages.length)
         .fill("")
         .map((_, i) => {
@@ -166,7 +168,8 @@ export default function CreateRecipe() {
             instruction: String(formData.get(`instruction${i + 1}`)) || "",
             image: instructionImages[i],
           };
-        });
+        })
+        .filter((inst) => inst.instruction || inst.image);
 
       const newRecipe = {
         favorite: favorite === true ? true : false,
@@ -181,12 +184,7 @@ export default function CreateRecipe() {
           customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
         },
         temperatures: {
-          temperatures: [
-            +(formData.get("temperature1") || 0),
-            +(formData.get("temperature2") || 0),
-            +(formData.get("temperature3") || 0),
-            +(formData.get("temperature4") || 0),
-          ],
+          temperatures: tempArr,
           unit:
             formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
         },
@@ -198,8 +196,11 @@ export default function CreateRecipe() {
         createdAt: new Date().toISOString(),
       };
 
+      if (!isRecipeAllowed(newRecipe))
+        throw new Error("Please fill more than one input field!");
+
       recipeData = await uploadRecipe(newRecipe);
-      // console.log(recipeData);
+
       userContext?.addNumberOfRecipes();
 
       setIsPending(false);
@@ -214,7 +215,7 @@ export default function CreateRecipe() {
       );
     }
 
-    redirect(`/recipes/recipe#${recipeData._id}`, RedirectType.replace);
+    // redirect(`/recipes/recipe#${recipeData._id}`, RedirectType.replace);
   }
 
   async function uploadRecipe(recipe: TYPE_RECIPE) {
@@ -268,7 +269,7 @@ export default function CreateRecipe() {
             color: "white",
             padding: "0.7% 1%",
             borderRadius: "5px",
-            fontSize: "1.4vw",
+            fontSize,
             letterSpacing: "0.07vw",
             marginBottom: "1%",
           }}
@@ -282,7 +283,7 @@ export default function CreateRecipe() {
           textAlign: "center",
           backgroundImage:
             "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-          width: "50%",
+          width: formWidth,
           height: "100%",
           display: "flex",
           flexDirection: "column",
@@ -295,12 +296,16 @@ export default function CreateRecipe() {
         onSubmit={handleSubmit}
       >
         <ImageTitle
+          mediaContext={mediaContext}
+          fontSize={fontSize}
           image={mainImage}
           onChangeImage={handleChangeMainImage}
           deleteImage={handleDeleteMainImage}
           displayError={displayError}
         />
         <BriefExplanation
+          mediaContext={mediaContext}
+          fontSize={fontSize}
           favorite={favorite}
           onClickFavorite={handleClickFavorite}
         />
@@ -327,16 +332,20 @@ export default function CreateRecipe() {
       </form>
     </div>
   ) : (
-    <Loading />
+    <Loading message="Creating your recipe..." />
   );
 }
 
 function ImageTitle({
+  mediaContext,
+  fontSize,
   image,
   onChangeImage,
   deleteImage,
   displayError,
 }: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
   image: TYPE_FILE | undefined;
   onChangeImage: (
     mainImageFile: TYPE_FILE,
@@ -345,6 +354,9 @@ function ImageTitle({
   deleteImage: () => void;
   displayError: (error: string) => void;
 }) {
+  const imageWidth = mediaContext === "mobile" ? "260px" : "500px";
+  const imageHeight = parseInt(imageWidth) * 0.6 + "px";
+
   async function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
     try {
       const files = e.currentTarget.files;
@@ -388,16 +400,17 @@ function ImageTitle({
     <div
       style={{
         position: "relative",
-        width: "500px",
-        height: "300px",
+        width: imageWidth,
+        height: imageHeight,
       }}
     >
       <button
         className={clsx(styles.btn__img, styles.btn__trash_img)}
         style={{
-          right: "-8%",
-          width: "7%",
-          height: "9%",
+          top: mediaContext === "mobile" ? "101%" : "0",
+          right: mediaContext === "mobile" ? "-10%" : "-8%",
+          width: mediaContext === "mobile" ? "15%" : "7%",
+          height: mediaContext === "mobile" ? "13%" : "9%",
           opacity: image ? 1 : 0,
         }}
         type="button"
@@ -406,12 +419,12 @@ function ImageTitle({
       {!image ? (
         <div
           className={styles.grey_background}
-          style={{ width: "500px", height: "300px" }}
+          style={{ width: imageWidth, height: imageHeight }}
         >
           <div
             style={{
               position: "relative",
-              width: "50%",
+              width: "60%",
               height: "13%",
               left: "4%",
               bottom: "3%",
@@ -425,8 +438,8 @@ function ImageTitle({
                 left: "0",
                 color: "rgba(255, 168, 7, 1)",
                 fontWeight: "bold",
-                fontSize: "1.5vw",
-                letterSpacing: "0.05vw",
+                fontSize,
+                letterSpacing: mediaContext === "mobile" ? "0.2vw" : "0.05vw",
               }}
               type="button"
             >
@@ -450,8 +463,8 @@ function ImageTitle({
         <Image
           src={image.data}
           alt="main image"
-          width={500}
-          height={300}
+          width={parseFloat(imageWidth)}
+          height={parseFloat(imageHeight)}
         ></Image>
       )}
       <div
@@ -463,14 +476,14 @@ function ImageTitle({
           top: "-10%",
           left: "7%",
           width: "85%",
-          minHeight: "60px",
+          height: "fit-content",
           overflow: "hidden",
           whiteSpace: "nowrap",
           textOverflow: "ellipsis",
           backgroundImage:
             "linear-gradient(150deg, rgb(255, 230, 0) 10%,rgb(255, 102, 0))",
           letterSpacing: "0.1vw",
-          padding: "1% 3.5%",
+          padding: "2% 3.5%",
           transform: "skewX(-17deg)",
           zIndex: "2",
         }}
@@ -482,7 +495,7 @@ function ImageTitle({
             background: "none",
             border: "none",
             letterSpacing: "0.07vw",
-            fontSize: "2.1vw",
+            fontSize: `calc(${fontSize} * 1.5)`,
             textAlign: "center",
           }}
           name="title"
@@ -493,14 +506,21 @@ function ImageTitle({
   );
 }
 
+//from here!
 function BriefExplanation({
+  mediaContext,
+  fontSize,
   favorite,
   onClickFavorite,
 }: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
   favorite: boolean;
   onClickFavorite: () => void;
 }) {
   const [mouseOver, setMouseOver] = useState([false, false, false]);
+  const [servingsUnit, setServingsUnit] =
+    useState<TYPE_SERVINGS_UNIT>("people");
   const [tempKeys, setTempKeys] = useState(
     Array(NUMBER_OF_TEMPERATURES)
       .fill("")
@@ -508,6 +528,8 @@ function BriefExplanation({
         return { id: nanoid() };
       })
   );
+
+  const iconSize = mediaContext === "mobile" ? 12 : 13;
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     const index = e.currentTarget.dataset.icon;
@@ -531,6 +553,11 @@ function BriefExplanation({
     });
   }
 
+  function handleChangeServingsUnit(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.currentTarget.value as TYPE_SERVINGS_UNIT;
+    setServingsUnit(value);
+  }
+
   return (
     <div
       style={{
@@ -539,10 +566,10 @@ function BriefExplanation({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        width: "90%",
+        width: mediaContext === "mobile" ? "95%" : "90%",
         height: "fit-content",
         gap: "3%",
-        margin: "50px 0 28px 0",
+        margin: mediaContext === "mobile" ? "40px 0 20px 0" : "50px 0 28px 0",
       }}
     >
       <div
@@ -553,11 +580,11 @@ function BriefExplanation({
           minWidth: "80%",
           width: "fit-content",
           maxWidth: "91%",
-          height: "100px",
+          height: mediaContext === "mobile" ? "80px" : "100px",
           whiteSpace: "nowrap",
           padding: "3%",
           backgroundColor: "rgb(255, 217, 0)",
-          borderRadius: "1% / 7%",
+          borderRadius: "5px",
           gap: "20%",
         }}
       >
@@ -585,8 +612,8 @@ function BriefExplanation({
             <Image
               src={"/person.svg"}
               alt="person icon"
-              width={13}
-              height={13}
+              width={iconSize}
+              height={iconSize}
             ></Image>
           </div>
           <input
@@ -622,8 +649,8 @@ function BriefExplanation({
             <Image
               src={"/servings.svg"}
               alt="servings icon"
-              width={14}
-              height={15}
+              width={iconSize + 1}
+              height={iconSize + 2}
             ></Image>
           </div>
           <input
@@ -639,6 +666,7 @@ function BriefExplanation({
             className={styles.input__brief_explanation}
             style={{ width: "22%" }}
             name="servingsUnit"
+            onChange={handleChangeServingsUnit}
           >
             <option value="people">people</option>
             <option value="slices">slices</option>
@@ -647,12 +675,14 @@ function BriefExplanation({
             <option value="bowls">bowls</option>
             <option value="other">other</option>
           </select>
-          <input
-            className={styles.input__brief_explanation}
-            style={{ width: "20%" }}
-            name="servingsCustomUnit"
-            placeholder="Custom unit"
-          />
+          {servingsUnit === "other" && (
+            <input
+              className={styles.input__brief_explanation}
+              style={{ width: "20%" }}
+              name="servingsCustomUnit"
+              placeholder="Custom unit"
+            />
+          )}
         </div>
         <div className={styles.container__units}>
           <div
@@ -681,8 +711,8 @@ function BriefExplanation({
             <Image
               src={"/temperature.svg"}
               alt="ingredient units icon"
-              width={17}
-              height={17}
+              width={iconSize + 3}
+              height={iconSize + 3}
             ></Image>
           </div>
           {tempKeys.map((keyObj, i) => (
@@ -855,7 +885,8 @@ function IngLine({
       const newLine = { ...prev };
       if (target.name.includes("Name")) newLine.name = target.value;
       if (target.name.includes("Amount")) newLine.amount = +target.value;
-      if (target.name.includes("Unit")) newLine.unit = target.value;
+      if (target.name.includes("Unit") && !target.name.includes("CustomUnit"))
+        newLine.unit = target.value;
       if (target.name.includes("CustomUnit")) newLine.customUnit = target.value;
       return newLine;
     });
@@ -898,7 +929,7 @@ function IngLine({
         className={styles.input__brief_explanation}
         style={{ width: "20%" }}
         name={`ingredient${i + 1}Unit`}
-        value={line.unit || "g"}
+        value={line.unit}
         onChange={handleChangeInput}
       >
         <option value="g">g</option>
@@ -914,18 +945,23 @@ function IngLine({
         <option value="tsp">tsp</option>
         <option value="Tbsp">Tbsp</option>
         <option value="TbspAustralia">Tbsp (Australia)</option>
+        <option value="pinch">pinch</option>
+        <option value="can">can</option>
+        <option value="slice">slice</option>
         <option value="other">Other</option>
         <option value="noUnit">No unit</option>
       </select>
-      <input
-        className={styles.input__brief_explanation}
-        style={{ width: "20%" }}
-        type="text"
-        name={`ingredient${i + 1}CustomUnit`}
-        placeholder="Custom unit"
-        value={line.customUnit}
-        onChange={handleChangeInput}
-      />
+      {line.unit === "other" && (
+        <input
+          className={styles.input__brief_explanation}
+          style={{ width: "20%" }}
+          type="text"
+          name={`ingredient${i + 1}CustomUnit`}
+          placeholder="Custom unit"
+          value={line.customUnit}
+          onChange={handleChangeInput}
+        />
+      )}
     </div>
   );
 }
@@ -1524,74 +1560,6 @@ function Comments() {
       </div> */}
       </div>
     </div>
-  );
-}
-
-function Loading() {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        top: "0%",
-        left: "0%",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(255, 174, 0, 1)",
-        zIndex: "100",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "15%",
-          width: "30%",
-          height: "40%",
-        }}
-      >
-        <p
-          style={{
-            color: "white",
-            fontSize: "1.8vw",
-            letterSpacing: "0.08vw",
-          }}
-        >
-          Creating your recipe...
-        </p>
-        <Image
-          className={styles.img__uploading}
-          src="/loading.png"
-          alt="loading icon"
-          width={150}
-          height={150}
-        ></Image>
-      </div>
-    </div>
-
-    // <p
-    //   style={{
-    //     display: "flex",
-    //     flexDirection: "column",
-    //     textAlign: "center",
-    //     justifyContent: "center",
-    //     width: "30%",
-    //     height: "30%",
-    //     fontSize: "1.5vw",
-    //     letterSpacing: "0.05vw",
-    //     padding: "1%",
-    //     color: "rgb(197, 118, 0)",
-    //     backgroundColor: "rgb(255, 254, 205)",
-    //     borderRadius: "2%/4%",
-    //   }}
-    // >
-    //   Recipe created successfully!
-    // </p>
   );
 }
 

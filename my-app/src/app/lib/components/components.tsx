@@ -1,10 +1,10 @@
 "use client";
-import React, { useCallback, useContext, useEffect } from "react";
-import clsx from "clsx";
 import styles from "./component.module.css";
-import { useState } from "react";
+import React, { useContext, useState } from "react";
+import clsx from "clsx";
 import { MediaContext, UserContext } from "../providers";
 import { redirect, RedirectType } from "next/navigation";
+import Image from "next/image";
 import { TYPE_MEDIA } from "../config";
 
 export function MessageContainer({
@@ -216,6 +216,75 @@ export function PaginationButtons({
           &rarr;
         </button>
       )}
+    </div>
+  );
+}
+
+export function Loading({ message }: { message: string }) {
+  const mediaContext = useContext(MediaContext);
+
+  const imageSize =
+    mediaContext === "mobile"
+      ? 100
+      : mediaContext === "tablet"
+      ? 130
+      : mediaContext === "desktop"
+      ? 150
+      : 180;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        top: "0%",
+        left: "0%",
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(255, 174, 0, 1)",
+        zIndex: "100",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "15%",
+          width: "40%",
+          height: "40%",
+        }}
+      >
+        <p
+          style={{
+            color: "white",
+            fontSize:
+              mediaContext === "mobile"
+                ? "5vw"
+                : mediaContext === "tablet"
+                ? "2.7vw"
+                : mediaContext === "desktop"
+                ? "1.8vw"
+                : "1.5vw",
+            letterSpacing: "0.08vw",
+            textAlign: "center",
+          }}
+        >
+          {message}
+        </p>
+        <Image
+          className={styles.img__uploading}
+          src="/loading.png"
+          alt="loading icon"
+          width={imageSize}
+          height={imageSize}
+          priority
+        ></Image>
+      </div>
     </div>
   );
 }

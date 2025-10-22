@@ -4,24 +4,148 @@ import {
   convertIngUnits,
   convertLengthUnits,
   convertTempUnits,
-} from "../helper";
-import { useEffect, useRef, useState } from "react";
+} from "../lib/helper";
+import { useContext, useEffect, useRef, useState } from "react";
+import { MediaContext } from "../lib/providers";
+import { TYPE_MEDIA } from "../lib/config";
+import { Loading } from "../lib/components/components";
 
 export default function Converter() {
+  const mediaContext = useContext(MediaContext);
+
+  const fontSize =
+    mediaContext === "mobile"
+      ? "4.5vw"
+      : mediaContext === "tablet"
+      ? "2.5vw"
+      : mediaContext === "desktop"
+      ? "1.7vw"
+      : "1.3vw";
+
+  const smallHeaderStyle = {
+    color: "#795200ff",
+    letterSpacing: "0.07vw",
+    wordSpacing: "0.3vw",
+    fontSize: `calc(${fontSize} * 1.1)`,
+    margin: mediaContext === "mobile" ? "5% 0 3% 0" : "3% 0 2% 0",
+  };
+
+  const outputFontSize = `calc(${fontSize} * 1.1)`;
+
+  const boxStyle = {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    backgroundColor: "antiquewhite",
+    gap: "1%",
+    borderRadius: "3px",
+    width:
+      mediaContext === "mobile"
+        ? "90%"
+        : mediaContext === "tablet"
+        ? "80%"
+        : "70%",
+    minHeight:
+      mediaContext === "mobile" || mediaContext === "tablet" ? "23%" : "20%",
+    maxHeight: "fit-content",
+    fontSize,
+  };
+
+  const converterInnerStyle = {
+    width:
+      mediaContext === "mobile"
+        ? "90%"
+        : mediaContext === "tablet"
+        ? "85%"
+        : mediaContext === "desktop"
+        ? "75%"
+        : "70%",
+    display: "flex",
+    flexDirection: "row",
+    alignSelf: "center",
+    justifyContent: "left",
+    height: "fit-content",
+    gap: "3%",
+    marginTop: "3%",
+    marginBottom: mediaContext === "mobile" ? "0" : "2%",
+  };
+
+  const inputSelectStyle = {
+    minWidth: mediaContext === "mobile" ? "35%" : "25%",
+    maxWidth: "fit-content",
+    textAlign: "center",
+    letterSpacing: "0.07vw",
+    borderRadius: "2%/7%",
+    borderColor: "rgba(0, 0, 0, 0.404)",
+    aspectRatio: "1/0.21",
+    fontSize,
+  };
+
   return (
-    <div className={styles.page__converter}>
-      <h1>Converter</h1>
-      <h3>Ingredient units</h3>
-      <ConverterIng />
-      <h3>Tempareture units</h3>
-      <ConverterTemp />
-      <h3>Length units</h3>
-      <ConverterLength />
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        justifyContent: "center",
+        width: "100%",
+        minHeight: "100vh",
+        maxHeight: "fit-content",
+        backgroundColor: "#6ddbb6",
+        padding: "2% 0",
+      }}
+    >
+      <h1
+        style={{
+          color: "#21038bff",
+          fontSize: `calc(${fontSize} * 1.4)`,
+          letterSpacing: "0.1vw",
+        }}
+      >
+        Converter
+      </h1>
+      <h3 style={smallHeaderStyle}>Ingredient units</h3>
+      <ConverterIng
+        mediaContext={mediaContext}
+        boxStyle={boxStyle}
+        converterInnerStyle={converterInnerStyle}
+        inputSelectStyle={inputSelectStyle}
+        outputFontSize={outputFontSize}
+      />
+      <h3 style={smallHeaderStyle}>Tempareture units</h3>
+      <ConverterTemp
+        mediaContext={mediaContext}
+        boxStyle={boxStyle}
+        converterInnerStyle={converterInnerStyle}
+        inputSelectStyle={inputSelectStyle}
+        outputFontSize={outputFontSize}
+      />
+      <h3 style={smallHeaderStyle}>Length units</h3>
+      <ConverterLength
+        mediaContext={mediaContext}
+        boxStyle={boxStyle}
+        converterInnerStyle={converterInnerStyle}
+        inputSelectStyle={inputSelectStyle}
+        outputFontSize={outputFontSize}
+      />
     </div>
   );
 }
 
-function ConverterIng() {
+function ConverterIng({
+  mediaContext,
+  boxStyle,
+  converterInnerStyle,
+  inputSelectStyle,
+  outputFontSize,
+}: {
+  mediaContext: TYPE_MEDIA;
+  boxStyle: object;
+  converterInnerStyle: object;
+  inputSelectStyle: object;
+  outputFontSize: string;
+}) {
   //prettier-ignore
   type AllowedUnitsIng = "g"| "kg"| "oz"| "lb"| "ml"| "L"| "USCup"| "JapaneseCup"| "ImperialCup"| "riceCup"| "tsp"| "Tbsp"| "AustralianTbsp";
 
@@ -89,75 +213,156 @@ function ConverterIng() {
   }, [unitIngFrom]);
 
   return (
-    <div className={styles.container__converter_ingredients}>
-      <div className={styles.container__converter}>
-        <label htmlFor="input__ingredient_amount">From</label>
-        <input
-          className={styles.input__amount}
-          id={styles.input__ingredient_amount}
-          type="number"
-          placeholder="Amount"
-          onChange={handleInputChangeIng}
-        />
-        <select
-          className={styles.select__ingredient_unit_from}
-          value={unitIngFrom}
-          onChange={handleSelectChangeIngFrom}
-        >
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-          <option value="oz">oz</option>
-          <option value="lb">lb</option>
-          <option value="ml">ml</option>
-          <option value="L">L</option>
-          <option value="USCup">cup (US)</option>
-          <option value="JapaneseCup">cup (Japan)</option>
-          <option value="ImperialCup">cup (1cup = 250ml)</option>
-          <option value="riceCup">rice cup</option>
-          <option value="tsp">tsp</option>
-          <option value="Tbsp">Tbsp</option>
-          <option value="AustralianTbsp">Tbsp (Australia)</option>
-        </select>
-        <label
-          className={styles.label__to}
-          htmlFor="select__ingredient_unit_to"
-        >
-          To
-        </label>
-        <select
-          className={styles.select__ingredient_unit_to}
-          ref={selectRefIng}
-          value={unitIngTo}
-          onChange={handleSelectChangeIngTo}
-        >
-          {isMass && unitIngFrom !== "g" && <option value="g">g</option>}
-          {isMass && unitIngFrom !== "kg" && <option value="kg">kg</option>}
-          {isMass && unitIngFrom !== "oz" && <option value="oz">oz</option>}
-          {isMass && unitIngFrom !== "lb" && <option value="lb">lb</option>}
-          {!isMass && unitIngFrom !== "ml" && <option value="ml">ml</option>}
-          {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
-          {!isMass && unitIngFrom !== "USCup" && (
+    <div style={boxStyle}>
+      {mediaContext !== "mobile" ? (
+        <div style={converterInnerStyle}>
+          <label htmlFor="input__ingredient_amount">From</label>
+          <input
+            style={inputSelectStyle}
+            type="number"
+            placeholder="Amount"
+            onChange={handleInputChangeIng}
+          />
+          <select
+            style={inputSelectStyle}
+            value={unitIngFrom}
+            onChange={handleSelectChangeIngFrom}
+          >
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="oz">oz</option>
+            <option value="lb">lb</option>
+            <option value="ml">ml</option>
+            <option value="L">L</option>
             <option value="USCup">cup (US)</option>
-          )}
-          {!isMass && unitIngFrom !== "JapaneseCup" && (
             <option value="JapaneseCup">cup (Japan)</option>
-          )}
-          {!isMass && unitIngFrom !== "ImperialCup" && (
             <option value="ImperialCup">cup (1cup = 250ml)</option>
-          )}
-          {!isMass && unitIngFrom !== "riceCup" && (
             <option value="riceCup">rice cup</option>
-          )}
-          {!isMass && unitIngFrom !== "tsp" && <option value="tsp">tsp</option>}
-          {!isMass && unitIngFrom !== "Tbsp" && (
+            <option value="tsp">tsp</option>
             <option value="Tbsp">Tbsp</option>
-          )}
-          {!isMass && unitIngFrom !== "AustralianTbsp" && (
             <option value="AustralianTbsp">Tbsp (Australia)</option>
-          )}
-        </select>
-      </div>
-      <div className={styles.container__output}>
+          </select>
+          <label
+            className={styles.label__to}
+            htmlFor="select__ingredient_unit_to"
+          >
+            To
+          </label>
+          <select
+            style={inputSelectStyle}
+            ref={selectRefIng}
+            value={unitIngTo}
+            onChange={handleSelectChangeIngTo}
+          >
+            {isMass && unitIngFrom !== "g" && <option value="g">g</option>}
+            {isMass && unitIngFrom !== "kg" && <option value="kg">kg</option>}
+            {isMass && unitIngFrom !== "oz" && <option value="oz">oz</option>}
+            {isMass && unitIngFrom !== "lb" && <option value="lb">lb</option>}
+            {!isMass && unitIngFrom !== "ml" && <option value="ml">ml</option>}
+            {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
+            {!isMass && unitIngFrom !== "USCup" && (
+              <option value="USCup">cup (US)</option>
+            )}
+            {!isMass && unitIngFrom !== "JapaneseCup" && (
+              <option value="JapaneseCup">cup (Japan)</option>
+            )}
+            {!isMass && unitIngFrom !== "ImperialCup" && (
+              <option value="ImperialCup">cup (1cup = 250ml)</option>
+            )}
+            {!isMass && unitIngFrom !== "riceCup" && (
+              <option value="riceCup">rice cup</option>
+            )}
+            {!isMass && unitIngFrom !== "tsp" && (
+              <option value="tsp">tsp</option>
+            )}
+            {!isMass && unitIngFrom !== "Tbsp" && (
+              <option value="Tbsp">Tbsp</option>
+            )}
+            {!isMass && unitIngFrom !== "AustralianTbsp" && (
+              <option value="AustralianTbsp">Tbsp (Australia)</option>
+            )}
+          </select>
+        </div>
+      ) : (
+        <>
+          <div style={converterInnerStyle}>
+            <label htmlFor="input__ingredient_amount">From</label>
+            <input
+              style={inputSelectStyle}
+              type="number"
+              placeholder="Amount"
+              onChange={handleInputChangeIng}
+            />
+            <select
+              style={inputSelectStyle}
+              value={unitIngFrom}
+              onChange={handleSelectChangeIngFrom}
+            >
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="oz">oz</option>
+              <option value="lb">lb</option>
+              <option value="ml">ml</option>
+              <option value="L">L</option>
+              <option value="USCup">cup (US)</option>
+              <option value="JapaneseCup">cup (Japan)</option>
+              <option value="ImperialCup">cup (1cup = 250ml)</option>
+              <option value="riceCup">rice cup</option>
+              <option value="tsp">tsp</option>
+              <option value="Tbsp">Tbsp</option>
+              <option value="AustralianTbsp">Tbsp (Australia)</option>
+            </select>
+          </div>
+          <div style={converterInnerStyle}>
+            <label
+              className={styles.label__to}
+              htmlFor="select__ingredient_unit_to"
+            >
+              To
+            </label>
+            <select
+              style={inputSelectStyle}
+              ref={selectRefIng}
+              value={unitIngTo}
+              onChange={handleSelectChangeIngTo}
+            >
+              {isMass && unitIngFrom !== "g" && <option value="g">g</option>}
+              {isMass && unitIngFrom !== "kg" && <option value="kg">kg</option>}
+              {isMass && unitIngFrom !== "oz" && <option value="oz">oz</option>}
+              {isMass && unitIngFrom !== "lb" && <option value="lb">lb</option>}
+              {!isMass && unitIngFrom !== "ml" && (
+                <option value="ml">ml</option>
+              )}
+              {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
+              {!isMass && unitIngFrom !== "USCup" && (
+                <option value="USCup">cup (US)</option>
+              )}
+              {!isMass && unitIngFrom !== "JapaneseCup" && (
+                <option value="JapaneseCup">cup (Japan)</option>
+              )}
+              {!isMass && unitIngFrom !== "ImperialCup" && (
+                <option value="ImperialCup">cup (1cup = 250ml)</option>
+              )}
+              {!isMass && unitIngFrom !== "riceCup" && (
+                <option value="riceCup">rice cup</option>
+              )}
+              {!isMass && unitIngFrom !== "tsp" && (
+                <option value="tsp">tsp</option>
+              )}
+              {!isMass && unitIngFrom !== "Tbsp" && (
+                <option value="Tbsp">Tbsp</option>
+              )}
+              {!isMass && unitIngFrom !== "AustralianTbsp" && (
+                <option value="AustralianTbsp">Tbsp (Australia)</option>
+              )}
+            </select>
+          </div>
+        </>
+      )}
+      <div
+        className={styles.container__output}
+        style={{ fontSize: outputFontSize }}
+      >
         <p className={styles.output}>{findResultIng()}</p>
         <span className={styles.unit}>
           {(() => {
@@ -173,7 +378,19 @@ function ConverterIng() {
   );
 }
 
-function ConverterTemp() {
+function ConverterTemp({
+  mediaContext,
+  boxStyle,
+  converterInnerStyle,
+  inputSelectStyle,
+  outputFontSize,
+}: {
+  mediaContext: TYPE_MEDIA;
+  boxStyle: object;
+  converterInnerStyle: object;
+  inputSelectStyle: object;
+  outputFontSize: string;
+}) {
   const [valueTemp, setValueTemp] = useState<number>();
   const [unitTempFrom, setUnitTempFrom] = useState<"℉" | "℃">("℉");
 
@@ -188,36 +405,72 @@ function ConverterTemp() {
   }
 
   return (
-    <div className={styles.container__converter_temperature}>
-      <div className={styles.container__converter}>
-        <label htmlFor="input__temperature_amount">From</label>
-        <input
-          className={styles.input__amount}
-          id={styles.input__temperature_amount}
-          type="number"
-          placeholder="Temperature"
-          onChange={handleInputChangeTemp}
-        />
-        <select
-          className={styles.select__temperature_unit_from}
-          value={unitTempFrom}
-          onChange={handleSelectChangeTempFrom}
-        >
-          <option value="℃">℃</option>
-          <option value="℉">℉</option>
-        </select>
-        <label
-          className={styles.label__to}
-          htmlFor="select__temperature_unit_to"
-        >
-          To
-        </label>
-        <select className={styles.select__temperature_unit_to}>
-          {unitTempFrom !== "℃" && <option value="℃">℃</option>}
-          {unitTempFrom !== "℉" && <option value="℉">℉</option>}
-        </select>
-      </div>
-      <div className={styles.container__output}>
+    <div style={boxStyle}>
+      {mediaContext !== "mobile" ? (
+        <div style={converterInnerStyle}>
+          <label htmlFor="input__temperature_amount">From</label>
+          <input
+            style={inputSelectStyle}
+            type="number"
+            placeholder="Temperature"
+            onChange={handleInputChangeTemp}
+          />
+          <select
+            style={inputSelectStyle}
+            value={unitTempFrom}
+            onChange={handleSelectChangeTempFrom}
+          >
+            <option value="℃">℃</option>
+            <option value="℉">℉</option>
+          </select>
+          <label
+            className={styles.label__to}
+            htmlFor="select__temperature_unit_to"
+          >
+            To
+          </label>
+          <select style={inputSelectStyle}>
+            {unitTempFrom !== "℃" && <option value="℃">℃</option>}
+            {unitTempFrom !== "℉" && <option value="℉">℉</option>}
+          </select>
+        </div>
+      ) : (
+        <>
+          <div style={converterInnerStyle}>
+            <label htmlFor="input__temperature_amount">From</label>
+            <input
+              style={inputSelectStyle}
+              type="number"
+              placeholder="Temperature"
+              onChange={handleInputChangeTemp}
+            />
+            <select
+              style={inputSelectStyle}
+              value={unitTempFrom}
+              onChange={handleSelectChangeTempFrom}
+            >
+              <option value="℃">℃</option>
+              <option value="℉">℉</option>
+            </select>
+          </div>
+          <div style={converterInnerStyle}>
+            <label
+              className={styles.label__to}
+              htmlFor="select__temperature_unit_to"
+            >
+              To
+            </label>
+            <select style={inputSelectStyle}>
+              {unitTempFrom !== "℃" && <option value="℃">℃</option>}
+              {unitTempFrom !== "℉" && <option value="℉">℉</option>}
+            </select>
+          </div>{" "}
+        </>
+      )}
+      <div
+        className={styles.container__output}
+        style={{ fontSize: outputFontSize }}
+      >
         <p className={styles.output}>
           {(valueTemp && convertTempUnits(valueTemp, unitTempFrom)) || ""}
         </p>
@@ -227,7 +480,19 @@ function ConverterTemp() {
   );
 }
 
-function ConverterLength() {
+function ConverterLength({
+  mediaContext,
+  boxStyle,
+  converterInnerStyle,
+  inputSelectStyle,
+  outputFontSize,
+}: {
+  mediaContext: TYPE_MEDIA;
+  boxStyle: object;
+  converterInnerStyle: object;
+  inputSelectStyle: object;
+  outputFontSize: string;
+}) {
   //prettier-ignore
   type AllowedUnitsLength = "mm" | "cm" | "m" | "inch" | "foot" | "yard";
 
@@ -281,46 +546,95 @@ function ConverterLength() {
   }, [unitLengthFrom]);
 
   return (
-    <div className={styles.container__converter_length}>
-      <div className={styles.container__converter}>
-        <label htmlFor="input__length_amount">From</label>
-        <input
-          className={styles.input__amount}
-          id={styles.input__length_amount}
-          type="number"
-          placeholder="Length"
-          onChange={handleInputChangeLength}
-        />
-        <select
-          className={styles.select__length_unit_from}
-          value={unitLengthFrom}
-          onChange={handleSelectChangeLengthFrom}
-        >
-          <option value="mm">mm</option>
-          <option value="cm">cm</option>
-          <option value="m">m</option>
-          <option value="inch">inch</option>
-          <option value="foot">foot</option>
-          <option value="yard">yard</option>
-        </select>
-        <label className={styles.label__to} htmlFor="select__length_unit_to">
-          To
-        </label>
-        <select
-          className={styles.select__length_unit_to}
-          ref={selectRefLength}
-          value={unitLengthTo}
-          onChange={handleSelectChangeLengthTo}
-        >
-          {unitLengthFrom !== "mm" && <option value="mm">mm</option>}
-          {unitLengthFrom !== "cm" && <option value="cm">cm</option>}
-          {unitLengthFrom !== "m" && <option value="m">m</option>}
-          {unitLengthFrom !== "inch" && <option value="inch">inch</option>}
-          {unitLengthFrom !== "foot" && <option value="foot">foot</option>}
-          {unitLengthFrom !== "yard" && <option value="yard">yard</option>}
-        </select>
-      </div>
-      <div className={styles.container__output}>
+    <div style={boxStyle}>
+      {mediaContext !== "mobile" ? (
+        <div style={converterInnerStyle}>
+          <label htmlFor="input__length_amount">From</label>
+          <input
+            style={inputSelectStyle}
+            type="number"
+            placeholder="Length"
+            onChange={handleInputChangeLength}
+          />
+          <select
+            style={inputSelectStyle}
+            value={unitLengthFrom}
+            onChange={handleSelectChangeLengthFrom}
+          >
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="m">m</option>
+            <option value="inch">inch</option>
+            <option value="foot">foot</option>
+            <option value="yard">yard</option>
+          </select>
+          <label className={styles.label__to} htmlFor="select__length_unit_to">
+            To
+          </label>
+          <select
+            style={inputSelectStyle}
+            ref={selectRefLength}
+            value={unitLengthTo}
+            onChange={handleSelectChangeLengthTo}
+          >
+            {unitLengthFrom !== "mm" && <option value="mm">mm</option>}
+            {unitLengthFrom !== "cm" && <option value="cm">cm</option>}
+            {unitLengthFrom !== "m" && <option value="m">m</option>}
+            {unitLengthFrom !== "inch" && <option value="inch">inch</option>}
+            {unitLengthFrom !== "foot" && <option value="foot">foot</option>}
+            {unitLengthFrom !== "yard" && <option value="yard">yard</option>}
+          </select>
+        </div>
+      ) : (
+        <>
+          <div style={converterInnerStyle}>
+            <label htmlFor="input__length_amount">From</label>
+            <input
+              style={inputSelectStyle}
+              type="number"
+              placeholder="Length"
+              onChange={handleInputChangeLength}
+            />
+            <select
+              style={inputSelectStyle}
+              value={unitLengthFrom}
+              onChange={handleSelectChangeLengthFrom}
+            >
+              <option value="mm">mm</option>
+              <option value="cm">cm</option>
+              <option value="m">m</option>
+              <option value="inch">inch</option>
+              <option value="foot">foot</option>
+              <option value="yard">yard</option>
+            </select>
+          </div>
+          <div style={converterInnerStyle}>
+            <label
+              className={styles.label__to}
+              htmlFor="select__length_unit_to"
+            >
+              To
+            </label>
+            <select
+              style={inputSelectStyle}
+              ref={selectRefLength}
+              value={unitLengthTo}
+              onChange={handleSelectChangeLengthTo}
+            >
+              {unitLengthFrom !== "mm" && <option value="mm">mm</option>}
+              {unitLengthFrom !== "cm" && <option value="cm">cm</option>}
+              {unitLengthFrom !== "m" && <option value="m">m</option>}
+              {unitLengthFrom !== "inch" && <option value="inch">inch</option>}
+              {unitLengthFrom !== "foot" && <option value="foot">foot</option>}
+              {unitLengthFrom !== "yard" && <option value="yard">yard</option>}
+            </select>
+          </div>
+        </>
+      )}
+      <div
+        className={styles.container__output}
+        style={{ fontSize: outputFontSize }}
+      >
         <p className={styles.output}>{findResultLength()}</p>
         <span className={styles.unit}>{unitLengthTo}</span>
       </div>

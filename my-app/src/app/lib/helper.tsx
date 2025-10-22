@@ -6,6 +6,8 @@ import {
   TYPE_INGREDIENT,
   MESSAGE_TIMEOUT,
   TYPE_FILE,
+  TYPE_INGREDIENT_UNIT,
+  TYPE_INGREDIENTS,
 } from "./config";
 import { resolve } from "path";
 
@@ -175,6 +177,21 @@ export const calcTransitionXSlider = (index: number, curSlide: number) => {
   return `translateX(${translateX}%)`;
 };
 
+export function isRecipeAllowed(recipe: TYPE_RECIPE) {
+  return !recipe.mainImage &&
+    !recipe.title &&
+    !recipe.author &&
+    !recipe.servings.servings &&
+    !recipe.ingredients.length &&
+    !recipe.temperatures.temperatures.length &&
+    !recipe.instructions.length &&
+    !recipe.description &&
+    !recipe.memoryImages.length &&
+    !recipe.comments
+    ? false
+    : true;
+}
+
 export const getImageURL = (file: any) => {
   console.log(file);
   return file?.name ? URL.createObjectURL(file) : "";
@@ -232,14 +249,13 @@ export const getRegion = (ingredients: any) => {
   return servingsUnit;
 };
 
-export const getReadableIngUnit = (unit: string, customUnit: string = "") => {
+export const getReadableIngUnit = (unit: string) => {
   let readableUnit;
   if (unit === "cupUS") readableUnit = "US cup";
   else if (unit === "cupJapan") readableUnit = "Japanese cup";
   else if (unit === "cupImperial") readableUnit = "Imperial cup";
   else if (unit === "riceCup") readableUnit = "rice cup";
   else if (unit === "TbspAustralia") readableUnit = "Australian Tbsp";
-  else if (unit === "other") readableUnit = customUnit;
   else if (unit === "noUnit") readableUnit = "";
   else readableUnit = unit;
 
@@ -344,7 +360,7 @@ export const convertTempUnits = function (
 // prettier-ignore
 export const convertIngUnits = function(
   amount: number,
-  unitFrom: "g" | "kg" | "oz" | "lb" | "ml" | "L" | "USCup" | "JapaneseCup" | "ImperialCup" | "riceCup" | "tsp" | "Tbsp" | "AustralianTbsp" | "other" | 'noUnit'
+  unitFrom: TYPE_INGREDIENT_UNIT | string
 ) {
   ///for main page toFixed(1)
   let metric;
@@ -390,6 +406,7 @@ export const convertIngUnits = function(
 
 
   if (unitFrom === "oz"){
+  
     metric = { amount: +(amount * 28.3495).toFixed(1), unit: "g" };
     us = {amount, unit: unitFrom};
     japan = metric;
@@ -400,6 +417,7 @@ export const convertIngUnits = function(
 }
 
   if (unitFrom === "lb"){
+  
     metric = { amount: +(amount / 35.274).toFixed(1), unit: "kg" };
     us = {amount, unit: unitFrom};
     japan = metric;
@@ -410,63 +428,67 @@ export const convertIngUnits = function(
 }
 
 if (unitFrom === "ml") {
+
   metric = {amount, unit: unitFrom};
-  us = { amount: +(amount / 240).toFixed(1), unit: "US cup" };
-  japan = { amount: +(amount / 200).toFixed(1), unit: "Japanese cup" };
-  metricCup = { amount: +(amount / 250).toFixed(1), unit: "Imperial cup" };
+  us = { amount: +(amount / 240).toFixed(1), unit: "USCup" };
+  japan = { amount: +(amount / 200).toFixed(1), unit: "JapaneseCup" };
+  metricCup = { amount: +(amount / 250).toFixed(1), unit: "ImperialCup" };
   australia = metricCup;
   ml = {amount, unit: unitFrom};
   }
 
   if (unitFrom === "L") {
+  
     metric = {amount, unit: unitFrom};
-    us = { amount: +(amount * 4.167).toFixed(1), unit: "US cup" };
-    japan = { amount: +(amount * 5).toFixed(1), unit: "Japanese cup" };
-    metricCup = { amount: +(amount * 4).toFixed(1), unit: "Imperial cup" };
+    us = { amount: +(amount * 4.167).toFixed(1), unit: "USCup" };
+    japan = { amount: +(amount * 5).toFixed(1), unit: "JapaneseCup" };
+    metricCup = { amount: +(amount * 4).toFixed(1), unit: "ImperialCup" };
     australia = metricCup;
     ml = {amount: +(amount * 1000).toFixed(3), unit: 'ml'};
   }
 
   if (unitFrom === "USCup") {
+  
     metric = { amount: +(amount * 240).toFixed(1), unit: "ml" };
-    us = {amount, unit: 'US cup'};
-    japan = { amount: +(amount * 1.2).toFixed(1), unit: "Japanese cup" }
-    // cupJapan: 
-    //   riceCup: { amount: +(amount * 1.3333).toFixed(1), unit: "rice cup" }
-    // };
-    metricCup = { amount: +(amount * 0.96).toFixed(1), unit: "Imperial cup" };
+    us = {amount, unit: 'USCup'};
+    japan = { amount: +(amount * 1.2).toFixed(1), unit: "JapaneseCup" }
+    metricCup = { amount: +(amount * 0.96).toFixed(1), unit: "ImperialCup" };
     australia = metricCup;
     ml = {amount: +(amount * 240).toFixed(3), unit: 'ml'};
   }
 
   if (unitFrom === "JapaneseCup") {
+  
     metric = { amount: +(amount * 200).toFixed(1), unit: "ml" };
-    us = { amount: +(amount * 0.833).toFixed(1), unit: "US cup" };
-    japan = {amount, unit: 'Japanese cup'};
-    metricCup = { amount: +(amount * 0.8).toFixed(1), unit: "Imperial cup" };
+    us = { amount: +(amount * 0.833).toFixed(1), unit: "USCup" };
+    japan = {amount, unit: 'JapaneseCup'};
+    metricCup = { amount: +(amount * 0.8).toFixed(1), unit: "ImperialCup" };
     australia = metricCup;
     ml = {amount: +(amount * 200).toFixed(3), unit: 'ml'};
   }
 
   if (unitFrom === "ImperialCup") {
+  
     metric = { amount: +(amount * 250).toFixed(1), unit: "ml" };
-    us = { amount: +(amount * 1.041).toFixed(1), unit: "US cup" };
-    japan = { amount: +(amount * 1.25).toFixed(1), unit: "Japanese cup" };
-    metricCup = {amount, unit: 'Imperial cup'};
+    us = { amount: +(amount * 1.041).toFixed(1), unit: "USCup" };
+    japan = { amount: +(amount * 1.25).toFixed(1), unit: "JapaneseCup" };
+    metricCup = {amount, unit: 'ImperialCup'};
     australia = metricCup;
     ml = {amount: +(amount * 250).toFixed(3), unit: 'ml'};
   }
 
   if (unitFrom === "riceCup") {
+  
     metric = { amount: +(amount * 180).toFixed(1), unit: "ml" };
-    us = { amount: +(amount * 0.75).toFixed(1), unit: "US cup" };
-    japan = { amount: +(amount * 0.9).toFixed(1), unit: "Japanese cup" };
-    metricCup = { amount: +(amount * 0.72).toFixed(1), unit: "Imperial cup" };
+    us = { amount: +(amount * 0.75).toFixed(1), unit: "USCup" };
+    japan = { amount: +(amount * 0.9).toFixed(1), unit: "JapaneseCup" };
+    metricCup = { amount: +(amount * 0.72).toFixed(1), unit: "ImperialCup" };
     australia = metricCup;
     ml = {amount: +(amount * 180).toFixed(3), unit: 'ml'};
   }
 
   if (unitFrom === "tsp"){ 
+  
     metric = { amount: +(amount * 5).toFixed(1), unit: "ml" };
     us = {amount, unit: unitFrom};
     japan = us;
@@ -480,7 +502,7 @@ if (unitFrom === "ml") {
     us = {amount, unit: unitFrom};
     japan = us;
     metricCup = us;
-    australia = { amount: +(amount * 0.75).toFixed(1), unit: "Australian Tbsp" };
+    australia = { amount: +(amount * 0.75).toFixed(1), unit: "AustralianTbsp" };
     ml = {amount: +(amount * 15).toFixed(3), unit: 'ml'};
   }
 
@@ -489,22 +511,23 @@ if (unitFrom === "ml") {
     us = { amount: +(amount * 1.3333).toFixed(1), unit: "Tbsp" };
     japan = us;
     metricCup = us;
-    australia = {amount, unit: 'Australian Tbsp'};
+    australia = {amount, unit: 'AustralianTbsp'};
     ml = {amount: +(amount * 20).toFixed(3), unit: 'ml'};
   }
 
   kg = g && {amount: +(g.amount / 1000).toFixed(3), unit: 'kg'};
   lb = oz && {amount: +(oz.amount / 16).toFixed(3), unit: 'lb'};
   L = ml && {amount: +(ml.amount / 1000).toFixed(3), unit: 'L'};
-  USCup = ml &&  {amount: +(ml.amount / 240).toFixed(3), unit: 'US cup'};
-  JapaneseCup = ml && {amount: +(ml.amount / 200).toFixed(3), unit: 'Japanese cup'};
-  ImperialCup = ml && {amount: +(ml.amount / 250).toFixed(3), unit: 'Imperial cup'};
-  riceCup = ml && {amount: +(ml.amount / 180).toFixed(3), unit: 'rice cup'};
+  USCup = ml &&  {amount: +(ml.amount / 240).toFixed(3), unit: 'USCup'};
+  JapaneseCup = ml && {amount: +(ml.amount / 200).toFixed(3), unit: 'JapaneseCup'};
+  ImperialCup = ml && {amount: +(ml.amount / 250).toFixed(3), unit: 'ImperialCup'};
+  riceCup = ml && {amount: +(ml.amount / 180).toFixed(3), unit: 'riceCup'};
   tsp = ml && {amount: +(ml.amount / 5).toFixed(3), unit: 'tsp'};
   Tbsp = ml && {amount: +(ml.amount / 15).toFixed(3), unit: 'Tbsp'};
-  AustralianTbsp = ml && {amount: +(ml.amount / 20).toFixed(3), unit: 'Australian Tbsp'};
+  AustralianTbsp = ml && {amount: +(ml.amount / 20).toFixed(3), unit: 'AustralianTbsp'};
 
   return {
+    original: {amount, unit: unitFrom},
     metric: metric || undefined,
     us: us || undefined,
     japan: japan || undefined,

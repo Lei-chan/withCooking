@@ -26,14 +26,12 @@ export const recipeSchema = z.object({
   temperatures: z.object({
     temperatures: z.array(z.number()),
     unit: z.string(),
-    // unit: z.stringFormat("temperature-unit", () => val === "℉" || val === "℃"),
   }),
   ingredients: z.array(
     z.object({
       ingredient: z.string(),
       amount: z.number(),
       unit: z.string(),
-      customUnit: z.string(),
       id: z.any(),
       convertion: z.any(),
     })

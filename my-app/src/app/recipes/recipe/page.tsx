@@ -23,6 +23,7 @@ import {
   updateConvertion,
   getNextSlideIndex,
   getImageFileData,
+  isRecipeAllowed,
 } from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
@@ -30,12 +31,15 @@ import {
   SLIDE_TRANSITION_SEC,
   TYPE_FILE,
   TYPE_INGREDIENT,
+  TYPE_INGREDIENT_UNIT,
   TYPE_INGREDIENTS,
   TYPE_INSTRUCTION,
   TYPE_RECIPE,
+  TYPE_REGION_UNIT,
 } from "@/app/lib/config";
 import { nanoid } from "nanoid";
 import fracty from "fracty";
+import { Loading } from "@/app/lib/components/components";
 
 export default function Recipe() {
   const userContext = useContext(UserContext);
@@ -46,9 +50,7 @@ export default function Recipe() {
   const [favorite, setFavorite] = useState<boolean>();
   const [edit, setEdit] = useState(false);
   const [servingsValue, setServingsValue] = useState<number>();
-  const [ingredientsUnit, setIngredientsUnit] = useState<
-    "metric" | "us" | "japan" | "australia" | "metricCup"
-  >();
+  const [regionUnit, setRegionUnit] = useState<TYPE_REGION_UNIT>("original");
 
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
@@ -86,7 +88,7 @@ export default function Recipe() {
     setCurRecipe(recipe);
     setFavorite(recipe.favorite);
     setServingsValue(recipe.servings.servings);
-    setIngredientsUnit(recipe.region);
+    setRegionUnit("original");
   }
 
   function handleToggleEdit() {
@@ -111,20 +113,9 @@ export default function Recipe() {
     });
   }
 
-  function handleChangeIngredientsUnit(
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) {
-    const value = e.currentTarget.value;
-    if (
-      value !== "metric" &&
-      value !== "us" &&
-      value !== "japan" &&
-      value !== "australia" &&
-      value !== "metricCup"
-    )
-      return;
-
-    setIngredientsUnit(value);
+  function handleChangeRegionUnit(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.currentTarget.value as TYPE_REGION_UNIT;
+    setRegionUnit(value);
   }
 
   function handleChangeMainImage(
@@ -259,59 +250,54 @@ export default function Recipe() {
       const formData = new FormData(e.currentTarget);
       const dataArr = [...formData];
 
+      //filter out temp with no input
+      const tempArr = [
+        formData.get("temperature1"),
+        formData.get("temperature2"),
+        formData.get("temperature3"),
+        formData.get("temperature4"),
+      ]
+        .filter((temp) => temp)
+        .map((temp) => parseFloat(String(temp)));
+
       ///ingredients
       const numberOfIngredients = dataArr.filter(
         (arr) => arr[0].includes("ingredient") && arr[0].includes("Name")
       ).length;
 
+      //filter out ingredient with no ingredinet or amount
       const ingredients = new Array(numberOfIngredients)
         .fill("")
         .map((_, i) => {
-          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
-          const unit = formData.get(`ingredient${i + 1}Unit`);
+          const ingredient = String(
+            formData.get(`ingredient${i + 1}Name`)
+          )?.trim();
 
-          if (
-            unit !== "noUnit" &&
-            unit !== "other" &&
-            unit !== "g" &&
-            unit !== "kg" &&
-            unit !== "oz" &&
-            unit !== "lb" &&
-            unit !== "ml" &&
-            unit !== "L" &&
-            unit !== "USCup" &&
-            unit !== "JapaneseCup" &&
-            unit !== "ImperialCup" &&
-            unit !== "riceCup" &&
-            unit !== "tsp" &&
-            unit !== "Tbsp" &&
-            unit !== "AustralianTbsp"
-          )
-            return {
-              ingredient:
-                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-                "",
-              amount,
-              unit: "g",
-              customUnit:
-                String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-                "",
-              id: undefined,
-              convertion: undefined,
-            };
+          const amount = +(formData.get(`ingredient${i + 1}Amount`) || 0);
+
+          const unitData = formData.get(
+            `ingredient${i + 1}Unit`
+          ) as TYPE_INGREDIENT_UNIT;
+          const customUnitData = String(
+            formData.get(`ingredient${i + 1}CustomUnit`)
+          )?.trim();
+
+          const unit = unitData !== "other" ? unitData : customUnitData;
 
           return {
-            ingredient:
-              String(formData.get(`ingredient${i + 1}Name`))?.trim() || "",
+            id: undefined,
+            ingredient,
             amount,
             unit,
-            customUnit:
-              String(formData.get(`ingredient${i + 1}CustomUnit`))?.trim() ||
-              "",
-            id: undefined,
             convertion: convertIngUnits(amount, unit),
           };
-        });
+        })
+        .filter((ing) => ing.ingredient || ing.amount);
+
+      //filter out instruction with no instruction and image
+      const instructions = curRecipe?.instructions.filter(
+        (inst) => inst.instruction || inst.image
+      ) as TYPE_INSTRUCTION[];
 
       const newRecipe = {
         favorite: favorite === true ? true : false,
@@ -326,22 +312,20 @@ export default function Recipe() {
           customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
         },
         temperatures: {
-          temperatures: [
-            +(formData.get("temperature1") || 0),
-            +(formData.get("temperature2") || 0),
-            +(formData.get("temperature3") || 0),
-            +(formData.get("temperature4") || 0),
-          ],
+          temperatures: tempArr,
           unit:
             formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
         },
         ingredients,
-        instructions: curRecipe?.instructions as TYPE_INSTRUCTION[],
+        instructions,
         description: String(formData.get("description"))?.trim() || "",
         memoryImages: curRecipe?.memoryImages as TYPE_FILE[] | [],
         comments: String(formData.get("comments"))?.trim() || "",
         createdAt: new Date().toISOString(),
       };
+
+      if (!isRecipeAllowed(newRecipe))
+        throw new Error("Please fill more than one input field!");
 
       const recipeData = await uploadRecipe(newRecipe, userContext);
       setStateInit(recipeData);
@@ -423,7 +407,7 @@ export default function Recipe() {
       {!recipe ||
       !curRecipe ||
       servingsValue === undefined ||
-      !ingredientsUnit ||
+      !regionUnit ||
       favorite === undefined ? (
         <form
           className={styles.loading}
@@ -467,17 +451,17 @@ export default function Recipe() {
             edit={edit}
             curRecipe={curRecipe}
             servingsValue={servingsValue}
-            ingredientsUnit={ingredientsUnit}
+            regionUnit={regionUnit}
             favorite={favorite}
             onChangeServings={handleChangeServings}
-            onChangeIngredientsUnit={handleChangeIngredientsUnit}
+            onChangeRegionUnit={handleChangeRegionUnit}
             onClickFavorite={handleClickFavorite}
           />
           <Ingredients
             edit={edit}
             servingsValue={servingsValue}
             ingredients={curRecipe.ingredients}
-            ingredientsUnit={ingredientsUnit}
+            regionUnit={regionUnit}
           />
           <Instructions
             edit={edit}
@@ -577,7 +561,7 @@ export default function Recipe() {
       )}
     </div>
   ) : (
-    <Loading />
+    <Loading message="Updating your recipe..." />
   );
 }
 
@@ -778,19 +762,19 @@ function BriefExplanation({
   edit,
   curRecipe,
   servingsValue,
-  ingredientsUnit,
+  regionUnit,
   favorite,
   onChangeServings,
-  onChangeIngredientsUnit,
+  onChangeRegionUnit,
   onClickFavorite,
 }: {
   edit: boolean;
   curRecipe: TYPE_RECIPE;
   servingsValue: number;
-  ingredientsUnit: string;
+  regionUnit: TYPE_REGION_UNIT;
   favorite: boolean;
   onChangeServings: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onChangeIngredientsUnit: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onChangeRegionUnit: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onClickFavorite: () => void;
 }) {
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
@@ -997,14 +981,16 @@ function BriefExplanation({
                 <option value="bowls">bowls</option>
                 <option value="other">other</option>
               </select>
-              <input
-                className={styles.input__brief_explanation}
-                style={{ width: "20%" }}
-                name="servingsCustomUnit"
-                placeholder="Custom unit"
-                value={servingsCustomUnit}
-                onChange={(e) => handleChangeInput(e, 0)}
-              />
+              {servingsUnit === "other" && (
+                <input
+                  className={styles.input__brief_explanation}
+                  style={{ width: "20%" }}
+                  name="servingsCustomUnit"
+                  placeholder="Custom unit"
+                  value={servingsCustomUnit}
+                  onChange={(e) => handleChangeInput(e, 0)}
+                />
+              )}
             </>
           ) : (
             <span style={{ width: "20%" }}>
@@ -1045,9 +1031,10 @@ function BriefExplanation({
                 className={styles.input__brief_explanation}
                 style={{ width: "25%" }}
                 name="region"
-                value={ingredientsUnit}
-                onChange={onChangeIngredientsUnit}
+                value={regionUnit}
+                onChange={onChangeRegionUnit}
               >
+                <option value="original">Original</option>
                 <option value="metric">Metric</option>
                 <option value="us">US</option>
                 <option value="japan">Japan</option>
@@ -1176,12 +1163,12 @@ function Ingredients({
   edit,
   servingsValue,
   ingredients,
-  ingredientsUnit,
+  regionUnit,
 }: {
   edit: boolean;
   servingsValue: number;
   ingredients: TYPE_INGREDIENTS;
-  ingredientsUnit: "metric" | "us" | "japan" | "australia" | "metricCup";
+  regionUnit: TYPE_REGION_UNIT;
 }) {
   const [numberOfLines, setNumberOfLines] = useState(ingredients.length);
   const [lines, setLines] = useState<any[]>(
@@ -1257,7 +1244,7 @@ function Ingredients({
                 convertion: undefined,
               }
             }
-            ingredientsUnit={ingredientsUnit}
+            regionUnit={regionUnit}
             i={i}
             onClickDelete={handleClickDelete}
           />
@@ -1276,29 +1263,53 @@ function IngLine({
   edit,
   servingsValue,
   ingredient,
-  ingredientsUnit,
+  regionUnit,
   i,
   onClickDelete,
 }: {
   edit: boolean;
   servingsValue: number;
   ingredient: TYPE_INGREDIENT;
-  ingredientsUnit: "metric" | "us" | "japan" | "australia" | "metricCup";
+  regionUnit: TYPE_REGION_UNIT;
   i: number;
   onClickDelete: (i: number) => void;
 }) {
+  const typeIngArr: TYPE_INGREDIENT_UNIT[] = [
+    "noUnit",
+    "other",
+    "g",
+    "kg",
+    "oz",
+    "lb",
+    "ml",
+    "L",
+    "USCup",
+    "JapaneseCup",
+    "ImperialCup",
+    "riceCup",
+    "tsp",
+    "Tbsp",
+    "AustralianTbsp",
+  ];
+
+  function isTypeIngUnit(unit: any) {
+    return typeIngArr.includes(unit);
+  }
+
+  //ingredient unit is set as unit if ingredient unit is TYPE_INGREDIENT_UNIT, otherwise customUnit
   const [line, setLine] = useState({
-    ingredient: ingredient?.ingredient,
-    amount: ingredient?.amount,
-    unit: ingredient?.unit,
-    customUnit: ingredient?.customUnit,
+    ingredient: ingredient.ingredient,
+    amount: ingredient.amount,
+    unit: isTypeIngUnit(ingredient.unit) ? ingredient.unit : "other",
+    customUnit: isTypeIngUnit(ingredient.unit) ? "" : ingredient.unit,
   });
+
   const [newIngredient, setNewIngredient] = useState<{
     amount: number;
     unit: string;
   }>({
     amount: ingredient.amount,
-    unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
+    unit: getReadableIngUnit(ingredient.unit),
   });
 
   function handleChangeInput(
@@ -1310,7 +1321,8 @@ function IngLine({
       const newLine = { ...prev };
       if (target.name.includes("Name")) newLine.ingredient = target.value;
       if (target.name.includes("Amount")) newLine.amount = +target.value;
-      if (target.name.includes("Unit")) newLine.unit = target.value;
+      if (target.name.includes("Unit") && !target.name.includes("CustomUnit"))
+        newLine.unit = target.value;
       if (target.name.includes("CustomUnit")) newLine.customUnit = target.value;
       return newLine;
     });
@@ -1319,15 +1331,15 @@ function IngLine({
   useEffect(() => {
     //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
     const newIngredient =
-      edit || !ingredient?.convertion || !ingredient.convertion[ingredientsUnit]
+      edit || !ingredient.convertion[regionUnit]
         ? {
             amount: ingredient.amount,
-            unit: getReadableIngUnit(ingredient.unit, ingredient.customUnit),
+            unit: getReadableIngUnit(ingredient.unit),
           }
-        : ingredient.convertion[ingredientsUnit];
+        : ingredient.convertion[regionUnit];
 
     setNewIngredient(newIngredient);
-  }, [ingredient, servingsValue, ingredientsUnit]);
+  }, [ingredient, servingsValue, regionUnit]);
 
   return (
     <div
@@ -1385,18 +1397,23 @@ function IngLine({
             <option value="tsp">tsp</option>
             <option value="Tbsp">Tbsp</option>
             <option value="TbspAustralia">Tbsp (Australia)</option>
+            <option value="pinch">pinch</option>
+            <option value="can">can</option>
+            <option value="slice">slice</option>
             <option value="other">Other</option>
             <option value="noUnit">No unit</option>
           </select>
-          <input
-            className={styles.input__brief_explanation}
-            style={{ width: "20%" }}
-            type="text"
-            name={`ingredient${i + 1}CustomUnit`}
-            placeholder="Custom unit"
-            value={line.customUnit}
-            onChange={handleChangeInput}
-          />
+          {line.unit === "other" && (
+            <input
+              className={styles.input__brief_explanation}
+              style={{ width: "20%" }}
+              type="text"
+              name={`ingredient${i + 1}CustomUnit`}
+              placeholder="Custom unit"
+              value={line.customUnit}
+              onChange={handleChangeInput}
+            />
+          )}
         </>
       ) : (
         <>
@@ -1507,19 +1524,25 @@ function Instructions({
       <h2 className={styles.header} style={{ marginBottom: "20px" }}>
         Instructions
       </h2>
-      {recipeInstructions.map((keyObj, i) => (
-        <Instruction
-          key={keyObj.id}
-          i={i}
-          edit={edit}
-          instruction={instructions[i] || { instruction: "", image: undefined }}
-          onClickDelete={handleClickDelete}
-          onChangeInstruction={onChangeInstruction}
-          onClickDeleteImage={deleteImage}
-          onChangeImage={onChangeImage}
-          displayError={displayError}
-        />
-      ))}
+      {recipeInstructions.length ? (
+        recipeInstructions.map((keyObj, i) => (
+          <Instruction
+            key={keyObj.id}
+            i={i}
+            edit={edit}
+            instruction={
+              instructions[i] || { instruction: "", image: undefined }
+            }
+            onClickDelete={handleClickDelete}
+            onChangeInstruction={onChangeInstruction}
+            onClickDeleteImage={deleteImage}
+            onChangeImage={onChangeImage}
+            displayError={displayError}
+          />
+        ))
+      ) : (
+        <p className={styles.no_content}>There're no instructions</p>
+      )}
       {edit && (
         <div
           style={{
@@ -2135,55 +2158,6 @@ function Comments({
             {comments || "There're no comments"}
           </p>
         )}
-      </div>
-    </div>
-  );
-}
-
-function Loading() {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        top: "0%",
-        left: "0%",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "rgba(255, 174, 0, 1)",
-        zIndex: "100",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "15%",
-          width: "30%",
-          height: "40%",
-        }}
-      >
-        <p
-          style={{
-            color: "white",
-            fontSize: "1.8vw",
-            letterSpacing: "0.08vw",
-          }}
-        >
-          Updating your recipe...
-        </p>
-        <Image
-          className={styles.img__uploading}
-          src="/loading.png"
-          alt="loading icon"
-          width={150}
-          height={150}
-        ></Image>
       </div>
     </div>
   );

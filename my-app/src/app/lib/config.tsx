@@ -42,6 +42,7 @@ export const APP_EXPLANATIONS = [
   },
 ];
 
+//type
 export type TYPE_MEDIA = "mobile" | "tablet" | "desktop" | "big";
 
 export type TYPE_USER_CONTEXT = {
@@ -100,34 +101,62 @@ export type TYPE_INGREDIENT = {
   ingredient: string;
   amount: number;
   unit: string;
-  customUnit: string;
   id: number | undefined;
-  convertion:
-    | {
-        metric: { amount: number; unit: string } | undefined;
-        us: { amount: number; unit: string } | undefined;
-        japan:
-          | { amount: number; unit: string }
-          // | {
-          //     cupJapan: { amount: number; unit: string };
-          //     riceCup: { amount: number; unit: string };
-          //   }
-          | undefined;
-        australia: { amount: number; unit: string } | undefined;
-        metricCup: { amount: number; unit: string } | undefined;
-        g: { amount: number; unit: string } | undefined;
-        kg: { amount: number; unit: string } | undefined;
-        oz: { amount: number; unit: string } | undefined;
-        lb: { amount: number; unit: string } | undefined;
-        ml: { amount: number; unit: string } | undefined;
-        L: { amount: number; unit: string } | undefined;
-        USCup: { amount: number; unit: string } | undefined;
-        JapaneseCup: { amount: number; unit: string } | undefined;
-        ImperialCup: { amount: number; unit: string } | undefined;
-        riceCup: { amount: number; unit: string } | undefined;
-        tsp: { amount: number; unit: string } | undefined;
-        Tbsp: { amount: number; unit: string } | undefined;
-        AustralianTbsp: { amount: number; unit: string } | undefined;
-      }
-    | undefined;
+  convertion: {
+    original: { amount: number; unit: string };
+    metric: { amount: number; unit: string } | undefined;
+    us: { amount: number; unit: string } | undefined;
+    japan: { amount: number; unit: string } | undefined;
+    australia: { amount: number; unit: string } | undefined;
+    metricCup: { amount: number; unit: string } | undefined;
+    g: { amount: number; unit: string } | undefined;
+    kg: { amount: number; unit: string } | undefined;
+    oz: { amount: number; unit: string } | undefined;
+    lb: { amount: number; unit: string } | undefined;
+    ml: { amount: number; unit: string } | undefined;
+    L: { amount: number; unit: string } | undefined;
+    USCup: { amount: number; unit: string } | undefined;
+    JapaneseCup: { amount: number; unit: string } | undefined;
+    ImperialCup: { amount: number; unit: string } | undefined;
+    riceCup: { amount: number; unit: string } | undefined;
+    tsp: { amount: number; unit: string } | undefined;
+    Tbsp: { amount: number; unit: string } | undefined;
+    AustralianTbsp: { amount: number; unit: string } | undefined;
+  };
 };
+
+export type TYPE_INGREDIENT_UNIT =
+  | "noUnit"
+  | "other"
+  | "g"
+  | "kg"
+  | "oz"
+  | "lb"
+  | "ml"
+  | "L"
+  | "USCup"
+  | "JapaneseCup"
+  | "ImperialCup"
+  | "riceCup"
+  | "tsp"
+  | "Tbsp"
+  | "AustralianTbsp"
+  | "pinch"
+  | "can"
+  | "slice";
+
+export type TYPE_REGION_UNIT =
+  | "original"
+  | "metric"
+  | "us"
+  | "japan"
+  | "australia"
+  | "metricCup";
+
+export type TYPE_SERVINGS_UNIT =
+  | "people"
+  | "slices"
+  | "pieces"
+  | "cups"
+  | "bowls"
+  | "other";
