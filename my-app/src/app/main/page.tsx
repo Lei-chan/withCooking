@@ -1001,8 +1001,8 @@ function ImageTitle({
         <Image
           src={image.data}
           alt="main image"
-          width={parseInt(width)}
-          height={parseInt(height)}
+          width={parseFloat(width)}
+          height={parseFloat(height)}
         ></Image>
       )}
       <div
@@ -1139,7 +1139,7 @@ function BriefExplanation({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        width: width,
+        width,
         aspectRatio: "1/0.1",
         gap: "3%",
         margin:
@@ -1179,12 +1179,7 @@ function BriefExplanation({
           <div
             className={styles.container__fukidashi}
             style={{
-              top:
-                mediaContext === "mobile"
-                  ? "-275%"
-                  : mediaContext === "tablet"
-                  ? "-295%"
-                  : "-295%",
+              top: mediaContext === "mobile" ? "-275%" : "-295%",
               left: "0%",
               opacity: !mouseOver[0] ? 0 : 1,
             }}
@@ -1608,7 +1603,7 @@ function Instruction({
         height: "fit-content",
         backgroundColor: "rgba(255, 255, 236, 0.91)",
         padding: "4% 3%",
-        fontSize: fontSize,
+        fontSize,
         letterSpacing: "0.06vw",
       }}
     >
@@ -1620,6 +1615,7 @@ function Instruction({
           width: "25px",
           aspectRatio: "1",
           borderRadius: "50%",
+          fontSize,
           color: "white",
           backgroundColor: " #ce3a00e7 ",
         }}
@@ -1681,7 +1677,7 @@ function AboutThisRecipe({
         alignItems: "center",
         width: "100%",
         maxHeight: "30%",
-        marginTop: marginTop,
+        marginTop,
       }}
     >
       <h2
@@ -1923,7 +1919,7 @@ function Comments({
   return (
     <div
       style={{
-        marginTop: marginTop,
+        marginTop,
         width:
           mediaContext === "mobile"
             ? "90%"
@@ -1931,14 +1927,12 @@ function Comments({
             ? "80%"
             : "70%",
         aspectRatio: comments ? "1/0.5" : "1/0.3",
-        // height: comments ? "200px" : "150px",
       }}
     >
       <h2
         className={styles.header}
         style={{ marginBottom: headerSize, fontSize: headerSize }}
       >
-        {" "}
         Comments
       </h2>
       <div

@@ -15,6 +15,7 @@ import {
   getRegion,
   getImageFileData,
   isRecipeAllowed,
+  getSize,
 } from "@/app/lib/helper";
 import {
   MAX_SERVINGS,
@@ -47,11 +48,39 @@ export default function CreateRecipe() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  //design
-  const formWidth = mediaContext === "mobile" ? "90%" : "50%";
-  const fontSize = mediaContext === "mobile" ? "4.3vw" : "2vw";
-  const headerSize = `calc(${fontSize} * 1.2)`;
-  const marginTop = `calc(${fontSize} * 2)`;
+  // //design
+  // const formWidth = mediaContext === "mobile" ? "90%" : "50%";
+  // const fontSize = mediaContext === "mobile" ? "4.3vw" : "2vw";
+  // const headerSize = `calc(${fontSize} * 1.2)`;
+  // const marginTop = `calc(${fontSize} * 2)`;
+
+  ///design
+  const recipeWidth =
+    window.innerWidth *
+      (mediaContext === "mobile"
+        ? 0.9
+        : mediaContext === "tablet"
+        ? 0.7
+        : 0.5) +
+    "px";
+
+  const fontSize =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.045, "4.5vw")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.034, "2.7vw")
+      : mediaContext === "desktop" && window.innerWidth <= 1100
+      ? getSize(recipeWidth, 0.031, "1.5vw")
+      : getSize(recipeWidth, 0.028, "1.3vw");
+  const headerSize =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.055, "5vw")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.04, "3.5vw")
+      : mediaContext === "desktop" && window.innerWidth <= 1100
+      ? getSize(recipeWidth, 0.035, "1.5vw")
+      : getSize(recipeWidth, 0.032, "1.3vw");
+  const marginTop = getSize(recipeWidth, 0.11, "30px");
 
   function displayError(error: string) {
     setError(error);
@@ -267,11 +296,11 @@ export default function CreateRecipe() {
           style={{
             backgroundColor: error ? "orangered" : "rgba(112, 231, 0, 1)",
             color: "white",
-            padding: "0.7% 1%",
+            padding: mediaContext === "mobile" ? "1.5% 2%" : "0.7% 1%",
             borderRadius: "5px",
-            fontSize,
+            fontSize: `calc(${fontSize} * 1.1)`,
             letterSpacing: "0.07vw",
-            marginBottom: "1%",
+            marginBottom: mediaContext === "mobile" ? "2%" : "1%",
           }}
         >
           {error || message}
@@ -283,20 +312,21 @@ export default function CreateRecipe() {
           textAlign: "center",
           backgroundImage:
             "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-          width: formWidth,
+          width: recipeWidth,
           height: "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "3% 0",
+          padding: mediaContext === "mobile" ? "6% 0" : "3% 0",
           color: "rgb(60, 0, 116)",
           boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
-          borderRadius: "10px",
+          borderRadius: mediaContext === "mobile" ? "5px" : "10px",
         }}
         onSubmit={handleSubmit}
       >
         <ImageTitle
           mediaContext={mediaContext}
+          recipeWidth={recipeWidth}
           fontSize={fontSize}
           image={mainImage}
           onChangeImage={handleChangeMainImage}
@@ -305,12 +335,22 @@ export default function CreateRecipe() {
         />
         <BriefExplanation
           mediaContext={mediaContext}
+          recipeWidth={recipeWidth}
           fontSize={fontSize}
           favorite={favorite}
           onClickFavorite={handleClickFavorite}
         />
-        <Ingredients />
+        <Ingredients
+          mediaContext={mediaContext}
+          fontSize={fontSize}
+          headerSize={headerSize}
+        />
         <Instructions
+          mediaContext={mediaContext}
+          recipeWidth={recipeWidth}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
           images={instructionImages}
           addImage={handleAddInstrucionImage}
           deleteImage={handleDeleteInstructionImage}
@@ -318,15 +358,34 @@ export default function CreateRecipe() {
           deleteInstruction={handleDeleteInstruciton}
           displayError={displayError}
         />
-        <AboutThisRecipe />
+        <AboutThisRecipe
+          mediaContext={mediaContext}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
+        />
         <Memories
+          mediaContext={mediaContext}
+          recipeWidth={recipeWidth}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
           images={memoryImages}
           onChangeImages={handleChangeMemoryImages}
           deleteImage={handleDeleteMemoryImage}
           displayError={displayError}
         />
-        <Comments />
-        <button className={styles.btn__upload_recipe} type="submit">
+        <Comments
+          mediaContext={mediaContext}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
+        />
+        <button
+          className={styles.btn__upload_recipe}
+          style={{ fontSize: headerSize, marginTop: headerSize }}
+          type="submit"
+        >
           Upload
         </button>
       </form>
@@ -338,6 +397,7 @@ export default function CreateRecipe() {
 
 function ImageTitle({
   mediaContext,
+  recipeWidth,
   fontSize,
   image,
   onChangeImage,
@@ -345,6 +405,7 @@ function ImageTitle({
   displayError,
 }: {
   mediaContext: TYPE_MEDIA;
+  recipeWidth: string;
   fontSize: string;
   image: TYPE_FILE | undefined;
   onChangeImage: (
@@ -354,8 +415,20 @@ function ImageTitle({
   deleteImage: () => void;
   displayError: (error: string) => void;
 }) {
-  const imageWidth = mediaContext === "mobile" ? "260px" : "500px";
-  const imageHeight = parseInt(imageWidth) * 0.6 + "px";
+  const width =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.82, "250px")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.74, "400px")
+      : getSize(recipeWidth, 0.7, "440px");
+  const height =
+    parseInt(width) *
+      (mediaContext === "mobile"
+        ? 0.65
+        : mediaContext === "tablet"
+        ? 0.63
+        : 0.6) +
+    "px";
 
   async function handleChangeImage(e: React.ChangeEvent<HTMLInputElement>) {
     try {
@@ -400,8 +473,8 @@ function ImageTitle({
     <div
       style={{
         position: "relative",
-        width: imageWidth,
-        height: imageHeight,
+        width,
+        height,
       }}
     >
       <button
@@ -417,10 +490,7 @@ function ImageTitle({
         onClick={deleteImage}
       ></button>
       {!image ? (
-        <div
-          className={styles.grey_background}
-          style={{ width: imageWidth, height: imageHeight }}
-        >
+        <div className={styles.grey_background} style={{ width, height }}>
           <div
             style={{
               position: "relative",
@@ -463,8 +533,8 @@ function ImageTitle({
         <Image
           src={image.data}
           alt="main image"
-          width={parseFloat(imageWidth)}
-          height={parseFloat(imageHeight)}
+          width={parseFloat(width)}
+          height={parseFloat(height)}
         ></Image>
       )}
       <div
@@ -506,14 +576,15 @@ function ImageTitle({
   );
 }
 
-//from here!
 function BriefExplanation({
   mediaContext,
+  recipeWidth,
   fontSize,
   favorite,
   onClickFavorite,
 }: {
   mediaContext: TYPE_MEDIA;
+  recipeWidth: string;
   fontSize: string;
   favorite: boolean;
   onClickFavorite: () => void;
@@ -529,7 +600,10 @@ function BriefExplanation({
       })
   );
 
-  const iconSize = mediaContext === "mobile" ? 12 : 13;
+  const width = getSize(recipeWidth, 0.9, "90%");
+  const fontSizeBrief = parseFloat(fontSize) * 0.95 + "px";
+  const iconSize = parseFloat(fontSizeBrief);
+  const fontFukidashiSize = `calc(${fontSizeBrief} * 0.9)`;
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     const index = e.currentTarget.dataset.icon;
@@ -566,10 +640,15 @@ function BriefExplanation({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        width: mediaContext === "mobile" ? "95%" : "90%",
+        width,
         height: "fit-content",
         gap: "3%",
-        margin: mediaContext === "mobile" ? "40px 0 20px 0" : "50px 0 28px 0",
+        margin:
+          mediaContext === "mobile"
+            ? "10% 0 5% 0"
+            : mediaContext === "tablet"
+            ? "8% 0 5% 0"
+            : "6% 0 5% 0 ",
       }}
     >
       <div
@@ -580,7 +659,7 @@ function BriefExplanation({
           minWidth: "80%",
           width: "fit-content",
           maxWidth: "91%",
-          height: mediaContext === "mobile" ? "80px" : "100px",
+          height: "100%",
           whiteSpace: "nowrap",
           padding: "3%",
           backgroundColor: "rgb(255, 217, 0)",
@@ -588,139 +667,286 @@ function BriefExplanation({
           gap: "20%",
         }}
       >
-        <div className={styles.container__author_servings}>
-          <div
-            className={styles.icons__brief_explanation}
-            data-icon="0"
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-          >
+        {mediaContext === "mobile" ? (
+          <>
             <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "500%",
-                height: "300%",
-                top: "-330%",
-                left: "-360%",
-                opacity: !mouseOver[0] ? 0 : 1,
-              }}
+              className={styles.container__author_servings}
+              style={{ gap: "3%" }}
             >
-              <p className={styles.p__fukidashi}>
-                Name of the person who will make the recipe
-              </p>
+              <div
+                className={styles.container__fukidashi}
+                style={{
+                  top: "-280%",
+                  left: "-13%",
+                  opacity: !mouseOver[0] ? 0 : 1,
+                  width: "45%",
+                }}
+              >
+                <p
+                  className={styles.p__fukidashi}
+                  style={{
+                    fontSize: fontFukidashiSize,
+                  }}
+                >
+                  Name of the person who will make the recipe
+                </p>
+              </div>
+              <div
+                className={styles.icons__brief_explanation}
+                data-icon="0"
+                onMouseOver={handleMouseOver}
+                onMouseOut={handleMouseOut}
+              >
+                <Image
+                  src={"/person.svg"}
+                  alt="person icon"
+                  width={iconSize}
+                  height={iconSize}
+                ></Image>
+              </div>
+              <input
+                className={styles.input__brief_explanation}
+                style={{ width: "35%", fontSize }}
+                name="author"
+                placeholder="Author"
+              ></input>
             </div>
-            <Image
-              src={"/person.svg"}
-              alt="person icon"
-              width={iconSize}
-              height={iconSize}
-            ></Image>
-          </div>
-          <input
-            className={styles.input__brief_explanation}
-            style={{ width: "19%" }}
-            name="author"
-            placeholder="Author"
-          ></input>
+            <div
+              className={styles.container__author_servings}
+              style={{ gap: "3%" }}
+            >
+              <div
+                className={styles.container__fukidashi}
+                style={{
+                  top: "-420%",
+                  left: "-13%",
+                  opacity: !mouseOver[1] ? 0 : 1,
+                  width: "70%",
+                }}
+              >
+                <p
+                  className={styles.p__fukidashi}
+                  style={{ fontSize: fontFukidashiSize }}
+                >
+                  Number of servings. If there isn't a unit you want to use in
+                  the selector, please select other and fill custom unit.
+                </p>
+              </div>
+              <div
+                className={styles.icons__brief_explanation}
+                data-icon="1"
+                onMouseOver={handleMouseOver}
+                onMouseOut={handleMouseOut}
+              >
+                <Image
+                  src={"/servings.svg"}
+                  alt="servings icon"
+                  width={iconSize}
+                  height={iconSize}
+                ></Image>
+              </div>
+              <input
+                className={styles.input__brief_explanation}
+                style={{ width: "35%", fontSize }}
+                type="number"
+                min="1"
+                max={MAX_SERVINGS}
+                name="servings"
+                placeholder="Servings"
+              />
+              <select
+                className={styles.input__brief_explanation}
+                style={{ width: "40%", fontSize }}
+                name="servingsUnit"
+                onChange={handleChangeServingsUnit}
+              >
+                <option value="people">people</option>
+                <option value="slices">slices</option>
+                <option value="pieces">pieces</option>
+                <option value="cups">cups</option>
+                <option value="bowls">bowls</option>
+                <option value="other">other</option>
+              </select>
+              {servingsUnit === "other" && (
+                <input
+                  className={styles.input__brief_explanation}
+                  style={{ width: "25%", fontSize }}
+                  name="servingsCustomUnit"
+                  placeholder="custom"
+                />
+              )}
+            </div>
+          </>
+        ) : (
           <div
-            className={styles.icons__brief_explanation}
-            data-icon="1"
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
+            className={styles.container__author_servings}
+            style={{ gap: "2%" }}
           >
             <div
               className={styles.container__fukidashi}
               style={{
-                width: "700%",
-                height: "420%",
-                top: "-450%",
-                left: "-545%",
-                opacity: !mouseOver[1] ? 0 : 1,
+                top: "-295%",
+                left: "-13%",
+                opacity: !mouseOver[0] ? 0 : 1,
+                width: mediaContext === "tablet" ? "38%" : "34%",
               }}
             >
               <p
                 className={styles.p__fukidashi}
-                style={{ padding: "0 3% 48% 3%" }}
+                style={{
+                  fontSize: fontFukidashiSize,
+                }}
               >
-                Number of servings. If there isn't a unit you want to use in the
-                selector, please select other and fill custom unit.
+                Name of the person who will make the recipe
               </p>
             </div>
-            <Image
-              src={"/servings.svg"}
-              alt="servings icon"
-              width={iconSize + 1}
-              height={iconSize + 2}
-            ></Image>
-          </div>
-          <input
-            className={styles.input__brief_explanation}
-            style={{ width: "17%" }}
-            type="number"
-            min="1"
-            max={MAX_SERVINGS}
-            name="servings"
-            placeholder="Servings"
-          />
-          <select
-            className={styles.input__brief_explanation}
-            style={{ width: "22%" }}
-            name="servingsUnit"
-            onChange={handleChangeServingsUnit}
-          >
-            <option value="people">people</option>
-            <option value="slices">slices</option>
-            <option value="pieces">pieces</option>
-            <option value="cups">cups</option>
-            <option value="bowls">bowls</option>
-            <option value="other">other</option>
-          </select>
-          {servingsUnit === "other" && (
+            <div
+              className={styles.icons__brief_explanation}
+              data-icon="0"
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <Image
+                src={"/person.svg"}
+                alt="person icon"
+                width={iconSize}
+                height={iconSize}
+              ></Image>
+            </div>
             <input
               className={styles.input__brief_explanation}
-              style={{ width: "20%" }}
-              name="servingsCustomUnit"
-              placeholder="Custom unit"
+              style={{
+                width: servingsUnit !== "other" ? "23%" : "19%",
+                fontSize,
+              }}
+              name="author"
+              placeholder="Author"
+            ></input>
+            <div
+              className={styles.icons__brief_explanation}
+              data-icon="1"
+              onMouseOver={handleMouseOver}
+              onMouseOut={handleMouseOut}
+            >
+              <div
+                className={styles.container__fukidashi}
+                style={{
+                  top: mediaContext === "tablet" ? "-370%" : "-350%",
+                  left: "10%",
+                  opacity: !mouseOver[1] ? 0 : 1,
+                  width: mediaContext === "tablet" ? "50.5%" : "42%",
+                }}
+              >
+                <p
+                  className={styles.p__fukidashi}
+                  style={{ fontSize: fontFukidashiSize }}
+                >
+                  Number of servings. If there isn't a unit you want to use in
+                  the selector, please select other and fill custom unit.
+                </p>
+              </div>
+              <Image
+                src={"/servings.svg"}
+                alt="servings icon"
+                width={iconSize}
+                height={iconSize}
+              ></Image>
+            </div>
+            <input
+              className={styles.input__brief_explanation}
+              style={{
+                width: servingsUnit !== "other" ? "25%" : "17%",
+                fontSize,
+              }}
+              type="number"
+              min="1"
+              max={MAX_SERVINGS}
+              name="servings"
+              placeholder="Servings"
             />
-          )}
-        </div>
-        <div className={styles.container__units}>
+            <select
+              className={styles.input__brief_explanation}
+              style={{
+                width: servingsUnit !== "other" ? "25%" : "22%",
+                fontSize,
+              }}
+              name="servingsUnit"
+              onChange={handleChangeServingsUnit}
+            >
+              <option value="people">people</option>
+              <option value="slices">slices</option>
+              <option value="pieces">pieces</option>
+              <option value="cups">cups</option>
+              <option value="bowls">bowls</option>
+              <option value="other">other</option>
+            </select>
+            {servingsUnit === "other" && (
+              <input
+                className={styles.input__brief_explanation}
+                style={{ width: "20%", fontSize }}
+                name="servingsCustomUnit"
+                placeholder={
+                  mediaContext === "tablet" ? "custom" : "custom unit"
+                }
+              />
+            )}
+          </div>
+        )}
+        <div className={styles.container__units} style={{ gap: "2%" }}>
+          <div
+            className={styles.container__fukidashi}
+            style={{
+              top:
+                mediaContext === "mobile"
+                  ? "-290%"
+                  : mediaContext === "tablet"
+                  ? "-295%"
+                  : "-290%",
+              left: "-13%",
+              opacity: !mouseOver[2] ? 0 : 1,
+              width:
+                mediaContext === "mobile"
+                  ? "54%"
+                  : mediaContext === "tablet"
+                  ? "40.5%"
+                  : "34.5%",
+            }}
+          >
+            <p
+              className={styles.p__fukidashi}
+              style={{ fontSize: fontFukidashiSize }}
+            >
+              Temperatures you use in the recipe (e.g. oven temperatures)
+            </p>
+          </div>
           <div
             className={styles.icons__brief_explanation}
+            style={{ marginRight: "1%" }}
             data-icon="2"
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
           >
-            <div
-              className={styles.container__fukidashi}
-              style={{
-                width: "520%",
-                height: "360%",
-                top: "-380%",
-                left: "-390%",
-                opacity: !mouseOver[2] ? 0 : 1,
-              }}
-            >
-              <p
-                className={styles.p__fukidashi}
-                style={{ padding: "0 5% 57% 5%" }}
-              >
-                Temperatures you use in the recipe (e.g. oven temperatures)
-              </p>
-            </div>
             <Image
               src={"/temperature.svg"}
               alt="ingredient units icon"
-              width={iconSize + 3}
-              height={iconSize + 3}
+              width={iconSize}
+              height={iconSize}
             ></Image>
           </div>
           {tempKeys.map((keyObj, i) => (
-            <InputTemp key={keyObj.id} i={i} />
+            <InputTemp
+              key={keyObj.id}
+              mediaContext={mediaContext}
+              fontSize={fontSize}
+              i={i}
+            />
           ))}
           <select
             className={styles.input__brief_explanation}
-            style={{ width: "8%" }}
+            style={{
+              width: "fit-content",
+              fontSize: mediaContext === "mobile" ? fontSize : fontSizeBrief,
+            }}
             name="temperatureUnit"
           >
             <option value="℃">℃</option>
@@ -734,7 +960,12 @@ function BriefExplanation({
           backgroundImage: !favorite
             ? 'url("/star-off.png")'
             : 'url("/star-on.png")',
-          width: "4.5%",
+          width:
+            mediaContext === "mobile"
+              ? "7%"
+              : mediaContext === "tablet"
+              ? "5.5%"
+              : "4.5%",
           aspectRatio: "1",
           backgroundRepeat: "no-repeat",
           backgroundSize: "100%",
@@ -747,19 +978,40 @@ function BriefExplanation({
   );
 }
 
-function InputTemp({ i }: { i: number }) {
+function InputTemp({
+  mediaContext,
+  fontSize,
+  // fontSizeBrief,
+  i,
+}: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
+  // fontSizeBrief: string;
+  i: number;
+}) {
   return (
     <input
       className={styles.input__brief_explanation}
-      style={{ width: "14%", fontSize: "1.1vw" }}
+      style={{
+        width: mediaContext === "mobile" ? "16%" : "18%",
+        fontSize,
+      }}
       type="number"
       name={`temperature${i + 1}`}
-      placeholder={`Temp ${i + 1}`}
+      placeholder={`${mediaContext === "mobile" ? "" : "Temp"} ${i + 1}`}
     ></input>
   );
 }
 
-function Ingredients() {
+function Ingredients({
+  mediaContext,
+  fontSize,
+  headerSize,
+}: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
+  headerSize: string;
+}) {
   const [numberOfLines, setNumberOfLines] = useState(1);
   const [lines, setLines] = useState<any[]>(
     Array(numberOfLines)
@@ -798,34 +1050,53 @@ function Ingredients() {
     <div
       style={{
         position: "relative",
-        width: "90%",
+        width: mediaContext === "mobile" ? "93%" : "90%",
         height: "fit-content",
         backgroundColor: "rgb(255, 247, 177)",
         padding: "2%",
         borderRadius: "3px",
       }}
     >
-      <h2 className={styles.header}>Ingredients</h2>
+      <h2
+        className={styles.header}
+        style={{
+          fontSize: headerSize,
+          marginBottom: headerSize,
+        }}
+      >
+        Ingredients
+      </h2>
       <div
         style={{
           width: "100%",
           display: "grid",
-          // gridTemplateColumns: "1fr 1fr",
-          gridTemplateColumns: "1fr",
+          gridTemplateColumns: "auto",
           justifyItems: "left",
           marginTop: "2%",
-          fontSize: "1.3vw",
+          fontSize,
           wordSpacing: "0.1vw",
-          columnGap: "5%",
-          rowGap: "15px",
+          // columnGap: "5%",
+          columnGap: mediaContext === "tablet" ? "0" : "5%",
+          rowGap:
+            mediaContext === "mobile" ? `calc(${fontSize} * 2)` : fontSize,
           // paddingLeft: "7%",
         }}
       >
         {lines.map((line, i) => (
-          <IngLine key={line.id} i={i} onClickDelete={handleClickDelete} />
+          <IngLine
+            key={line.id}
+            mediaContext={mediaContext}
+            fontSize={fontSize}
+            i={i}
+            onClickDelete={handleClickDelete}
+          />
         ))}
         <div className={styles.ingredients_line}>
-          <ButtonPlus onClickBtn={handleClickPlus} />
+          <ButtonPlus
+            mediaContext={mediaContext}
+            fontSize={fontSize}
+            onClickBtn={handleClickPlus}
+          />
         </div>
 
         {/* {recipe.ingredients.map((ing: any) => {
@@ -863,9 +1134,13 @@ function Ingredients() {
 }
 
 function IngLine({
+  mediaContext,
+  fontSize,
   i,
   onClickDelete,
 }: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
   i: number;
   onClickDelete: (i: number) => void;
 }) {
@@ -903,14 +1178,28 @@ function IngLine({
     >
       <button
         className={clsx(styles.btn__img, styles.btn__trash_img)}
-        style={{ width: "3%", height: "80%", right: "-6%", top: "10%" }}
+        style={{
+          width: `calc(${fontSize} * 1.2)`,
+          height: "80%",
+          right:
+            mediaContext === "mobile"
+              ? "2%"
+              : mediaContext === "tablet"
+              ? "-7.5%"
+              : "-7%",
+          top: mediaContext === "mobile" ? "120%" : "10%",
+        }}
         type="button"
         onClick={() => onClickDelete(i)}
       ></button>
-      <span style={{ fontSize: "1.5vw" }}>{i + 1}. </span>
+      <span style={{ fontSize }}>{i + 1}. </span>
       <input
         className={styles.input__brief_explanation}
-        style={{ width: "30%" }}
+        style={{
+          width: line.unit !== "other" ? "35%" : "27%",
+          fontSize,
+          padding: "1%",
+        }}
         name={`ingredient${i + 1}Name`}
         placeholder={`Name ${i + 1}`}
         value={line.name}
@@ -918,7 +1207,11 @@ function IngLine({
       ></input>
       <input
         className={styles.input__brief_explanation}
-        style={{ width: "20%" }}
+        style={{
+          width: line.unit !== "other" ? "26%" : "20%",
+          fontSize,
+          padding: "1%",
+        }}
         type="number"
         name={`ingredient${i + 1}Amount`}
         placeholder="Amount"
@@ -927,7 +1220,11 @@ function IngLine({
       ></input>
       <select
         className={styles.input__brief_explanation}
-        style={{ width: "20%" }}
+        style={{
+          width: line.unit !== "other" ? "25%" : "18%",
+          fontSize,
+          padding: "1%",
+        }}
         name={`ingredient${i + 1}Unit`}
         value={line.unit}
         onChange={handleChangeInput}
@@ -954,7 +1251,7 @@ function IngLine({
       {line.unit === "other" && (
         <input
           className={styles.input__brief_explanation}
-          style={{ width: "20%" }}
+          style={{ width: "25%", padding: "1%", fontSize }}
           type="text"
           name={`ingredient${i + 1}CustomUnit`}
           placeholder="Custom unit"
@@ -966,13 +1263,21 @@ function IngLine({
   );
 }
 
-function ButtonPlus({ onClickBtn }: { onClickBtn: () => void }) {
+function ButtonPlus({
+  mediaContext,
+  fontSize,
+  onClickBtn,
+}: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
+  onClickBtn: () => void;
+}) {
   return (
     <button
       style={{
         fontWeight: "bold",
-        fontSize: "1.2vw",
-        width: "25px",
+        fontSize,
+        width: mediaContext === "mobile" ? "8%" : "6%",
         aspectRatio: "1",
         color: "white",
         backgroundColor: "brown",
@@ -988,6 +1293,11 @@ function ButtonPlus({ onClickBtn }: { onClickBtn: () => void }) {
 }
 
 function Instructions({
+  mediaContext,
+  recipeWidth,
+  fontSize,
+  headerSize,
+  marginTop,
   images,
   addImage,
   deleteImage,
@@ -995,6 +1305,11 @@ function Instructions({
   deleteInstruction,
   displayError,
 }: {
+  mediaContext: TYPE_MEDIA;
+  recipeWidth: string;
+  fontSize: string;
+  headerSize: string;
+  marginTop: string;
   images: (TYPE_FILE | undefined)[];
   addImage: () => void;
   deleteImage: (index: number) => void;
@@ -1037,17 +1352,23 @@ function Instructions({
     <div
       style={{
         position: "relative",
-        top: "30px",
-        width: "80%",
+        marginTop: marginTop,
+        width: mediaContext === "mobile" ? "90%" : "80%",
         height: "fit-content",
       }}
     >
-      <h2 className={styles.header} style={{ marginBottom: "20px" }}>
+      <h2
+        className={styles.header}
+        style={{ fontSize: headerSize, marginBottom: headerSize }}
+      >
         Instructions
       </h2>
       {instructions.map((inst, i) => (
         <Instruction
           key={inst.id}
+          mediaContext={mediaContext}
+          recipeWidth={recipeWidth}
+          fontSize={fontSize}
           i={i}
           image={images[i]}
           onClickDeleteImage={deleteImage}
@@ -1064,10 +1385,7 @@ function Instructions({
           paddingBottom: "2%",
         }}
       >
-        <ButtonPlus
-          // onClickBtn={handleClickPlus}
-          onClickBtn={addImage}
-        />
+        <ButtonPlus fontSize={fontSize} onClickBtn={addImage} />
       </div>
 
       {/* {recipe.instructions.map((step: any, i: number) => (
@@ -1105,6 +1423,9 @@ function Instructions({
 }
 
 function Instruction({
+  mediaContext,
+  recipeWidth,
+  fontSize,
   i,
   image,
   onClickDeleteImage,
@@ -1112,6 +1433,9 @@ function Instruction({
   onChangeImage,
   displayError,
 }: {
+  mediaContext: TYPE_MEDIA;
+  recipeWidth: string;
+  fontSize: string;
   i: number;
   image: TYPE_FILE | undefined;
   onClickDeleteImage: (i: number) => void;
@@ -1119,12 +1443,21 @@ function Instruction({
   onChangeImage: (image: TYPE_FILE, i: number) => void;
   displayError: (error: string) => void;
 }) {
+  const imageWidth =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.28, "100px")
+      : getSize(recipeWidth, 0.22, "140px");
+
+  const imageHeight =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.2, "70px")
+      : getSize(recipeWidth, 0.15, "100px");
+
   async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
     try {
       const files = e.currentTarget.files;
       if (!files) return;
 
-      // onChangeImage(await getFileData(files[0]), i);
       Resizer.imageFileResizer(
         files[0],
         140,
@@ -1152,12 +1485,12 @@ function Instruction({
         flexDirection: "row",
         textAlign: "left",
         alignItems: "center",
-        gap: "5%",
+        gap: mediaContext === "mobile" ? "2%" : "5%",
         width: "100%",
         height: "fit-content",
         backgroundColor: "rgba(255, 255, 236, 0.91)",
         padding: "4% 3%",
-        fontSize: "1.2vw",
+        fontSize,
         letterSpacing: "0.05vw",
       }}
     >
@@ -1166,9 +1499,9 @@ function Instruction({
           position: "relative",
           top: "-35px",
           textAlign: "center",
-          width: "25px",
+          fontSize,
+          width: mediaContext === "mobile" ? "8%" : "5%",
           aspectRatio: "1",
-          fontSize: "1.4vw",
           borderRadius: "50%",
           color: "white",
           backgroundColor: " #ce3a00e7 ",
@@ -1180,7 +1513,7 @@ function Instruction({
         style={{
           width: "55%",
           height: "100px",
-          fontSize: "1.2vw",
+          fontSize,
           letterSpacing: "0.03vw",
           padding: "0.3% 1%",
           resize: "none",
@@ -1188,7 +1521,9 @@ function Instruction({
         name={`instruction${i + 1}`}
         placeholder={`Instruction ${i + 1}`}
       ></textarea>
-      <div style={{ position: "relative", width: "140px", height: "100px" }}>
+      <div
+        style={{ position: "relative", width: imageWidth, height: imageHeight }}
+      >
         {!image ? (
           <div
             className={styles.grey_background}
@@ -1218,16 +1553,16 @@ function Instruction({
             <Image
               src={image.data}
               alt={`instruction ${i + 1} image`}
-              width={140}
-              height={100}
+              width={parseFloat(imageWidth)}
+              height={parseFloat(imageHeight)}
             ></Image>
             <button
               className={clsx(styles.btn__img, styles.btn__trash_img)}
               style={{
                 right: "0",
-                top: "101%",
-                width: "18%",
-                height: "18%",
+                top: mediaContext === "mobile" ? "110%" : "103%",
+                width: `calc(${fontSize} * 1.2)`,
+                height: `calc(${fontSize} * 1.2)`,
               }}
               type="button"
               onClick={() => onClickDeleteImage(i)}
@@ -1238,10 +1573,10 @@ function Instruction({
       <button
         className={clsx(styles.btn__img, styles.btn__trash_img)}
         style={{
-          right: "-20%",
+          right: mediaContext === "mobile" ? "-13%" : "-20%",
           top: "44%",
-          width: "18%",
-          height: "18%",
+          width: mediaContext === "mobile" ? "15%" : "18%",
+          height: mediaContext === "mobile" ? "15%" : "18%",
         }}
         type="button"
         onClick={() => onClickDelete(i)}
@@ -1250,7 +1585,17 @@ function Instruction({
   );
 }
 
-function AboutThisRecipe() {
+function AboutThisRecipe({
+  mediaContext,
+  fontSize,
+  headerSize,
+  marginTop,
+}: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
+  headerSize: string;
+  marginTop: string;
+}) {
   return (
     <div
       style={{
@@ -1260,17 +1605,20 @@ function AboutThisRecipe() {
         alignItems: "center",
         width: "100%",
         maxHeight: "30%",
-        marginTop: "70px",
+        marginTop,
       }}
     >
-      <h2 className={styles.header}>About this recipe</h2>
+      <h2
+        className={styles.header}
+        style={{ marginBottom: headerSize, fontSize: headerSize }}
+      >
+        About this recipe
+      </h2>
       <div
         style={{
           backgroundColor: "rgb(255, 247, 133)",
-          // overflowY: "auto",
-          width: "85%",
-          height: "130px",
-          fontSize: "1.2vw",
+          width: mediaContext === "mobile" ? "90%" : "85%",
+          aspectRatio: mediaContext === "mobile" ? "1/0.4" : "1/0.3",
           letterSpacing: "0.05vw",
           padding: "1.2% 1.5%",
         }}
@@ -1280,7 +1628,7 @@ function AboutThisRecipe() {
             resize: "none",
             width: "100%",
             height: "100%",
-            fontSize: "1.2vw",
+            fontSize,
             letterSpacing: "0.05vw",
             padding: "1.2% 1.5%",
             background: "none",
@@ -1295,17 +1643,36 @@ function AboutThisRecipe() {
 }
 
 function Memories({
+  mediaContext,
+  recipeWidth,
+  fontSize,
+  headerSize,
+  marginTop,
   images,
   onChangeImages,
   deleteImage,
   displayError,
 }: {
+  mediaContext: TYPE_MEDIA;
+  recipeWidth: string;
+  fontSize: string;
+  headerSize: string;
+  marginTop: string;
   images: [] | TYPE_FILE[];
   onChangeImages: (imagesArr: TYPE_FILE[]) => void;
   deleteImage: (i: number) => void;
   displayError: (error: string) => void;
 }) {
   const [curImg, setCurImg] = useState(0);
+
+  //design
+  const width =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.9, "300px")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.65, "400px")
+      : getSize(recipeWidth, 0.55, "400px");
+  const height = parseInt(width) * 0.55 + "px";
 
   async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
     try {
@@ -1349,12 +1716,22 @@ function Memories({
   return (
     <div
       style={{
-        marginTop: "40px",
-        width: "60%",
-        height: "250px",
+        marginTop,
+        width:
+          mediaContext === "mobile"
+            ? "90%"
+            : mediaContext === "tablet"
+            ? "65%"
+            : "55%",
+        height: `calc(${headerSize} * 2 + ${height})`,
       }}
     >
-      <h2 className={styles.header}>Memories of the recipe</h2>
+      <h2
+        className={styles.header}
+        style={{ marginBottom: headerSize, fontSize: headerSize }}
+      >
+        Memories of the recipe
+      </h2>
       <div
         style={{
           position: "relative",
@@ -1362,13 +1739,15 @@ function Memories({
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          height: "80%",
+          height,
           overflow: "hidden",
         }}
       >
         {images.map((img, i) => (
           <MemoryImg
             key={nanoid()}
+            width={width}
+            height={height}
             i={i}
             image={img}
             translateX={calcTransitionXSlider(i, curImg)}
@@ -1395,7 +1774,7 @@ function Memories({
                 height: "18%",
                 top: "38%",
                 left: "25%",
-                fontSize: "1.5vw",
+                fontSize,
                 letterSpacing: "0.07vw",
                 color: "rgba(255, 168, 7, 1)",
                 fontWeight: "bold",
@@ -1420,27 +1799,26 @@ function Memories({
             />
           </div>
         </div>
-
-        {/* {recipe.memoryImages.map((img: string, i: number) => (
-                  <img
-                    key={nanoid()}
-                    src={img || "/grey-img.png"}
-                    alt={`memory image${i + 1}`}
-                    style={{
-                      transform: calcTransitionXSlider(i),
-                    }}
-                  ></img>
-                ))} */}
         <div
           style={{
             position: "absolute",
-            width: "70%",
+            width:
+              mediaContext === "mobile"
+                ? "85%"
+                : mediaContext === "tablet"
+                ? "80%"
+                : "70%",
             height: "5%",
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            gap: "1.7%",
+            gap:
+              mediaContext === "mobile"
+                ? "2.4%"
+                : mediaContext === "tablet"
+                ? "2.2%"
+                : "1.8%",
             bottom: "5%",
           }}
         >
@@ -1450,7 +1828,7 @@ function Memories({
               key={nanoid()}
               style={{
                 opacity: "0.6",
-                width: "2.5%",
+                width: mediaContext === "mobile" ? "3.5%" : "3%",
                 aspectRatio: "1",
                 backgroundColor:
                   curImg === i ? "rgb(0, 0, 0)" : "rgba(0, 0, 0, 0.3)",
@@ -1476,11 +1854,15 @@ function Memories({
 }
 
 function MemoryImg({
+  width,
+  height,
   i,
   image,
   translateX,
   onClickDelete,
 }: {
+  width: string;
+  height: string;
   i: number;
   image: TYPE_FILE;
   translateX: string;
@@ -1510,17 +1892,43 @@ function MemoryImg({
       <Image
         src={image.data}
         alt={`memory image ${i + 1}`}
-        width={400}
-        height={200}
+        width={parseFloat(width)}
+        height={parseFloat(height)}
       ></Image>
     </div>
   );
 }
 
-function Comments() {
+function Comments({
+  mediaContext,
+  fontSize,
+  headerSize,
+  marginTop,
+}: {
+  mediaContext: TYPE_MEDIA;
+  fontSize: string;
+  headerSize: string;
+  marginTop: string;
+}) {
   return (
-    <div style={{ marginTop: "30px", width: "70%", height: "200px" }}>
-      <h2 className={styles.header}> Comments</h2>
+    <div
+      style={{
+        marginTop,
+        width:
+          mediaContext === "mobile"
+            ? "90%"
+            : mediaContext === "tablet"
+            ? "80%"
+            : "70%",
+        aspectRatio: "1/0.5",
+      }}
+    >
+      <h2
+        className={styles.header}
+        style={{ fontSize: headerSize, marginBottom: headerSize }}
+      >
+        Comments
+      </h2>
       <div
         style={{
           width: "100%",
@@ -1536,7 +1944,7 @@ function Comments() {
             border: "none",
             width: "100%",
             height: "100%",
-            fontSize: "1.3vw",
+            fontSize,
             letterSpacing: "0.05vw",
             padding: "3%",
           }}
