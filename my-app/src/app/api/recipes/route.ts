@@ -67,7 +67,6 @@ export function downloadFile(bucket: any, file: any) {
     downloadStream.on("end", () => {
       const buffer = Buffer.concat(chunks);
       const parsedBuffer = JSON.parse(buffer.toString("utf-8"));
-      // console.log(parsedBuffer);
       resolve(parsedBuffer);
     });
 
@@ -391,22 +390,66 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     await connectDB();
+    const bucket = getGridFSBucket();
 
-    const id = getId(req);
+    const body = await req.json();
+    const recipeIdArr: string[] = body.ids;
 
-    const recipe = await Recipe.findByIdAndDelete(id).select("-__v");
+    //get recipes from ids
+    const promiseRecipes = recipeIdArr.map((id) => Recipe.findById(id));
+    const recipes = await Promise.all(promiseRecipes);
 
-    if (!recipe) {
-      const err: any = new Error("Recipe not found");
-      err.statusCode = 404;
-      throw err;
-    }
+    //delete mainImages from bucket
+    const promiseDeleteMainImage = recipes.map((recipe) =>
+      recipe.mainImage
+        ? bucket.delete(new ObjectId(recipe.mainImage.fileId))
+        : Promise.resolve(undefined)
+    );
+    await Promise.all(promiseDeleteMainImage);
+
+    //delete mainImagePreview from bucket
+    const promiseDeleteMainImagePreview = recipes.map((recipe) =>
+      recipe.mainImagePreview
+        ? bucket.delete(new ObjectId(recipe.mainImagePreview.fileId))
+        : Promise.resolve(undefined)
+    );
+    console.log("mainImagePreview", promiseDeleteMainImagePreview);
+    await Promise.all(promiseDeleteMainImagePreview);
+
+    //delete instruction images from bucket
+    const promiseDeleteInstructionImages = recipes.flatMap((recipe) =>
+      recipe.instructions.map(
+        (inst: {
+          instruction: string;
+          image: TYPE_CONVERTED_FILE | undefined;
+        }) =>
+          inst.image
+            ? bucket.delete(new ObjectId(inst.image.fileId))
+            : Promise.resolve(undefined)
+      )
+    );
+    await Promise.all(promiseDeleteInstructionImages);
+
+    //delete memoryImages from bucket
+    const promiseDeleteMemoryImages = recipes.flatMap((recipe) =>
+      recipe.memoryImages.length
+        ? recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
+            bucket.delete(new ObjectId(image.fileId))
+          )
+        : Promise.resolve(undefined)
+    );
+    await Promise.all(promiseDeleteMemoryImages);
+
+    const promiseDeleteRecipes = recipeIdArr.map((id) =>
+      Recipe.findByIdAndDelete(id)
+    );
+    const deletedRecipes = await Promise.all(promiseDeleteRecipes);
 
     return NextResponse.json(
       {
         success: true,
         message: "Recipe deleted successfully",
-        data: recipe,
+        data: deletedRecipes,
       },
       { status: 200 }
     );

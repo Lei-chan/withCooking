@@ -871,6 +871,8 @@ function OverlayLogin({
         body: JSON.stringify(accountInfo),
       });
 
+      console.log(data.data);
+
       userContext?.firstLogin(data.accessToken, data.data.numberOfRecipes);
     } catch (err) {
       throw err;

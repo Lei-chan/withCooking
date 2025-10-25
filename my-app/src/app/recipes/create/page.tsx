@@ -1519,7 +1519,8 @@ function Instruction({
       <textarea
         style={{
           width: "55%",
-          height: "100px",
+          aspectRatio: "1/0.7",
+
           fontSize,
           letterSpacing: "0.03vw",
           padding: "0.3% 1%",

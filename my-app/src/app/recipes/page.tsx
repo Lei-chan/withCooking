@@ -9,16 +9,14 @@ import {
 } from "@/app/lib/components/components";
 import {
   createMessage,
-  getData,
   getRecipesPerPage,
-  getOrderedRecipes,
-  getFilteredRecipes,
   calcNumberOfPages,
-  getSize,
   getUserRecipes,
+  getData,
+  wait,
 } from "@/app/lib/helper";
 import React, { useContext, useEffect, useState } from "react";
-import { TYPE_MEDIA, TYPE_RECIPE } from "../lib/config";
+import { TYPE_MEDIA, TYPE_RECIPE, TYPE_USER_CONTEXT } from "../lib/config";
 import { MediaContext, UserContext } from "../lib/providers";
 
 export default function Recipes() {
@@ -65,8 +63,14 @@ export default function Recipes() {
       ? "1.5vw"
       : "1.2vw";
 
+  function resetRecipes() {
+    setRecipes([]);
+    setCurPage(1);
+  }
+
   // //set numberOfRecipes for the first render
   useEffect(() => {
+    console.log(userContext?.numberOfRecipes);
     if (userContext?.numberOfRecipes === null || !userContext) return;
     setNumberOfRecipes(userContext.numberOfRecipes);
     setNumberOfPages(
@@ -112,6 +116,14 @@ export default function Recipes() {
     })();
   }, [curPage, keyword]);
 
+  function displayPending(pendingOrNot: boolean) {
+    setIsPending(pendingOrNot);
+  }
+
+  function displayError(message: string) {
+    setError(message);
+  }
+
   async function handleSearchRecipes(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -154,11 +166,15 @@ export default function Recipes() {
       />
       <RecipeContainer
         mediaContext={mediaContext}
+        userContext={userContext}
         fontSize={fontSize}
         isPending={isPending}
         numberOfRecipes={numberOfRecipes}
         recipes={recipes}
         error={error}
+        displayPending={displayPending}
+        displayError={displayError}
+        resetRecipes={resetRecipes}
       />
       <PaginationButtons
         mediaContext={mediaContext}
@@ -239,8 +255,9 @@ function SearchSection({
               ? "77%"
               : "60%",
           height: "68%",
-          borderRadius: mediaContext === "mobile" ? "3% / 10%" : "1% / 10%",
+          borderRadius: mediaContext === "mobile" ? "5px" : "7px",
           gap: "3%",
+          boxShadow: "rgba(0, 0, 0, 0.31) 3px 3px 3px",
         }}
         onSubmit={onSubmitSearch}
       >
@@ -294,18 +311,26 @@ function SearchSection({
 
 function RecipeContainer({
   mediaContext,
+  userContext,
   fontSize,
   isPending,
   numberOfRecipes,
   recipes,
   error,
+  displayPending,
+  displayError,
+  resetRecipes,
 }: {
   mediaContext: TYPE_MEDIA;
+  userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   isPending: boolean;
   numberOfRecipes: number | null;
   recipes: any[] | [];
   error: string;
+  displayPending: (pendingOrNot: boolean) => void;
+  displayError: (message: string) => void;
+  resetRecipes: () => void;
 }) {
   const NUMBER_OF_COLUMNS =
     mediaContext === "mobile"
@@ -322,6 +347,8 @@ function RecipeContainer({
     new Array(NUMBER_OF_COLUMNS).fill([])
   );
   const [message, setMessage] = useState("");
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[] | []>([]);
 
   //recipes for each column array[];
   const getRecipesPerColumn = () => {
@@ -346,8 +373,64 @@ function RecipeContainer({
     setMessage(message);
   }, [error, isPending, numberOfRecipes, recipes.length]);
 
+  function handleToggleSelectBtn() {
+    isSelecting && setSelectedRecipeIds([]);
+    setIsSelecting(!isSelecting);
+  }
+
+  function addSelectedRecipe(e: React.ChangeEvent<HTMLInputElement>) {
+    const curTarget = e.currentTarget;
+
+    //first filter out same recipe id already added and set selected recipe
+    if (curTarget.checked)
+      setSelectedRecipeIds((prev) => {
+        const newIds = [...prev].filter((id) => id !== curTarget.value);
+        newIds.push(curTarget.value);
+        return newIds;
+      });
+  }
+
+  async function handleSubmitDeleteRecipe(e: React.FormEvent<HTMLFormElement>) {
+    try {
+      e.preventDefault();
+      if (!selectedRecipeIds.length) return;
+
+      displayPending(true);
+      await getData(`/api/recipes`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids: selectedRecipeIds }),
+      });
+
+      await getData(`/api/users/recipes`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+        body: JSON.stringify({ ids: selectedRecipeIds }),
+      });
+
+      userContext?.reduceNumberOfRecipes(selectedRecipeIds.length);
+
+      setIsSelecting(false);
+      setSelectedRecipeIds([]);
+      resetRecipes();
+      displayPending(false);
+    } catch (err: any) {
+      displayError("Server error while deleting recipe 🙇‍♂️ Please try again");
+      console.error(
+        "Error while deleting recipe",
+        err.message,
+        err.statusCode || 500
+      );
+    }
+  }
+
   return (
-    <div
+    <form
       style={{
         position: "relative",
         display: "grid",
@@ -359,27 +442,127 @@ function RecipeContainer({
         justifyItems: "center",
         // backgroundColor: "orange",
       }}
+      onSubmit={handleSubmitDeleteRecipe}
     >
+      <div
+        style={{
+          position: "absolute",
+          display: "flex",
+          flexDirection: "row",
+          top: "0",
+          right:
+            mediaContext === "mobile" || mediaContext === "tablet" ? "7%" : "0",
+          width:
+            mediaContext === "mobile"
+              ? "38%"
+              : mediaContext === "tablet"
+              ? "25%"
+              : "16%",
+          height: "fit-content",
+          gap: "5%",
+          zIndex: "10",
+          alignItems: "center",
+          justifyContent: "end",
+          // backgroundColor: "blue",
+        }}
+      >
+        {isSelecting && (
+          <button
+            className={styles.btn__trash_img}
+            style={{
+              width:
+                mediaContext === "mobile"
+                  ? "18%"
+                  : mediaContext === "tablet"
+                  ? "15%"
+                  : "18%",
+              aspectRatio: "1",
+              zIndex: "100",
+            }}
+            type="submit"
+          ></button>
+        )}
+        <button
+          style={{
+            width: "fit-content",
+            height: "fit-content",
+            fontSize: `calc(${fontSize} * ${
+              mediaContext === "mobile" || mediaContext === "tablet"
+                ? 0.92
+                : 0.95
+            })`,
+            letterSpacing: "0.05vw",
+            color: "white",
+            textAlign: "center",
+            backgroundColor: "rgb(172, 112, 0)",
+            border: "none",
+            borderRadius: "3px",
+            padding:
+              mediaContext === "mobile"
+                ? "0.8%"
+                : mediaContext === "tablet"
+                ? "1%"
+                : "2.5%",
+          }}
+          type="button"
+          onClick={handleToggleSelectBtn}
+        >
+          {!isSelecting ? "Select Recipe" : "Stop Selecting"}
+        </button>
+      </div>
       {/* when there are no recipes => message, otherwise recipes */}
-      {!isPending && !error && recipesPerColumn[0].length ? (
+      {!isPending && !error && !message && recipesPerColumn[0].length ? (
         recipesPerColumn.map((recipes, i) => (
           <ul
             key={i}
             style={{
-              width: "85%",
+              width:
+                mediaContext === "mobile" || mediaContext === "tablet"
+                  ? "85%"
+                  : "90%",
               height: "100%",
               zIndex: "1",
               overflow: "hidden",
+              // backgroundColor: "blue",
             }}
           >
             {recipes.map((recipe: TYPE_RECIPE, i: number) => {
               return (
-                <RecipePreview
+                <div
                   key={i}
-                  mediaContext={mediaContext}
-                  fontSize={fontSize}
-                  recipe={recipe}
-                />
+                  style={{
+                    width: "100%",
+                    height: "15%",
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: "3%",
+                    marginTop: "2%",
+                  }}
+                >
+                  {isSelecting && (
+                    <input
+                      style={{
+                        width:
+                          mediaContext === "mobile"
+                            ? "7%"
+                            : mediaContext === "tablet"
+                            ? "8%"
+                            : "10%",
+                      }}
+                      type="checkbox"
+                      name="checkbox"
+                      value={recipe._id}
+                      onChange={addSelectedRecipe}
+                    ></input>
+                  )}
+                  <RecipePreview
+                    key={i}
+                    mediaContext={mediaContext}
+                    fontSize={fontSize}
+                    recipe={recipe}
+                    isSelecting={isSelecting}
+                  />
+                </div>
               );
             })}
           </ul>
@@ -394,7 +577,7 @@ function RecipeContainer({
           wordSpacing={"0.3vw"}
         />
       )}
-    </div>
+    </form>
   );
 }
 
@@ -402,10 +585,12 @@ function RecipePreview({
   mediaContext,
   fontSize,
   recipe,
+  isSelecting,
 }: {
   mediaContext: TYPE_MEDIA;
   fontSize: string;
   recipe: any;
+  isSelecting: boolean;
 }) {
   const mainImageSize = mediaContext === "mobile" ? "50px" : "46px";
   // const mainImageSize = "50px";
@@ -419,6 +604,14 @@ function RecipePreview({
   return (
     <li
       className={styles.recipe_preview}
+      style={{
+        width: !isSelecting
+          ? "100%"
+          : mediaContext === "mobile"
+          ? "90%"
+          : "80%",
+        height: "100%",
+      }}
       id={recipe._id}
       onClick={handleClickPreview}
     >

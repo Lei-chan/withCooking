@@ -96,7 +96,10 @@ export async function POST(req: NextRequest) {
           _id: user._id,
           numberOfRecipes: user.recipes?.length || 0,
           // email: user.email,
-          // recipes: user.recipes,
+
+          //for now to debug
+          recipes: user.recipes,
+
           // createdAt: user.createdAt,
         },
         accessToken,

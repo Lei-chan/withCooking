@@ -6,6 +6,7 @@ import { refreshAccessToken } from "@/app/lib/auth";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
 import { downloadFile } from "../../recipes/route";
 import { getOrderedRecipes } from "@/app/lib/helper";
+import next from "next";
 
 //get recipes in user data
 export async function GET(req: NextRequest) {
@@ -66,11 +67,12 @@ export async function GET(req: NextRequest) {
     //   : [];
     const mainImagePreviews = slicedRecipes.length
       ? await Promise.all(
-          slicedRecipes.map((recipe: any) =>
-            recipe.mainImagePreview
+          slicedRecipes.map((recipe: any) => {
+            console.log(recipe.mainImagePreview);
+            return recipe.mainImagePreview
               ? downloadFile(bucket, recipe.mainImagePreview)
-              : Promise.resolve(undefined)
-          )
+              : Promise.resolve(undefined);
+          })
         )
       : [];
 
@@ -195,8 +197,8 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const searchParams = req.nextUrl.searchParams;
-    const recipeId = searchParams.get("id");
+    const body = await req.json();
+    const recipeIdsArr: string[] = body.ids;
 
     let { id, newAccessToken } = await authenticateToken(req);
 
@@ -207,18 +209,23 @@ export async function DELETE(req: NextRequest) {
       newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const recipes = await User.findById(id).select("recipes");
-    const deletedRecipeIndex = recipes.findIndex(
-      (recipe: any) => recipe.recipeId === recipeId
+    const user = await User.findById(id);
+
+    const recipes = user.recipes;
+
+    const deletedIndexes = recipeIdsArr.map((id) =>
+      recipes.findIndex((recipe: any) => recipe._id === id)
     );
 
-    if (deletedRecipeIndex === -1) {
+    if (deletedIndexes.includes(-1)) {
       const err: any = new Error("Recipe not found");
       err.statusCode = 404;
       throw err;
     }
 
-    const newRecipes = recipes.toSpliced(deletedRecipeIndex, 1);
+    const newRecipes = [...recipes];
+    deletedIndexes.forEach((index) => newRecipes.splice(index, 1));
+
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { recipes: newRecipes },
@@ -229,7 +236,7 @@ export async function DELETE(req: NextRequest) {
       {
         success: true,
         message: "User recipe deleted successfully",
-        data: updatedUser,
+        data: updatedUser.recipes,
         newAccessToken,
       },
       { status: 200 }

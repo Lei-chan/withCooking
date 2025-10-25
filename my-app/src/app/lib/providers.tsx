@@ -60,7 +60,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
       //for persisting data
       localStorage.setItem("numberOfRecipes", numberOfRecipes + "");
-      // setUserRecipes(accessToken);
       await showMessage();
     },
     []
@@ -84,8 +83,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    setAccessToken("");
     localStorage.removeItem("numberOfRecipes");
+    setAccessToken("");
   }, []);
 
   const addNumberOfRecipes = useCallback(() => {
@@ -94,6 +93,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       return prev + 1;
     });
   }, []);
+
+  const reduceNumberOfRecipes = useCallback(
+    (deletedNumberOfRecipes: number) => {
+      setNumberOfRecipes((prev) => {
+        localStorage.setItem(
+          "numberOfRecipes",
+          prev - deletedNumberOfRecipes + ""
+        );
+        return prev - deletedNumberOfRecipes;
+      });
+    },
+    []
+  );
 
   const userContextValue = useMemo(
     () => ({
@@ -104,6 +116,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       login,
       logout,
       addNumberOfRecipes,
+      reduceNumberOfRecipes,
     }),
     [
       accessToken,
@@ -113,6 +126,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       login,
       logout,
       addNumberOfRecipes,
+      reduceNumberOfRecipes,
     ]
   );
 

@@ -14,14 +14,20 @@
   background-image: linear-gradient(rgb(188, 255, 32), rgb(139, 199, 0));
 }
 
+.btn__trash_img {
+  background: transparent;
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: none;
+  background-image: url(/trash.svg);
+}
+
 .recipe_preview {
   display: flex;
   flex-direction: row;
   text-align: center;
   align-items: center;
-  width: 100%;
   background-image: linear-gradient(rgb(255, 255, 232), rgb(255, 252, 205));
-  height: 15%;
   margin-bottom: 2%;
   gap: 5%;
   padding: 0 3%;

@@ -114,7 +114,7 @@ export default function Account() {
           style={{
             backgroundColor: "#fffdcdff",
             width: formWidth,
-            minHeight: "80%",
+            aspectRatio: "1/0.7",
             marginTop: "2%",
             borderRadius: "1.1%/1.4%",
           }}

@@ -53,6 +53,7 @@ export type TYPE_USER_CONTEXT = {
   login: (accessToken: string) => void;
   logout: () => void;
   addNumberOfRecipes: () => void;
+  reduceNumberOfRecipes: (deletedNumberOfRecipes: number) => void;
 } | null;
 
 export type TYPE_RECIPE = {
