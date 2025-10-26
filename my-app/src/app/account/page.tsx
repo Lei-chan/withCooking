@@ -73,8 +73,8 @@ export default function Account() {
     <div
       style={{
         backgroundColor: "#b3f8dbff",
-        width: "100%",
-        height: "100%",
+        width: "100vw",
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
@@ -114,7 +114,7 @@ export default function Account() {
           style={{
             backgroundColor: "#fffdcdff",
             width: formWidth,
-            aspectRatio: "1/0.7",
+            aspectRatio: "1/1.3",
             marginTop: "2%",
             borderRadius: "1.1%/1.4%",
           }}
@@ -570,7 +570,6 @@ function CloseAccount({
           authorization: `Bearer ${userContext?.accessToken}`,
         },
       });
-      console.log(data);
 
       //delete accessToken from context
       userContext?.logout();

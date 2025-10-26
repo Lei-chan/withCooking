@@ -29,13 +29,15 @@ export default function News() {
     <div
       style={{
         backgroundColor: "#b3f8dbff",
-        width: "100%",
-        height: "100%",
+        width: "100vw",
+        minHeight: "100vh",
+        maxHeight: "fit-content",
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
         alignItems: "center",
         justifyContent: "center",
+        padding: "3% 0 5% 0",
       }}
     >
       <h1

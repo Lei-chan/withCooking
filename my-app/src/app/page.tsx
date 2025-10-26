@@ -150,8 +150,8 @@ export default function Home() {
     <div
       style={{
         width: "100%",
-        // height: "100%",
-        height: "fit-content",
+        height: "100%",
+        // height: "fit-content",
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
@@ -404,7 +404,7 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
       </h3>
       <footer
         style={{
-          width: "100%",
+          width: "100vw",
           padding:
             mediaContext === "mobile"
               ? "3% 0 1% 0"
@@ -906,9 +906,9 @@ function OverlayLogin({
         style={{
           width: formWidth,
           backgroundImage: "linear-gradient(rgb(255, 217, 0), orange)",
-          aspectRatio: "1 / 0.6",
+          aspectRatio: "1 / 0.61",
           borderRadius: "2% / calc(2% + 2% * 0.6)",
-          paddingTop: "1.6%",
+          padding: "1.6% 0",
         }}
         onSubmit={handleSubmit}
       >

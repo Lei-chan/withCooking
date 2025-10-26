@@ -27,6 +27,7 @@ const RecipeSchema = new mongoose.Schema({
       convertion: {},
     },
   ],
+  preparation: String,
   instructions: [
     {
       instruction: String,

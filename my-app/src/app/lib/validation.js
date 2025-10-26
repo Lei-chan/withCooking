@@ -36,6 +36,7 @@ export const recipeSchema = z.object({
       convertion: z.any(),
     })
   ),
+  preparation: z.string(),
   instructions: z.array(
     z.object({
       instruction: z.string(),

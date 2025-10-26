@@ -67,6 +67,7 @@ export type TYPE_RECIPE = {
   servings: { servings: number; unit: string; customUnit: string };
   temperatures: { temperatures: number[]; unit: "℉" | "℃" };
   ingredients: TYPE_INGREDIENTS;
+  preparation: string;
   instructions: {
     instruction: string;
     image: TYPE_FILE | undefined;

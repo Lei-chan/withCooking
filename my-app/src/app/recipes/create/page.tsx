@@ -2,7 +2,7 @@
 import styles from "./page.module.css";
 import Image from "next/image";
 import clsx from "clsx";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import Resizer from "react-image-file-resizer";
 import { nanoid } from "nanoid";
 import {
@@ -30,6 +30,7 @@ import {
 import { MediaContext, UserContext } from "@/app/lib/providers";
 import { redirect, RedirectType } from "next/navigation";
 import { Loading } from "@/app/lib/components/components";
+import { text } from "stream/consumers";
 
 export default function CreateRecipe() {
   const mediaContext = useContext(MediaContext);
@@ -203,8 +204,8 @@ export default function CreateRecipe() {
         region: getRegion(ingredients),
         servings: {
           servings: +(formData.get("servings") || 0),
-          unit: String(formData.get("servingsUnit")) || "people",
-          customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
+          unit: String(formData.get("servingsUnit")),
+          customUnit: String(formData.get("servingsCustomUnit") || "").trim(),
         },
         temperatures: {
           temperatures: tempArr,
@@ -212,10 +213,11 @@ export default function CreateRecipe() {
             formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
         },
         ingredients,
+        preparation: String(formData.get("preparation")).trim(),
         instructions,
-        description: String(formData.get("description"))?.trim() || "",
+        description: String(formData.get("description")).trim(),
         memoryImages,
-        comments: String(formData.get("comments"))?.trim() || "",
+        comments: String(formData.get("comments")).trim(),
         createdAt: new Date().toISOString(),
       };
 
@@ -1319,6 +1321,7 @@ function Instructions({
   deleteInstruction: (index: number) => void;
   displayError: (error: string) => void;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   //Store key so whenever user delete instruction, other instructions' info will remain the same
   const [instructions, setInstructions] = useState(
     Array(images.length)
@@ -1328,11 +1331,47 @@ function Instructions({
       })
   );
   const [deletedIndex, setDeletedIndex] = useState<number>();
+  const [isTextareaFocus, setIsTextareaFocus] = useState(false);
+  const [textareaWithBullet, setTextareaWithBullet] = useState("");
 
   function handleClickDelete(i: number) {
     setDeletedIndex(i);
     deleteInstruction(i);
   }
+
+  function handleToggleTextarea() {
+    setIsTextareaFocus(!isTextareaFocus);
+  }
+
+  function handleChangeTextarea(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const value = e.currentTarget.value;
+    setTextareaWithBullet(value);
+  }
+
+  //attach key event to Enter key and add a bullet point when it's pressed
+  useEffect(() => {
+    function handleAddBulletPoint(e: KeyboardEvent) {
+      if (e.key !== "Enter" || !textareaRef.current || !isTextareaFocus) return;
+
+      //split texts into each line and get rid of empty line
+      const splitedTextsEachLine = textareaRef.current.value
+        .split("\n")
+        .filter((line) => line);
+
+      //add a new line to increase bullet
+      splitedTextsEachLine.push("");
+
+      const nextTexts = splitedTextsEachLine
+        .map((line) => (!line.includes("•") ? `• ${line}` : line))
+        .join("\n");
+
+      setTextareaWithBullet(nextTexts);
+    }
+
+    window.addEventListener("keydown", handleAddBulletPoint);
+
+    return () => window.removeEventListener("keydown", handleAddBulletPoint);
+  }, [isTextareaFocus]);
 
   //manually add or splice key info to remain other instructions info
   useEffect(() => {
@@ -1365,6 +1404,49 @@ function Instructions({
       >
         Instructions
       </h2>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          height: "fit-content",
+          backgroundColor: "rgba(240, 235, 172, 0.91)",
+          marginBottom: fontSize,
+          padding: "2%",
+        }}
+      >
+        <span
+          style={{
+            fontSize: `calc(${fontSize} * 1.1)`,
+            color: "rgba(117, 109, 0, 0.91)",
+            margin: "0 3% 1.5% 3%",
+            letterSpacing: "0.07vw",
+            alignSelf: "flex-start",
+          }}
+        >
+          Preparation
+        </span>
+        <textarea
+          ref={textareaRef}
+          style={{
+            width: "95%",
+            aspectRatio: "1/0.25",
+            resize: "none",
+            border: "none",
+            backgroundColor: "transparent",
+            padding: "2%",
+            fontSize,
+            letterSpacing: "0.05vw",
+          }}
+          placeholder='Click here to add preparation steps (A bullet point will come up for each line when you press "Enter")'
+          name="preparation"
+          value={textareaWithBullet}
+          onFocus={handleToggleTextarea}
+          onBlur={handleToggleTextarea}
+          onChange={handleChangeTextarea}
+        ></textarea>
+      </div>
       {instructions.map((inst, i) => (
         <Instruction
           key={inst.id}

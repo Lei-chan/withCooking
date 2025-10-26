@@ -5,7 +5,7 @@ import Resizer from "react-image-file-resizer";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
 import clsx from "clsx";
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { MediaContext, UserContext } from "@/app/lib/providers";
 import {
   wait,
@@ -343,8 +343,8 @@ export default function Recipe() {
         region: getRegion(ingredients),
         servings: {
           servings: +(formData.get("servings") || 0),
-          unit: String(formData.get("servingsUnit")) || "people",
-          customUnit: String(formData.get("servingsCustomUnit")).trim() || "",
+          unit: String(formData.get("servingsUnit")),
+          customUnit: String(formData.get("servingsCustomUnit") || "").trim(),
         },
         temperatures: {
           temperatures: tempArr,
@@ -352,6 +352,7 @@ export default function Recipe() {
             formData.get("temperatureUnit") === "℉" ? "℉" : ("℃" as "℉" | "℃"),
         },
         ingredients,
+        preparation: String(formData.get("preparation")).trim(),
         instructions,
         description: String(formData.get("description"))?.trim() || "",
         memoryImages: curRecipe?.memoryImages as TYPE_FILE[] | [],
@@ -515,7 +516,7 @@ export default function Recipe() {
               flexDirection: "column",
               alignItems: "center",
               padding: mediaContext === "mobile" ? "6% 0" : "3% 0",
-              color: "rgb(60, 0, 116)",
+              color: "black",
               boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
               borderRadius: mediaContext === "mobile" ? "5px" : "10px",
             }}
@@ -562,6 +563,7 @@ export default function Recipe() {
               headerSize={headerSize}
               marginTop={marginTop}
               edit={edit}
+              preparation={curRecipe.preparation}
               instructions={curRecipe.instructions}
               addInstruction={handleAddInstrucion}
               deleteInstruction={handleDeleteInstruciton}
@@ -877,6 +879,7 @@ function ImageTitle({
               letterSpacing: "0.07vw",
               fontSize: `calc(${fontSize} * 1.5)`,
               textAlign: "center",
+              color: "rgb(60, 0, 116)",
             }}
             name="title"
             placeholder="Click here to set title"
@@ -891,6 +894,7 @@ function ImageTitle({
               fontSize: `calc(${fontSize} * 1.5)`,
               letterSpacing: "0.1vw",
               textAlign: "center",
+              color: "rgb(60, 0, 116)",
             }}
           >
             {recipeTitle}
@@ -2218,6 +2222,7 @@ function Instructions({
   headerSize,
   marginTop,
   edit,
+  preparation,
   instructions,
   addInstruction,
   deleteInstruction,
@@ -2232,6 +2237,7 @@ function Instructions({
   headerSize: string;
   marginTop: string;
   edit: boolean;
+  preparation: string;
   instructions: { instruction: string; image: TYPE_FILE | undefined }[] | [];
   addInstruction: () => void;
   deleteInstruction: (index: number) => void;
@@ -2240,6 +2246,7 @@ function Instructions({
   deleteImage: (index: number) => void;
   displayError: (error: string) => void;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   //Store key so whenever user delete instruction, other instructions' info will remain the same
   const [recipeInstructions, setRecipeInstructions] = useState(
     instructions.map(() => {
@@ -2247,11 +2254,47 @@ function Instructions({
     })
   );
   const [deletedIndex, setDeletedIndex] = useState<number>();
+  const [isTextareaFocus, setIsTextareaFocus] = useState(false);
+  const [textareaWithBullet, setTextareaWithBullet] = useState(preparation);
 
   function handleClickDelete(i: number) {
     setDeletedIndex(i);
     deleteInstruction(i);
   }
+
+  function handleToggleTextarea() {
+    setIsTextareaFocus(!isTextareaFocus);
+  }
+
+  function handleChangeTextarea(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const value = e.currentTarget.value;
+    setTextareaWithBullet(value);
+  }
+
+  //attach key event to Enter key and add a bullet point when it's pressed
+  useEffect(() => {
+    function handleAddBulletPoint(e: KeyboardEvent) {
+      if (e.key !== "Enter" || !textareaRef.current || !isTextareaFocus) return;
+
+      //split texts into each line and get rid of empty line
+      const splitedTextsEachLine = textareaRef.current.value
+        .split("\n")
+        .filter((line) => line);
+
+      //add a new line to increase bullet
+      splitedTextsEachLine.push("");
+
+      const nextTexts = splitedTextsEachLine
+        .map((line) => (!line.includes("•") ? `• ${line}` : line))
+        .join("\n");
+
+      setTextareaWithBullet(nextTexts);
+    }
+
+    window.addEventListener("keydown", handleAddBulletPoint);
+
+    return () => window.removeEventListener("keydown", handleAddBulletPoint);
+  }, [isTextareaFocus]);
 
   //manually add or splice key info to remain other instructions info
   useEffect(() => {
@@ -2286,6 +2329,71 @@ function Instructions({
       >
         Instructions
       </h2>
+      {((!edit && preparation) || edit) && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            width: "100%",
+            height: "fit-content",
+            backgroundColor: "rgba(250, 246, 185, 0.91)",
+            marginBottom: fontSize,
+            padding: "2%",
+          }}
+        >
+          <span
+            style={{
+              fontSize: `calc(${fontSize} * 1.1)`,
+              color: "rgba(117, 109, 0, 0.91)",
+              margin: "0 3% 1.5% 3%",
+              letterSpacing: "0.07vw",
+              alignSelf: "flex-start",
+            }}
+          >
+            Preparation
+          </span>
+          {!edit ? (
+            <p
+              style={{
+                width: "95%",
+                height: "fit-content",
+
+                resize: "none",
+                border: "none",
+                backgroundColor: "transparent",
+                padding: "2%",
+                fontSize,
+                letterSpacing: "0.05vw",
+                whiteSpace: "break-spaces",
+                textAlign: "left",
+              }}
+            >
+              {preparation}
+            </p>
+          ) : (
+            <textarea
+              ref={textareaRef}
+              style={{
+                width: "95%",
+                aspectRatio: "1/0.25",
+                resize: "none",
+                border: "none",
+                backgroundColor: "transparent",
+                padding: "2%",
+                fontSize,
+                letterSpacing: "0.05vw",
+              }}
+              placeholder='Click here to add preparation steps (A bullet point will come up for each line when you press "Enter")'
+              name="preparation"
+              value={textareaWithBullet}
+              onFocus={handleToggleTextarea}
+              onBlur={handleToggleTextarea}
+              onChange={handleChangeTextarea}
+            ></textarea>
+          )}
+        </div>
+      )}
       {recipeInstructions.length !== 0 &&
         recipeInstructions.map((keyObj, i) => (
           <Instruction

@@ -184,6 +184,7 @@ export function isRecipeAllowed(recipe: TYPE_RECIPE) {
     !recipe.servings.servings &&
     !recipe.ingredients.length &&
     !recipe.temperatures.temperatures.length &&
+    !recipe.preparation &&
     !recipe.instructions.length &&
     !recipe.description &&
     !recipe.memoryImages.length &&

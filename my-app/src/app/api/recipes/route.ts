@@ -413,7 +413,6 @@ export async function DELETE(req: NextRequest) {
         ? bucket.delete(new ObjectId(recipe.mainImagePreview.fileId))
         : Promise.resolve(undefined)
     );
-    console.log("mainImagePreview", promiseDeleteMainImagePreview);
     await Promise.all(promiseDeleteMainImagePreview);
 
     //delete instruction images from bucket

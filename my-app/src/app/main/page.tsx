@@ -260,9 +260,7 @@ function Search({
         ? 0.06
         : 0.055) +
     "px";
-  const mainImageSize =
-    parseFloat(searchMenuSize) * (mediaContext === "mobile" ? 0.25 : 0.2) +
-    "px";
+  const mainImageSize = parseFloat(searchMenuSize) * 0.2 + "px";
 
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
   const [numberOfRecipes, setNumberOfRecipes] = useState(
@@ -826,7 +824,7 @@ function Recipe({
                 : mediaContext === "tablet"
                 ? "6% 0"
                 : "3% 0",
-            color: "rgb(60, 0, 116)",
+            color: "black",
           }}
         >
           <ImageTitle
@@ -862,6 +860,7 @@ function Recipe({
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
+            preparation={recipe.preparation}
             instructions={recipe.instructions}
           />
           <AboutThisRecipe
@@ -1033,6 +1032,7 @@ function ImageTitle({
             fontSize: `calc(${fontSize} * 1.5)`,
             letterSpacing: "0.1vw",
             textAlign: "center",
+            color: "rgb(60, 0, 116)",
           }}
         >
           {title}
@@ -1516,6 +1516,7 @@ function Instructions({
   fontSize,
   headerSize,
   marginTop,
+  preparation,
   instructions,
 }: {
   mediaContext: TYPE_MEDIA;
@@ -1523,6 +1524,7 @@ function Instructions({
   fontSize: string;
   headerSize: string;
   marginTop: string;
+  preparation: string;
   instructions: { instruction: string; image: TYPE_FILE | undefined }[];
 }) {
   return (
@@ -1540,16 +1542,64 @@ function Instructions({
       >
         Instructions
       </h2>
-      {instructions.map((inst, i) => (
-        <Instruction
-          key={i}
-          mediaContext={mediaContext}
-          recipeWidth={recipeWidth}
-          fontSize={fontSize}
-          instruction={inst}
-          i={i}
-        />
-      ))}
+      {preparation && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            width: "100%",
+            height: "fit-content",
+            backgroundColor: "rgba(250, 246, 185, 0.91)",
+            marginBottom: fontSize,
+            padding: "2%",
+          }}
+        >
+          <span
+            style={{
+              fontSize: `calc(${fontSize} * 1.1)`,
+              color: "rgba(117, 109, 0, 0.91)",
+              margin: "0 3% 1.5% 3%",
+              letterSpacing: "0.07vw",
+              alignSelf: "flex-start",
+            }}
+          >
+            Preparation
+          </span>
+          <p
+            style={{
+              width: "95%",
+              height: "fit-content",
+              resize: "none",
+              border: "none",
+              backgroundColor: "transparent",
+              padding: "2%",
+              fontSize,
+              letterSpacing: "0.05vw",
+              whiteSpace: "break-spaces",
+              textAlign: "left",
+            }}
+          >
+            {preparation}
+          </p>
+        </div>
+      )}
+      {instructions.length ? (
+        instructions.map((inst, i) => (
+          <Instruction
+            key={i}
+            mediaContext={mediaContext}
+            recipeWidth={recipeWidth}
+            fontSize={fontSize}
+            instruction={inst}
+            i={i}
+          />
+        ))
+      ) : (
+        <p className={styles.no_content} style={{ fontSize }}>
+          There're no instructions
+        </p>
+      )}
     </div>
   );
 }

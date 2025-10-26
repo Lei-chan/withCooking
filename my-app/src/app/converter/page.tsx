@@ -89,9 +89,8 @@ export default function Converter() {
         alignItems: "center",
         textAlign: "center",
         justifyContent: "center",
-        width: "100%",
-        minHeight: "100vh",
-        maxHeight: "fit-content",
+        width: "100vw",
+        height: "100%",
         backgroundColor: "#6ddbb6",
         padding: "2% 0",
       }}
