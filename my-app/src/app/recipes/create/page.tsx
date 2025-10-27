@@ -1,36 +1,43 @@
 "use client";
-import styles from "./page.module.css";
-import Image from "next/image";
-import clsx from "clsx";
+//react
 import React, { useContext, useEffect, useRef, useState } from "react";
+import clsx from "clsx";
 import Resizer from "react-image-file-resizer";
-import { nanoid } from "nanoid";
+//next.js
+import Image from "next/image";
+import { redirect, RedirectType } from "next/navigation";
+//css
+import styles from "./page.module.css";
+//type
 import {
-  calcTransitionXSlider,
-  convertFileToString,
-  convertIngUnits,
-  getData,
-  getImageURL,
-  getFileData,
-  getRegion,
-  getImageFileData,
-  isRecipeAllowed,
-  getSize,
-} from "@/app/lib/helper";
-import {
-  MAX_SERVINGS,
-  NUMBER_OF_TEMPERATURES,
   TYPE_RECIPE,
   TYPE_FILE,
   TYPE_INGREDIENT_UNIT,
   TYPE_SERVINGS_UNIT,
-  TYPE_INGREDIENTS,
   TYPE_MEDIA,
-} from "@/app/lib/config";
+} from "@/app/lib/config/type";
+//settings
+import {
+  MAX_SERVINGS,
+  NUMBER_OF_TEMPERATURES,
+} from "@/app/lib/config/settings";
+//general methods
+import { getData, getSize } from "@/app/lib/helpers/other";
+//methods for recipes
+import {
+  calcTransitionXSlider,
+  // getRegion,
+  getImageFileData,
+  isRecipeAllowed,
+} from "@/app/lib/helpers/recipes";
+//methods to convert
+import { convertIngUnits } from "@/app/lib/helpers/converter";
+//context
 import { MediaContext, UserContext } from "@/app/lib/providers";
-import { redirect, RedirectType } from "next/navigation";
+//componets
 import { Loading } from "@/app/lib/components/components";
-import { text } from "stream/consumers";
+//library
+import { nanoid } from "nanoid";
 
 export default function CreateRecipe() {
   const mediaContext = useContext(MediaContext);
@@ -201,7 +208,7 @@ export default function CreateRecipe() {
         mainImagePreview,
         title: String(formData.get("title"))?.trim() || "",
         author: String(formData.get("author")).trim() || "",
-        region: getRegion(ingredients),
+        // region: getRegion(ingredients),
         servings: {
           servings: +(formData.get("servings") || 0),
           unit: String(formData.get("servingsUnit")),
@@ -1239,13 +1246,13 @@ function IngLine({
         <option value="oz">oz</option>
         <option value="ml">ml</option>
         <option value="L">L</option>
-        <option value="cupUS">cup (US)</option>
-        <option value="cupJapan">cup (Japan)</option>
-        <option value="cupImperial">cup (1cup = 250ml)</option>
+        <option value="usCup">cup (US)</option>
+        <option value="japaneseCup">cup (Japan)</option>
+        <option value="imperialCup">cup (1cup = 250ml)</option>
         <option value="riceCup">rice cup</option>
         <option value="tsp">tsp</option>
-        <option value="Tbsp">Tbsp</option>
-        <option value="TbspAustralia">Tbsp (Australia)</option>
+        <option value="tbsp">Tbsp</option>
+        <option value="australianTbsp">Tbsp (Australia)</option>
         <option value="pinch">pinch</option>
         <option value="can">can</option>
         <option value="slice">slice</option>

@@ -1,12 +1,17 @@
-import connectDB from "@/app/lib/mongoDB";
+//next.js
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+//schema
 import User from "@/app/lib/modelSchemas/User";
+//database
+import connectDB from "@/app/lib/mongoDB";
+//zod validation
 import {
   passwordUpdateSchema,
   userOtherUpdateSchema,
   userSchema,
 } from "@/app/lib/validation";
+//methods for authentication
 import {
   authenticateToken,
   generateAccessToken,
@@ -262,7 +267,7 @@ export async function DELETE(req: NextRequest) {
       newAccessToken = tokenInfo.newAccessToken;
     }
 
-    const user = await User.findById(id).select("+password");
+    const user = await User.findById(id);
 
     if (!user) {
       const err: any = new Error("User not found");
@@ -270,7 +275,7 @@ export async function DELETE(req: NextRequest) {
       throw err;
     }
 
-    const deletedUser = await User.findByIdAndDelete(id);
+    await User.findByIdAndDelete(id);
 
     return NextResponse.json(
       { success: true, message: "User deleted successfully" },

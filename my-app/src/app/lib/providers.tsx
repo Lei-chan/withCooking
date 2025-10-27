@@ -6,19 +6,18 @@ import {
   useMemo,
   useEffect,
 } from "react";
-import { wait } from "./helper";
+import { useMediaQuery } from "react-responsive";
 import {
   MAX_DESKTOP,
   MAX_MOBILE,
   MAX_TABLET,
-  TYPE_MEDIA,
-  MESSAGE_TIMEOUT,
   MIN_BIG,
   MIN_DESKTOP,
   MIN_TABLET,
-  TYPE_USER_CONTEXT,
-} from "./config";
-import { useMediaQuery } from "react-responsive";
+} from "./config/media";
+import { TYPE_MEDIA, TYPE_USER_CONTEXT } from "./config/type";
+import { MESSAGE_TIMEOUT } from "./config/settings";
+import { wait } from "./helpers/other";
 
 //mediaContext
 export const MediaContext = createContext<TYPE_MEDIA>("desktop");
@@ -84,6 +83,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem("numberOfRecipes");
+    setNumberOfRecipes(0);
     setAccessToken("");
   }, []);
 

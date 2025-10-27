@@ -1,17 +1,22 @@
+//next.js
+import { NextRequest, NextResponse } from "next/server";
+//database
 import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
-import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../lib/mongoDB";
-import Recipe from "@/app/lib/modelSchemas/Recipes";
-import { recipeSchema } from "@/app/lib/validation";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
+//schema
+import Recipe from "@/app/lib/modelSchemas/Recipes";
+//zod validation
+import { recipeSchema } from "@/app/lib/validation";
+//type
 import {
   TYPE_FILE,
   TYPE_INSTRUCTION,
   TYPE_CONVERTED_FILE,
-} from "@/app/lib/config";
+} from "@/app/lib/config/type";
+//methods for authentication
 import { authenticateToken, refreshAccessToken } from "@/app/lib/auth";
-import { parse, resolve } from "path";
 
 function getId(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;

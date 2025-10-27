@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const RecipeSchema = new mongoose.Schema({
   //recipeId => only for recipe in user info
-  recipeId: String,
+  _id: String,
   favorite: Boolean,
-  region: String,
+  // region: String,
   mainImage: {},
   mainImagePreview: {},
   title: String,

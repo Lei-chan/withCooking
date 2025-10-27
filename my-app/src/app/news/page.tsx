@@ -1,8 +1,12 @@
 "use client";
+//react
 import { useContext } from "react";
+//type
+import { TYPE_MEDIA } from "../lib/config/type";
+//context
 import { MediaContext } from "../lib/providers";
+//model for news
 import news from "../lib/models/news";
-import { TYPE_MEDIA } from "../lib/config";
 
 export default function News() {
   const mediaContext = useContext(MediaContext);

@@ -1,25 +1,35 @@
 "use client";
+//react
+import { useEffect, useState, useContext } from "react";
+import clsx from "clsx";
+//next.js
+import { redirect, RedirectType } from "next/navigation";
+//css
 import styles from "./page.module.css";
+//type
+import { TYPE_RECIPE, TYPE_USER_CONTEXT } from "@/app/lib/config/type";
+//settings
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_UPPERCASE,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_DIGIT,
-  TYPE_USER_CONTEXT,
-} from "../lib/config";
-import { getData, wait } from "@/app/lib/helper";
-import { useEffect, useState, useContext } from "react";
+} from "../lib/config/settings";
+//general methods
+import { getData, wait } from "@/app/lib/helpers/other";
+//context
 import { MediaContext, UserContext } from "../lib/providers";
-import { redirect, RedirectType } from "next/navigation";
-import clsx from "clsx";
 
 export default function Account() {
   const mediaContext = useContext(MediaContext);
   const userContext = useContext(UserContext);
-  const [data, setData] = useState<{ email: string; createdAt: string }>();
+  const [user, setUser] = useState<{
+    email: string;
+    recipes: TYPE_RECIPE[] | [];
+    createdAt: string;
+  }>();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  console.log(mediaContext);
 
   //design
   const formWidth =
@@ -49,7 +59,7 @@ export default function Account() {
         },
       });
 
-      setData(data.data);
+      setUser(data.data);
 
       //set newAccessToken for context when it's refreshed
       data.newAccessToken && userContext?.login(data.newAccessToken);
@@ -109,7 +119,7 @@ export default function Account() {
           {error || message}
         </p>
       )}
-      {!data && (
+      {!user && (
         <div
           style={{
             backgroundColor: "#fffdcdff",
@@ -121,7 +131,7 @@ export default function Account() {
           className={styles.loading}
         ></div>
       )}
-      {data && (
+      {user && (
         <div
           style={{
             backgroundImage: "linear-gradient(#fffedbff, #fffdcdff)",
@@ -139,7 +149,7 @@ export default function Account() {
             smallHeaderSize={smallHeaderSize}
             inputWidth={inputWidth}
             btnSize={btnSize}
-            email={data.email}
+            email={user.email}
             displayMessage={displayMessage}
           />
           <Password
@@ -153,13 +163,14 @@ export default function Account() {
           <Since
             fontSize={fontSize}
             smallHeaderSize={smallHeaderSize}
-            since={data.createdAt}
+            since={user.createdAt}
           />
           <CloseAccount
             userContext={userContext}
             fontSize={fontSize}
             smallHeaderSize={smallHeaderSize}
             btnSize={btnSize}
+            recipes={user.recipes || []}
             displayMessage={displayMessage}
           />
         </div>
@@ -524,12 +535,14 @@ function CloseAccount({
   fontSize,
   smallHeaderSize,
   btnSize,
+  recipes,
   displayMessage,
 }: {
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   smallHeaderSize: string;
   btnSize: string;
+  recipes: TYPE_RECIPE[] | [];
   displayMessage: (message: string) => void;
 }) {
   const [close, setClose] = useState(false);
@@ -549,7 +562,9 @@ function CloseAccount({
         "Thank you for using this app :) I hope to see you again!"
       );
     } catch (err: any) {
-      setError(err.message);
+      setError(
+        "Server error while closing account 🙇‍♂️ Please try again this later"
+      );
       return console.error(
         "Error while closing account",
         err.message,
@@ -564,14 +579,20 @@ function CloseAccount({
 
   async function closeAccount() {
     try {
-      const data = await getData("/api/users", {
+      const recipeIds = recipes.map((recipe) => recipe._id);
+      await getData("/api/recipes", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: recipeIds }),
+      });
+      await getData("/api/users", {
         method: "DELETE",
         headers: {
           authorization: `Bearer ${userContext?.accessToken}`,
         },
       });
 
-      //delete accessToken from context
+      //delete accessToken from context and numberOfRecipes from localStorage
       userContext?.logout();
     } catch (err) {
       throw err;

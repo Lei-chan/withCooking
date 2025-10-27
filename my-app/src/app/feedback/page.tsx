@@ -1,6 +1,9 @@
 "use client";
-import Link from "next/link";
+//react
 import { useContext } from "react";
+//next.js
+import Link from "next/link";
+//context
 import { MediaContext } from "../lib/providers";
 
 export default function Feedback() {

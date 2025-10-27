@@ -1,23 +1,27 @@
 "use client";
-import styles from "./page.module.css";
+//react
+import { useEffect, useState, useContext } from "react";
+import clsx from "clsx";
+import { useInView } from "react-intersection-observer";
+//next.js
 import Image from "next/image";
 import Link from "next/link";
-import clsx from "clsx";
-import { useEffect, useState, useContext } from "react";
 import { redirect, RedirectType } from "next/navigation";
-import { useInView } from "react-intersection-observer";
+//css
+import styles from "./page.module.css";
+//type
+import { TYPE_MEDIA } from "./lib/config/type";
+//settings
 import {
   APP_EXPLANATIONS,
-  MAX_MOBILE,
-  MAX_TABLET,
-  TYPE_MEDIA,
-  MIN_TABLET,
   PASSWORD_MIN_DIGIT,
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
-} from "./lib/config";
-import { getData } from "@/app/lib/helper";
+} from "./lib/config/settings";
+//general methods
+import { getData } from "@/app/lib/helpers/other";
+//context
 import { UserContext, MediaContext } from "./lib/providers";
 
 export default function Home() {

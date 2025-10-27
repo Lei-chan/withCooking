@@ -1,11 +1,11 @@
 "use client";
-import styles from "./component.module.css";
 import React, { useContext, useState } from "react";
 import clsx from "clsx";
-import { MediaContext, UserContext } from "../providers";
 import { redirect, RedirectType } from "next/navigation";
 import Image from "next/image";
-import { TYPE_MEDIA } from "../config";
+import styles from "./component.module.css";
+import { TYPE_MEDIA } from "../config/type";
+import { MediaContext, UserContext } from "../providers";
 
 export function MessageContainer({
   message,

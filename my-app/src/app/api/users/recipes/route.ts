@@ -1,12 +1,16 @@
-import connectDB from "@/app/lib/mongoDB";
+//next.js
 import { NextRequest, NextResponse } from "next/server";
+//schema
 import User from "@/app/lib/modelSchemas/User";
-import { authenticateToken } from "@/app/lib/auth";
-import { refreshAccessToken } from "@/app/lib/auth";
+//database
+import connectDB from "@/app/lib/mongoDB";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
+//method for file downloading
 import { downloadFile } from "../../recipes/route";
-import { getOrderedRecipes } from "@/app/lib/helper";
-import next from "next";
+//methods for authentication
+import { refreshAccessToken, authenticateToken } from "@/app/lib/auth";
+//methods for recipes
+import { getOrderedRecipes } from "@/app/lib/helpers/recipes";
 
 //get recipes in user data
 export async function GET(req: NextRequest) {

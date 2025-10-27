@@ -1,14 +1,26 @@
 "use client";
+//react
+import React, { useEffect, useRef, useState, useContext } from "react";
+//next.js
 import Image from "next/image";
 import styles from "./page.module.css";
 import Link from "next/link";
-import React, { useEffect, useRef, useState, useContext } from "react";
-import { nanoid } from "nanoid";
-import fracty from "fracty";
-import { MediaContext, UserContext } from "../lib/providers";
+//type
 import {
-  getData,
-  getSize,
+  TYPE_RECIPE,
+  TYPE_FILE,
+  TYPE_INGREDIENT,
+  TYPE_INGREDIENTS,
+  TYPE_USER_CONTEXT,
+  TYPE_MEDIA,
+  TYPE_REGION_UNIT,
+} from "../lib/config/type";
+//settings
+import { MAX_SERVINGS, SLIDE_TRANSITION_SEC } from "../lib/config/settings";
+//general methods
+import { getData, getSize } from "@/app/lib/helpers/other";
+//methods for recipes
+import {
   createMessage,
   uploadRecipe,
   getTemperatures,
@@ -19,23 +31,19 @@ import {
   getReadableIngUnit,
   getNextSlideIndex,
   getUserRecipes,
-} from "@/app/lib/helper";
-import {
-  MAX_SERVINGS,
-  TYPE_RECIPE,
-  TYPE_FILE,
-  TYPE_INGREDIENT,
-  TYPE_INGREDIENTS,
-  SLIDE_TRANSITION_SEC,
-  TYPE_USER_CONTEXT,
-  TYPE_MEDIA,
-  TYPE_REGION_UNIT,
-} from "../lib/config";
+  getIngGridTemplateColumnsStyle,
+} from "@/app/lib/helpers/recipes";
+//context
+import { MediaContext, UserContext } from "../lib/providers";
+//components
 import {
   MessageContainer,
   OverlayMessage,
   PaginationButtons,
 } from "../lib/components/components";
+//library
+import { nanoid } from "nanoid";
+import fracty from "fracty";
 
 export default function MAIN() {
   const mediaContext = useContext(MediaContext);
@@ -744,7 +752,7 @@ function Recipe({
     setCurRecipe(recipe);
     setFavorite(recipe.favorite);
     setServingsValue(recipe.servings.servings);
-    setRegionUnit(recipe.region);
+    setRegionUnit("original");
   }
 
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1402,7 +1410,7 @@ function Ingredients({
         width: "90%",
         height: "fit-content",
         backgroundColor: "rgb(255, 247, 177)",
-        padding: "2%",
+        padding: "2% 2% 8% 2%",
         borderRadius: "3px",
         overflowX: "auto",
       }}
@@ -1420,7 +1428,12 @@ function Ingredients({
         style={{
           width: "100%",
           display: "grid",
-          gridTemplateColumns: mediaContext === "mobile" ? "auto" : "auto auto",
+          gridTemplateColumns: getIngGridTemplateColumnsStyle(
+            ingredients,
+            regionUnit,
+            mediaContext,
+            false
+          ),
           justifyItems: "left",
           marginTop: "2%",
           wordSpacing: "0.1vw",
@@ -1461,14 +1474,18 @@ function IngLine({
   });
 
   useEffect(() => {
+    const convertedIng = ingredient.convertion[regionUnit];
+
     //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
-    const newIngredient = !ingredient.convertion[regionUnit]
+    const newIngredient = !convertedIng
       ? {
           amount: ingredient.amount,
           unit: getReadableIngUnit(ingredient.unit),
         }
-      : ingredient.convertion[regionUnit];
-
+      : {
+          amount: convertedIng.amount,
+          unit: getReadableIngUnit(convertedIng.unit),
+        };
     setNewIngredient(newIngredient);
   }, [ingredient, servingsValue, regionUnit]);
 
@@ -1481,7 +1498,7 @@ function IngLine({
         alignItems: "center",
         gap: "4%",
         whiteSpace: "nowrap",
-        fontSize: fontSize,
+        fontSize,
       }}
     >
       <input
@@ -1492,20 +1509,19 @@ function IngLine({
         }}
         type="checkbox"
       ></input>
-      {newIngredient.amount !== 0 && (
-        <span>
-          {newIngredient.unit === "g" ||
-          newIngredient.unit === "kg" ||
-          newIngredient.unit === "oz" ||
-          newIngredient.unit === "lb" ||
-          newIngredient.unit === "ml" ||
-          newIngredient.unit === "L"
-            ? newIngredient.amount
-            : fracty(newIngredient.amount)}
-        </span>
-      )}
-      {newIngredient.unit && <span>{`${newIngredient.unit} of`}</span>}
-      <span>{ingredient.ingredient}</span>
+      <p>
+        {(newIngredient.amount !== 0 && newIngredient.unit === "g") ||
+        newIngredient.unit === "kg" ||
+        newIngredient.unit === "oz" ||
+        newIngredient.unit === "lb" ||
+        newIngredient.unit === "ml" ||
+        newIngredient.unit === "L"
+          ? newIngredient.amount
+          : fracty(newIngredient.amount)}{" "}
+        &nbsp;
+        {newIngredient.unit && `${newIngredient.unit} of`} &nbsp;
+        {ingredient.ingredient}
+      </p>
     </div>
   );
 }

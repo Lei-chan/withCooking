@@ -1,35 +1,14 @@
 "use client";
-import styles from "./page.module.css";
-import Image from "next/image";
-import Resizer from "react-image-file-resizer";
-import Link from "next/link";
-import { redirect, RedirectType } from "next/navigation";
-import clsx from "clsx";
+//react
 import React, { useEffect, useState, useContext, useRef } from "react";
-import { MediaContext, UserContext } from "@/app/lib/providers";
+import clsx from "clsx";
+import Resizer from "react-image-file-resizer";
+//next.js
+import Image from "next/image";
+//css
+import styles from "./page.module.css";
+//type
 import {
-  wait,
-  getData,
-  uploadRecipe,
-  getFileData,
-  getTemperatures,
-  // getUnit,
-  getRegion,
-  convertIngUnits,
-  convertTempUnits,
-  getReadableIngUnit,
-  calcTransitionXSlider,
-  updateIngsForServings,
-  updateConvertion,
-  getNextSlideIndex,
-  getImageFileData,
-  isRecipeAllowed,
-  getSize,
-} from "@/app/lib/helper";
-import {
-  MAX_SERVINGS,
-  NUMBER_OF_TEMPERATURES,
-  SLIDE_TRANSITION_SEC,
   TYPE_FILE,
   TYPE_INGREDIENT,
   TYPE_INGREDIENT_UNIT,
@@ -38,10 +17,38 @@ import {
   TYPE_MEDIA,
   TYPE_RECIPE,
   TYPE_REGION_UNIT,
-} from "@/app/lib/config";
+} from "@/app/lib/config/type";
+//settings
+import {
+  MAX_SERVINGS,
+  NUMBER_OF_TEMPERATURES,
+  SLIDE_TRANSITION_SEC,
+} from "@/app/lib/config/settings";
+//general methods
+import { wait, getData, getSize } from "@/app/lib/helpers/other";
+//methods for recipes
+import {
+  uploadRecipe,
+  getTemperatures,
+  // getRegion,
+  getReadableIngUnit,
+  calcTransitionXSlider,
+  updateIngsForServings,
+  updateConvertion,
+  getNextSlideIndex,
+  getImageFileData,
+  isRecipeAllowed,
+  getIngGridTemplateColumnsStyle,
+} from "@/app/lib/helpers/recipes";
+//methods to convert
+import { convertIngUnits, convertTempUnits } from "@/app/lib/helpers/converter";
+//context
+import { MediaContext, UserContext } from "@/app/lib/providers";
+//components
+import { Loading } from "@/app/lib/components/components";
+//library
 import { nanoid } from "nanoid";
 import fracty from "fracty";
-import { Loading } from "@/app/lib/components/components";
 
 export default function Recipe() {
   const mediaContext = useContext(MediaContext);
@@ -340,7 +347,7 @@ export default function Recipe() {
         mainImagePreview: curRecipe?.mainImagePreview,
         title: String(formData.get("title"))?.trim() || "",
         author: String(formData.get("author")).trim() || "",
-        region: getRegion(ingredients),
+        // region: getRegion(ingredients),
         servings: {
           servings: +(formData.get("servings") || 0),
           unit: String(formData.get("servingsUnit")),
@@ -430,8 +437,6 @@ export default function Recipe() {
           style={{
             backgroundImage:
               "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-            // width: "50%",
-            // height: "600px",
             width: recipeWidth,
             aspectRatio: "1/1.5",
             boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
@@ -1141,7 +1146,7 @@ function BriefExplanation({
                 className={styles.input__brief_explanation}
                 style={{ width: "35%", fontSize }}
                 type="number"
-                min="1"
+                min="0"
                 max={MAX_SERVINGS}
                 name="servings"
                 placeholder="Servings"
@@ -1886,6 +1891,14 @@ function Ingredients({
     setNumberOfLines((prev) => prev - 1);
   }
 
+  useEffect(() => {
+    setLines(
+      ingredients.map(() => {
+        return { id: nanoid() };
+      })
+    );
+  }, [ingredients]);
+
   ////Manually update lines to remain current state when users delete line
   useEffect(() => {
     ///when line is added
@@ -1908,7 +1921,7 @@ function Ingredients({
         width: mediaContext === "mobile" ? "93%" : "90%",
         height: "fit-content",
         backgroundColor: "rgb(255, 247, 177)",
-        padding: "2%",
+        padding: "2% 2% 8% 2%",
         borderRadius: "3px",
         overflowX: !edit ? "auto" : "visible",
       }}
@@ -1925,9 +1938,14 @@ function Ingredients({
       <div
         style={{
           width: "100%",
+          height: "fit-content",
           display: "grid",
-          gridTemplateColumns:
-            edit || mediaContext === "mobile" ? "auto" : "auto auto",
+          gridTemplateColumns: getIngGridTemplateColumnsStyle(
+            ingredients,
+            regionUnit,
+            mediaContext,
+            edit
+          ),
           justifyItems: "left",
           marginTop: "2%",
           fontSize,
@@ -1952,9 +1970,27 @@ function Ingredients({
                 ingredient: "",
                 amount: 0,
                 unit: "g",
-                customUnit: "",
-                id: undefined,
-                convertion: undefined,
+                convertion: {
+                  original: { amount: 0, unit: "g" },
+                  metric: undefined,
+                  us: undefined,
+                  japan: undefined,
+                  australia: undefined,
+                  metricCup: undefined,
+                  g: undefined,
+                  kg: undefined,
+                  oz: undefined,
+                  lb: undefined,
+                  ml: undefined,
+                  L: undefined,
+                  usCup: undefined,
+                  japaneseCup: undefined,
+                  imperialCup: undefined,
+                  riceCup: undefined,
+                  tsp: undefined,
+                  tbsp: undefined,
+                  australianTbsp: undefined,
+                },
               }
             }
             regionUnit={regionUnit}
@@ -2004,13 +2040,16 @@ function IngLine({
     "lb",
     "ml",
     "L",
-    "USCup",
-    "JapaneseCup",
-    "ImperialCup",
+    "usCup",
+    "japaneseCup",
+    "imperialCup",
     "riceCup",
     "tsp",
-    "Tbsp",
-    "AustralianTbsp",
+    "tbsp",
+    "australianTbsp",
+    "pinch",
+    "can",
+    "slice",
   ];
 
   function isTypeIngUnit(unit: any) {
@@ -2049,18 +2088,33 @@ function IngLine({
     });
   }
 
+  // useEffect(() => {
+  //   setLine({
+  //     ingredient: ingredient.ingredient,
+  //     amount: ingredient.amount,
+  //     unit: isTypeIngUnit(ingredient.unit) ? ingredient.unit : "other",
+  //     customUnit: isTypeIngUnit(ingredient.unit) ? "" : ingredient.unit,
+  //   });
+  // }, [ingredient]);
+
   useEffect(() => {
+    if (edit) return;
+
+    const convertedIng = ingredient.convertion[regionUnit];
+
     //Not applicable converted ingredients unit => ingrediet otherwise converted ingredient
-    const newIngredient =
-      edit || !ingredient.convertion[regionUnit]
-        ? {
-            amount: ingredient.amount,
-            unit: getReadableIngUnit(ingredient.unit),
-          }
-        : ingredient.convertion[regionUnit];
+    const newIngredient = !convertedIng
+      ? {
+          amount: ingredient.amount,
+          unit: getReadableIngUnit(ingredient.unit),
+        }
+      : {
+          amount: convertedIng.amount,
+          unit: getReadableIngUnit(convertedIng.unit),
+        };
 
     setNewIngredient(newIngredient);
-  }, [ingredient, servingsValue, regionUnit]);
+  }, [ingredient, servingsValue, regionUnit, edit]);
 
   return (
     <div
@@ -2113,7 +2167,7 @@ function IngLine({
             type="number"
             name={`ingredient${i + 1}Amount`}
             placeholder="Amount"
-            value={line.amount || ""}
+            value={line.amount}
             onChange={handleChangeInput}
           ></input>
           <select
@@ -2133,13 +2187,13 @@ function IngLine({
             <option value="oz">oz</option>
             <option value="ml">ml</option>
             <option value="L">L</option>
-            <option value="cupUS">cup (US)</option>
-            <option value="cupJapan">cup (Japan)</option>
-            <option value="cupImperial">cup (1cup = 250ml)</option>
+            <option value="usCup">cup (US)</option>
+            <option value="japaneseCup">cup (Japan)</option>
+            <option value="imperialCup">cup (1cup = 250ml)</option>
             <option value="riceCup">rice cup</option>
             <option value="tsp">tsp</option>
-            <option value="Tbsp">Tbsp</option>
-            <option value="TbspAustralia">Tbsp (Australia)</option>
+            <option value="tbsp">Tbsp</option>
+            <option value="australianTbsp">Tbsp (Australia)</option>
             <option value="pinch">pinch</option>
             <option value="can">can</option>
             <option value="slice">slice</option>
@@ -2164,22 +2218,19 @@ function IngLine({
             style={{ width: fontSize, marginLeft: "2%" }}
             type="checkbox"
           ></input>
-          {newIngredient.amount !== 0 && (
-            <span style={{ fontSize }}>
-              {newIngredient.unit === "g" ||
-              newIngredient.unit === "kg" ||
-              newIngredient.unit === "oz" ||
-              newIngredient.unit === "lb" ||
-              newIngredient.unit === "ml" ||
-              newIngredient.unit === "L"
-                ? newIngredient.amount
-                : fracty(newIngredient.amount)}
-            </span>
-          )}
-          {newIngredient.unit && (
-            <span style={{ fontSize }}>{`${newIngredient.unit} of`}</span>
-          )}
-          <span style={{ fontSize }}>{ingredient.ingredient}</span>
+          <p style={{ fontSize }}>
+            {(newIngredient.amount !== 0 && newIngredient.unit === "g") ||
+            newIngredient.unit === "kg" ||
+            newIngredient.unit === "oz" ||
+            newIngredient.unit === "lb" ||
+            newIngredient.unit === "ml" ||
+            newIngredient.unit === "L"
+              ? newIngredient.amount
+              : fracty(newIngredient.amount)}{" "}
+            &nbsp;
+            {newIngredient.unit && `${newIngredient.unit} of`} &nbsp;
+            {ingredient.ingredient}
+          </p>
         </>
       )}
     </div>

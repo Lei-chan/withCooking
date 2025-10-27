@@ -1,14 +1,18 @@
 "use client";
+//react
+import { useContext, useEffect, useRef, useState } from "react";
+//css
 import styles from "./page.module.css";
+//type
+import { TYPE_MEDIA } from "../lib/config/type";
+//mehods to convert
 import {
   convertIngUnits,
   convertLengthUnits,
   convertTempUnits,
-} from "../lib/helper";
-import { useContext, useEffect, useRef, useState } from "react";
+} from "../lib/helpers/converter";
+//context
 import { MediaContext } from "../lib/providers";
-import { TYPE_MEDIA } from "../lib/config";
-import { Loading } from "../lib/components/components";
 
 export default function Converter() {
   const mediaContext = useContext(MediaContext);

@@ -1,23 +1,30 @@
 "use client";
-import styles from "./page.module.css";
+//react
+import React, { useContext, useEffect, useState } from "react";
+//next.js
 import Image from "next/image";
 import Link from "next/link";
 import { redirect, RedirectType } from "next/navigation";
-import {
-  MessageContainer,
-  PaginationButtons,
-} from "@/app/lib/components/components";
+//css
+import styles from "./page.module.css";
+//type
+import { TYPE_MEDIA, TYPE_RECIPE, TYPE_USER_CONTEXT } from "../lib/config/type";
+//general methods
+import { getData, wait } from "@/app/lib/helpers/other";
+//methods for recipes
 import {
   createMessage,
   getRecipesPerPage,
   calcNumberOfPages,
   getUserRecipes,
-  getData,
-  wait,
-} from "@/app/lib/helper";
-import React, { useContext, useEffect, useState } from "react";
-import { TYPE_MEDIA, TYPE_RECIPE, TYPE_USER_CONTEXT } from "../lib/config";
+} from "@/app/lib/helpers/recipes";
+//context
 import { MediaContext, UserContext } from "../lib/providers";
+//components
+import {
+  MessageContainer,
+  PaginationButtons,
+} from "@/app/lib/components/components";
 
 export default function Recipes() {
   const mediaContext = useContext(MediaContext);
@@ -347,6 +354,7 @@ function RecipeContainer({
     new Array(NUMBER_OF_COLUMNS).fill([])
   );
   const [message, setMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[] | []>([]);
 
@@ -388,6 +396,13 @@ function RecipeContainer({
         newIds.push(curTarget.value);
         return newIds;
       });
+
+    //delete unchecked one
+    if (!curTarget.checked)
+      setSelectedRecipeIds((prev) => {
+        const newIds = [...prev].filter((id) => id !== curTarget.value);
+        return newIds;
+      });
   }
 
   async function handleSubmitDeleteRecipe(e: React.FormEvent<HTMLFormElement>) {
@@ -419,6 +434,11 @@ function RecipeContainer({
       setSelectedRecipeIds([]);
       resetRecipes();
       displayPending(false);
+      setSuccessMessage(
+        `Recipe${selectedRecipeIds.length > 1 ? "s" : ""} deleted`
+      );
+      await wait();
+      setSuccessMessage("");
     } catch (err: any) {
       displayError("Server error while deleting recipe 🙇‍♂️ Please try again");
       console.error(
@@ -499,9 +519,9 @@ function RecipeContainer({
             borderRadius: "3px",
             padding:
               mediaContext === "mobile"
-                ? "0.8%"
+                ? "0.8% 2%"
                 : mediaContext === "tablet"
-                ? "1%"
+                ? "1% 2%"
                 : "2.5%",
           }}
           type="button"
@@ -511,7 +531,7 @@ function RecipeContainer({
         </button>
       </div>
       {/* when there are no recipes => message, otherwise recipes */}
-      {!isPending && !error && !message && recipesPerColumn[0].length ? (
+      {!isPending && !error && recipesPerColumn[0].length ? (
         recipesPerColumn.map((recipes, i) => (
           <ul
             key={i}
@@ -576,6 +596,36 @@ function RecipeContainer({
           letterSpacing={"0.1vw"}
           wordSpacing={"0.3vw"}
         />
+      )}
+      {successMessage && (
+        <div
+          style={{
+            position: "absolute",
+            width:
+              mediaContext === "mobile"
+                ? "85%"
+                : mediaContext === "tablet"
+                ? "50%"
+                : "30%",
+            height: "fit-content",
+            backgroundColor: "rgba(208, 255, 155, 1)",
+            boxShadow: "rgba(0, 0, 0, 0.33) 2px 2px 4px",
+            borderRadius: "5px",
+            bottom: "0%",
+            color: "brown",
+            textAlign: "center",
+            padding:
+              mediaContext === "mobile"
+                ? "3%"
+                : mediaContext === "tablet"
+                ? "1.5%"
+                : "1%",
+            fontSize,
+            zIndex: "10",
+          }}
+        >
+          {successMessage}
+        </div>
       )}
     </form>
   );

@@ -32,7 +32,9 @@ export default async function connectDB() {
 }
 
 export function getGridFSBucket() {
-  return !bucket
-    ? new GridFSBucket(mongoose.connection.db, { bucketName: "recipeFiles" })
-    : bucket;
+  if (!bucket)
+    bucket = new GridFSBucket(mongoose.connection.db, {
+      bucketName: "recipeFiles",
+    });
+  return bucket;
 }

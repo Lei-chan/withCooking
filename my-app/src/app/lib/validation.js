@@ -6,12 +6,12 @@ import {
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
   PASSWORD_REGEX,
-} from "./config";
+} from "./config/settings";
 
 export const recipeSchema = z.object({
   recipeId: z.string().optional(), //only for recipe in user info
   favorite: z.boolean(),
-  region: z.string(),
+  // region: z.string(),
   mainImage: z.any(),
   mainImagePreview: z.any(),
   title: z.string(),

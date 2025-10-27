@@ -1,48 +1,3 @@
-///responsive design
-export const MAX_MOBILE = 479;
-export const MIN_TABLET = 480;
-export const MAX_TABLET = 768;
-export const MIN_DESKTOP = 769;
-export const MAX_DESKTOP = 1439;
-export const MIN_BIG = 1440;
-
-export const PASSWORD_MIN_LENGTH = 8;
-export const PASSWORD_MIN_UPPERCASE = 1;
-export const PASSWORD_MIN_LOWERCASE = 1;
-export const PASSWORD_MIN_DIGIT = 1;
-export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-export const NUMBER_OF_TEMPERATURES = 4;
-export const MAX_SERVINGS = 999;
-export const SLIDE_TRANSITION_SEC = 4;
-export const MESSAGE_TIMEOUT = 4; //seconds
-
-export const APP_EXPLANATIONS = [
-  {
-    title: "Create recipes",
-    image: "/grey-img.png",
-    explanation:
-      "You can create recipes with simple steps. Nutritional information is automatically created for your recipes, so it's useful to manage your diet. You can also automatically convert ingredients/temperature units to various types of units, so you don't need to look up for different units on the Internet anymore!",
-  },
-  {
-    title: "Search recipes",
-    image: "/grey-img.png",
-    explanation: "You can search your recipes using keywords.",
-  },
-  {
-    title: "Cook with recipes",
-    image: "/grey-img.png",
-    explanation:
-      "You can edit and leave comments for recipes while cooking, so whenever you want to change your recipes, you can easily manage it.",
-  },
-  {
-    title: "Set multiple timers",
-    image: "/grey-img.png",
-    explanation:
-      " You can edit and leave comments for recipes while cooking, so whenever you want to change your recipes, you can easily manage it.",
-  },
-];
-
-//type
 export type TYPE_MEDIA = "mobile" | "tablet" | "desktop" | "big";
 
 export type TYPE_USER_CONTEXT = {
@@ -59,7 +14,7 @@ export type TYPE_USER_CONTEXT = {
 export type TYPE_RECIPE = {
   _id?: string;
   favorite: boolean;
-  region: "metric" | "us" | "japan" | "australia" | "metricCup";
+  // region: "metric" | "us" | "japan" | "australia" | "metricCup";
   mainImage: TYPE_FILE | undefined;
   mainImagePreview?: TYPE_FILE | undefined;
   title: string;
@@ -75,21 +30,6 @@ export type TYPE_RECIPE = {
   description: string;
   memoryImages: TYPE_FILE[] | [];
   comments: string;
-};
-
-export type TYPE_FILE = {
-  data: string;
-  contentType: string;
-  filename: string;
-  fileSize: number;
-};
-
-export type TYPE_CONVERTED_FILE = {
-  fileId: any;
-  filename: string;
-  contentType: string;
-  fileSize: number;
-  uploadedAt: Date;
 };
 
 export type TYPE_INSTRUCTION = {
@@ -117,13 +57,13 @@ export type TYPE_INGREDIENT = {
     lb: { amount: number; unit: string } | undefined;
     ml: { amount: number; unit: string } | undefined;
     L: { amount: number; unit: string } | undefined;
-    USCup: { amount: number; unit: string } | undefined;
-    JapaneseCup: { amount: number; unit: string } | undefined;
-    ImperialCup: { amount: number; unit: string } | undefined;
+    usCup: { amount: number; unit: string } | undefined;
+    japaneseCup: { amount: number; unit: string } | undefined;
+    imperialCup: { amount: number; unit: string } | undefined;
     riceCup: { amount: number; unit: string } | undefined;
     tsp: { amount: number; unit: string } | undefined;
-    Tbsp: { amount: number; unit: string } | undefined;
-    AustralianTbsp: { amount: number; unit: string } | undefined;
+    tbsp: { amount: number; unit: string } | undefined;
+    australianTbsp: { amount: number; unit: string } | undefined;
   };
 };
 
@@ -136,13 +76,13 @@ export type TYPE_INGREDIENT_UNIT =
   | "lb"
   | "ml"
   | "L"
-  | "USCup"
-  | "JapaneseCup"
-  | "ImperialCup"
+  | "usCup"
+  | "japaneseCup"
+  | "imperialCup"
   | "riceCup"
   | "tsp"
-  | "Tbsp"
-  | "AustralianTbsp"
+  | "tbsp"
+  | "australianTbsp"
   | "pinch"
   | "can"
   | "slice";
@@ -162,3 +102,18 @@ export type TYPE_SERVINGS_UNIT =
   | "cups"
   | "bowls"
   | "other";
+
+export type TYPE_FILE = {
+  data: string;
+  contentType: string;
+  filename: string;
+  fileSize: number;
+};
+
+export type TYPE_CONVERTED_FILE = {
+  fileId: any;
+  filename: string;
+  contentType: string;
+  fileSize: number;
+  uploadedAt: Date;
+};
