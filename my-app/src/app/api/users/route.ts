@@ -140,8 +140,24 @@ export async function GET(req: NextRequest) {
       throw err;
     }
 
+    //change recipeId to _id for frontend
+    const { recipes, ...others } = user.toObject();
+
+    const structuredRecipes = recipes.map((recipe: any) => {
+      const { recipeId, ...others } = recipe;
+      return {
+        _id: recipeId,
+        ...others,
+      };
+    });
+    console.log({ recipes: structuredRecipes, ...others });
+
     return NextResponse.json(
-      { success: true, data: user, newAccessToken },
+      {
+        success: true,
+        data: { recipes: structuredRecipes, ...others },
+        newAccessToken,
+      },
       { status: 200 }
     );
   } catch (err: any) {

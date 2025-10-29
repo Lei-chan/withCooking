@@ -117,17 +117,10 @@ export default function Recipe() {
   }
 
   function setStateInit(recipeData: any) {
-    //recipe is stored inside _doc of data.data
-    //images are stored in data.data
-    const recipe = { ...recipeData._doc };
-    recipe.mainImage = recipeData.mainImage;
-    recipe.instructions = recipeData.instructions;
-    recipe.memoryImages = recipeData.memoryImages;
-
-    setRecipe(recipe);
-    setCurRecipe(recipe);
-    setFavorite(recipe.favorite);
-    setServingsValue(recipe.servings.servings);
+    setRecipe(recipeData);
+    setCurRecipe(recipeData);
+    setFavorite(recipeData.favorite);
+    setServingsValue(recipeData.servings.servings);
     setRegionUnit("original");
   }
 
@@ -256,26 +249,30 @@ export default function Recipe() {
     });
   }
 
+  //update recipe only edit is false
   async function handleClickFavorite() {
     try {
+      setFavorite(!favorite);
+      if (edit) return;
+
       setError("");
       setMessage("Updating favorite status...");
-      setFavorite(!favorite);
-
       if (!recipe) return;
 
       const newRecipe = { ...recipe };
       newRecipe.favorite = !favorite;
 
-      await uploadRecipe(newRecipe, userContext);
+      const recipeData = await uploadRecipe(newRecipe, userContext);
+      setStateInit(recipeData);
+
       setMessage("Favorite status updated successfully!");
       await wait();
       setMessage("");
     } catch (err: any) {
       setMessage("");
-      setError(`Server error while uploading recipe 🙇‍♂️ ${err.message}`);
+      setError(`Server error while updating recipe 🙇‍♂️ ${err.message}`);
       console.error(
-        "Error while uploading recipe",
+        "Error while updating recipe",
         err.message,
         err.statusCode || 500
       );
@@ -342,6 +339,7 @@ export default function Recipe() {
       ) as TYPE_INSTRUCTION[];
 
       const newRecipe = {
+        _id: curRecipe?._id,
         favorite: favorite === true ? true : false,
         mainImage: curRecipe?.mainImage,
         mainImagePreview: curRecipe?.mainImagePreview,

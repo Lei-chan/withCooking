@@ -643,7 +643,6 @@ function RecipePreview({
   isSelecting: boolean;
 }) {
   const mainImageSize = mediaContext === "mobile" ? "50px" : "46px";
-  // const mainImageSize = "50px";
 
   function handleClickPreview(e: React.MouseEvent<HTMLElement>) {
     const id = e.currentTarget.id;

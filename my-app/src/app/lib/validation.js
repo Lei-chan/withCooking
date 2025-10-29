@@ -9,9 +9,7 @@ import {
 } from "./config/settings";
 
 export const recipeSchema = z.object({
-  recipeId: z.string().optional(), //only for recipe in user info
   favorite: z.boolean(),
-  // region: z.string(),
   mainImage: z.any(),
   mainImagePreview: z.any(),
   title: z.string(),
@@ -62,7 +60,17 @@ export const userSchema = z.object({
       PASSWORD_REGEX,
       `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit`
     ),
-  recipes: z.array(recipeSchema).optional(),
+  recipes: z
+    .array({
+      recipeId: z.string(),
+      mainImagePreview: z.any(),
+      title: z.string(),
+      author: z.string(),
+      favorite: z.boolean(),
+      ingredients: z.any(),
+      createdAt: z.iso.datetime(),
+    })
+    .optional(),
 });
 
 export const passwordUpdateSchema = z.object({

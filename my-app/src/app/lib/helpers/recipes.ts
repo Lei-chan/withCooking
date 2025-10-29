@@ -11,17 +11,17 @@ import { getData } from "./other";
 //upload recipe
 export const uploadRecipe = async (recipe: TYPE_RECIPE, userContext: any) => {
   try {
-    const recipeId = window.location.hash.slice(1);
+    // const recipeId = window.location.hash.slice(1);
+
     //remove _id to avoid trying to update immutable field
     const { _id, ...others } = recipe;
 
     ///store new recipe in recipes database and user info database
-    const recipeData = await getData(`/api/recipes?id=${recipeId}`, {
+    const recipeData = await getData(`/api/recipes?id=${_id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(others),
     });
-
     recipeData.newAccessToken && userContext?.login(recipeData.newAccessToken);
 
     //connect the recipe data id to user recipe data id
@@ -177,40 +177,6 @@ export const calcTransitionXSlider = (index: number, curSlide: number) => {
   const translateX = (index - curSlide) * 100;
   return `translateX(${translateX}%)`;
 };
-
-// export const getImageURL = (file: any) => {
-//   console.log(file);
-//   return file?.name ? URL.createObjectURL(file) : "";
-// };
-
-// export function convertFileToString(file: File): Promise<string> {
-//   return new Promise((resolve, reject) => {
-//     const reader = new FileReader();
-
-//     reader.onerror = () => {
-//       reject(new Error(reader.error?.message));
-//     };
-
-//     reader.onload = () => {
-//       resolve(reader.result as string);
-//     };
-
-//     reader.readAsDataURL(file);
-//   });
-// }
-
-// export async function getFileData(file: File) {
-//   try {
-//     return {
-//       data: await convertFileToString(file),
-//       contentType: file.type,
-//       filename: file.name,
-//       fileSize: file.size,
-//     };
-//   } catch (err) {
-//     throw err;
-//   }
-// }
 
 export const getImageFileData = (file: File, uri: any) => {
   return {

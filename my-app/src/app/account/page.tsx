@@ -25,7 +25,7 @@ export default function Account() {
   const userContext = useContext(UserContext);
   const [user, setUser] = useState<{
     email: string;
-    recipes: TYPE_RECIPE[] | [];
+    recipes: any[] | [];
     createdAt: string;
   }>();
   const [error, setError] = useState("");
@@ -542,7 +542,7 @@ function CloseAccount({
   fontSize: string;
   smallHeaderSize: string;
   btnSize: string;
-  recipes: TYPE_RECIPE[] | [];
+  recipes: any[] | [];
   displayMessage: (message: string) => void;
 }) {
   const [close, setClose] = useState(false);
@@ -580,6 +580,7 @@ function CloseAccount({
   async function closeAccount() {
     try {
       const recipeIds = recipes.map((recipe) => recipe._id);
+
       await getData("/api/recipes", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },

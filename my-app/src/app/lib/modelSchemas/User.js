@@ -14,14 +14,16 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required."],
       select: false,
-      //   trim: true,
-      //   match: [
-      //     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
-      //     `Please provide a password that contains at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit.`,
-      //   ],
-      //   minLength: [8, "Password must be at least 8 characters"],
     },
-    recipes: Array,
+    recipes: {
+      recipeId: String,
+      mainImagePreview: Object,
+      title: String,
+      author: String,
+      favorite: Boolean,
+      ingredients: Array,
+      createdAt: String,
+    },
   },
   { timestamps: true }
 );

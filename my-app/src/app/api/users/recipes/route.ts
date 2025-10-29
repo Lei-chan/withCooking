@@ -12,6 +12,8 @@ import { refreshAccessToken, authenticateToken } from "@/app/lib/auth";
 //methods for recipes
 import { getOrderedRecipes } from "@/app/lib/helpers/recipes";
 
+//_id in Recipe is recipeId in User recipes
+
 //get recipes in user data
 export async function GET(req: NextRequest) {
   try {
@@ -60,34 +62,24 @@ export async function GET(req: NextRequest) {
       parseInt(endIndex)
     );
 
-    // const mainImages = slicedRecipes.length
-    //   ? await Promise.all(
-    //       slicedRecipes.map((recipe: any) =>
-    //         recipe.mainImage
-    //           ? downloadFile(bucket, recipe.mainImage)
-    //           : Promise.resolve(undefined)
-    //       )
-    //     )
-    //   : [];
     const mainImagePreviews = slicedRecipes.length
       ? await Promise.all(
-          slicedRecipes.map((recipe: any) => {
-            console.log(recipe.mainImagePreview);
-            return recipe.mainImagePreview
+          slicedRecipes.map((recipe: any) =>
+            recipe.mainImagePreview
               ? downloadFile(bucket, recipe.mainImagePreview)
-              : Promise.resolve(undefined);
-          })
+              : Promise.resolve(undefined)
+          )
         )
       : [];
 
+    //use _id and send mainImagePreview data for frontend
     const recipesForPreview = slicedRecipes.length
       ? slicedRecipes.map((recipe: any, i: number) => {
+          const { recipeId, mainImagePreview, ...others } = recipe;
           const newRecipe = {
-            _id: recipe._id,
-            title: recipe.title,
-            // mainImage: mainImages[i],
+            _id: recipeId,
             mainImagePreview: mainImagePreviews[i],
-            favorite: recipe.favorite,
+            ...others,
           };
           return newRecipe;
         })
@@ -115,7 +107,25 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
-    const body = await req.json();
+    const {
+      _id,
+      mainImagePreview,
+      title,
+      author,
+      favorite,
+      ingredients,
+      createdAt,
+      ...others
+    } = await req.json();
+    const newBody = {
+      recipeId: _id,
+      mainImagePreview,
+      title,
+      author,
+      favorite,
+      ingredients,
+      createdAt,
+    };
     let { id, newAccessToken } = await authenticateToken(req);
 
     //try to refresh accessToken when access token is expired
@@ -127,7 +137,9 @@ export async function POST(req: NextRequest) {
 
     const user = await User.findById(id);
 
-    const newRecipes = user.recipes.length ? [...user.recipes, body] : [body];
+    const newRecipes = user.recipes.length
+      ? [...user.recipes, newBody]
+      : [newBody];
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
@@ -135,11 +147,21 @@ export async function POST(req: NextRequest) {
       { new: true, runValidators: true }
     );
 
+    //change recipeId to _id for frontend
+    const structuredRecipes = updatedUser.recipes.map((recipe: any) => {
+      const { recipeId, ...others } = recipe;
+      return {
+        _id: recipeId,
+        ...others,
+      };
+    });
+
+    console.log("POST: user recipes", structuredRecipes);
     return NextResponse.json(
       {
         success: true,
         message: "User recipe created successfully",
-        data: updatedUser,
+        data: structuredRecipes,
         newAccessToken,
       },
       { status: 200 }
@@ -156,7 +178,26 @@ export async function PUT(req: NextRequest) {
   try {
     await connectDB();
 
-    const body = await req.json();
+    const {
+      _id,
+      mainImagePreview,
+      title,
+      author,
+      favorite,
+      ingredients,
+      createdAt,
+      ...others
+    } = await req.json();
+    const newBody = {
+      recipeId: _id,
+      mainImagePreview,
+      title,
+      author,
+      favorite,
+      ingredients,
+      createdAt,
+    };
+
     let { id, newAccessToken } = await authenticateToken(req);
 
     //try to refresh accessToken when access token is expired
@@ -168,13 +209,13 @@ export async function PUT(req: NextRequest) {
 
     const user = await User.findById(id);
 
-    //recipe id is inside _doc
+    //filter out updated recipe and add again
     const recipesForNotUpdate = user.recipes.length
-      ? user.recipes.filter((recipe: any) => recipe._id !== body._doc._id)
+      ? user.recipes.filter(
+          (recipe: any) => recipe.recipeId !== newBody.recipeId
+        )
       : [];
-    const newRecipes = user.recipes.length
-      ? [...recipesForNotUpdate, body]
-      : [body];
+    const newRecipes = [...recipesForNotUpdate, newBody];
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
@@ -182,11 +223,21 @@ export async function PUT(req: NextRequest) {
       { new: true, runValidators: true }
     );
 
+    //change recipeId to _id for frontend
+    const structuredRecipes = updatedUser.recipes.map((recipe: any) => {
+      const { recipeId, ...others } = recipe;
+      return {
+        _id: recipeId,
+        ...others,
+      };
+    });
+    console.log("PUT: user recipes", structuredRecipes);
+
     return NextResponse.json(
       {
         success: true,
         message: "User recipe updated successfully",
-        data: updatedUser,
+        data: structuredRecipes,
         newAccessToken,
       },
       { status: 200 }
@@ -218,7 +269,7 @@ export async function DELETE(req: NextRequest) {
     const recipes = user.recipes;
 
     const deletedIndexes = recipeIdsArr.map((id) =>
-      recipes.findIndex((recipe: any) => recipe._id === id)
+      recipes.findIndex((recipe: any) => recipe.recipeId === id)
     );
 
     if (deletedIndexes.includes(-1)) {
@@ -227,8 +278,11 @@ export async function DELETE(req: NextRequest) {
       throw err;
     }
 
-    const newRecipes = [...recipes];
-    deletedIndexes.forEach((index) => newRecipes.splice(index, 1));
+    const recipesArr = [...recipes];
+    //fill deleted index place with null
+    deletedIndexes.forEach((index) => recipesArr.fill(null, index, index + 1));
+    //filter out deleted recipes
+    const newRecipes = recipesArr.filter((recipe) => recipe);
 
     const updatedUser = await User.findByIdAndUpdate(
       id,

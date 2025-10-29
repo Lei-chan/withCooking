@@ -219,8 +219,6 @@ export async function GET(req: NextRequest) {
       ? await downloadFile(bucket, recipe.mainImage)
       : undefined;
 
-    // const mainImagePreview = recipe.mainImagePreview ? await downloadFile(bucket, recipe.mainImagePreview) : undefined;
-
     const instructionImages = await Promise.all(
       recipe.instructions.map(
         (inst: {
@@ -241,7 +239,7 @@ export async function GET(req: NextRequest) {
         )
       : [];
 
-    const newRecipe = { ...recipe };
+    const newRecipe = { ...recipe.toObject() };
     newRecipe.mainImage = mainImage;
     // newRecipe.mainImagePreview = mainImagePreview;
     newRecipe.instructions = recipe.instructions.map(
@@ -293,37 +291,19 @@ export async function PUT(req: NextRequest) {
       throw err;
     }
 
-    //delete existing mainImage from bucket
-    recipe.mainImage &&
-      (await bucket.delete(new ObjectId(recipe.mainImage.fileId)));
+    //delete old mainImage from bucket
+    if (recipe.mainImage.data) {
+      try {
+        await bucket.delete(new ObjectId(recipe.mainImage.fileId));
+      } catch (err: any) {
+        throw new Error(
+          "Error while deleting mainImage from bucket",
+          err.message
+        );
+      }
+    }
 
-    //delete existing mainImagePreview from bucket
-    recipe.mainImagePreview &&
-      (await bucket.delete(new ObjectId(recipe.mainImagePreview.fileId)));
-
-    //delete existing instruction images from bucket
-    await Promise.all(
-      recipe.instructions.map(
-        (inst: {
-          instruction: string;
-          image: TYPE_CONVERTED_FILE | undefined;
-        }) => {
-          inst.image
-            ? bucket.delete(new ObjectId(inst.image.fileId))
-            : Promise.resolve(undefined);
-        }
-      )
-    );
-
-    //delete existing memoryImages from bucket
-    recipe.memoryImages.length &&
-      (await Promise.all(
-        recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-          bucket.delete(new ObjectId(image.fileId))
-        )
-      ));
-
-    //upload mainImage
+    //upload mainImage (If no mainImage in body => undefined, if mainImage in body  => upload file)
     const mainImage = !body.mainImage
       ? undefined
       : await uploadFile(bucket, body.mainImage, {
@@ -332,20 +312,76 @@ export async function PUT(req: NextRequest) {
           section: "mainImage",
         });
 
-    const mainImagePreview = !body.mainImagePreview
-      ? undefined
-      : await uploadFile(bucket, body.mainImagePreview, {
-          userId: id,
-          recipeTitle: body.title,
-          section: "mainImagePreview",
-        });
+    //upload mainImagePreview (If no mainImagePreview in body => undefined, if mainImage in body already has data, mainImagePreview should already have data too => the data, otherwise => upload file)
+    let mainImagePreview;
+    if (!body.mainImagePreview) mainImagePreview = undefined;
+    else if (body.mainImage.data) mainImagePreview = body.mainImagePreview;
+    else
+      await uploadFile(bucket, body.mainImagePreview, {
+        userId: id,
+        recipeTitle: body.title,
+        section: "mainImagePreview",
+      });
+
+    // //delete old mainImagePreview from bucket
+    // if (recipe.mainImagePreview) {
+    //   try {
+    //     await bucket.delete(new ObjectId(recipe.mainImagePreview.fileId));
+    //   } catch (err: any) {
+    //     throw new Error(
+    //       "Error while deleting mainImagePreview from bucket",
+    //       err.message
+    //     );
+    //   }
+    // }
+
+    //delete old instruction images from bucket
+    if (recipe.instructions.length) {
+      try {
+        await Promise.all(
+          recipe.instructions.map(
+            (inst: {
+              instruction: string;
+              image: TYPE_CONVERTED_FILE | undefined;
+            }) => {
+              inst.image
+                ? bucket.delete(new ObjectId(inst.image.fileId))
+                : Promise.resolve(undefined);
+            }
+          )
+        );
+      } catch (err: any) {
+        throw new Error(
+          "Error while deleting instruction images from bucket",
+          err.message
+        );
+      }
+    }
 
     //upload instruction images
-    const instructionImages = await uploadInstructionImages(
-      bucket,
-      body.instructions,
-      { userId: id, recipeTitle: body.title, section: "instructionImage" }
-    );
+    const instructionImages = body.instructions.length
+      ? await uploadInstructionImages(bucket, body.instructions, {
+          userId: id,
+          recipeTitle: body.title,
+          section: "instructionImage",
+        })
+      : [];
+
+    //delete old memoryImages from bucket
+    if (recipe.memoryImages.length) {
+      try {
+        await Promise.all(
+          recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
+            bucket.delete(new ObjectId(image.fileId))
+          )
+        );
+      } catch (err: any) {
+        throw new Error(
+          "Error while deleting memoryImages from bucket",
+          err.message
+        );
+      }
+    }
 
     //upload memoryImages
     const memoryImages = body.memoryImages.length
@@ -356,6 +392,7 @@ export async function PUT(req: NextRequest) {
         })
       : [];
 
+    //save recipe with image file id instead of actual data
     const newBody = { ...body };
     newBody.mainImage = mainImage;
     newBody.mainImagePreview = mainImagePreview;
@@ -370,17 +407,17 @@ export async function PUT(req: NextRequest) {
       new: true,
     }).select("-__v");
 
-    const strucaturedRecipe = { ...newRecipe };
-    strucaturedRecipe.mainImage = body.mainImage;
-    strucaturedRecipe.mainImagePreview = body.mainImagePreview;
-    strucaturedRecipe.instructions = body.instructions;
-    strucaturedRecipe.memoryImages = body.memoryImages;
+    //send actual image file data instead of file id to display
+    const structuredRecipe = { ...newRecipe.toObject() };
+    structuredRecipe.mainImage = body.mainImage;
+    structuredRecipe.instructions = body.instructions;
+    structuredRecipe.memoryImages = body.memoryImages;
 
     return NextResponse.json(
       {
         success: true,
         message: "Recipe updated successfully",
-        data: strucaturedRecipe,
+        data: structuredRecipe,
       },
       { status: 200 }
     );

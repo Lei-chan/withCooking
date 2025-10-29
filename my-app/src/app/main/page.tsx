@@ -338,7 +338,6 @@ function Search({
     e.preventDefault();
 
     const keywordData = new FormData(e.currentTarget).get("keyword");
-    console.log(keywordData);
     if (!keywordData && keywordData !== "") return;
 
     const structuredKeyword = String(keywordData).trim().toLowerCase();
@@ -723,17 +722,12 @@ function Recipe({
   async function getRecipe(id: string) {
     try {
       setIsLoading(true);
-      const data = await getData(`/api/recipes?id=${id}`, { method: "GET" });
+      setError("");
+      const recipeData = await getData(`/api/recipes?id=${id}`, {
+        method: "GET",
+      });
 
-      //recipe is stored inside _doc of data.data
-      //images are stored in data.data
-      const recipe = { ...data.data._doc };
-      recipe.mainImage = data.data.mainImage;
-      recipe.instructions = data.data.instructions;
-      recipe.memoryImages = data.data.memoryImages;
-
-      console.log(recipe);
-      setStateInitNoImages(recipe);
+      setStateInitNoImages(recipeData.data);
 
       setIsLoading(false);
     } catch (err: any) {
