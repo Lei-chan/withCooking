@@ -41,7 +41,9 @@ export async function GET(req: NextRequest) {
     }
 
     const user = await User.findById(id);
-    const recipes = user.recipes ? getOrderedRecipes(user.recipes) : [];
+    const recipes = user.recipes
+      ? getOrderedRecipes(user.toObject().recipes)
+      : [];
 
     const filteredRecipes =
       keyword && recipes.length
@@ -148,13 +150,15 @@ export async function POST(req: NextRequest) {
     );
 
     //change recipeId to _id for frontend
-    const structuredRecipes = updatedUser.recipes.map((recipe: any) => {
-      const { recipeId, ...others } = recipe;
-      return {
-        _id: recipeId,
-        ...others,
-      };
-    });
+    const structuredRecipes = updatedUser
+      .toObject()
+      .recipes.map((recipe: any) => {
+        const { recipeId, ...others } = recipe;
+        return {
+          _id: recipeId,
+          ...others,
+        };
+      });
 
     console.log("POST: user recipes", structuredRecipes);
     return NextResponse.json(
@@ -224,13 +228,15 @@ export async function PUT(req: NextRequest) {
     );
 
     //change recipeId to _id for frontend
-    const structuredRecipes = updatedUser.recipes.map((recipe: any) => {
-      const { recipeId, ...others } = recipe;
-      return {
-        _id: recipeId,
-        ...others,
-      };
-    });
+    const structuredRecipes = updatedUser
+      .toObject()
+      .recipes.map((recipe: any) => {
+        const { recipeId, ...others } = recipe;
+        return {
+          _id: recipeId,
+          ...others,
+        };
+      });
     console.log("PUT: user recipes", structuredRecipes);
 
     return NextResponse.json(

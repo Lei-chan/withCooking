@@ -123,17 +123,6 @@
   z-index: 3;
   transition: all 0.5s;
   pointer-events: none;
-  /* position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-image: url(/fukidashi.svg);
-  background-repeat: no-repeat;
-  background-size: cover;
-  z-index: 3;
-  transition: all 0.5s;
-  pointer-events: none; */
 }
 
 .p__fukidashi {
@@ -142,13 +131,6 @@
   white-space: wrap;
   letter-spacing: 0.02vw;
   padding: 5%;
-  /* width: 90%;
-  height: 70%;
-  white-space: wrap;
-  font-size: 1vw;
-  letter-spacing: 0.02vw;
-  text-align: left;
-  padding: 0 5%; */
 }
 
 .input__brief_explanation {
