@@ -14,7 +14,6 @@ export type TYPE_USER_CONTEXT = {
 export type TYPE_RECIPE = {
   _id?: string;
   favorite: boolean;
-  // region: "metric" | "us" | "japan" | "australia" | "metricCup";
   mainImage: TYPE_FILE | undefined;
   mainImagePreview?: TYPE_FILE | undefined;
   title: string;
@@ -30,6 +29,8 @@ export type TYPE_RECIPE = {
   description: string;
   memoryImages: TYPE_FILE[] | [];
   comments: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type TYPE_INSTRUCTION = {

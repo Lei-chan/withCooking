@@ -6,45 +6,26 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import Link from "next/link";
 //type
-import {
-  TYPE_RECIPE,
-  TYPE_FILE,
-  TYPE_INGREDIENT,
-  TYPE_INGREDIENTS,
-  TYPE_USER_CONTEXT,
-  TYPE_MEDIA,
-  TYPE_REGION_UNIT,
-} from "../lib/config/type";
-//settings
-import { MAX_SERVINGS, SLIDE_TRANSITION_SEC } from "../lib/config/settings";
+import { TYPE_USER_CONTEXT, TYPE_MEDIA, TYPE_RECIPE } from "../lib/config/type";
 //general methods
-import { getData, getSize } from "@/app/lib/helpers/other";
+import { getSize } from "@/app/lib/helpers/other";
 //methods for recipes
 import {
   createMessage,
-  uploadRecipe,
-  getTemperatures,
   calcNumberOfPages,
-  calcTransitionXSlider,
-  updateConvertion,
-  updateIngsForServings,
-  getReadableIngUnit,
-  getNextSlideIndex,
   getUserRecipes,
-  getIngGridTemplateColumnsStyle,
 } from "@/app/lib/helpers/recipes";
 //context
 import { MediaContext, UserContext } from "../lib/providers";
 //components
 import {
-  MessageContainer,
   OverlayMessage,
   PaginationButtons,
   RecipeNoEdit,
 } from "../lib/components/components";
 //library
 import { nanoid } from "nanoid";
-import fracty from "fracty";
+import { error } from "console";
 
 export default function MAIN() {
   const mediaContext = useContext(MediaContext);
@@ -203,14 +184,10 @@ export default function MAIN() {
             mediaContext={mediaContext}
             userContext={userContext}
             recipeWidth={recipeWidth}
+            error=""
             mainOrRecipe="main"
             userRecipe={null}
           />
-          {/* <Recipe
-            mediaContext={mediaContext}
-            userContext={userContext}
-            recipeWidth={recipeWidth}
-          /> */}
         </section>
 
         <section

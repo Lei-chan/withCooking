@@ -35,6 +35,7 @@ const RecipeSchema = new mongoose.Schema({
   memoryImages: [{}],
   comments: String,
   createdAt: String,
+  updatedAt: String,
 });
 
 const Recipe = mongoose.models.Recipe || mongoose.model("Recipe", RecipeSchema);

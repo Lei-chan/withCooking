@@ -9,10 +9,11 @@ import { convertIngUnits, convertTempUnits } from "./converter";
 import { getData } from "./other";
 
 //upload recipe
-export const uploadRecipe = async (recipe: TYPE_RECIPE, userContext: any) => {
+export const uploadRecipeUpdate = async (
+  recipe: TYPE_RECIPE,
+  userContext: any
+) => {
   try {
-    // const recipeId = window.location.hash.slice(1);
-
     //remove _id to avoid trying to update immutable field
     const { _id, ...others } = recipe;
 

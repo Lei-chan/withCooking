@@ -45,6 +45,7 @@ export const recipeSchema = z.object({
   memoryImages: z.array(z.any()),
   comments: z.string(),
   createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const userSchema = z.object({

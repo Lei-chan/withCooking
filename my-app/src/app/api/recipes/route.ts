@@ -215,6 +215,8 @@ export async function GET(req: NextRequest) {
       throw err;
     }
 
+    console.log(recipe);
+
     const mainImage = recipe.mainImage
       ? await downloadFile(bucket, recipe.mainImage)
       : undefined;
