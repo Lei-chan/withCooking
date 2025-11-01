@@ -1,16 +1,3 @@
-@keyframes loading {
-  from {
-    opacity: 0.5;
-  }
-  to {
-    opacity: 0.8;
-  }
-}
-
-.loading {
-  animation: loading 1s infinite linear;
-}
-
 .btn__img {
   background: transparent;
   background-size: contain;

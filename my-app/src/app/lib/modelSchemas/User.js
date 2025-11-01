@@ -23,6 +23,7 @@ const UserSchema = new mongoose.Schema(
       favorite: Boolean,
       ingredients: Array,
       createdAt: String,
+      updatedAt: String,
     },
   },
   { timestamps: true }

@@ -17,6 +17,9 @@ import {
 } from "@/app/lib/helpers/recipes";
 //context
 import { MediaContext, UserContext } from "../lib/providers";
+//media
+import news from "@/app/lib/models/news";
+
 //components
 import {
   OverlayMessage,
@@ -494,6 +497,10 @@ function DropdownMenu({
       : mediaContext === "tablet"
       ? "2.7vw"
       : "1.8vw";
+
+  //check if news has new info
+  const isNewsNew = news.some((news) => news.new);
+
   return (
     <div
       style={{
@@ -554,7 +561,7 @@ function DropdownMenu({
           className={styles.link__dropdown}
           href="http://localhost:3000/recipes"
         >
-          <li className={styles.list}>
+          <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/recipes.svg"}
               alt="recipe icon"
@@ -568,7 +575,7 @@ function DropdownMenu({
           className={styles.link__dropdown}
           href="http://localhost:3000/converter"
         >
-          <li className={styles.list}>
+          <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/convert.svg"}
               alt="converter icon"
@@ -582,7 +589,7 @@ function DropdownMenu({
           className={styles.link__dropdown}
           href="http://localhost:3000/account"
         >
-          <li className={styles.list}>
+          <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/account.svg"}
               alt="account icon"
@@ -596,7 +603,7 @@ function DropdownMenu({
           className={styles.link__dropdown}
           href="http://localhost:3000/news"
         >
-          <li className={styles.list}>
+          <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/news.svg"}
               alt="news icon"
@@ -604,13 +611,23 @@ function DropdownMenu({
               height={25}
             ></Image>
             <span>News</span>
+            {isNewsNew && (
+              <span
+                style={{
+                  fontSize: `calc(${fontSize} * 0.9)`,
+                  color: "orangered",
+                }}
+              >
+                new!
+              </span>
+            )}
           </li>
         </Link>
         <Link
           className={styles.link__dropdown}
           href="http://localhost:3000/how-to-use"
         >
-          <li className={styles.list}>
+          <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/howtouse.svg"}
               alt="how to use icon"
@@ -624,7 +641,7 @@ function DropdownMenu({
           className={styles.link__dropdown}
           href="http://localhost:3000/feedback"
         >
-          <li className={styles.list}>
+          <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/feedback.svg"}
               alt="feedback icon"
@@ -634,7 +651,11 @@ function DropdownMenu({
             <span>Feedback</span>
           </li>
         </Link>
-        <li className={styles.list} onClick={onClickLogout}>
+        <li
+          className={styles.list}
+          style={{ gap: "8%" }}
+          onClick={onClickLogout}
+        >
           <Image
             src={"/logout.svg"}
             alt="logout icon"

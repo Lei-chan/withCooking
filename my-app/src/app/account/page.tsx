@@ -581,11 +581,12 @@ function CloseAccount({
     try {
       const recipeIds = recipes.map((recipe) => recipe._id);
 
-      await getData("/api/recipes", {
+      const recipeData = await getData("/api/recipes", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: recipeIds }),
       });
+
       await getData("/api/users", {
         method: "DELETE",
         headers: {

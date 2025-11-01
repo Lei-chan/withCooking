@@ -513,7 +513,7 @@ export function RecipeEdit({
           ? await uploadRecipeCreate(newRecipe)
           : await uploadRecipeUpdate(newRecipe, userContext);
 
-      setCurRecipe(recipeData);
+      // setCurRecipe(recipeData);
 
       setIsPending(false);
       handleChangeEdit && handleChangeEdit(false);
@@ -587,96 +587,101 @@ export function RecipeEdit({
           mainOrRecipe="recipe"
         />
       )}
-      <form
-        style={{
-          position: "relative",
-          textAlign: "center",
-          backgroundImage:
-            "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-          width: recipeWidth,
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: mediaContext === "mobile" ? "6% 0" : "3% 0",
-          color: "rgb(60, 0, 116)",
-          boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
-          borderRadius: mediaContext === "mobile" ? "5px" : "10px",
-        }}
-        onSubmit={handleSubmit}
-      >
-        <ImageTitleEdit
-          mediaContext={mediaContext}
-          recipeWidth={recipeWidth}
-          fontSize={fontSize}
-          curTitle={curRecipe.title}
-          curImage={curRecipe.mainImage}
-          onChangeImage={handleChangeMainImage}
-          deleteImage={handleDeleteMainImage}
-          displayError={displayError}
-        />
-        <BriefExplanationEdit
-          mediaContext={mediaContext}
-          recipeWidth={recipeWidth}
-          fontSize={fontSize}
-          curRecipe={curRecipe}
-          onClickFavorite={handleClickFavorite}
-        />
-        <IngredientsEdit
-          mediaContext={mediaContext}
-          fontSize={fontSize}
-          headerSize={headerSize}
-          ingredients={curRecipe.ingredients}
-          regionUnit="original"
-        />
-        <InstructionsEdit
-          mediaContext={mediaContext}
-          recipeWidth={recipeWidth}
-          fontSize={fontSize}
-          headerSize={headerSize}
-          marginTop={marginTop}
-          preparation={curRecipe.preparation}
-          instructions={curRecipe.instructions}
-          addInstruction={handleAddInstrucion}
-          deleteInstruction={handleDeleteInstruciton}
-          onChangeInstruction={handleChangeInstruction}
-          deleteImage={handleDeleteInstructionImage}
-          onChangeImage={handleChangeInstructionImage}
-          displayError={displayError}
-        />
-        <AboutThisRecipeEdit
-          mediaContext={mediaContext}
-          fontSize={fontSize}
-          headerSize={headerSize}
-          marginTop={marginTop}
-          curDescription={curRecipe.description}
-        />
-        <MemoriesEdit
-          mediaContext={mediaContext}
-          recipeWidth={recipeWidth}
-          fontSize={fontSize}
-          headerSize={headerSize}
-          marginTop={marginTop}
-          images={curRecipe.memoryImages}
-          onChangeImages={handleChangeMemoryImages}
-          deleteImage={handleDeleteMemoryImage}
-          displayError={displayError}
-        />
-        <CommentsEdit
-          mediaContext={mediaContext}
-          fontSize={fontSize}
-          headerSize={headerSize}
-          marginTop={marginTop}
-          curComments={curRecipe.comments}
-        />
-        <button
-          className={styles.btn__upload_recipe}
-          style={{ fontSize: headerSize, marginTop: headerSize }}
-          type="submit"
+
+      {!curRecipe ? (
+        <LoadingRecipe mediaContext={mediaContext} recipeWidth={recipeWidth} />
+      ) : (
+        <form
+          style={{
+            position: "relative",
+            textAlign: "center",
+            backgroundImage:
+              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+            width: recipeWidth,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: mediaContext === "mobile" ? "6% 0" : "3% 0",
+            color: "rgb(60, 0, 116)",
+            boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
+            borderRadius: mediaContext === "mobile" ? "5px" : "10px",
+          }}
+          onSubmit={handleSubmit}
         >
-          Upload
-        </button>
-      </form>
+          <ImageTitleEdit
+            mediaContext={mediaContext}
+            recipeWidth={recipeWidth}
+            fontSize={fontSize}
+            curTitle={curRecipe.title}
+            curImage={curRecipe.mainImage}
+            onChangeImage={handleChangeMainImage}
+            deleteImage={handleDeleteMainImage}
+            displayError={displayError}
+          />
+          <BriefExplanationEdit
+            mediaContext={mediaContext}
+            recipeWidth={recipeWidth}
+            fontSize={fontSize}
+            curRecipe={curRecipe}
+            onClickFavorite={handleClickFavorite}
+          />
+          <IngredientsEdit
+            mediaContext={mediaContext}
+            fontSize={fontSize}
+            headerSize={headerSize}
+            ingredients={curRecipe.ingredients}
+            regionUnit="original"
+          />
+          <InstructionsEdit
+            mediaContext={mediaContext}
+            recipeWidth={recipeWidth}
+            fontSize={fontSize}
+            headerSize={headerSize}
+            marginTop={marginTop}
+            preparation={curRecipe.preparation}
+            instructions={curRecipe.instructions}
+            addInstruction={handleAddInstrucion}
+            deleteInstruction={handleDeleteInstruciton}
+            onChangeInstruction={handleChangeInstruction}
+            deleteImage={handleDeleteInstructionImage}
+            onChangeImage={handleChangeInstructionImage}
+            displayError={displayError}
+          />
+          <AboutThisRecipeEdit
+            mediaContext={mediaContext}
+            fontSize={fontSize}
+            headerSize={headerSize}
+            marginTop={marginTop}
+            curDescription={curRecipe.description}
+          />
+          <MemoriesEdit
+            mediaContext={mediaContext}
+            recipeWidth={recipeWidth}
+            fontSize={fontSize}
+            headerSize={headerSize}
+            marginTop={marginTop}
+            images={curRecipe.memoryImages}
+            onChangeImages={handleChangeMemoryImages}
+            deleteImage={handleDeleteMemoryImage}
+            displayError={displayError}
+          />
+          <CommentsEdit
+            mediaContext={mediaContext}
+            fontSize={fontSize}
+            headerSize={headerSize}
+            marginTop={marginTop}
+            curComments={curRecipe.comments}
+          />
+          <button
+            className={styles.btn__upload_recipe}
+            style={{ fontSize: headerSize, marginTop: headerSize }}
+            type="submit"
+          >
+            Upload
+          </button>
+        </form>
+      )}
     </>
   ) : (
     <Loading
@@ -980,13 +985,13 @@ function BriefExplanationEdit({
     curRecipe.temperatures.unit
   );
 
-  const [tempKeys, setTempKeys] = useState(
-    Array(NUMBER_OF_TEMPERATURES)
-      .fill("")
-      .map((_) => {
-        return { id: nanoid() };
-      })
-  );
+  // const [tempKeys, setTempKeys] = useState(
+  //   Array(NUMBER_OF_TEMPERATURES)
+  //     .fill("")
+  //     .map((_) => {
+  //       return { id: nanoid() };
+  //     })
+  // );
 
   //design
   const width = getSize(recipeWidth, 0.9, "90%");
@@ -1362,7 +1367,21 @@ function BriefExplanationEdit({
               height={iconSize}
             ></Image>
           </div>
-          {tempKeys.map((keyObj, i) => (
+          {Array(NUMBER_OF_TEMPERATURES)
+            .fill("")
+            .map((_, i) => (
+              <InputTempEdit
+                // key={keyObj.id}
+                key={i}
+                mediaContext={mediaContext}
+                fontSize={fontSize}
+                temperature={
+                  curRecipe.temperatures.temperatures[i] || undefined
+                }
+                i={i}
+              />
+            ))}
+          {/* {tempKeys.map((keyObj, i) => (
             <InputTempEdit
               key={keyObj.id}
               mediaContext={mediaContext}
@@ -1370,7 +1389,7 @@ function BriefExplanationEdit({
               temperature={curRecipe.temperatures.temperatures[i]}
               i={i}
             />
-          ))}
+          ))} */}
           <select
             className={styles.input__brief_explanation}
             style={{
@@ -1403,14 +1422,14 @@ function InputTempEdit({
 }: {
   mediaContext: TYPE_MEDIA;
   fontSize: string;
-  temperature: number;
+  temperature: number | undefined;
   i: number;
 }) {
-  const [temp, setTemp] = useState<number>(temperature);
+  const [temp, setTemp] = useState(temperature);
 
   function handleChangeTemp(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = +e.currentTarget.value;
-    setTemp(value);
+    const value = e.currentTarget.value;
+    setTemp(value !== "" ? +value : undefined);
   }
 
   return (
@@ -1423,7 +1442,7 @@ function InputTempEdit({
       type="number"
       name={`temperature${i + 1}`}
       placeholder={`${mediaContext === "mobile" ? "" : "Temp"} ${i + 1}`}
-      value={temp}
+      value={temp !== undefined ? temp : ""}
       onChange={handleChangeTemp}
     ></input>
   );
@@ -2626,6 +2645,7 @@ export function RecipeNoEdit({
     setRegionUnit(value);
   }
 
+  console.log(curRecipe);
   //update recipe only edit is false
   async function handleClickFavorite() {
     try {
@@ -3925,6 +3945,28 @@ function CommentsNoEdit({
         </p>
       </div>
     </div>
+  );
+}
+
+export function LoadingRecipe({
+  mediaContext,
+  recipeWidth,
+}: {
+  mediaContext: TYPE_MEDIA;
+  recipeWidth: string;
+}) {
+  return (
+    <form
+      className={styles.loading}
+      style={{
+        backgroundImage:
+          "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+        width: recipeWidth,
+        aspectRatio: "1/1.5",
+        boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
+        borderRadius: mediaContext === "mobile" ? "5px" : "10px",
+      }}
+    ></form>
   );
 }
 

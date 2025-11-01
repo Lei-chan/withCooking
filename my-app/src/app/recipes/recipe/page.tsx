@@ -43,6 +43,7 @@ import {
   BtnFavorite,
   ErrorMessageRecipe,
   Loading,
+  LoadingRecipe,
   RecipeEdit,
   RecipeNoEdit,
 } from "@/app/lib/components/components";
@@ -370,19 +371,9 @@ export default function Recipe() {
           mainOrRecipe="recipe"
         />
       )} */}
-      {!recipe ? (
-        <form
-          className={styles.loading}
-          style={{
-            backgroundImage:
-              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-            width: recipeWidth,
-            aspectRatio: "1/1.5",
-            boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
-            borderRadius: mediaContext === "mobile" ? "5px" : "10px",
-          }}
-        ></form>
-      ) : (
+      {!recipe ? 
+        <LoadingRecipe mediaContext={mediaContext} recipeWidth={recipeWidth} />
+       : (
         <>
           {edit ? (
             <>

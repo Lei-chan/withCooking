@@ -153,7 +153,7 @@ export default function Home() {
   return (
     <div
       style={{
-        width: "100%",
+        width: "100vw",
         height: "100%",
         // height: "fit-content",
         display: "flex",
@@ -523,74 +523,76 @@ function Details({ mediaContext }: { mediaContext: string }) {
   });
 
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        width: "100%",
-        marginTop:
-          mediaContext === "mobile"
-            ? "25%"
-            : mediaContext === "tablet"
-            ? "16%"
-            : mediaContext === "desktop"
-            ? "13%"
-            : "10%",
-        padding:
-          mediaContext === "mobile"
-            ? "7% 0 20% 0"
-            : mediaContext === "tablet"
-            ? "6% 0"
-            : "4% 0",
-        backgroundImage: "linear-gradient(#ffffee, #fff5d6 8%, #feffc4)",
-      }}
-    >
-      <h1
-        ref={ref}
+    <div style={{ width: "100%", height: "fit-content", overflow: "hidden" }}>
+      <div
         style={{
-          position: "absolute",
-          top: "-3%",
-          left:
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          marginTop:
             mediaContext === "mobile"
-              ? "5%"
+              ? "25%"
               : mediaContext === "tablet"
-              ? "3%"
-              : "2%",
-          backgroundImage:
-            "linear-gradient(150deg, rgb(255, 230, 0) 10%, rgb(255, 102, 0))",
-          width: "fit-content",
-          height: "fit-content",
-          letterSpacing: "0.15vw",
-          wordSpacing: "0.3vw",
-          lineHeight: "130%",
-          padding: "2% 3.5%",
-          color: "rgb(119, 87, 0)",
-          transition: "all 1s",
-          boxShadow: "rgba(0, 0, 0, 0.301) 3px 3px 8px",
-          transform: !inView
-            ? "translateX(-98%) skewX(-17deg)"
-            : "translateX(0%) skewX(-17deg)",
-          fontSize:
+              ? "16%"
+              : mediaContext === "desktop"
+              ? "13%"
+              : "10%",
+          padding:
             mediaContext === "mobile"
-              ? "6vw"
+              ? "7% 0 20% 0"
               : mediaContext === "tablet"
-              ? "3.9vw"
-              : "2.6vw",
+              ? "6% 0"
+              : "4% 0",
+          backgroundImage: "linear-gradient(#ffffee, #fff5d6 8%, #feffc4)",
         }}
       >
-        Manage your favorite recipes{mediaContext === "mobile" && <br />} in one
-        app
-      </h1>
-      {APP_EXPLANATIONS.map((explanation, i) => (
-        <Explanation
-          key={i}
-          mediaContext={mediaContext}
-          explanation={explanation}
-          i={i}
-        />
-      ))}
+        <h1
+          ref={ref}
+          style={{
+            position: "absolute",
+            top: "-3%",
+            left:
+              mediaContext === "mobile"
+                ? "5%"
+                : mediaContext === "tablet"
+                ? "3%"
+                : "2%",
+            backgroundImage:
+              "linear-gradient(150deg, rgb(255, 230, 0) 10%, rgb(255, 102, 0))",
+            width: "fit-content",
+            height: "fit-content",
+            letterSpacing: "0.15vw",
+            wordSpacing: "0.3vw",
+            lineHeight: "130%",
+            padding: "2% 3.5%",
+            color: "rgb(119, 87, 0)",
+            transition: "all 1s",
+            boxShadow: "rgba(0, 0, 0, 0.301) 3px 3px 8px",
+            transform: !inView
+              ? "translateX(-98%) skewX(-17deg)"
+              : "translateX(0%) skewX(-17deg)",
+            fontSize:
+              mediaContext === "mobile"
+                ? "6vw"
+                : mediaContext === "tablet"
+                ? "3.9vw"
+                : "2.6vw",
+          }}
+        >
+          Manage your favorite recipes{mediaContext === "mobile" && <br />} in
+          one app
+        </h1>
+        {APP_EXPLANATIONS.map((explanation, i) => (
+          <Explanation
+            key={i}
+            mediaContext={mediaContext}
+            explanation={explanation}
+            i={i}
+          />
+        ))}
+      </div>
     </div>
   );
 }

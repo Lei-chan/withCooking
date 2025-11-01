@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 //schema
 import User from "@/app/lib/modelSchemas/User";
 //database
-import connectDB from "@/app/lib/mongoDB";
+import connectDB, { getGridFSBucket } from "@/app/lib/mongoDB";
 //zod validation
 import {
   passwordUpdateSchema,
@@ -19,6 +19,7 @@ import {
   refreshAccessToken,
   hashPassword,
 } from "@/app/lib/auth";
+import { GridFSBucket } from "mongodb";
 
 export async function POST(req: NextRequest) {
   try {

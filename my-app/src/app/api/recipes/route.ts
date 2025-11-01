@@ -63,7 +63,7 @@ export function downloadFile(bucket: any, file: any) {
     const downloadStream = bucket.openDownloadStream(
       file.fileId instanceof mongoose.Types.ObjectId
         ? file.fileId
-        : new ObjectId(file.fileId)
+        : new mongoose.Types.ObjectId(file.fileId)
     );
 
     const chunks: any[] = [];
@@ -215,11 +215,13 @@ export async function GET(req: NextRequest) {
       throw err;
     }
 
-    console.log(recipe);
-
     const mainImage = recipe.mainImage
       ? await downloadFile(bucket, recipe.mainImage)
       : undefined;
+
+    // const mainImagePreview = recipe.mainImagePreview
+    //   ? await downloadFile(bucket, recipe.mainImagePreview)
+    //   : undefined;
 
     const instructionImages = await Promise.all(
       recipe.instructions.map(
@@ -241,10 +243,12 @@ export async function GET(req: NextRequest) {
         )
       : [];
 
-    const newRecipe = { ...recipe.toObject() };
+    const recipeObj = recipe.toObject();
+
+    //mainImagePreview image => data won't be sent since it won't be used, other images => data will be sent since it'll be used
+    const newRecipe = { ...recipeObj };
     newRecipe.mainImage = mainImage;
-    // newRecipe.mainImagePreview = mainImagePreview;
-    newRecipe.instructions = recipe.instructions.map(
+    newRecipe.instructions = recipeObj.instructions.map(
       (
         inst: { instruction: string; image: TYPE_CONVERTED_FILE | undefined },
         i: number
@@ -294,9 +298,11 @@ export async function PUT(req: NextRequest) {
     }
 
     //delete old mainImage from bucket
-    if (recipe.mainImage.data) {
+    if (recipe.mainImage?.data) {
       try {
-        await bucket.delete(new ObjectId(recipe.mainImage.fileId));
+        await bucket.delete(
+          new mongoose.Types.ObjectId(recipe.mainImage.fileId)
+        );
       } catch (err: any) {
         throw new Error(
           "Error while deleting mainImage from bucket",
@@ -314,28 +320,35 @@ export async function PUT(req: NextRequest) {
           section: "mainImage",
         });
 
-    //upload mainImagePreview (If no mainImagePreview in body => undefined, if mainImage in body already has data, mainImagePreview should already have data too => the data, otherwise => upload file)
+    const bodyMainImagePreview = body.mainImagePreview;
+    //delete old mainImagePreview from bucket only when there's new data
+    if (recipe.mainImagePreview && bodyMainImagePreview.data) {
+      try {
+        await bucket.delete(
+          new mongoose.Types.ObjectId(recipe.mainImagePreview.fileId)
+        );
+      } catch (err: any) {
+        throw new Error(
+          "Error while deleting mainImagePreview from bucket",
+          err.message
+        );
+      }
+    }
+
+    //upload mainImagePreview (If no mainImagePreview in body => undefined, if mainImagePreview in body and it has new data  => upload file, if mainImagePreview in body but it's been already uploaded => do nothing)
     let mainImagePreview;
-    if (!body.mainImagePreview) mainImagePreview = undefined;
-    else if (body.mainImage.data) mainImagePreview = body.mainImagePreview;
-    else
-      await uploadFile(bucket, body.mainImagePreview, {
+
+    if (!bodyMainImagePreview) mainImagePreview = undefined;
+
+    if (bodyMainImagePreview && bodyMainImagePreview.data)
+      mainImagePreview = await uploadFile(bucket, bodyMainImagePreview, {
         userId: id,
         recipeTitle: body.title,
         section: "mainImagePreview",
       });
 
-    // //delete old mainImagePreview from bucket
-    // if (recipe.mainImagePreview) {
-    //   try {
-    //     await bucket.delete(new ObjectId(recipe.mainImagePreview.fileId));
-    //   } catch (err: any) {
-    //     throw new Error(
-    //       "Error while deleting mainImagePreview from bucket",
-    //       err.message
-    //     );
-    //   }
-    // }
+    if (bodyMainImagePreview && bodyMainImagePreview.fileId)
+      mainImagePreview = bodyMainImagePreview;
 
     //delete old instruction images from bucket
     if (recipe.instructions.length) {
@@ -347,7 +360,7 @@ export async function PUT(req: NextRequest) {
               image: TYPE_CONVERTED_FILE | undefined;
             }) => {
               inst.image
-                ? bucket.delete(new ObjectId(inst.image.fileId))
+                ? bucket.delete(new mongoose.Types.ObjectId(inst.image.fileId))
                 : Promise.resolve(undefined);
             }
           )
@@ -374,7 +387,7 @@ export async function PUT(req: NextRequest) {
       try {
         await Promise.all(
           recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-            bucket.delete(new ObjectId(image.fileId))
+            bucket.delete(new mongoose.Types.ObjectId(image.fileId))
           )
         );
       } catch (err: any) {
@@ -409,9 +422,10 @@ export async function PUT(req: NextRequest) {
       new: true,
     }).select("-__v");
 
-    //send actual image file data instead of file id to display
+    //send actual image file data instead of file id to display except for mainImagePreview since it won't be used
     const structuredRecipe = { ...newRecipe.toObject() };
     structuredRecipe.mainImage = body.mainImage;
+    // structuredRecipe.mainImagePreview = body.mainImagePreview;
     structuredRecipe.instructions = body.instructions;
     structuredRecipe.memoryImages = body.memoryImages;
 
@@ -446,7 +460,7 @@ export async function DELETE(req: NextRequest) {
     //delete mainImages from bucket
     const promiseDeleteMainImage = recipes.map((recipe) =>
       recipe.mainImage
-        ? bucket.delete(new ObjectId(recipe.mainImage.fileId))
+        ? bucket.delete(new mongoose.Types.ObjectId(recipe.mainImage.fileId))
         : Promise.resolve(undefined)
     );
     await Promise.all(promiseDeleteMainImage);
@@ -454,7 +468,9 @@ export async function DELETE(req: NextRequest) {
     //delete mainImagePreview from bucket
     const promiseDeleteMainImagePreview = recipes.map((recipe) =>
       recipe.mainImagePreview
-        ? bucket.delete(new ObjectId(recipe.mainImagePreview.fileId))
+        ? bucket.delete(
+            new mongoose.Types.ObjectId(recipe.mainImagePreview.fileId)
+          )
         : Promise.resolve(undefined)
     );
     await Promise.all(promiseDeleteMainImagePreview);
@@ -467,7 +483,7 @@ export async function DELETE(req: NextRequest) {
           image: TYPE_CONVERTED_FILE | undefined;
         }) =>
           inst.image
-            ? bucket.delete(new ObjectId(inst.image.fileId))
+            ? bucket.delete(new mongoose.Types.ObjectId(inst.image.fileId))
             : Promise.resolve(undefined)
       )
     );
@@ -477,7 +493,7 @@ export async function DELETE(req: NextRequest) {
     const promiseDeleteMemoryImages = recipes.flatMap((recipe) =>
       recipe.memoryImages.length
         ? recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-            bucket.delete(new ObjectId(image.fileId))
+            bucket.delete(new mongoose.Types.ObjectId(image.fileId))
           )
         : Promise.resolve(undefined)
     );

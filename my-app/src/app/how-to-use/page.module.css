@@ -1,0 +1,19 @@
+.small_header {
+  color: rgb(180, 108, 0);
+}
+
+.container__a {
+  display: flex;
+  flex-direction: column;
+  width: 90%;
+  text-align: left;
+  margin: 2% 0 5% 0;
+}
+
+.a {
+  color: rgb(0, 103, 187);
+}
+
+.a:hover {
+  color: rgb(0, 153, 255);
+}

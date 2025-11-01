@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
       favorite,
       ingredients,
       createdAt,
+      updatedAt,
       ...others
     } = await req.json();
     const newBody = {
@@ -127,6 +128,7 @@ export async function POST(req: NextRequest) {
       favorite,
       ingredients,
       createdAt,
+      updatedAt,
     };
     let { id, newAccessToken } = await authenticateToken(req);
 
@@ -138,10 +140,9 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await User.findById(id);
+    const recipes = user.toObject().recipes;
 
-    const newRecipes = user.recipes.length
-      ? [...user.recipes, newBody]
-      : [newBody];
+    const newRecipes = recipes.length ? [...recipes, newBody] : [newBody];
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
@@ -190,6 +191,7 @@ export async function PUT(req: NextRequest) {
       favorite,
       ingredients,
       createdAt,
+      updatedAt,
       ...others
     } = await req.json();
     const newBody = {
@@ -200,6 +202,7 @@ export async function PUT(req: NextRequest) {
       favorite,
       ingredients,
       createdAt,
+      updatedAt,
     };
 
     let { id, newAccessToken } = await authenticateToken(req);
@@ -212,12 +215,11 @@ export async function PUT(req: NextRequest) {
     }
 
     const user = await User.findById(id);
+    const recipes = user.toObject().recipes;
 
     //filter out updated recipe and add again
-    const recipesForNotUpdate = user.recipes.length
-      ? user.recipes.filter(
-          (recipe: any) => recipe.recipeId !== newBody.recipeId
-        )
+    const recipesForNotUpdate = recipes.length
+      ? recipes.filter((recipe: any) => recipe.recipeId !== newBody.recipeId)
       : [];
     const newRecipes = [...recipesForNotUpdate, newBody];
 
@@ -272,7 +274,7 @@ export async function DELETE(req: NextRequest) {
 
     const user = await User.findById(id);
 
-    const recipes = user.recipes;
+    const recipes = user.toObject().recipes;
 
     const deletedIndexes = recipeIdsArr.map((id) =>
       recipes.findIndex((recipe: any) => recipe.recipeId === id)
