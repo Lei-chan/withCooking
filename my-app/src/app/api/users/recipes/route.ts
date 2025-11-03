@@ -64,6 +64,8 @@ export async function GET(req: NextRequest) {
       parseInt(endIndex)
     );
 
+    console.log(slicedRecipes);
+
     const mainImagePreviews = slicedRecipes.length
       ? await Promise.all(
           slicedRecipes.map((recipe: any) =>

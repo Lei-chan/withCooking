@@ -4,7 +4,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 //css
 import styles from "./page.module.css";
 //type
-import { TYPE_MEDIA } from "../lib/config/type";
+import { TYPE_INGREDIENT_UNIT, TYPE_MEDIA } from "../lib/config/type";
 //mehods to convert
 import {
   convertIngUnits,
@@ -13,6 +13,7 @@ import {
 } from "../lib/helpers/converter";
 //context
 import { MediaContext } from "../lib/providers";
+import { getReadableIngUnit } from "../lib/helpers/recipes";
 
 export default function Converter() {
   const mediaContext = useContext(MediaContext);
@@ -150,13 +151,13 @@ function ConverterIng({
   outputFontSize: string;
 }) {
   //prettier-ignore
-  type AllowedUnitsIng = "g"| "kg"| "oz"| "lb"| "ml"| "L"| "USCup"| "JapaneseCup"| "ImperialCup"| "riceCup"| "tsp"| "Tbsp"| "AustralianTbsp";
+  type AllowedUnitsIng = "g"| "kg"| "oz"| "lb"| "ml"| "L"| "usCup"| "japaneseCup"| "imperialCup"| "riceCup"| "tsp"| "tbsp"| "australianTbsp";
 
-  //prettier-ignore
-  const allowedUnitsIng: AllowedUnitsIng[] = [ "g", "kg", "oz", "lb", "ml", "L", "USCup", "JapaneseCup", "ImperialCup", "riceCup", "tsp", "Tbsp", "AustralianTbsp"];
+  // //prettier-ignore
+  // const allowedUnitsIng: TYPE_INGREDIENT_UNIT[] = [ "g", "kg", "oz", "lb", "ml", "L", "usCup", "japaneseCup", "imperialCup", "riceCup", "tsp", "tbsp", "australianTbsp"];
 
-  const isAllowedUnitIng = (value: string): value is AllowedUnitsIng =>
-    allowedUnitsIng.includes(value as AllowedUnitsIng);
+  // const isAllowedUnitIng = (value: string): value is AllowedUnitsIng =>
+  //   allowedUnitsIng.includes(value as AllowedUnitsIng);
 
   const selectRefIng = useRef<HTMLSelectElement>(null);
   const [valueIng, setValueIng] = useState<number>();
@@ -179,21 +180,21 @@ function ConverterIng({
     const value = e.currentTarget.value;
     setIsMass(calcIsMass(value));
 
-    if (!isAllowedUnitIng(value)) return;
-    setUnitIngFrom(value);
+    // if (!isAllowedUnitIng(value)) return;
+    setUnitIngFrom(value as AllowedUnitsIng);
   }
 
   function handleSelectChangeIngTo(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.currentTarget.value;
 
-    if (!isAllowedUnitIng(value)) return;
-    setUnitIngTo(value);
+    // if (!isAllowedUnitIng(value)) return;
+    setUnitIngTo(value as AllowedUnitsIng);
   }
 
   const findResultIng = () => {
     const resultsObj = valueIng && convertIngUnits(valueIng, unitIngFrom);
 
-    if (!resultsObj || typeof resultsObj[unitIngTo] === "string") return;
+    if (!resultsObj) return;
     const result = resultsObj[unitIngTo]?.amount;
 
     return result ? result : "";
@@ -205,14 +206,14 @@ function ConverterIng({
   // Above cases the select element 'To' options are changed by the app, but state unitIngTo isn't reassigned because it's not something triggerd by change event
   useEffect(() => {
     const value = selectRefIng.current?.value;
-    if (!value || !isAllowedUnitIng(value)) return;
+    if (!value) return;
 
     if (
       unitIngFrom === unitIngTo ||
       (isMass && !calcIsMass(unitIngTo)) ||
       (!isMass && calcIsMass(unitIngTo))
     )
-      setUnitIngTo(value);
+      setUnitIngTo(value as AllowedUnitsIng);
   }, [unitIngFrom]);
 
   return (
@@ -237,13 +238,13 @@ function ConverterIng({
             <option value="lb">lb</option>
             <option value="ml">ml</option>
             <option value="L">L</option>
-            <option value="USCup">cup (US)</option>
-            <option value="JapaneseCup">cup (Japan)</option>
-            <option value="ImperialCup">cup (1cup = 250ml)</option>
+            <option value="usCup">cup (US)</option>
+            <option value="japaneseCup">cup (Japan)</option>
+            <option value="imperialCup">cup (1cup = 250ml)</option>
             <option value="riceCup">rice cup</option>
             <option value="tsp">tsp</option>
-            <option value="Tbsp">Tbsp</option>
-            <option value="AustralianTbsp">Tbsp (Australia)</option>
+            <option value="tbsp">tbsp</option>
+            <option value="australianTbsp">tbsp (Australia)</option>
           </select>
           <label
             className={styles.label__to}
@@ -263,14 +264,14 @@ function ConverterIng({
             {isMass && unitIngFrom !== "lb" && <option value="lb">lb</option>}
             {!isMass && unitIngFrom !== "ml" && <option value="ml">ml</option>}
             {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
-            {!isMass && unitIngFrom !== "USCup" && (
-              <option value="USCup">cup (US)</option>
+            {!isMass && unitIngFrom !== "usCup" && (
+              <option value="usCup">cup (US)</option>
             )}
-            {!isMass && unitIngFrom !== "JapaneseCup" && (
-              <option value="JapaneseCup">cup (Japan)</option>
+            {!isMass && unitIngFrom !== "japaneseCup" && (
+              <option value="japaneseCup">cup (Japan)</option>
             )}
-            {!isMass && unitIngFrom !== "ImperialCup" && (
-              <option value="ImperialCup">cup (1cup = 250ml)</option>
+            {!isMass && unitIngFrom !== "imperialCup" && (
+              <option value="imperialCup">cup (1cup = 250ml)</option>
             )}
             {!isMass && unitIngFrom !== "riceCup" && (
               <option value="riceCup">rice cup</option>
@@ -278,11 +279,11 @@ function ConverterIng({
             {!isMass && unitIngFrom !== "tsp" && (
               <option value="tsp">tsp</option>
             )}
-            {!isMass && unitIngFrom !== "Tbsp" && (
-              <option value="Tbsp">Tbsp</option>
+            {!isMass && unitIngFrom !== "tbsp" && (
+              <option value="tbsp">tbsp</option>
             )}
-            {!isMass && unitIngFrom !== "AustralianTbsp" && (
-              <option value="AustralianTbsp">Tbsp (Australia)</option>
+            {!isMass && unitIngFrom !== "australianTbsp" && (
+              <option value="australianTbsp">tbsp (Australia)</option>
             )}
           </select>
         </div>
@@ -307,13 +308,13 @@ function ConverterIng({
               <option value="lb">lb</option>
               <option value="ml">ml</option>
               <option value="L">L</option>
-              <option value="USCup">cup (US)</option>
-              <option value="JapaneseCup">cup (Japan)</option>
-              <option value="ImperialCup">cup (1cup = 250ml)</option>
+              <option value="usCup">cup (US)</option>
+              <option value="japaneseCup">cup (Japan)</option>
+              <option value="imperialCup">cup (1cup = 250ml)</option>
               <option value="riceCup">rice cup</option>
               <option value="tsp">tsp</option>
-              <option value="Tbsp">Tbsp</option>
-              <option value="AustralianTbsp">Tbsp (Australia)</option>
+              <option value="tbsp">tbsp</option>
+              <option value="australianTbsp">tbsp (Australia)</option>
             </select>
           </div>
           <div style={converterInnerStyle}>
@@ -337,14 +338,14 @@ function ConverterIng({
                 <option value="ml">ml</option>
               )}
               {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
-              {!isMass && unitIngFrom !== "USCup" && (
-                <option value="USCup">cup (US)</option>
+              {!isMass && unitIngFrom !== "usCup" && (
+                <option value="usCup">cup (US)</option>
               )}
-              {!isMass && unitIngFrom !== "JapaneseCup" && (
-                <option value="JapaneseCup">cup (Japan)</option>
+              {!isMass && unitIngFrom !== "japaneseCup" && (
+                <option value="japaneseCup">cup (Japan)</option>
               )}
-              {!isMass && unitIngFrom !== "ImperialCup" && (
-                <option value="ImperialCup">cup (1cup = 250ml)</option>
+              {!isMass && unitIngFrom !== "imperialCup" && (
+                <option value="imperialCup">cup (1cup = 250ml)</option>
               )}
               {!isMass && unitIngFrom !== "riceCup" && (
                 <option value="riceCup">rice cup</option>
@@ -352,11 +353,11 @@ function ConverterIng({
               {!isMass && unitIngFrom !== "tsp" && (
                 <option value="tsp">tsp</option>
               )}
-              {!isMass && unitIngFrom !== "Tbsp" && (
-                <option value="Tbsp">Tbsp</option>
+              {!isMass && unitIngFrom !== "tbsp" && (
+                <option value="tbsp">tbsp</option>
               )}
-              {!isMass && unitIngFrom !== "AustralianTbsp" && (
-                <option value="AustralianTbsp">Tbsp (Australia)</option>
+              {!isMass && unitIngFrom !== "australianTbsp" && (
+                <option value="australianTbsp">tbsp (Australia)</option>
               )}
             </select>
           </div>
@@ -367,15 +368,7 @@ function ConverterIng({
         style={{ fontSize: outputFontSize }}
       >
         <p className={styles.output}>{findResultIng()}</p>
-        <span className={styles.unit}>
-          {(() => {
-            if (unitIngTo.includes("Cup"))
-              return unitIngTo.replace("Cup", " cup");
-            if (unitIngTo.includes("nTbsp"))
-              return unitIngTo.replace("nTbsp", "n Tbsp");
-            return unitIngTo;
-          })()}
-        </span>
+        <span className={styles.unit}>{getReadableIngUnit(unitIngTo)}</span>
       </div>
     </div>
   );

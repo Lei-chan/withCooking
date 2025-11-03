@@ -2625,6 +2625,13 @@ export function RecipeNoEdit({
     }
   }
 
+  function handleClickEdit() {
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+
+    redirect(`/recipes/recipe#${id}`, RedirectType.replace);
+  }
+
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
     const newValue = +e.currentTarget.value;
     setServingsValue(newValue);
@@ -2711,11 +2718,7 @@ export function RecipeNoEdit({
             alignItems: "center",
             padding:
               mainOrRecipe === "main"
-                ? mediaContext === "mobile"
-                  ? "10% 0"
-                  : mediaContext === "tablet"
-                  ? "6% 0"
-                  : "3% 0"
+                ? "10% 0"
                 : mediaContext === "mobile"
                 ? "6% 0"
                 : "3% 0",
@@ -2729,6 +2732,26 @@ export function RecipeNoEdit({
             boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
           }}
         >
+          {mainOrRecipe === "main" && (
+            <button
+              className={clsx(styles.btn__img, styles.btn__edit)}
+              style={{
+                color: "blueviolet",
+                backgroundImage: "url(/pencile.svg)",
+                width:
+                  mediaContext === "mobile" || mediaContext === "tablet"
+                    ? "20%"
+                    : "15%",
+                top: mediaContext === "mobile" ? "0.2%" : "0.4%",
+                right: mediaContext === "mobile" ? "10%" : "5%",
+                fontSize: headerSize,
+              }}
+              type="button"
+              onClick={handleClickEdit}
+            >
+              Edit
+            </button>
+          )}
           <ImageTitleNoEdit
             mediaContext={mediaContext}
             recipeWidth={recipeWidth}

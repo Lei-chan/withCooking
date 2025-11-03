@@ -92,6 +92,8 @@ export async function POST(req: NextRequest) {
       maxAge: 7 * 24 * 60 * 60 * 1000, //7days
     });
 
+    const recipeObj = user.toObject().recipes;
+
     return NextResponse.json(
       {
         success: true,
@@ -100,11 +102,11 @@ export async function POST(req: NextRequest) {
         } successfully`,
         data: {
           _id: user._id,
-          numberOfRecipes: user.recipes?.length || 0,
+          numberOfRecipes: recipeObj?.length || 0,
           // email: user.email,
 
           //for now to debug
-          recipes: user.recipes,
+          recipes: recipeObj,
 
           // createdAt: user.createdAt,
         },

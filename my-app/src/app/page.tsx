@@ -212,6 +212,7 @@ export default function Home() {
                 : 250
             }
             priority
+            unoptimized
           ></Image>
           <p
             className={styles.description}
@@ -736,7 +737,6 @@ function Explanation({
         }}
       >
         <Image
-          // fill
           src={explanation.image}
           alt={`${explanation.title} image`}
           width={

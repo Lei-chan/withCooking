@@ -35,6 +35,22 @@
   border: none;
 }
 
+.btn__edit {
+  position: absolute;
+  padding: 0.3% 1%;
+  background-size: 25%;
+  background-position-y: 50%;
+  background-position-x: 20%;
+  text-align: right;
+  transition: all 0.3s;
+}
+
+.btn__edit:hover {
+  transform: translateY(-1px);
+  background-color: rgb(255, 208, 0);
+  border-radius: 5px;
+}
+
 .btn__trash_img {
   position: absolute;
   background-image: url(/trash.svg);
