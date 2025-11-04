@@ -427,7 +427,7 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
           <button
             className={styles.link__button}
             style={{
-              backgroundImage: 'url("/instagram.png")',
+              backgroundImage: 'url("/icons/instagram.png")',
               marginRight:
                 mediaContext === "mobile"
                   ? "4%"
@@ -450,7 +450,7 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
           <button
             className={styles.link__button}
             style={{
-              backgroundImage: 'url("/github.svg")',
+              backgroundImage: 'url("/icons/github.svg")',
               marginRight:
                 mediaContext === "mobile"
                   ? "3.5%"
@@ -470,7 +470,7 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
           <button
             className={styles.link__button}
             style={{
-              backgroundImage: 'url("/feedback.png")',
+              backgroundImage: 'url("/icons/feedback.png")',
               width:
                 mediaContext === "mobile"
                   ? "7%"
@@ -1127,7 +1127,6 @@ function OverlayCreateAccount({
         style={{
           backgroundImage:
             "linear-gradient(rgb(221, 255, 96), rgb(114, 221, 43))",
-          // aspectRatio: "1 / 0.9",
           height: "fit-content",
           borderRadius: "2%",
           padding:

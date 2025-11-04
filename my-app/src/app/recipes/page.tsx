@@ -693,7 +693,7 @@ function RecipePreview({
       </p>
       {recipe.favorite && (
         <Image
-          src="/star-on.png"
+          src="/icons/star-on.png"
           alt="favorite icon"
           width={parseFloat(mainImageSize) / 3}
           height={parseFloat(mainImageSize) / 3}

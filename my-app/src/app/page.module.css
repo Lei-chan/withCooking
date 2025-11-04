@@ -101,11 +101,11 @@
     }
 
     .btn__eye {
-      background-image: url("/eye.png");
+      background-image: url("/icons/eye.png");
     }
 
     .btn__eye_off {
-      background-image: url("/eye-off.png");
+      background-image: url("/icons/eye-off.png");
     }
   }
 

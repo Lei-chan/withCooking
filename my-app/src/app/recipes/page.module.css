@@ -19,7 +19,7 @@
   background-size: contain;
   background-repeat: no-repeat;
   border: none;
-  background-image: url(/trash.svg);
+  background-image: url(/icons/trash.svg);
 }
 
 .recipe_preview {

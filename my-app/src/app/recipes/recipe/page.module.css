@@ -24,14 +24,14 @@
 .btn__trash_img {
   position: absolute;
   top: 0;
-  background-image: url(/trash.svg);
+  background-image: url(/icons/trash.svg);
   z-index: 3;
   /* background-color: aqua; */
 }
 
 .btn__upload_img {
   position: absolute;
-  background-image: url("/upload.svg");
+  background-image: url("/icons/upload.svg");
 }
 
 .btn__upload_recipe {
@@ -66,7 +66,7 @@
 }
 
 .btn__favorite_on {
-  background-image: url("/star-on.png");
+  background-image: url("/icons/star-on.png");
 }
 
 .container__author_servings,
@@ -103,7 +103,7 @@
   justify-content: center;
   min-height: 280%;
   height: fit-content;
-  background-image: url(/fukidashi.svg);
+  background-image: url(/icons/fukidashi.svg);
   background-repeat: no-repeat;
   background-size: cover;
   z-index: 3;

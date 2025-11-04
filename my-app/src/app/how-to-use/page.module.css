@@ -1,5 +1,7 @@
 .small_header {
   color: rgb(180, 108, 0);
+  margin: 7% 0;
+  scroll-margin-top: 20px;
 }
 
 .container__a {
@@ -10,10 +12,33 @@
   margin: 2% 0 5% 0;
 }
 
+.a__small_header {
+  text-decoration: underline solid;
+}
+
+.a__small_header:hover {
+  color: rgb(224, 135, 0);
+}
+
 .a {
   color: rgb(0, 103, 187);
+  text-decoration: underline solid;
 }
 
 .a:hover {
   color: rgb(0, 153, 255);
+}
+
+.container__answer {
+  margin: 15% 0;
+}
+
+.p__question {
+  color: rgb(0, 103, 187);
+  margin: 2% 0;
+  scroll-margin-top: 20px;
+}
+
+.p__answer {
+  margin-bottom: 5%;
 }

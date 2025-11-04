@@ -426,7 +426,7 @@ function Search({
                 <p className={styles.title}>{recipe.title}</p>
                 {recipe.favorite && (
                   <Image
-                    src="/star-on.png"
+                    src="/icons/star-on.png"
                     alt="favorite icon"
                     width={parseFloat(mainImageSize) * 0.3}
                     height={parseFloat(mainImageSize) * 0.3}
@@ -531,7 +531,7 @@ function DropdownMenu({
           aspectRatio: "1",
           background: "none",
           border: "none",
-          backgroundImage: 'url("/dropdown.svg")',
+          backgroundImage: 'url("/icons/dropdown.svg")',
           backgroundRepeat: "no-repeat",
           backgroundSize: "65%",
           backgroundPosition: "center",
@@ -563,7 +563,7 @@ function DropdownMenu({
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
-              src={"/recipes.svg"}
+              src={"/icons/recipes.svg"}
               alt="recipe icon"
               width={25}
               height={25}
@@ -577,7 +577,7 @@ function DropdownMenu({
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
-              src={"/convert.svg"}
+              src={"/icons/convert.svg"}
               alt="converter icon"
               width={25}
               height={25}
@@ -591,7 +591,7 @@ function DropdownMenu({
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
-              src={"/account.svg"}
+              src={"/icons/account.svg"}
               alt="account icon"
               width={25}
               height={25}
@@ -605,7 +605,7 @@ function DropdownMenu({
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
-              src={"/news.svg"}
+              src={"/icons/news.svg"}
               alt="news icon"
               width={25}
               height={25}
@@ -629,7 +629,7 @@ function DropdownMenu({
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
-              src={"/howtouse.svg"}
+              src={"/icons/howtouse.svg"}
               alt="how to use icon"
               width={25}
               height={25}
@@ -643,7 +643,7 @@ function DropdownMenu({
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
-              src={"/feedback.svg"}
+              src={"/icons/feedback.svg"}
               alt="feedback icon"
               width={25}
               height={25}
@@ -657,7 +657,7 @@ function DropdownMenu({
           onClick={onClickLogout}
         >
           <Image
-            src={"/logout.svg"}
+            src={"/icons/logout.svg"}
             alt="logout icon"
             width={25}
             height={25}
