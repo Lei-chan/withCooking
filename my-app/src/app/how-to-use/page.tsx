@@ -1,23 +1,44 @@
 "use client";
-import { useContext, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
 import { MediaContext } from "../lib/providers";
 import howToUse from "../lib/models/howToUse";
 import clsx from "clsx";
+import { check } from "zod";
+import { MIN_TABLET } from "../lib/config/media";
 
 export default function HowToUse() {
   const mediaContext = useContext(MediaContext);
 
   //design
-  const fontSize = mediaContext === "mobile" ? "5vw" : "2vw";
+  const fontSize =
+    mediaContext === "mobile"
+      ? "5vw"
+      : mediaContext === "tablet"
+      ? "2.7vw"
+      : mediaContext === "desktop"
+      ? "1.8vw"
+      : "1.5vw";
   const fontHeaderSize = `calc(${fontSize} * 1.1)`;
-  const imageSizeNormalWidth = mediaContext === "mobile" ? 300 : 400;
+  const imageSizeNormalWidth =
+    mediaContext === "mobile"
+      ? 300
+      : mediaContext === "tablet"
+      ? 500
+      : mediaContext === "desktop"
+      ? 600
+      : 650;
   const imageSizeNormalHeight = imageSizeNormalWidth * 0.5;
 
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const [numberOfResults, setNumberOfResults] = useState<number | null>(null);
 
-  //refs for scrollIntoView
+  //ref for search
+  const indexRef = useRef<HTMLDivElement>(null);
+
+  //refs for scrollIntoView & search
   const mainRef = useRef<HTMLDivElement>(null);
   const mainSetRecipeRef = useRef<HTMLDivElement>(null);
   const mainAdjustRef = useRef<HTMLDivElement>(null);
@@ -42,8 +63,113 @@ export default function HowToUse() {
   const changeAccountRef = useRef<HTMLDivElement>(null);
   const closeAccountRef = useRef<HTMLDivElement>(null);
 
+  //ref for scrollIntoView
+  const screenTopRef = useRef<HTMLDivElement>(null);
+
+  // const refsForSearch = useMemo(
+  //   () => [
+  //     mainRef,
+  //     mainSetRecipeRef,
+  //     mainAdjustRef,
+  //     mainTimersRef,
+  //     mainNotesRef,
+  //     mainDropdownRef,
+  //     mainLogoutRef,
+  //     recipesRef,
+  //     createRecipeRef,
+  //     editRecipeRef,
+  //     deleteRecipeRef,
+  //     shareRecipeRef,
+  //     moreAboutRecipeRef,
+  //     converterRef,
+  //     converterDetailsRef,
+  //     feedbackRef,
+  //     feedbackDetailsRef,
+  //     newsRef,
+  //     newsDetailsRef,
+  //     accountRef,
+  //     checkAccountRef,
+  //     changeAccountRef,
+  //     closeAccountRef,
+  //     indexRef,
+  //   ],
+  //   [
+  //     mainRef,
+  //     mainSetRecipeRef,
+  //     mainAdjustRef,
+  //     mainTimersRef,
+  //     mainNotesRef,
+  //     mainDropdownRef,
+  //     mainLogoutRef,
+  //     recipesRef,
+  //     createRecipeRef,
+  //     editRecipeRef,
+  //     deleteRecipeRef,
+  //     shareRecipeRef,
+  //     moreAboutRecipeRef,
+  //     converterRef,
+  //     converterDetailsRef,
+  //     feedbackRef,
+  //     feedbackDetailsRef,
+  //     newsRef,
+  //     newsDetailsRef,
+  //     accountRef,
+  //     checkAccountRef,
+  //     changeAccountRef,
+  //     closeAccountRef,
+  //     indexRef,
+  //   ]
+  // );
+
+  const refsForSearch = [
+    mainRef,
+    mainSetRecipeRef,
+    mainAdjustRef,
+    mainTimersRef,
+    mainNotesRef,
+    mainDropdownRef,
+    mainLogoutRef,
+    recipesRef,
+    createRecipeRef,
+    editRecipeRef,
+    deleteRecipeRef,
+    shareRecipeRef,
+    moreAboutRecipeRef,
+    converterRef,
+    converterDetailsRef,
+    feedbackRef,
+    feedbackDetailsRef,
+    newsRef,
+    newsDetailsRef,
+    accountRef,
+    checkAccountRef,
+    changeAccountRef,
+    closeAccountRef,
+    indexRef,
+  ];
+
   function handleClickSearch() {
     setIsSearchVisible(!isSearchVisible);
+  }
+
+  function handleSubmitSearch(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    const target = e.currentTarget;
+    const value = new FormData(target).get("search");
+
+    setNumberOfResults(null);
+    setKeyword(String(value).trim().toLowerCase());
+
+    target.querySelector("input")?.blur();
+  }
+
+  function handleClickUpArrow() {
+    if (screenTopRef?.current)
+      screenTopRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
   }
 
   //callback functions for scrollIntoView
@@ -219,6 +345,82 @@ export default function HowToUse() {
       });
   }
 
+  //search => mark keywords in texts, set numberOfResults matches keyword
+  useEffect(() => {
+    // When no keyword is put, get rid of old <span></span>
+    if (!keyword) {
+      refsForSearch.forEach((ref) => {
+        if (ref.current) {
+          const childrenArr = Array.from(ref.current.children);
+
+          //get rid of old <span></span>
+          const replacedInnerHTML = childrenArr.map((child) =>
+            child.innerHTML
+              .replaceAll('<span style="background-color: yellow">', "")
+              .replaceAll("</span>", "")
+          );
+
+          childrenArr.forEach(
+            (child, i) => (child.innerHTML = replacedInnerHTML[i])
+          );
+        }
+      });
+
+      return;
+    }
+
+    //When keyword is truty value
+    const keywordUpperCase = keyword.toUpperCase();
+    const keywordFirstUpperCase =
+      keyword.at(0)?.toUpperCase() + keyword.slice(1);
+
+    let results = 0;
+    refsForSearch.forEach((ref) => {
+      if (ref.current) {
+        const childrenArr = Array.from(ref.current.children);
+
+        //get rid of old <span></span> and add new span
+        const replacedInnerHTML = childrenArr.map((child) =>
+          child.innerHTML
+            .replaceAll('<span style="background-color: yellow">', "")
+            .replaceAll("</span>", "")
+            .replaceAll(
+              keyword,
+              `<span style='background-color: yellow'>${keyword}</span>`
+            )
+            .replaceAll(
+              keywordUpperCase,
+              `<span style='background-color: yellow'>${keywordUpperCase}</span>`
+            )
+            .replaceAll(
+              keywordFirstUpperCase,
+              `<span style='background-color: yellow'>${keywordFirstUpperCase}</span>`
+            )
+        );
+
+        //changing current HTML to replaced (marked) HTML
+        childrenArr.forEach(
+          (child, i) => (child.innerHTML = replacedInnerHTML[i])
+        );
+
+        //count number of results
+        // First, connect all elements in an array and separate by whitespace again, so it becomes one array with elements separated by words.
+        // Second, add 1 if the word includes </span>
+        const resultsInCurChilden = replacedInnerHTML
+          .join(" ")
+          .split(" ")
+          .reduce((acc, word) => {
+            return word.includes("</span>") ? acc + 1 : acc;
+          }, results);
+
+        results = resultsInCurChilden;
+      }
+    });
+
+    setNumberOfResults(results);
+  }, [keyword]);
+
+  console.log(mediaContext);
   return (
     <div
       style={{
@@ -230,8 +432,9 @@ export default function HowToUse() {
         minHeight: "100vh",
         maxHeight: "fit-content",
         backgroundColor: "#fff9e9ff",
-        padding: "6% 0 7% 0",
+        padding: "6% 0 0 0",
       }}
+      ref={screenTopRef}
     >
       <h1
         style={{
@@ -245,60 +448,145 @@ export default function HowToUse() {
       </h1>
       <div
         style={{
-          position: "absolute",
+          width: "100%",
+          height: "10%",
+          position: "fixed",
           display: "flex",
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "right",
-          width: "80%",
-          height: "10%",
           top: "2%",
           right: "2%",
-          gap: "2%",
-          overflow: "hidden",
-          //   backgroundColor: "blue",
+          zIndex: "10",
+          padding: "0 2%",
         }}
       >
-        <input
+        {numberOfResults !== null && (
+          <p
+            style={{
+              display: "flex",
+              width:
+                mediaContext === "mobile"
+                  ? "20%"
+                  : mediaContext === "tablet"
+                  ? "15%"
+                  : "10%",
+              height: "100%",
+              flexDirection: "column",
+              textAlign: "center",
+              justifyContent: "center",
+              backgroundColor: "#fffebbff",
+              fontSize,
+              color: "#b44200ff",
+              boxShadow: "#00000046 2px 2px 7px",
+              borderRadius: "6px",
+              padding: "1%",
+            }}
+          >{`${numberOfResults} results`}</p>
+        )}
+        <form
           style={{
-            fontSize,
-            width: "75%",
-            height: "fit-content",
-            textAlign: "center",
-            padding: "2%",
-            letterSpacing: "0.1vw",
-            borderRadius: "3px",
-            borderColor: "#00000042",
-            transform: isSearchVisible ? "translateX(0%)" : "translateX(150%)",
-            transition: "all 0.4s",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "right",
+            width:
+              mediaContext === "mobile"
+                ? "76%"
+                : mediaContext === "tablet"
+                ? "81%"
+                : "86%",
+            height: "100%",
+            gap: "4%",
+            overflow: "hidden",
+            // backgroundColor: "blue",
           }}
-          type="search"
-          placeholder="search by keyword"
-        ></input>
-        <button
-          style={{
-            width: "15%",
-            aspectRatio: "1",
-            backgroundImage: "url('/icons/magnifying-grass.svg')",
-            backgroundSize: "contain",
-            backgroundRepeat: "no-repeat",
-            backgroundColor: "transparent",
-            border: "none",
-          }}
-          onClick={handleClickSearch}
-        ></button>
+          onSubmit={handleSubmitSearch}
+        >
+          <input
+            style={{
+              fontSize,
+              width:
+                mediaContext === "mobile"
+                  ? "75%"
+                  : mediaContext === "tablet"
+                  ? "50%"
+                  : "30%",
+              height: "80%",
+              textAlign: "center",
+              padding: "2%",
+              letterSpacing: "0.1vw",
+              borderRadius: "3px",
+              borderColor: "#00000042",
+              transform: isSearchVisible
+                ? "translateX(0%)"
+                : "translateX(150%)",
+              transition: "all 0.4s",
+            }}
+            type="search"
+            name="search"
+            placeholder="search by keyword"
+          ></input>
+          <button
+            className={styles.btn__image}
+            style={{
+              width:
+                mediaContext === "mobile"
+                  ? "15%"
+                  : mediaContext === "tablet"
+                  ? "8%"
+                  : mediaContext === "desktop"
+                  ? "5%"
+                  : "4%",
+              aspectRatio: "1",
+              backgroundImage: "url('/icons/magnifying-grass.svg')",
+            }}
+            type="button"
+            onClick={handleClickSearch}
+          ></button>
+        </form>
       </div>
+      <button
+        className={styles.btn__image}
+        style={{
+          position: "fixed",
+          bottom: "3%",
+          right:
+            mediaContext === "mobile"
+              ? "5%"
+              : mediaContext === "tablet"
+              ? "4%"
+              : "3%",
+          width:
+            mediaContext === "mobile"
+              ? "8%"
+              : mediaContext === "tablet"
+              ? "5%"
+              : "4%",
+          aspectRatio: "1/1",
+          backgroundImage: 'url("/icons/up-arrow.svg")',
+        }}
+        onClick={handleClickUpArrow}
+      ></button>
       <div
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          width: "90%",
+          width:
+            mediaContext === "mobile"
+              ? "90%"
+              : mediaContext === "tablet"
+              ? "70%"
+              : "60%",
           height: "fit-content",
           backgroundColor: "#fffefcff",
           borderRadius: "5px",
           boxShadow: "#00000042 3px 3px 7px",
-          padding: "5%",
+          padding:
+            mediaContext === "mobile" || mediaContext === "tablet"
+              ? "7%"
+              : "7%",
           marginBottom: "10%",
         }}
       >
@@ -309,7 +597,9 @@ export default function HowToUse() {
             flexDirection: "column",
             alignItems: "center",
             width: "100%",
+            fontSize,
           }}
+          ref={indexRef}
         >
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
@@ -318,26 +608,26 @@ export default function HowToUse() {
           >
             Main Page
           </a>
-          <div className={styles.container__a} style={{ fontSize }}>
-            <a className={styles.a} onClick={handleClickMainAdjust}>
-              How can I adjust the recipe, timer, and notes sizes?
-            </a>
-            <a className={styles.a} onClick={handleClickMainSetRecipe}>
-              How can I set a recipe?
-            </a>
-            <a className={styles.a} onClick={handleClickMainTimers}>
-              How do timers work?
-            </a>
-            <a className={styles.a} onClick={handleClickMainNotes}>
-              How do notes work?
-            </a>
-            <a className={styles.a} onClick={handleClickMainDropdown}>
-              How can I go to different pages?
-            </a>
-            <a className={styles.a} onClick={handleClickMainLogout}>
-              How can I log out?
-            </a>
-          </div>
+          {/* <div className={styles.container__a} style={{ fontSize }}> */}
+          <a className={styles.a} onClick={handleClickMainAdjust}>
+            How can I adjust the recipe, timer, and notes sizes?
+          </a>
+          <a className={styles.a} onClick={handleClickMainSetRecipe}>
+            How can I set a recipe?
+          </a>
+          <a className={styles.a} onClick={handleClickMainTimers}>
+            How do timers work?
+          </a>
+          <a className={styles.a} onClick={handleClickMainNotes}>
+            How do notes work?
+          </a>
+          <a className={styles.a} onClick={handleClickMainDropdown}>
+            How can I go to different pages?
+          </a>
+          <a className={styles.a} onClick={handleClickMainLogout}>
+            How can I log out?
+          </a>
+          {/* </div> */}
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
@@ -345,23 +635,23 @@ export default function HowToUse() {
           >
             Recipes, Create Recipe, Recipe Page
           </a>
-          <div className={styles.container__a} style={{ fontSize }}>
-            <a className={styles.a} onClick={handleClickCreateRecipe}>
-              How can I create a recipe?
-            </a>
-            <a className={styles.a} onClick={handleClickEditRecipe}>
-              How can I edit a recipe?
-            </a>
-            <a className={styles.a} onClick={handleClickDeleteRecipe}>
-              How can I delete a recipe?
-            </a>
-            <a className={styles.a} onClick={handleClickShareRecipe}>
-              How can I share a recipe?
-            </a>
-            <a className={styles.a} onClick={handleClickMoreAboutRecipe}>
-              Tell me more about what I can do with a recipe!
-            </a>
-          </div>
+          {/* <div className={styles.container__a} style={{ fontSize }}> */}
+          <a className={styles.a} onClick={handleClickCreateRecipe}>
+            How can I create a recipe?
+          </a>
+          <a className={styles.a} onClick={handleClickEditRecipe}>
+            How can I edit a recipe?
+          </a>
+          <a className={styles.a} onClick={handleClickDeleteRecipe}>
+            How can I delete a recipe?
+          </a>
+          <a className={styles.a} onClick={handleClickShareRecipe}>
+            How can I share a recipe?
+          </a>
+          <a className={styles.a} onClick={handleClickMoreAboutRecipe}>
+            Tell me more about what I can do with a recipe!
+          </a>
+          {/* </div> */}
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
@@ -369,11 +659,11 @@ export default function HowToUse() {
           >
             Converter Page
           </a>
-          <div className={styles.container__a} style={{ fontSize }}>
-            <a className={styles.a} onClick={handleClickConverterDetails}>
-              What can I do on the converter page?
-            </a>
-          </div>
+          {/* <div className={styles.container__a} style={{ fontSize }}> */}
+          <a className={styles.a} onClick={handleClickConverterDetails}>
+            What can I do on the converter page?
+          </a>
+          {/* </div> */}
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
@@ -381,11 +671,11 @@ export default function HowToUse() {
           >
             Feedback Page
           </a>
-          <div className={styles.container__a} style={{ fontSize }}>
-            <a className={styles.a} onClick={handleClickFeedbackDetails}>
-              What can I do on the feedback page?
-            </a>
-          </div>
+          {/* <div className={styles.container__a} style={{ fontSize }}> */}
+          <a className={styles.a} onClick={handleClickFeedbackDetails}>
+            What can I do on the feedback page?
+          </a>
+          {/* </div> */}
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
@@ -393,11 +683,11 @@ export default function HowToUse() {
           >
             News Page
           </a>
-          <div className={styles.container__a} style={{ fontSize }}>
-            <a className={styles.a} onClick={handleClickNewsDetails}>
-              What can I do on the news page?
-            </a>
-          </div>
+          {/* <div className={styles.container__a} style={{ fontSize }}> */}
+          <a className={styles.a} onClick={handleClickNewsDetails}>
+            What can I do on the news page?
+          </a>
+          {/* </div> */}
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
@@ -405,21 +695,32 @@ export default function HowToUse() {
           >
             Account Page
           </a>
-          <div className={styles.container__a} style={{ fontSize }}>
-            <a className={styles.a} onClick={handleClickCheckAccount}>
-              How can I check my account information?
-            </a>
-            <a className={styles.a} onClick={handleClickChangeAccount}>
-              How can I change my account information?
-            </a>
-            <a className={styles.a} onClick={handleClickCloseAccount}>
-              How can I close my account?
-            </a>
-          </div>
+          {/* <div className={styles.container__a} style={{ fontSize }}> */}
+          <a className={styles.a} onClick={handleClickCheckAccount}>
+            How can I check my account information?
+          </a>
+          <a className={styles.a} onClick={handleClickChangeAccount}>
+            How can I change my account information?
+          </a>
+          <a className={styles.a} onClick={handleClickCloseAccount}>
+            How can I close my account?
+          </a>
+          {/* </div> */}
         </div>
       </div>
-      <div style={{ padding: "0 5%" }}>
-        <h3 className={styles.small_header} ref={mainRef}>
+      <div
+        style={{
+          padding:
+            mediaContext === "mobile" || mediaContext === "tablet"
+              ? "0 5%"
+              : "0 10%",
+        }}
+      >
+        <h3
+          className={styles.small_header}
+          style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
+          ref={mainRef}
+        >
           Main Page
         </h3>
         <Image
@@ -428,13 +729,12 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={mainAdjustRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={mainAdjustRef}
           >
             How can I adjust the recipe, timer, and notes sizes?
           </p>
@@ -445,21 +745,19 @@ export default function HowToUse() {
             height={imageSizeNormalHeight}
           ></Image>
           <p className={styles.p__answer} style={{ fontSize }}>
-            When you want to change the recipe and timer/notes width, or the
+            {`When you want to change the recipe and timer/notes width, or the
             timer and notes height, place a cursor onto where the two sections
             are separated, and drag it to where you want to move it to.
-            <br />
             You can adjust the sizes only when you are using a device larger
-            than a tablet (width is larger than px).
+            than a tablet (width is larger than ${MIN_TABLET}px).`}
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={mainSetRecipeRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={mainSetRecipeRef}
           >
             How can I set a recipe?
           </p>
@@ -482,13 +780,12 @@ export default function HowToUse() {
             title or ingredient works too.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={mainTimersRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={mainTimersRef}
           >
             How do timers work?
           </p>
@@ -518,13 +815,12 @@ export default function HowToUse() {
             🍳 To delete timer : Click the top right x button
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={mainNotesRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={mainNotesRef}
           >
             How do notes work?
           </p>
@@ -539,13 +835,12 @@ export default function HowToUse() {
             when you reload the page or go to a different page.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={mainDropdownRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={mainDropdownRef}
           >
             How can I go to a different page?
           </p>
@@ -560,7 +855,7 @@ export default function HowToUse() {
             Click the page your want to go to.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={mainLogoutRef}>
           <p
             className={styles.p__question}
             style={{
@@ -574,14 +869,18 @@ export default function HowToUse() {
             src="/how-to-use/others-logout.webp"
             alt="Logout image"
             width={imageSizeNormalWidth}
-            height={imageSizeNormalHeight}
+            height={imageSizeNormalHeight * 1.6}
           ></Image>
-          <p>
+          <p className={styles.p__answer} style={{ fontSize }}>
             Click the top right three line icon to open/close the dropdown menu.
             Click the bottom Logout button and click the I'm sure button.
           </p>
         </div>
-        <h3 className={styles.small_header} ref={recipesRef}>
+        <h3
+          className={styles.small_header}
+          style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
+          ref={recipesRef}
+        >
           Recipes, Create Recipe, Recipe Pages
         </h3>
         <Image
@@ -590,7 +889,7 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <p className={styles.p__answer} style={{ fontSize }}>
+        <p className={styles.p__answer} style={{ fontSize, marginTop: "1%" }}>
           Recipes page image
         </p>
         <Image
@@ -599,7 +898,7 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <p className={styles.p__answer} style={{ fontSize }}>
+        <p className={styles.p__answer} style={{ fontSize, marginTop: "1%" }}>
           Recipe page image
         </p>
         <Image
@@ -608,16 +907,15 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight * 1.7}
         ></Image>
-        <p className={styles.p__answer} style={{ fontSize }}>
+        <p className={styles.p__answer} style={{ fontSize, marginTop: "1%" }}>
           Recipe page (edit) image
         </p>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={createRecipeRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={createRecipeRef}
           >
             How can I create a recipe?
           </p>
@@ -638,13 +936,12 @@ export default function HowToUse() {
             height={imageSizeNormalHeight * 1.5}
           ></Image>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={editRecipeRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={editRecipeRef}
           >
             How can I edit a recipe?
           </p>
@@ -671,13 +968,12 @@ export default function HowToUse() {
             Fill the form and click the upload button.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={deleteRecipeRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={deleteRecipeRef}
           >
             How can I delete a recipe?
           </p>
@@ -690,20 +986,19 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
-          <p>
+          <p className={styles.p__answer} style={{ fontSize }}>
             Select the recipes you want to delete. Click the trash can button to
             delete them.
             <br />
             When you want to quit selecting, click the stop selecting button.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={shareRecipeRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={shareRecipeRef}
           >
             How can I share a recipe?
           </p>
@@ -713,13 +1008,12 @@ export default function HowToUse() {
             Copy the link and share it with anyone.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={moreAboutRecipeRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={moreAboutRecipeRef}
           >
             Tell me more about what I can do with a recipe!
           </p>
@@ -745,7 +1039,11 @@ export default function HowToUse() {
             already added.
           </p>
         </div>
-        <h3 className={styles.small_header} ref={converterRef}>
+        <h3
+          className={styles.small_header}
+          style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
+          ref={converterRef}
+        >
           Converter Page
         </h3>
         <Image
@@ -754,13 +1052,12 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={converterDetailsRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={converterDetailsRef}
           >
             What can I do on the converter page?
           </p>
@@ -781,7 +1078,11 @@ export default function HowToUse() {
             height={imageSizeNormalHeight * 0.85}
           ></Image>
         </div>
-        <h3 className={styles.small_header} ref={feedbackRef}>
+        <h3
+          className={styles.small_header}
+          style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
+          ref={feedbackRef}
+        >
           Feedback Page
         </h3>
         <Image
@@ -790,13 +1091,12 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={feedbackDetailsRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={feedbackDetailsRef}
           >
             What can I do on the feedback page?
           </p>
@@ -806,7 +1106,11 @@ export default function HowToUse() {
             encounter!
           </p>
         </div>
-        <h3 className={styles.small_header} ref={newsRef}>
+        <h3
+          className={styles.small_header}
+          style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
+          ref={newsRef}
+        >
           News Page
         </h3>
         <Image
@@ -815,13 +1119,12 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={newsDetailsRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={newsDetailsRef}
           >
             What can I do on the news page?
           </p>
@@ -830,7 +1133,11 @@ export default function HowToUse() {
             information.
           </p>
         </div>
-        <h3 className={styles.small_header} ref={accountRef}>
+        <h3
+          className={styles.small_header}
+          style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
+          ref={accountRef}
+        >
           Account Page
         </h3>
         <Image
@@ -839,13 +1146,12 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight * 1.3}
         ></Image>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={checkAccountRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={checkAccountRef}
           >
             How can I check my account information?
           </p>
@@ -854,13 +1160,12 @@ export default function HowToUse() {
             can't check your password for a security reason.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={changeAccountRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={changeAccountRef}
           >
             How can I change my account information?
           </p>
@@ -885,13 +1190,12 @@ export default function HowToUse() {
             click the Change button on the account page.
           </p>
         </div>
-        <div className={styles.container__answer}>
+        <div className={styles.container__answer} ref={closeAccountRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={closeAccountRef}
           >
             How can I close my account?
           </p>

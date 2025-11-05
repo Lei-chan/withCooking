@@ -1,19 +1,31 @@
+.btn__image {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-color: transparent;
+  border: none;
+}
+
 .small_header {
   color: rgb(180, 108, 0);
   margin: 7% 0;
   scroll-margin-top: 20px;
 }
 
-.container__a {
+/* .container__a {
   display: flex;
   flex-direction: column;
   width: 90%;
   text-align: left;
   margin: 2% 0 5% 0;
-}
+} */
 
 .a__small_header {
   text-decoration: underline solid;
+  margin: 10% 0 7% 0;
+}
+
+.a__small_header:first-child {
+  margin: 0 0 7% 0;
 }
 
 .a__small_header:hover {
@@ -23,6 +35,8 @@
 .a {
   color: rgb(0, 103, 187);
   text-decoration: underline solid;
+  align-self: flex-start;
+  text-align: left;
 }
 
 .a:hover {
@@ -31,14 +45,14 @@
 
 .container__answer {
   margin: 15% 0;
+  scroll-margin-top: 20px;
 }
 
 .p__question {
   color: rgb(0, 103, 187);
-  margin: 2% 0;
-  scroll-margin-top: 20px;
+  margin: 2% 0 3% 0;
 }
 
 .p__answer {
-  margin-bottom: 5%;
+  margin: 5% 0;
 }
