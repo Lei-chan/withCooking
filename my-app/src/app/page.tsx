@@ -1,6 +1,6 @@
 "use client";
 //react
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useMemo } from "react";
 import clsx from "clsx";
 import { useInView } from "react-intersection-observer";
 //next.js
@@ -10,10 +10,9 @@ import { redirect, RedirectType } from "next/navigation";
 //css
 import styles from "./page.module.css";
 //type
-import { TYPE_MEDIA } from "./lib/config/type";
+import { TYPE_LANGUAGE, TYPE_MEDIA } from "./lib/config/type";
 //settings
 import {
-  APP_EXPLANATIONS,
   PASSWORD_MIN_DIGIT,
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_LOWERCASE,
@@ -22,43 +21,41 @@ import {
 //general methods
 import { getData } from "@/app/lib/helpers/other";
 //context
-import { UserContext, MediaContext } from "./lib/providers";
+import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
+//model
+import homeDetails from "./lib/models/homeDetails";
 
 export default function Home() {
   const mediaContext = useContext(MediaContext);
+  const languageContext = useContext(LanguageContext);
   const userContext = useContext(UserContext);
 
+  console.log(languageContext?.language);
   //design
-  const warningFontSize =
+  const fontSize =
     mediaContext === "mobile"
-      ? "4.5vw"
+      ? "4vw"
       : mediaContext === "tablet"
       ? "2.5vw"
       : mediaContext === "desktop"
-      ? "1.5vw"
-      : "1.3vw";
+      ? "1.8vw"
+      : "1.5vw";
+  const warningFontSize = `calc(${fontSize} * 1.1)`;
   const inputWrapperDesign = {
+    position: "relative",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
     width:
       mediaContext === "mobile"
         ? "72%"
         : mediaContext === "tablet"
         ? "68%"
         : "65%",
-    aspectRatio: mediaContext === "mobile" ? "1 / 0.12" : "1 / 0.1",
-    position: "relative",
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
+
+    height: "fit-content",
     margin: "4% auto 6% auto",
   };
-  const inputFontSize =
-    mediaContext === "mobile"
-      ? "4.5vw"
-      : mediaContext === "tablet"
-      ? "2.5vw"
-      : mediaContext === "desktop"
-      ? "1.6vw"
-      : "1.4vw";
   const btnXDesign = {
     top:
       mediaContext === "mobile"
@@ -115,13 +112,7 @@ export default function Home() {
         ? "1.6vw"
         : "1.4vw",
     marginTop:
-      mediaContext === "mobile"
-        ? "0"
-        : mediaContext === "tablet"
-        ? "1%"
-        : mediaContext === "desktop"
-        ? "2%"
-        : "2%",
+      mediaContext === "mobile" ? "0" : mediaContext === "tablet" ? "1%" : "2%",
   };
 
   const [showLogin, setShowLogin] = useState(false);
@@ -175,6 +166,8 @@ export default function Home() {
       >
         <Buttons
           mediaContext={mediaContext}
+          language={languageContext?.language || "en"}
+          fontSize={fontSize}
           onLoginClick={handleToggleLogin}
           onSignupClick={handleToggleSignup}
         />
@@ -191,7 +184,7 @@ export default function Home() {
           }}
         >
           <Image
-            src="/withCooking-title.gif"
+            src="/home/withCooking-title.gif"
             alt="withCooking"
             width={
               mediaContext === "mobile"
@@ -219,23 +212,20 @@ export default function Home() {
             style={{
               width: "100%",
               lineHeight: "150%",
-              fontSize:
-                mediaContext === "mobile"
-                  ? "4vw"
-                  : mediaContext === "tablet"
-                  ? "2.4vw"
-                  : mediaContext === "desktop"
-                  ? "2vw"
-                  : "2vw",
+              fontSize,
             }}
           >
-            In this app, all necessary and useful tools for cooking are
-            included.
+            {languageContext?.language === "ja"
+              ? "このウェブサイトには、クッキングの時に「こんなものがあったらよかったのにな～」といったものが詰まっています！"
+              : 'In this app, these kinds of features which you think "that would be nice if there were..." for cooking are stuffed!'}
             <br />
-            Store recipes, search your recipes, set multiple timers with titles,
-            check nutrients for your recipes, etc.
+            {languageContext?.language === "ja"
+              ? "複数のタイマーをセットして料理ができたり、メモができたり、簡単に自分が作ったレシピをタイトルや材料で検索出来たり、料理の時によく使われる単位を変換できたり、自分がつっくたレシピを整理された形で保管できたり…。"
+              : "Cook with a recipe using multiple timers or memo, easily search your recipe by title or ingredient, convert units frequently used for cook, manage your recipes, etc."}
             <br />
-            This simple but userful app will become your cooking buddy :)
+            {languageContext?.language === "ja"
+              ? "この、シンプルだけれどとても便利なウェブサイトが、あなたのクッキング仲間となるでしょう！"
+              : "This simple but userful app will become your cooking buddy :)"}
           </p>
         </div>
         <div
@@ -247,27 +237,29 @@ export default function Home() {
               "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.185))",
             color: " #ff8800ff",
             letterSpacing: "0.05vw",
-            fontSize:
-              mediaContext === "mobile"
-                ? "4vw"
-                : mediaContext === "tablet"
-                ? "2vw"
-                : mediaContext === "desktop"
-                ? "1.6vw"
-                : "1.6vw",
+            fontSize: `calc(${fontSize} * 1.1)`,
           }}
         >
-          <p>Scroll for more details</p>
+          <p>
+            {languageContext?.language === "ja"
+              ? "詳細はスクロールしてチェック"
+              : "Scroll for more details"}
+          </p>
           <p>&darr;</p>
         </div>
       </div>
-      <BottomHalf mediaContext={mediaContext} />
+      <BottomHalf
+        mediaContext={mediaContext}
+        language={languageContext?.language || "en"}
+        fontSize={fontSize}
+      />
       <OverlayLogin
         mediaContext={mediaContext}
+        language={languageContext?.language || "en"}
         userContext={userContext}
+        fontSize={fontSize}
         warningFontSize={warningFontSize}
         inputWrapperDesign={inputWrapperDesign}
-        inputFontSize={inputFontSize}
         btnXDesign={btnXDesign}
         headingDesign={headingDesign}
         eyeOnDesign={eyeOnDesign}
@@ -279,10 +271,11 @@ export default function Home() {
       />
       <OverlayCreateAccount
         mediaContext={mediaContext}
+        language={languageContext?.language || "en"}
         userContext={userContext}
+        fontSize={fontSize}
         warningFontSize={warningFontSize}
         inputWrapperDesign={inputWrapperDesign}
-        inputFontSize={inputFontSize}
         btnXDesign={btnXDesign}
         headingDesign={headingDesign}
         eyeOnDesign={eyeOnDesign}
@@ -298,13 +291,18 @@ export default function Home() {
 
 function Buttons({
   mediaContext,
+  language,
+  fontSize,
   onLoginClick,
   onSignupClick,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
+  fontSize: string;
   onLoginClick: () => void;
   onSignupClick: () => void;
 }) {
+  const btnFontSize = `calc(${fontSize} * 1.2)`;
   return (
     <div
       style={{
@@ -329,40 +327,34 @@ function Buttons({
       <button
         className={styles.btn__login}
         style={{
-          fontSize:
-            mediaContext === "mobile"
-              ? "5vw"
-              : mediaContext === "tablet"
-              ? "3vw"
-              : mediaContext === "desktop"
-              ? "2vw"
-              : "1.7vw",
+          fontSize: btnFontSize,
         }}
         onClick={onLoginClick}
       >
-        Login
+        {language === "en" ? "Login" : "ログイン"}
       </button>
       <button
         className={styles.btn__signup}
         style={{
-          fontSize:
-            mediaContext === "mobile"
-              ? "5vw"
-              : mediaContext === "tablet"
-              ? "3vw"
-              : mediaContext === "desktop"
-              ? "2vw"
-              : "1.7vw",
+          fontSize: btnFontSize,
         }}
         onClick={onSignupClick}
       >
-        Sign up
+        {language === "en" ? "Sign up" : "登録"}
       </button>
     </div>
   );
 }
 
-function BottomHalf({ mediaContext }: { mediaContext: string }) {
+function BottomHalf({
+  mediaContext,
+  language,
+  fontSize,
+}: {
+  mediaContext: string;
+  language: TYPE_LANGUAGE;
+  fontSize: string;
+}) {
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.02,
@@ -372,7 +364,11 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
     <div
       style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
     >
-      <Details mediaContext={mediaContext} />
+      <Details
+        mediaContext={mediaContext}
+        language={language}
+        fontSize={fontSize}
+      />
       <h3
         ref={ref}
         style={{
@@ -393,7 +389,7 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
           transform: inView ? "scale(100%)" : "scale(90%)",
         }}
       >
-        Let's start{" "}
+        Let's start
         <span
           style={{
             backgroundImage:
@@ -403,7 +399,7 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
           }}
         >
           withCooking
-        </span>{" "}
+        </span>
         by {(mediaContext === "mobile" || mediaContext === "tablet") && <br />}
         signing up for free
       </h3>
@@ -517,7 +513,15 @@ function BottomHalf({ mediaContext }: { mediaContext: string }) {
   );
 }
 
-function Details({ mediaContext }: { mediaContext: string }) {
+function Details({
+  mediaContext,
+  language,
+  fontSize,
+}: {
+  mediaContext: string;
+  language: TYPE_LANGUAGE;
+  fontSize: string;
+}) {
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.02,
@@ -553,7 +557,7 @@ function Details({ mediaContext }: { mediaContext: string }) {
           ref={ref}
           style={{
             position: "absolute",
-            top: "-3%",
+            top: mediaContext === "mobile" ? "-2%" : "-1%",
             left:
               mediaContext === "mobile"
                 ? "5%"
@@ -574,22 +578,19 @@ function Details({ mediaContext }: { mediaContext: string }) {
             transform: !inView
               ? "translateX(-98%) skewX(-17deg)"
               : "translateX(0%) skewX(-17deg)",
-            fontSize:
-              mediaContext === "mobile"
-                ? "6vw"
-                : mediaContext === "tablet"
-                ? "3.9vw"
-                : "2.6vw",
+            fontSize: `calc(${fontSize} * 1.5)`,
           }}
         >
           Manage your favorite recipes{mediaContext === "mobile" && <br />} in
           one app
         </h1>
-        {APP_EXPLANATIONS.map((explanation, i) => (
+        {homeDetails.map((detail, i) => (
           <Explanation
             key={i}
             mediaContext={mediaContext}
-            explanation={explanation}
+            language={language}
+            fontSize={fontSize}
+            detail={detail}
             i={i}
           />
         ))}
@@ -600,22 +601,49 @@ function Details({ mediaContext }: { mediaContext: string }) {
 
 function Explanation({
   mediaContext,
-  explanation,
+  language,
+  fontSize,
+  detail,
   i,
 }: {
   mediaContext: string;
-  explanation: {
+  language: TYPE_LANGUAGE;
+  fontSize: string;
+  detail: {
     title: string;
     image: string;
     explanation: string;
+    heightRatio: number;
   };
   i: number;
 }) {
+  //design
+  const imageWidth =
+    mediaContext === "mobile"
+      ? 250
+      : mediaContext === "tablet"
+      ? 360
+      : mediaContext === "desktop"
+      ? 400
+      : 450;
+  const imageHeight = imageWidth * detail.heightRatio;
+  const marginTopDefault =
+    mediaContext === "mobile"
+      ? "15%"
+      : mediaContext === "tablet"
+      ? "10%"
+      : "7%";
+  const TITLE_TOO_LONG =
+    mediaContext === "mobile" ? 25 : mediaContext === "tablet" ? 35 : 45;
+  const isTitleLong = useMemo(
+    () => detail.title.length >= TITLE_TOO_LONG,
+    [detail]
+  );
+
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.02 });
   const [transform, setTransform] = useState("");
 
-  const checkIsEven = () => (i % 2 === 0 ? true : false);
-  const isEven = checkIsEven();
+  const isEven = useMemo(() => (i % 2 === 0 ? true : false), [detail]);
 
   useEffect(() => {
     const nextTransform = getTransform(inView, isEven);
@@ -658,24 +686,22 @@ function Explanation({
           mediaContext === "mobile"
             ? "94%"
             : mediaContext === "tablet"
-            ? "90%"
+            ? "85%"
             : mediaContext === "desktop"
-            ? "80%"
-            : "70%",
+            ? "75%"
+            : "65%",
         height: "fit-content",
         display: "flex",
-        flexDirection: "row",
+        flexDirection:
+          mediaContext === "mobile" || mediaContext === "tablet"
+            ? "column"
+            : "row",
         alignItems: "center",
         justifyContent: "center",
         gap: "5%",
-        marginTop:
-          mediaContext === "mobile"
-            ? "15%"
-            : mediaContext === "tablet"
-            ? "10%"
-            : mediaContext === "desktop"
-            ? "7%"
-            : "7%",
+        marginTop: !isTitleLong
+          ? marginTopDefault
+          : `calc(${marginTopDefault} * 1.3)`,
         padding:
           mediaContext === "mobile"
             ? "8% 2%"
@@ -695,16 +721,18 @@ function Explanation({
       <h2
         style={{
           position: "absolute",
+          textAlign: "center",
           backgroundImage:
             "linear-gradient(150deg,rgb(198, 233, 1) 5%,rgb(129, 199, 0))",
           width: "fit-content",
           height: "fit-content",
           letterSpacing: "0.15vw",
           padding: "0.6% 3%",
+          margin: "0 0 0 5%",
           transform: "skewX(-17deg)",
           color: "aliceblue",
-          whiteSpace: "nowrap",
-          top: "-4vh",
+          whiteSpace: isTitleLong ? "inherit" : "nowrap",
+          top: isTitleLong ? "-9vh" : "-4vh",
           right:
             mediaContext === "mobile"
               ? "2%"
@@ -717,19 +745,25 @@ function Explanation({
             mediaContext === "mobile"
               ? "6vw"
               : mediaContext === "tablet"
-              ? "4vw"
+              ? "3.9vw"
               : mediaContext === "desktop"
               ? "3vw"
               : "2.6vw",
         }}
       >
-        {explanation.title}
+        {detail.title}
       </h2>
       <div
         style={{
           position: "relative",
-          width: "50%",
-          height: "100%",
+          width:
+            mediaContext === "mobile" || mediaContext === "tablet"
+              ? "100%"
+              : "fit-content",
+          height:
+            mediaContext === "mobile" || mediaContext === "tablet"
+              ? "fit-content"
+              : "100%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -737,55 +771,41 @@ function Explanation({
         }}
       >
         <Image
-          src={explanation.image}
-          alt={`${explanation.title} image`}
-          width={
-            mediaContext === "mobile"
-              ? 140
-              : mediaContext === "tablet"
-              ? 300
-              : mediaContext === "desktop"
-              ? 350
-              : 400
-          }
-          height={
-            mediaContext === "mobile"
-              ? 140 * 0.7
-              : mediaContext === "tablet"
-              ? 300 * 0.7
-              : mediaContext === "desktop"
-              ? 350 * 0.7
-              : 400 * 0.7
-          }
+          src={detail.image}
+          alt={`${detail.title} image`}
+          width={imageWidth}
+          height={imageHeight}
         ></Image>
       </div>
       <p
         style={{
-          width: "43%",
+          display: "flex",
+          flexDirection: "column",
+          textAlign: "left",
+          alignItems: "center",
+          width:
+            mediaContext === "mobile" || mediaContext === "tablet"
+              ? "100%"
+              : "43%",
           height: "fit-content",
-          fontSize:
-            mediaContext === "mobile"
-              ? "4vw"
-              : mediaContext === "tablet"
-              ? "2.7vw"
-              : mediaContext === "desktop"
-              ? "2vw"
-              : "1.7vw",
+          fontSize,
           letterSpacing: "0.06vw",
           lineHeight: "140%",
+          padding: "4% 4% 0 4%",
         }}
       >
-        {explanation.explanation}
+        {detail.explanation}
       </p>
     </div>
   );
 }
 function OverlayLogin({
   mediaContext,
+  language,
   userContext,
+  fontSize,
   warningFontSize,
   inputWrapperDesign,
-  inputFontSize,
   btnXDesign,
   headingDesign,
   eyeOnDesign,
@@ -796,10 +816,11 @@ function OverlayLogin({
   onClickOutside,
 }: {
   mediaContext: string;
+  language: TYPE_LANGUAGE;
   userContext: any;
+  fontSize: string;
   warningFontSize: string;
   inputWrapperDesign: object;
-  inputFontSize: string;
   btnXDesign: object;
   headingDesign: object;
   eyeOnDesign: object;
@@ -877,8 +898,6 @@ function OverlayLogin({
         body: JSON.stringify(accountInfo),
       });
 
-      console.log(data.data);
-
       userContext?.firstLogin(data.accessToken, data.data.numberOfRecipes);
     } catch (err) {
       throw err;
@@ -910,6 +929,7 @@ function OverlayLogin({
       </p>
       <form
         style={{
+          position: "relative",
           width: formWidth,
           backgroundImage: "linear-gradient(rgb(255, 217, 0), orange)",
           aspectRatio: "1 / 0.61",
@@ -935,7 +955,7 @@ function OverlayLogin({
                 errorFields === "email" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
-              fontSize: inputFontSize,
+              fontSize,
             }}
             name="email"
             type="email"
@@ -950,7 +970,7 @@ function OverlayLogin({
                 errorFields === "password" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
-              fontSize: inputFontSize,
+              fontSize,
             }}
             type={!isPasswordVisible ? "password" : "text"}
             name="password"
@@ -989,10 +1009,11 @@ function OverlayLogin({
 
 function OverlayCreateAccount({
   mediaContext,
+  language,
   userContext,
+  fontSize,
   warningFontSize,
   inputWrapperDesign,
-  inputFontSize,
   btnXDesign,
   headingDesign,
   eyeOnDesign,
@@ -1003,10 +1024,11 @@ function OverlayCreateAccount({
   onClickOutside,
 }: {
   mediaContext: string;
+  language: TYPE_LANGUAGE;
   userContext: any;
+  fontSize: string;
   warningFontSize: string;
   inputWrapperDesign: object;
-  inputFontSize: string;
   btnXDesign: object;
   headingDesign: object;
   eyeOnDesign: object;
@@ -1169,7 +1191,7 @@ function OverlayCreateAccount({
                 errorFields === "email" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
-              fontSize: inputFontSize,
+              fontSize,
             }}
             name="email"
             type="email"
@@ -1194,14 +1216,7 @@ function OverlayCreateAccount({
             padding: "1%",
             margin: "2% auto",
             borderRadius: "1% / 6%",
-            fontSize:
-              mediaContext === "mobile"
-                ? "4.3vw"
-                : mediaContext === "tablet"
-                ? "2.5vw"
-                : mediaContext === "desktop"
-                ? "1.4vw"
-                : "2vw",
+            fontSize,
           }}
         >
           Use {PASSWORD_MIN_LENGTH} letters at minimum, including at least
@@ -1229,7 +1244,7 @@ function OverlayCreateAccount({
                 errorFields === "password" || errorFields === "both"
                   ? "orangered"
                   : " #0000004f",
-              fontSize: inputFontSize,
+              fontSize,
             }}
             name="password"
             type={!isPasswordVisible ? "password" : "text"}

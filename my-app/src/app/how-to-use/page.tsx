@@ -987,7 +987,7 @@ export default function HowToUse() {
             height={imageSizeNormalHeight}
           ></Image>
           <p className={styles.p__answer} style={{ fontSize }}>
-            Select the recipes you want to delete. Click the trash can button to
+            Select the recipes you want to delete. You can not select recipes on multiple pages. Click the trash can button to
             delete them.
             <br />
             When you want to quit selecting, click the stop selecting button.

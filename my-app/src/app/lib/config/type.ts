@@ -1,4 +1,5 @@
 export type TYPE_MEDIA = "mobile" | "tablet" | "desktop" | "big";
+export type TYPE_LANGUAGE = "en" | "ja";
 
 export type TYPE_USER_CONTEXT = {
   accessToken: string;

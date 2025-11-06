@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Playfair_Display, Playfair } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./lib/providers";
 
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
+const playfairDisplay = Playfair_Display({
+  weight: "400",
+  subsets: ["latin"],
+  fallback: ["playfair", "serif"],
+});
 
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
+// const playfair = Playfair({
 //   subsets: ["latin"],
+//   fallback: ["serif"],
 // });
 
 export const metadata: Metadata = {
@@ -24,24 +25,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html>
-      <body>
+    <html lang="en" data-gramm="false" data-gramm_editor="false">
+      <body className={playfairDisplay.className}>
         <Providers>{children}</Providers>
       </body>
     </html>
   );
 }
-
-// export default function RootLayout({
-//   children,
-// }: Readonly<{
-//   children: React.ReactNode;
-// }>) {
-//   return (
-//     <html lang="en">
-//       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-//         {children}
-//       </body>
-//     </html>
-//   );
-// }
