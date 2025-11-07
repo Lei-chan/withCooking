@@ -147,7 +147,7 @@
   align-items: center;
   padding-left: 20%;
   background-image: linear-gradient(rgb(254, 255, 167), rgb(255, 232, 103));
-  height: calc(100% / 7);
+  height: calc(100% / 7.9);
   letter-spacing: 0.1vw;
   color: rgb(89, 1, 172);
 }

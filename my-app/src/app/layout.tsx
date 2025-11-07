@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Playfair } from "next/font/google";
+import { Playfair_Display, Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./lib/providers";
 
 const playfairDisplay = Playfair_Display({
   weight: "400",
   subsets: ["latin"],
-  fallback: ["playfair", "serif"],
+  fallback: ["Noto Serif JP", "serif"],
 });
+
+// const notoSerifJp = Noto_Serif_JP({
+//   weight: "400",
+//   fallback: ["serif"],
+// });
 
 // const playfair = Playfair({
 //   subsets: ["latin"],

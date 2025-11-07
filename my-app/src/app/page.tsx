@@ -14,6 +14,7 @@ import { TYPE_LANGUAGE, TYPE_MEDIA } from "./lib/config/type";
 //settings
 import {
   PASSWORD_MIN_DIGIT,
+  PASSWORD_MIN_EACH,
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_UPPERCASE,
@@ -24,6 +25,7 @@ import { getData } from "@/app/lib/helpers/other";
 import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
 //model
 import homeDetails from "./lib/models/homeDetails";
+import { LanguageSelect } from "./lib/components/components";
 
 export default function Home() {
   const mediaContext = useContext(MediaContext);
@@ -32,14 +34,25 @@ export default function Home() {
 
   console.log(languageContext?.language);
   //design
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4vw"
-      : mediaContext === "tablet"
-      ? "2.5vw"
-      : mediaContext === "desktop"
-      ? "1.8vw"
-      : "1.5vw";
+  let fontSize;
+  if (languageContext?.language === "ja")
+    fontSize =
+      mediaContext === "mobile"
+        ? "3.8vw"
+        : mediaContext === "tablet"
+        ? "2.3vw"
+        : mediaContext === "desktop"
+        ? "1.6vw"
+        : "1.3vw";
+  else
+    fontSize =
+      mediaContext === "mobile"
+        ? "4vw"
+        : mediaContext === "tablet"
+        ? "2.5vw"
+        : mediaContext === "desktop"
+        ? "1.8vw"
+        : "1.5vw";
   const warningFontSize = `calc(${fontSize} * 1.1)`;
   const inputWrapperDesign = {
     position: "relative",
@@ -164,6 +177,13 @@ export default function Home() {
           alignItems: "center",
         }}
       >
+        <LanguageSelect
+          fontSize={fontSize}
+          position="absolute"
+          minWidth={mediaContext === "mobile" ? "35%" : "10%"}
+          backgroundColor="white"
+          color="black"
+        />
         <Buttons
           mediaContext={mediaContext}
           language={languageContext?.language || "en"}
@@ -237,7 +257,7 @@ export default function Home() {
               "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.185))",
             color: " #ff8800ff",
             letterSpacing: "0.05vw",
-            fontSize: `calc(${fontSize} * 1.1)`,
+            fontSize,
           }}
         >
           <p>
@@ -378,30 +398,24 @@ function BottomHalf({
           margin: "8%",
           borderBottom: "thin solid red",
           width: "fit-content",
+          transition: "all 1.5s",
           fontSize:
             mediaContext === "mobile"
               ? "6vw"
               : mediaContext === "tablet"
               ? "4vw"
               : "2.8vw",
-          transition: "all 1.5s",
           opacity: inView ? "1" : "0",
           transform: inView ? "scale(100%)" : "scale(90%)",
         }}
       >
-        Let's start
-        <span
-          style={{
-            backgroundImage:
-              "linear-gradient(150deg,rgb(252, 255, 99) 10%,rgb(255, 115, 0))",
-            padding: "1% 0%",
-            borderRadius: "100% 10%",
-          }}
-        >
-          withCooking
-        </span>
-        by {(mediaContext === "mobile" || mediaContext === "tablet") && <br />}
-        signing up for free
+        {language === "ja" ? "さあ、" : "Let's start "}
+        <span className={styles.span__withcooking}>withCooking</span>{" "}
+        {language === "ja" ? "と" : "by "}
+        {(mediaContext === "mobile" || mediaContext === "tablet") && <br />}
+        {language === "ja"
+          ? "クッキングを楽しみましょう！"
+          : "signing up for free"}
       </h3>
       <footer
         style={{
@@ -581,8 +595,11 @@ function Details({
             fontSize: `calc(${fontSize} * 1.5)`,
           }}
         >
-          Manage your favorite recipes{mediaContext === "mobile" && <br />} in
-          one app
+          {language === "ja"
+            ? "あなたのお気に入りのレシピを１つのサイトに"
+            : "Manage your favorite recipes "}
+          {mediaContext === "mobile" && <br />}
+          {language === "ja" ? "まとめましょう" : "in one app"}
         </h1>
         {homeDetails.map((detail, i) => (
           <Explanation
@@ -610,9 +627,9 @@ function Explanation({
   language: TYPE_LANGUAGE;
   fontSize: string;
   detail: {
-    title: string;
+    title: { en: string; ja: string };
     image: string;
-    explanation: string;
+    explanation: { en: string; ja: string };
     heightRatio: number;
   };
   i: number;
@@ -636,7 +653,7 @@ function Explanation({
   const TITLE_TOO_LONG =
     mediaContext === "mobile" ? 25 : mediaContext === "tablet" ? 35 : 45;
   const isTitleLong = useMemo(
-    () => detail.title.length >= TITLE_TOO_LONG,
+    () => detail.title[language].length >= TITLE_TOO_LONG,
     [detail]
   );
 
@@ -676,6 +693,7 @@ function Explanation({
     return "";
   }
 
+  console.log(mediaContext);
   ///even number details appear from right, odd number from left
   return (
     <div
@@ -751,7 +769,7 @@ function Explanation({
               : "2.6vw",
         }}
       >
-        {detail.title}
+        {detail.title[language]}
       </h2>
       <div
         style={{
@@ -772,7 +790,7 @@ function Explanation({
       >
         <Image
           src={detail.image}
-          alt={`${detail.title} image`}
+          alt={`${detail.title[language]} image`}
           width={imageWidth}
           height={imageHeight}
         ></Image>
@@ -794,7 +812,7 @@ function Explanation({
           padding: "4% 4% 0 4%",
         }}
       >
-        {detail.explanation}
+        {detail.explanation[language]}
       </p>
     </div>
   );
@@ -867,7 +885,11 @@ function OverlayLogin({
 
       if (!trimmedEmail && !trimmedPassword) {
         setErrorFields("both");
-        return setError("※Please fill both fields");
+        return setError(
+          language === "ja"
+            ? "※両方入力してください"
+            : "※Please fill both fields"
+        );
       }
 
       //send data to server
@@ -876,7 +898,13 @@ function OverlayLogin({
         password: trimmedPassword,
       });
     } catch (err: any) {
-      setError(err.message);
+      setError(
+        `${
+          language === "ja"
+            ? "ログイン中にエラーが発生しました"
+            : "Server error while loging in"
+        } ${err.message}`
+      );
       err.message.includes("password") && setErrorFields("password");
       err.message.includes("email") && setErrorFields("email");
 
@@ -925,7 +953,9 @@ function OverlayLogin({
           fontSize: warningFontSize,
         }}
       >
-        {error ? error : "Loging in..."}
+        {error
+          ? error
+          : `${language === "ja" ? "ログイン中…" : "Loging in..."}`}
       </p>
       <form
         style={{
@@ -946,7 +976,9 @@ function OverlayLogin({
         >
           &times;
         </button>
-        <h2 style={headingDesign}>Login</h2>
+        <h2 style={headingDesign}>
+          {language === "ja" ? "ログイン" : "Login"}
+        </h2>
         <div className={styles.input_wrapper} style={inputWrapperDesign}>
           <input
             className={styles.input}
@@ -959,7 +991,7 @@ function OverlayLogin({
             }}
             name="email"
             type="email"
-            placeholder="email"
+            placeholder={language === "ja" ? "メールアドレス" : "email"}
           />
         </div>
         <div className={styles.input_wrapper} style={inputWrapperDesign}>
@@ -974,7 +1006,7 @@ function OverlayLogin({
             }}
             type={!isPasswordVisible ? "password" : "text"}
             name="password"
-            placeholder="password"
+            placeholder={language === "ja" ? "パスワード" : "password"}
           />
           <button
             className={clsx(
@@ -987,6 +1019,7 @@ function OverlayLogin({
           ></button>
           <button
             className={clsx(
+              styles.btn__image,
               styles.btn__eye_off,
               !isPasswordVisible && styles.hidden
             )}
@@ -1000,7 +1033,7 @@ function OverlayLogin({
           style={btnSubmitDesign}
           type="submit"
         >
-          Log in
+          {language === "ja" ? "ログイン" : "Log in"}
         </button>
       </form>
     </div>
@@ -1086,12 +1119,22 @@ function OverlayCreateAccount({
 
       if (!trimmedEmail && !trimmedPassword) {
         setErrorFields("both");
-        return setError("※Please fill both fields");
+        return setError(
+          language === "ja"
+            ? "※両方入力してください"
+            : "※Please fill both fields"
+        );
       }
 
       await createAccount({ email: trimmedEmail, password: trimmedPassword });
     } catch (err: any) {
-      setError(err.message);
+      setError(
+        `${
+          language === "ja"
+            ? "アカウントの作成中にエラーが発生しました"
+            : "Server error while creating account"
+        } ${err.message}`
+      );
       setErrorFields(err.message.includes("email") ? "email" : "password");
 
       return console.error(
@@ -1143,7 +1186,11 @@ function OverlayCreateAccount({
           fontSize: warningFontSize,
         }}
       >
-        {error ? error : "Creating your account..."}
+        {error
+          ? error
+          : language === "ja"
+          ? "アカウント作成中…"
+          : "Creating your account..."}
       </p>
       <form
         style={{
@@ -1153,10 +1200,10 @@ function OverlayCreateAccount({
           borderRadius: "2%",
           padding:
             mediaContext === "mobile"
-              ? "3% 2% 6% 2%"
-              : mediaContext === "tablet"
               ? "3% 2% 4% 2%"
-              : "2% 1%",
+              : mediaContext === "tablet"
+              ? "2%"
+              : "2% 1% 1% 1%",
           width: formWidth,
         }}
         onSubmit={handleSubmit}
@@ -1169,8 +1216,14 @@ function OverlayCreateAccount({
         >
           &times;
         </button>
-        <h2 style={headingDesign}>Sign-up</h2>
-        <h4 style={h4Design}>Please enter your email address</h4>
+        <h2 style={headingDesign}>
+          {language === "ja" ? "アカウント作成" : "Sign-up"}
+        </h2>
+        <h4 style={h4Design}>
+          {language === "ja"
+            ? "メールアドレスを入力してください"
+            : "Please enter your email address"}
+        </h4>
         <div
           style={{
             ...inputWrapperDesign,
@@ -1195,10 +1248,14 @@ function OverlayCreateAccount({
             }}
             name="email"
             type="email"
-            placeholder="email"
+            placeholder={language === "ja" ? "メールアドレス" : "email"}
           ></input>
         </div>
-        <h4 style={h4Design}>Please enter password you want to use</h4>
+        <h4 style={h4Design}>
+          {language === "ja"
+            ? "使用するパスワードを入力してください"
+            : "Please enter password you will use"}
+        </h4>
         <p
           style={{
             backgroundImage:
@@ -1219,10 +1276,9 @@ function OverlayCreateAccount({
             fontSize,
           }}
         >
-          Use {PASSWORD_MIN_LENGTH} letters at minimum, including at least
-          <br />
-          {PASSWORD_MIN_UPPERCASE} uppercase, {PASSWORD_MIN_LOWERCASE}{" "}
-          lowercase, and {PASSWORD_MIN_DIGIT} digit
+          {language === "ja"
+            ? `${PASSWORD_MIN_LENGTH}文字以上で、大文字、小文字、数字を${PASSWORD_MIN_EACH}つずつ使用してください`
+            : `Use ${PASSWORD_MIN_LENGTH} letters at minimum, including at least ${PASSWORD_MIN_EACH} uppercase, lowercase, and digit`}
         </p>
         <div
           style={{
@@ -1248,7 +1304,7 @@ function OverlayCreateAccount({
             }}
             name="password"
             type={!isPasswordVisible ? "password" : "text"}
-            placeholder="password"
+            placeholder={language === "ja" ? "パスワード" : "password"}
           ></input>
           <button
             className={clsx(
@@ -1261,6 +1317,7 @@ function OverlayCreateAccount({
           ></button>
           <button
             className={clsx(
+              styles.btn__image,
               styles.btn__eye_off,
               !isPasswordVisible && styles.hidden
             )}
@@ -1274,7 +1331,7 @@ function OverlayCreateAccount({
           style={btnSubmitDesign}
           type="submit"
         >
-          Sign up
+          {language === "ja" ? "登録" : "Sign up"}
         </button>
       </form>
     </div>

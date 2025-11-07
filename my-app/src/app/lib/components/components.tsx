@@ -11,6 +11,7 @@ import {
   TYPE_INGREDIENT_UNIT,
   TYPE_INGREDIENTS,
   TYPE_INSTRUCTION,
+  TYPE_LANGUAGE,
   TYPE_MEDIA,
   TYPE_RECIPE,
   TYPE_REGION_UNIT,
@@ -36,9 +37,70 @@ import {
 } from "../helpers/recipes";
 import { getData, getSize, wait } from "../helpers/other";
 import { convertIngUnits } from "../helpers/converter";
-import { MediaContext, UserContext } from "../providers";
+import { LanguageContext, MediaContext, UserContext } from "../providers";
 import fracty from "fracty";
 import { nanoid } from "nanoid";
+import { create } from "domain";
+
+export function LanguageSelect({
+  fontSize,
+  position,
+  minWidth,
+  backgroundColor,
+  color,
+}: {
+  fontSize: string;
+  position: any;
+  minWidth: string;
+  backgroundColor: string;
+  color: string;
+}) {
+  const mediaContext = useContext(MediaContext);
+  const languageContext = useContext(LanguageContext);
+
+  const [languageValue, setLanguageValue] = useState<TYPE_LANGUAGE>("en");
+
+  function handleChangeLanguage(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.currentTarget.value as TYPE_LANGUAGE;
+    setLanguageValue(value);
+    languageContext?.updateLanguage(value);
+  }
+
+  useEffect(() => {
+    if (languageContext) setLanguageValue(languageContext.language);
+  }, [languageContext?.language]);
+
+  return (
+    <select
+      style={{
+        position,
+        backgroundImage: 'url("/icons/global.svg")',
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "17%",
+        backgroundPositionX: "3%",
+        backgroundPositionY: "center",
+        backgroundColor,
+        minWidth,
+        maxWidth: "fit-content",
+        top: "1.5%",
+        left: "2.5%",
+        textAlign: "center",
+        padding:
+          mediaContext === "mobile" || mediaContext === "tablet"
+            ? "1% 2% 1% 5%"
+            : "0.5% 2%  0.5% 5%",
+        border: "none",
+        fontSize: `calc(${fontSize} * 0.9)`,
+        color,
+      }}
+      value={languageValue}
+      onChange={handleChangeLanguage}
+    >
+      <option value="en">English</option>
+      <option value="ja">日本語</option>
+    </select>
+  );
+}
 
 export function MessageContainer({
   message,
@@ -84,6 +146,7 @@ export function OverlayMessage({
   toggleLogout?: () => void;
 }) {
   const mediaContext = useContext(MediaContext);
+  const languageContext = useContext(LanguageContext);
   const userContext = useContext(UserContext);
   const [isVisible, setIsVisible] = useState(true);
 
@@ -100,16 +163,26 @@ export function OverlayMessage({
     if (content === "welcome")
       message = (
         <p>
-          Welcome!
+          {languageContext?.language === "ja" ? "こんにちは！" : "Welcome!"}
           <br />
-          It's nice to see you :)
+          {languageContext?.language === "ja"
+            ? "今日もお会いできて嬉しいです！"
+            : "It's nice to see you :)"}
           <br />
-          Time to cook!
+          {languageContext?.language === "ja"
+            ? "さあ、クッキングを始めましょう！"
+            : "Let's start cooking!"}
         </p>
       );
 
     if (content === "logout")
-      message = <p>Are you sure you want to log out?</p>;
+      message = (
+        <p>
+          {languageContext?.language === "ja"
+            ? "ログインしてよろしいですか？"
+            : "Are you sure you want to log out?"}
+        </p>
+      );
 
     return message;
   }
@@ -186,7 +259,7 @@ export function OverlayMessage({
             style={{ fontSize: `calc(${fontSize} * 0.75)` }}
             onClick={handleLogout}
           >
-            I'm sure
+            {languageContext?.language === "ja" ? "はい" : "I'm sure"}
           </button>
         )}
       </div>
@@ -211,6 +284,8 @@ export function PaginationButtons({
   isPending: boolean;
   onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
+  const languageContext = useContext(LanguageContext);
+
   const fontSizePagination =
     mediaContext === "mobile"
       ? fontSize
@@ -232,7 +307,9 @@ export function PaginationButtons({
           value="decrease"
           onClick={onClickPagination}
         >
-          {`Page ${curPage - 1}`}
+          {`${languageContext?.language === "ja" ? "ページ" : "Page"} ${
+            curPage - 1
+          }`}
           <br />
           &larr;
         </button>
@@ -244,7 +321,9 @@ export function PaginationButtons({
           value="increase"
           onClick={onClickPagination}
         >
-          {`Page ${curPage + 1}`}
+          {`${languageContext?.language === "ja" ? "ページ" : "Page"} ${
+            curPage + 1
+          }`}
           <br />
           &rarr;
         </button>
@@ -265,6 +344,7 @@ export function RecipeEdit({
   handleChangeEdit?: (editOrNot: boolean) => void | undefined;
 }) {
   const mediaContext = useContext(MediaContext);
+  const languageContext = useContext(LanguageContext);
   const userContext = useContext(UserContext);
   //set favorite and images when user change them and set other fields when user submits the recipe
   const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>(recipe);
@@ -400,8 +480,6 @@ export function RecipeEdit({
     });
   }
 
-  console.log(curRecipe);
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     let recipeData;
@@ -460,14 +538,6 @@ export function RecipeEdit({
       const instructions = curRecipe?.instructions.filter(
         (inst) => inst.instruction || inst.image
       );
-      // const instructions = curRecipe.instructions
-      //   .map((inst, i) => {
-      //     return {
-      //       instruction: String(formData.get(`instruction${i + 1}`)) || "",
-      //       image: inst.image,
-      //     };
-      //   })
-      //   .filter((inst) => inst.instruction || inst.image);
 
       const newRecipe = {
         _id: curRecipe._id || undefined,
@@ -503,7 +573,11 @@ export function RecipeEdit({
       setCurRecipe(newRecipe);
 
       if (!isRecipeAllowed(newRecipe)) {
-        const err: any = new Error("Please fill more than one input field!");
+        const err: any = new Error(
+          languageContext?.language === "ja"
+            ? "一つ以上の欄を入力してください"
+            : "Please fill more than one input field"
+        );
         err.statusCode = 400;
         throw err;
       }
@@ -518,9 +592,13 @@ export function RecipeEdit({
       setIsPending(false);
       handleChangeEdit && handleChangeEdit(false);
       setMessage(
-        `Recipe ${
-          createOrUpdate === "create" ? "created" : "updated"
-        } successfully :)`
+        languageContext?.language === "ja"
+          ? `レシピの${
+              createOrUpdate === "create" ? "作成" : "更新"
+            }が完了しました！`
+          : `Recipe ${
+              createOrUpdate === "create" ? "created" : "updated"
+            } successfully :)`
       );
       if (createOrUpdate === "update") {
         await wait();
@@ -529,9 +607,17 @@ export function RecipeEdit({
     } catch (err: any) {
       setIsPending(false);
       setCurError(
-        `Server error while creating recipe 🙇‍♂️ ${
-          err.statusCode === 400 ? err.message : "Please try again this later"
-        }`
+        languageContext?.language === "ja"
+          ? `レシピ作成中にサーバーエラーが発生しました🙇‍♂️ ${
+              err.statusCode === 400
+                ? err.message
+                : "後ほどもう一度試してください"
+            }`
+          : `Server error while creating recipe 🙇‍♂️ ${
+              err.statusCode === 400
+                ? err.message
+                : "Please try again this later"
+            }`
       );
       return console.error(
         "Error while creating recipe",
@@ -611,6 +697,7 @@ export function RecipeEdit({
         >
           <ImageTitleEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             curTitle={curRecipe.title}
@@ -621,6 +708,7 @@ export function RecipeEdit({
           />
           <BriefExplanationEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             curRecipe={curRecipe}
@@ -628,6 +716,7 @@ export function RecipeEdit({
           />
           <IngredientsEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
             fontSize={fontSize}
             headerSize={headerSize}
             ingredients={curRecipe.ingredients}
@@ -635,6 +724,7 @@ export function RecipeEdit({
           />
           <InstructionsEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -650,6 +740,7 @@ export function RecipeEdit({
           />
           <AboutThisRecipeEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
@@ -657,6 +748,7 @@ export function RecipeEdit({
           />
           <MemoriesEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -668,6 +760,7 @@ export function RecipeEdit({
           />
           <CommentsEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
@@ -678,16 +771,20 @@ export function RecipeEdit({
             style={{ fontSize: headerSize, marginTop: headerSize }}
             type="submit"
           >
-            Upload
+            {languageContext?.language === "ja" ? "アップロード" : "Upload"}
           </button>
         </form>
       )}
     </>
   ) : (
     <Loading
-      message={`${
-        createOrUpdate === "create" ? "Creating" : "Updating"
-      } your recipe...`}
+      message={
+        languageContext?.language === "ja"
+          ? `レシピを${createOrUpdate === "create" ? "作成" : "更新"}中…`
+          : `${
+              createOrUpdate === "create" ? "Creating" : "Updating"
+            } your recipe...`
+      }
     />
   );
 }
@@ -763,6 +860,7 @@ export function BtnFavorite({
 
 function ImageTitleEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   curTitle,
@@ -772,6 +870,7 @@ function ImageTitleEdit({
   displayError,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   curTitle: string;
@@ -961,12 +1060,14 @@ function ImageTitleEdit({
 
 function BriefExplanationEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   curRecipe,
   onClickFavorite,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   curRecipe: TYPE_RECIPE;
@@ -1374,6 +1475,7 @@ function BriefExplanationEdit({
                 // key={keyObj.id}
                 key={i}
                 mediaContext={mediaContext}
+                language={language}
                 fontSize={fontSize}
                 temperature={
                   curRecipe.temperatures.temperatures[i] || undefined
@@ -1416,11 +1518,13 @@ function BriefExplanationEdit({
 
 function InputTempEdit({
   mediaContext,
+  language,
   fontSize,
   temperature,
   i,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   temperature: number | undefined;
   i: number;
@@ -1450,12 +1554,14 @@ function InputTempEdit({
 
 function IngredientsEdit({
   mediaContext,
+  language,
   fontSize,
   headerSize,
   ingredients,
   regionUnit,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   headerSize: string;
   ingredients: TYPE_INGREDIENTS;
@@ -1540,6 +1646,7 @@ function IngredientsEdit({
           <IngLineEdit
             key={line.id}
             mediaContext={mediaContext}
+            language={language}
             fontSize={fontSize}
             ingredient={
               ingredients[i] || {
@@ -1587,12 +1694,14 @@ function IngredientsEdit({
 
 function IngLineEdit({
   mediaContext,
+  language,
   fontSize,
   ingredient,
   i,
   onClickDelete,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   ingredient: TYPE_INGREDIENT;
   i: number;
@@ -1773,6 +1882,7 @@ function ButtonPlus({
 
 function InstructionsEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   headerSize,
@@ -1787,6 +1897,7 @@ function InstructionsEdit({
   displayError,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   headerSize: string;
@@ -1931,6 +2042,7 @@ function InstructionsEdit({
           <InstructionEdit
             key={keyObj.id}
             mediaContext={mediaContext}
+            language={language}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             i={i}
@@ -1964,6 +2076,7 @@ function InstructionsEdit({
 
 function InstructionEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   i,
@@ -1975,6 +2088,7 @@ function InstructionEdit({
   displayError,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   i: number;
@@ -2137,12 +2251,14 @@ function InstructionEdit({
 
 function AboutThisRecipeEdit({
   mediaContext,
+  language,
   fontSize,
   headerSize,
   marginTop,
   curDescription,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   headerSize: string;
   marginTop: string;
@@ -2207,6 +2323,7 @@ function AboutThisRecipeEdit({
 
 function MemoriesEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   headerSize,
@@ -2217,6 +2334,7 @@ function MemoriesEdit({
   displayError,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   headerSize: string;
@@ -2309,6 +2427,7 @@ function MemoriesEdit({
         {images.map((img, i) => (
           <MemoryImgEdit
             key={i}
+            language={language}
             width={width}
             height={height}
             image={img}
@@ -2409,6 +2528,7 @@ function MemoriesEdit({
 }
 
 function MemoryImgEdit({
+  language,
   width,
   height,
   image,
@@ -2416,6 +2536,7 @@ function MemoryImgEdit({
   translateX,
   onClickDelete,
 }: {
+  language: TYPE_LANGUAGE;
   width: string;
   height: string;
   image: TYPE_FILE;
@@ -2456,12 +2577,14 @@ function MemoryImgEdit({
 
 function CommentsEdit({
   mediaContext,
+  language,
   fontSize,
   headerSize,
   marginTop,
   curComments,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   headerSize: string;
   marginTop: string;
@@ -2537,6 +2660,8 @@ export function RecipeNoEdit({
   mainOrRecipe: "main" | "recipe";
   userRecipe: TYPE_RECIPE | null;
 }) {
+  const languageContext = useContext(LanguageContext);
+
   ///design
   const fontSize =
     mediaContext === "mobile"
@@ -2754,6 +2879,7 @@ export function RecipeNoEdit({
           )}
           <ImageTitleNoEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "ja"}
             recipeWidth={recipeWidth}
             mainOrRecipe={mainOrRecipe}
             fontSize={fontSize}
@@ -2762,6 +2888,7 @@ export function RecipeNoEdit({
           />
           <BriefExplanationNoEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "ja"}
             recipeWidth={recipeWidth}
             mainOrRecipe={mainOrRecipe}
             fontSize={fontSize}
@@ -2776,6 +2903,7 @@ export function RecipeNoEdit({
           />
           <IngredientsNoEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "ja"}
             mainOrRecipe={mainOrRecipe}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -2785,6 +2913,7 @@ export function RecipeNoEdit({
           />
           <InstructionsNoEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "ja"}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -2794,6 +2923,7 @@ export function RecipeNoEdit({
           />
           <AboutThisRecipeNoEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "ja"}
             mainOrRecipe={mainOrRecipe}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -2802,6 +2932,7 @@ export function RecipeNoEdit({
           />
           <MemoriesNoEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "ja"}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -2810,6 +2941,7 @@ export function RecipeNoEdit({
           />
           <CommentsNoEdit
             mediaContext={mediaContext}
+            language={languageContext?.language || "ja"}
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
@@ -2893,6 +3025,7 @@ export function RecipeNoEdit({
 
 function ImageTitleNoEdit({
   mediaContext,
+  language,
   recipeWidth,
   mainOrRecipe,
   fontSize,
@@ -2900,6 +3033,7 @@ function ImageTitleNoEdit({
   title,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   mainOrRecipe: "main" | "recipe";
   fontSize: string;
@@ -2983,6 +3117,7 @@ function ImageTitleNoEdit({
 
 function BriefExplanationNoEdit({
   mediaContext,
+  language,
   recipeWidth,
   mainOrRecipe,
   fontSize,
@@ -2996,6 +3131,7 @@ function BriefExplanationNoEdit({
   onClickFavorite,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   mainOrRecipe: "main" | "recipe";
   fontSize: string;
@@ -3331,6 +3467,7 @@ function BriefExplanationNoEdit({
 
 function IngredientsNoEdit({
   mediaContext,
+  language,
   mainOrRecipe,
   fontSize,
   headerSize,
@@ -3339,6 +3476,7 @@ function IngredientsNoEdit({
   regionUnit,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   mainOrRecipe: "main" | "recipe";
   fontSize: string;
   headerSize: string;
@@ -3477,6 +3615,7 @@ function IngLineNoEdit({
 
 function InstructionsNoEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   headerSize,
@@ -3485,6 +3624,7 @@ function InstructionsNoEdit({
   instructions,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   headerSize: string;
@@ -3554,6 +3694,7 @@ function InstructionsNoEdit({
           <InstructionNoEdit
             key={i}
             mediaContext={mediaContext}
+            language={language}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             instruction={inst}
@@ -3571,12 +3712,14 @@ function InstructionsNoEdit({
 
 function InstructionNoEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   instruction,
   i,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   instruction: { instruction: string; image: TYPE_FILE | undefined };
@@ -3675,6 +3818,7 @@ function InstructionNoEdit({
 
 function AboutThisRecipeNoEdit({
   mediaContext,
+  language,
   mainOrRecipe,
   fontSize,
   headerSize,
@@ -3682,6 +3826,7 @@ function AboutThisRecipeNoEdit({
   description,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   mainOrRecipe: "main" | "recipe";
   fontSize: string;
   headerSize: string;
@@ -3737,6 +3882,7 @@ function AboutThisRecipeNoEdit({
 
 function MemoriesNoEdit({
   mediaContext,
+  language,
   recipeWidth,
   fontSize,
   headerSize,
@@ -3744,6 +3890,7 @@ function MemoriesNoEdit({
   images,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   recipeWidth: string;
   fontSize: string;
   headerSize: string;
@@ -3819,6 +3966,7 @@ function MemoriesNoEdit({
           images.map((img, i) => (
             <MemoryImgNoEdit
               key={i}
+              language={language}
               width={width}
               height={height}
               i={i}
@@ -3878,12 +4026,14 @@ function MemoriesNoEdit({
 }
 
 function MemoryImgNoEdit({
+  language,
   width,
   height,
   i,
   image,
   translateX,
 }: {
+  language: TYPE_LANGUAGE;
   width: string;
   height: string;
   i: number;
@@ -3914,12 +4064,14 @@ function MemoryImgNoEdit({
 
 function CommentsNoEdit({
   mediaContext,
+  language,
   fontSize,
   headerSize,
   marginTop,
   comments,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   headerSize: string;
   marginTop: string;

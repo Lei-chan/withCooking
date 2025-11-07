@@ -47,7 +47,8 @@
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
+  max-height: fit-content;
   background-color: rgba(0, 0, 0, 0.384);
   backdrop-filter: blur(3px);
   z-index: 10;
@@ -56,7 +57,7 @@
   text-align: center;
   align-items: center;
   justify-content: center;
-  padding: 3%;
+  padding: 1% 0;
   transition: all 0.5s;
 
   .warning {
@@ -140,6 +141,14 @@
   }
 }
 
+.btn__image {
+  aspect-ratio: 1;
+  background: none;
+  border: none;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
 .input {
   width: 100%;
   height: fit-content;
@@ -147,6 +156,16 @@
   letter-spacing: 0.1vw;
   text-align: center;
   padding-bottom: 1%;
+}
+
+.span__withcooking {
+  background-image: linear-gradient(
+    150deg,
+    rgb(252, 255, 99) 10%,
+    rgb(255, 115, 0)
+  );
+  padding: 1% 0%;
+  border-radius: 100% 10%;
 }
 
 .hidden {

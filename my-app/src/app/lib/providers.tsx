@@ -42,27 +42,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
   //media
   useEffect(() => {
     const updateMedia = () => {
-      if (window.matchMedia(`( max-width: ${MAX_MOBILE}px )`).matches)
-        return setMedia("mobile");
+      if (window.matchMedia(`( width >= ${MIN_BIG}px )`).matches)
+        return setMedia("big");
 
       if (
         window.matchMedia(`(
-      min-width: ${MIN_TABLET}px,
-      max-width: ${MAX_TABLET}px,
-    )`).matches
-      )
-        return setMedia("tablet");
-
-      if (
-        window.matchMedia(`(
-      min-width: ${MIN_DESKTOP}px,
-      max-width: ${MAX_DESKTOP}px,
-    )`).matches
+            ${MAX_DESKTOP}px >= width >= ${MIN_DESKTOP}px
+          )`).matches
       )
         return setMedia("desktop");
 
-      if (window.matchMedia(`( min-width: ${MIN_BIG}px )`).matches)
-        return setMedia("big");
+      if (
+        window.matchMedia(`(
+            ${MAX_TABLET}px >= width >= ${MIN_TABLET}px
+          )`).matches
+      )
+        return setMedia("tablet");
+
+      if (window.matchMedia(`( ${MAX_MOBILE}px >= width )`).matches)
+        return setMedia("mobile");
     };
 
     updateMedia();
@@ -72,9 +70,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   //language
-  const updateLanguage = useCallback((nav: string) => {
-    nav.slice(0, 2) === "ja" ? setLanguage("ja") : setLanguage("en");
-  }, []);
+  const updateLanguage = useCallback(
+    (nav: string) => {
+      nav.slice(0, 2) === "ja" ? setLanguage("ja") : setLanguage("en");
+    },
+    [language]
+  );
 
   useEffect(() => {
     updateLanguage(navigator.language);

@@ -7,7 +7,7 @@
 button,
 input,
 textarea {
-  font-family: "Playfair Display", serif;
+  font-family: "Playfair Display", "Noto Serif JP", Serif;
 }
 
 button,

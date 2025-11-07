@@ -6,7 +6,12 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import Link from "next/link";
 //type
-import { TYPE_USER_CONTEXT, TYPE_MEDIA, TYPE_RECIPE } from "../lib/config/type";
+import {
+  TYPE_USER_CONTEXT,
+  TYPE_MEDIA,
+  TYPE_RECIPE,
+  TYPE_LANGUAGE,
+} from "../lib/config/type";
 //general methods
 import { getSize } from "@/app/lib/helpers/other";
 //methods for recipes
@@ -16,12 +21,13 @@ import {
   getUserRecipes,
 } from "@/app/lib/helpers/recipes";
 //context
-import { MediaContext, UserContext } from "../lib/providers";
+import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //media
 import news from "@/app/lib/models/news";
 
 //components
 import {
+  LanguageSelect,
   OverlayMessage,
   PaginationButtons,
   RecipeNoEdit,
@@ -32,10 +38,15 @@ import { error } from "console";
 
 export default function MAIN() {
   const mediaContext = useContext(MediaContext);
+  const languageContext = useContext(LanguageContext);
   const userContext = useContext(UserContext);
+
+  console.log(languageContext?.language);
 
   const searchRef = useRef(null);
 
+  const [innerWidth, setInnerWidth] = useState(1440);
+  const [innerHeight, setInnerHeight] = useState(600);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isMessageVisible, setIsMessageVisible] = useState(false);
@@ -43,18 +54,21 @@ export default function MAIN() {
   const [isDraggingY, setIsDraggingY] = useState(false);
   const [recipeWidth, setRecipeWidth] = useState(
     mediaContext === "mobile"
-      ? window.innerWidth + "px"
+      ? innerWidth + "px"
       : mediaContext === "tablet"
-      ? window.innerWidth * 0.65 + "px"
-      : window.innerWidth * 0.55 + "px"
+      ? innerWidth * 0.65 + "px"
+      : innerWidth * 0.55 + "px"
   );
-  const [timerHeight, setTimerHeight] = useState(
-    window.innerHeight * 0.65 + "px"
-  );
+  const [timerHeight, setTimerHeight] = useState(innerHeight * 0.65 + "px");
   const timerNoteWidth =
     mediaContext === "mobile"
-      ? window.innerWidth + "px"
-      : window.innerWidth - parseFloat(recipeWidth) + "px";
+      ? innerWidth + "px"
+      : innerWidth - parseFloat(recipeWidth) + "px";
+
+  useEffect(() => {
+    setInnerWidth(window.innerWidth);
+    setInnerHeight(window.innerHeight);
+  }, []);
 
   function handleMouseDownX() {
     setIsDraggingX(true);
@@ -146,7 +160,9 @@ export default function MAIN() {
         <Search
           searchRef={searchRef}
           mediaContext={mediaContext}
+          language={languageContext?.language || "en"}
           userContext={userContext}
+          innerWidth={innerWidth}
           isSearchVisible={isSearchVisible}
           onClickSearch={handleToggleSearch}
         />
@@ -166,6 +182,7 @@ export default function MAIN() {
         )}
         <DropdownMenu
           mediaContext={mediaContext}
+          language={languageContext?.language || "en"}
           isDropdownVisible={isDropdownVisible}
           onClickDropdown={handleToggleDropdown}
           onClickLogout={handleToggleLogout}
@@ -216,8 +233,18 @@ export default function MAIN() {
             }}
             onMouseDown={handleMouseDownY}
           ></div>
-          <Timers mediaContext={mediaContext} timerWidth={timerNoteWidth} />
-          <Note mediaContext={mediaContext} noteWidth={timerNoteWidth} />
+          <Timers
+            mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
+            innerWidth={innerWidth}
+            timerWidth={timerNoteWidth}
+          />
+          <Note
+            mediaContext={mediaContext}
+            language={languageContext?.language || "en"}
+            innerWidth={innerWidth}
+            noteWidth={timerNoteWidth}
+          />
         </section>
       </div>
     </div>
@@ -226,25 +253,29 @@ export default function MAIN() {
 
 function Search({
   mediaContext,
+  language,
   userContext,
+  innerWidth,
   isSearchVisible,
   searchRef,
   onClickSearch,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
+  innerWidth: number;
   isSearchVisible: boolean;
   searchRef: any;
   onClickSearch: () => void;
 }) {
   const RECIPES_PER_PAGE = 6;
   const searchMenuSize =
-    window.innerWidth *
+    innerWidth *
       (mediaContext === "mobile"
         ? 0.7
         : mediaContext === "tablet"
         ? 0.5
-        : mediaContext === "desktop" && window.innerWidth <= 1100
+        : mediaContext === "desktop" && innerWidth <= 1100
         ? 0.35
         : 0.28) +
     "px";
@@ -482,11 +513,13 @@ function Search({
 
 function DropdownMenu({
   mediaContext,
+  language,
   isDropdownVisible,
   onClickDropdown,
   onClickLogout,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   isDropdownVisible: boolean;
   onClickDropdown: () => void;
   onClickLogout: () => void;
@@ -508,7 +541,7 @@ function DropdownMenu({
         top:
           mediaContext === "mobile" || mediaContext === "tablet" ? "0%" : "1%",
         right: "3%",
-        aspectRatio: "1 / 1.8",
+        aspectRatio: "1 / 1.9",
         zIndex: "10",
         width:
           mediaContext === "mobile"
@@ -516,6 +549,7 @@ function DropdownMenu({
             : mediaContext === "tablet"
             ? "38%"
             : "20%",
+        maxHeight: "80%",
         pointerEvents: !isDropdownVisible ? "none" : "all",
       }}
     >
@@ -553,7 +587,7 @@ function DropdownMenu({
           boxShadow: "rgba(0, 0, 0, 0.315) 4px 4px 10px",
           overflow: "hidden",
           transition: "all 0.4s",
-          fontSize: fontSize,
+          fontSize,
           opacity: !isDropdownVisible ? 0 : 1,
         }}
       >
@@ -664,6 +698,29 @@ function DropdownMenu({
           ></Image>
           <span style={{ color: "rgba(233, 4, 4, 1)" }}>Logout</span>
         </li>
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "calc(100% - (100% / 7.9 * 7))",
+            backgroundColor: "orange",
+          }}
+        >
+          <LanguageSelect
+            fontSize={`calc(${fontSize} * 0.8)`}
+            position="relative"
+            minWidth="50%"
+            backgroundColor="transparent"
+            color="rgba(3, 46, 124, 1)"
+          />
+          <p style={{ fontSize: `calc(${fontSize} * 0.8)`, color: "brown" }}>
+            Ver 1.0.0
+          </p>
+        </div>
       </ul>
     </div>
   );
@@ -671,9 +728,13 @@ function DropdownMenu({
 
 function Timers({
   mediaContext,
+  language,
+  innerWidth,
   timerWidth,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
+  innerWidth: number;
   timerWidth: string;
 }) {
   const MAX_TIMERS = 10;
@@ -682,7 +743,7 @@ function Timers({
       ? getSize(timerWidth, 0.045, "3.5vw")
       : mediaContext === "tablet"
       ? getSize(timerWidth, 0.07, "2.7vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
+      : mediaContext === "desktop" && innerWidth <= 1100
       ? getSize(timerWidth, 0.035, "1.5vw")
       : getSize(timerWidth, 0.031, "1.3vw");
 
@@ -743,7 +804,7 @@ function Timers({
               ? "90%"
               : mediaContext === "tablet"
               ? "100%"
-              : mediaContext === "desktop" && window.innerWidth <= 1100
+              : mediaContext === "desktop" && innerWidth <= 1100
               ? "95%"
               : "90%",
           height: "fit-content",
@@ -754,6 +815,7 @@ function Timers({
           <Timer
             key={keyObj.id}
             mediaContext={mediaContext}
+            language={language}
             fontSize={fontSize}
             index={i}
             onClickDelete={handleDeleteTimers}
@@ -793,11 +855,13 @@ function Timers({
 
 function Timer({
   mediaContext,
+  language,
   fontSize,
   index,
   onClickDelete,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   index: number;
   onClickDelete: (i: number) => void;
@@ -1142,9 +1206,13 @@ function Timer({
 
 function Note({
   mediaContext,
+  language,
+  innerWidth,
   noteWidth,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
+  innerWidth: number;
   noteWidth: string;
 }) {
   return (
@@ -1162,7 +1230,7 @@ function Note({
             ? getSize(noteWidth, 0.047, "4vw")
             : mediaContext === "tablet"
             ? getSize(noteWidth, 0.07, "2.7vw")
-            : mediaContext === "desktop" && window.innerWidth <= 1100
+            : mediaContext === "desktop" && innerWidth <= 1100
             ? getSize(noteWidth, 0.04, "1.5vw")
             : getSize(noteWidth, 0.03, "1.3vw"),
         letterSpacing:
