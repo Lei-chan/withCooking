@@ -40,7 +40,6 @@ import { convertIngUnits } from "../helpers/converter";
 import { LanguageContext, MediaContext, UserContext } from "../providers";
 import fracty from "fracty";
 import { nanoid } from "nanoid";
-import { create } from "domain";
 
 export function LanguageSelect({
   fontSize,
@@ -58,16 +57,17 @@ export function LanguageSelect({
   const mediaContext = useContext(MediaContext);
   const languageContext = useContext(LanguageContext);
 
-  const [languageValue, setLanguageValue] = useState<TYPE_LANGUAGE>("en");
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
 
   function handleChangeLanguage(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.currentTarget.value as TYPE_LANGUAGE;
-    setLanguageValue(value);
+    setLanguage(value);
     languageContext?.updateLanguage(value);
   }
 
   useEffect(() => {
-    if (languageContext) setLanguageValue(languageContext.language);
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
   }, [languageContext?.language]);
 
   return (
@@ -76,7 +76,7 @@ export function LanguageSelect({
         position,
         backgroundImage: 'url("/icons/global.svg")',
         backgroundRepeat: "no-repeat",
-        backgroundSize: "17%",
+        backgroundSize: "13%",
         backgroundPositionX: "3%",
         backgroundPositionY: "center",
         backgroundColor,
@@ -93,7 +93,7 @@ export function LanguageSelect({
         fontSize: `calc(${fontSize} * 0.9)`,
         color,
       }}
-      value={languageValue}
+      value={language}
       onChange={handleChangeLanguage}
     >
       <option value="en">English</option>
@@ -146,16 +146,36 @@ export function OverlayMessage({
   toggleLogout?: () => void;
 }) {
   const mediaContext = useContext(MediaContext);
-  const languageContext = useContext(LanguageContext);
   const userContext = useContext(UserContext);
-  const [isVisible, setIsVisible] = useState(true);
 
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4.4vw"
-      : mediaContext === "tablet"
-      ? "3vw"
-      : "1.6vw";
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
+  const [fontSize, setFontSize] = useState("1.6vw");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4.4vw"
+        : mediaContext === "tablet"
+        ? "3vw"
+        : "1.6vw";
+    setFontSize(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "vw" : fontSizeEn
+    );
+  }, [mediaContext, language]);
+
+  const [isVisible, setIsVisible] = useState(true);
 
   function getMessage() {
     let message;
@@ -179,7 +199,7 @@ export function OverlayMessage({
       message = (
         <p>
           {languageContext?.language === "ja"
-            ? "ログインしてよろしいですか？"
+            ? "ログアウトしてよろしいですか？"
             : "Are you sure you want to log out?"}
         </p>
       );
@@ -234,7 +254,7 @@ export function OverlayMessage({
           textAlign: "center",
           backgroundImage:
             "linear-gradient(rgba(255, 235, 221, 1), rgba(255, 240, 172, 1))",
-          fontSize: fontSize,
+          fontSize,
           letterSpacing: "0.08vw",
           lineHeight: option === "message" ? "150%" : "130%",
           padding: "2%",
@@ -244,7 +264,7 @@ export function OverlayMessage({
       >
         <button
           className={styles.btn__x}
-          style={{ fontSize: fontSize }}
+          style={{ fontSize }}
           onClick={() => {
             content === "welcome" && handleClose();
             content === "logout" && toggleLogout && toggleLogout();
@@ -2660,26 +2680,56 @@ export function RecipeNoEdit({
   mainOrRecipe: "main" | "recipe";
   userRecipe: TYPE_RECIPE | null;
 }) {
+  //language
   const languageContext = useContext(LanguageContext);
 
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+
+    setLanguage(languageContext?.language);
+  }, [languageContext?.language]);
+
   ///design
-  const fontSize =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.045, "4.5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.035, "2.7vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
-      ? getSize(recipeWidth, 0.031, "1.5vw")
-      : getSize(recipeWidth, 0.028, "1.3vw");
-  const headerSize =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.05, "5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.04, "3.5vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
-      ? getSize(recipeWidth, 0.035, "1.5vw")
-      : getSize(recipeWidth, 0.032, "1.3vw");
-  const marginTop = getSize(recipeWidth, 0.11, "30px");
+  const [fontSize, setFontSize] = useState("1.3vw");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.045, "4.5vw")
+        : mediaContext === "tablet"
+        ? getSize(recipeWidth, 0.035, "2.7vw")
+        : mediaContext === "desktop" && window.innerWidth <= 1100
+        ? getSize(recipeWidth, 0.031, "1.5vw")
+        : getSize(recipeWidth, 0.028, "1.3vw");
+
+    setFontSize(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
+    );
+  }, [mediaContext, language, recipeWidth]);
+
+  const [headerSize, setHeaderSize] = useState("1.3vw");
+
+  useEffect(() => {
+    setHeaderSize(parseFloat(fontSize) * 1.1 + "px");
+  }, [fontSize]);
+
+  const [marginTop, setMarginTop] = useState("30px");
+
+  useEffect(() => {
+    setMarginTop(getSize(recipeWidth, 0.11, "30px"));
+  }, [recipeWidth]);
+
+  // const headerSize =
+  // mediaContext === "mobile"
+  // ? getSize(recipeWidth, 0.05, "5vw")
+  // : mediaContext === "tablet"
+  //     ? getSize(recipeWidth, 0.04, "3.5vw")
+  //     : mediaContext === "desktop" && window.innerWidth <= 1100
+  //     ? getSize(recipeWidth, 0.035, "1.5vw")
+  //     : getSize(recipeWidth, 0.032, "1.3vw");
 
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE | null>(userRecipe);
@@ -2719,12 +2769,16 @@ export function RecipeNoEdit({
     window.addEventListener("hashchange", handleHashChange);
 
     return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
+  }, [mainOrRecipe, languageContext?.language]);
 
   async function handleHashChange() {
     const id = window.location.hash.slice(1);
     if (!id)
-      return setMessage("Let's start cooking by selecting your recipe :)");
+      return setMessage(
+        languageContext?.language === "ja"
+          ? "レシピを検索してクッキングを始めましょう！"
+          : "Let's start cooking by selecting your recipe :)"
+      );
     await getRecipe(id);
   }
 
@@ -2741,7 +2795,11 @@ export function RecipeNoEdit({
       setIsLoading(false);
     } catch (err: any) {
       setIsLoading(false);
-      setCurError(err.message);
+      setCurError(
+        language === "ja"
+          ? "レシピのロード中にエラーが発生しました🙇‍♂️もう一度試してください"
+          : "Server error while loading recipe 🙇‍♂️ Please try again"
+      );
       console.error(
         "Error while loading recipe",
         err.message,
@@ -2783,7 +2841,11 @@ export function RecipeNoEdit({
     try {
       setFavorite(!favorite);
       setCurError("");
-      setSuccessMessage("Updating favorite status...");
+      setSuccessMessage(
+        language === "ja"
+          ? "お気に入り情報を更新中…"
+          : "Updating favorite status..."
+      );
       if (!recipe) return;
 
       const newRecipe = { ...recipe };
@@ -2792,12 +2854,22 @@ export function RecipeNoEdit({
       const recipeData = await uploadRecipeUpdate(newRecipe, userContext);
       setStateInit(recipeData);
 
-      setSuccessMessage("Favorite status updated successfully!");
+      setSuccessMessage(
+        language === "ja"
+          ? "お気に入り情報が更新されました！"
+          : "Favorite status updated successfully!"
+      );
       await wait();
       setSuccessMessage("");
     } catch (err: any) {
       setSuccessMessage("");
-      setCurError(`Server error while updating recipe 🙇‍♂️ ${err.message}`);
+      setCurError(
+        `${
+          language === "ja"
+            ? "レシピの更新中にエラーが発生しました🙇‍♂️もう一度試してください"
+            : "Server error while updating recipe 🙇‍♂️"
+        } ${err.message}`
+      );
       console.error(
         "Error while updating recipe",
         err.message,
@@ -2824,7 +2896,13 @@ export function RecipeNoEdit({
         favorite === undefined) &&
       mainOrRecipe === "main" ? (
         <MessageContainer
-          message={isLoading ? "Loading your recipe..." : message}
+          message={
+            isLoading
+              ? language === "ja"
+                ? "レシピをロード中…"
+                : "Loading your recipe..."
+              : message
+          }
           fontSize={`calc(${fontSize} * 1.3)`}
           letterSpacing={"0.05vw"}
           wordSpacing={"0.3vw"}
@@ -2862,7 +2940,7 @@ export function RecipeNoEdit({
               className={clsx(styles.btn__img, styles.btn__edit)}
               style={{
                 color: "blueviolet",
-                backgroundImage: "url(/pencile.svg)",
+                backgroundImage: "url(/icons/pencile.svg)",
                 width:
                   mediaContext === "mobile" || mediaContext === "tablet"
                     ? "20%"
@@ -2874,7 +2952,7 @@ export function RecipeNoEdit({
               type="button"
               onClick={handleClickEdit}
             >
-              Edit
+              {language === "ja" ? "編集" : "Edit"}
             </button>
           )}
           <ImageTitleNoEdit
@@ -3040,21 +3118,31 @@ function ImageTitleNoEdit({
   image: TYPE_FILE | undefined;
   title: string;
 }) {
-  const width =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, mainOrRecipe === "main" ? 0.8 : 0.82, "250px")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, mainOrRecipe === "main" ? 0.72 : 0.74, "400px")
-      : getSize(recipeWidth, mainOrRecipe === "main" ? 0.65 : 0.7, "440px");
+  //design
+  const [width, setWidth] = useState("440px");
+  const [height, setHeight] = useState("264px");
 
-  const height =
-    parseInt(width) *
-      (mediaContext === "mobile"
-        ? 0.65
-        : mainOrRecipe === "recipe" && mediaContext === "tablet"
-        ? 0.63
-        : 0.6) +
-    "px";
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const imageTitleWidth =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, mainOrRecipe === "main" ? 0.8 : 0.82, "250px")
+        : mediaContext === "tablet"
+        ? getSize(recipeWidth, mainOrRecipe === "main" ? 0.72 : 0.74, "400px")
+        : getSize(recipeWidth, mainOrRecipe === "main" ? 0.65 : 0.7, "440px");
+
+    setWidth(imageTitleWidth);
+    setHeight(
+      parseInt(imageTitleWidth) *
+        (mediaContext === "mobile"
+          ? 0.65
+          : mainOrRecipe === "recipe" && mediaContext === "tablet"
+          ? 0.63
+          : 0.6) +
+        "px"
+    );
+  }, [mediaContext, recipeWidth, mainOrRecipe]);
 
   return (
     <div
@@ -3072,7 +3160,7 @@ function ImageTitleNoEdit({
       ) : (
         <Image
           src={image.data}
-          alt="main image"
+          alt={language === "ja" ? "メイン画像" : "main image"}
           width={parseFloat(width)}
           height={parseFloat(height)}
         ></Image>
@@ -3144,11 +3232,30 @@ function BriefExplanationNoEdit({
   onChangeIngredientsUnit: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   onClickFavorite: () => void;
 }) {
-  const width = getSize(recipeWidth, 0.9, "90%");
-  const fontSizeBrief =
-    parseFloat(fontSize) * (mainOrRecipe === "main" ? 0.9 : 0.95) + "px";
-  const iconSize = parseFloat(fontSizeBrief);
-  const fontFukidashiSize = `calc(${fontSizeBrief} * 0.9)`;
+  //design
+  const [width, setWidth] = useState("90%");
+  const [fontSizeBrief, setFontSizeBrief] = useState(
+    parseFloat(fontSize) * (mainOrRecipe === "main" ? 0.9 : 0.95) + "px"
+  );
+  const [iconSize, setIconSize] = useState(parseFloat(fontSizeBrief));
+  const [fontFukidashiSize, setFontFukidashiSize] = useState(
+    `calc(${fontSizeBrief} * 0.9)`
+  );
+
+  useEffect(() => {
+    setWidth(getSize(recipeWidth, 0.9, "90%"));
+  }, [recipeWidth]);
+
+  useEffect(() => {
+    const fontSizeEn =
+      parseFloat(fontSize) * (mainOrRecipe === "main" ? 0.9 : 0.95) + "px";
+    const fontSizeFinal =
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
+
+    setFontSizeBrief(fontSizeFinal);
+    setIconSize(parseFloat(fontSizeEn));
+    setFontFukidashiSize(`calc(${fontSizeFinal} * 0.9)`);
+  }, [fontSize, mainOrRecipe, language]);
 
   const [mouseOver, setMouseOver] = useState([false, false, false, false]);
   const [servingsUnit, setServingsUnit] = useState(curRecipe?.servings.unit);
@@ -3230,7 +3337,6 @@ function BriefExplanationNoEdit({
         alignItems: "center",
         justifyContent: "center",
         width,
-        // aspectRatio: "1/0.1",
         height: "fit-content",
         gap: "3%",
         margin:
@@ -3266,7 +3372,6 @@ function BriefExplanationNoEdit({
         <div
           className={styles.container__author_servings}
           style={{
-            // gap: mediaContext === "mobile" ? "6%" : "2%"
             gap: mediaContext === "mobile" ? "4%" : "2%",
             marginBottom: "2%",
           }}
@@ -3286,7 +3391,7 @@ function BriefExplanationNoEdit({
                 fontSize: fontFukidashiSize,
               }}
             >
-              Author of the recipe
+              {language === "ja" ? "このレシピの作者" : "Author of the recipe"}
             </p>
           </div>
           <div
@@ -3296,8 +3401,8 @@ function BriefExplanationNoEdit({
             onMouseOut={handleMouseOut}
           >
             <Image
-              src={"/person.svg"}
-              alt="person icon"
+              src={"/icons/person.svg"}
+              alt={language === "ja" ? "アイコン人" : "person icon"}
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -3323,7 +3428,9 @@ function BriefExplanationNoEdit({
               className={styles.p__fukidashi}
               style={{ fontSize: fontFukidashiSize }}
             >
-              Number of servings of the recipe
+              {language === "ja"
+                ? "このレシピの量"
+                : "Number of servings of the recipe"}
             </p>
           </div>
           <div
@@ -3333,8 +3440,8 @@ function BriefExplanationNoEdit({
             onMouseOut={handleMouseOut}
           >
             <Image
-              src={"/servings.svg"}
-              alt="servings icon"
+              src={"/icons/servings.svg"}
+              alt={language === "ja" ? "アイコン量" : "servings icon"}
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -3347,7 +3454,7 @@ function BriefExplanationNoEdit({
               min="1"
               max={MAX_SERVINGS}
               name="servings"
-              placeholder="Servings"
+              placeholder={language === "ja" ? "量" : "Servings"}
               value={servingsValue}
               onChange={onChangeServings}
             />
@@ -3380,7 +3487,9 @@ function BriefExplanationNoEdit({
               className={styles.p__fukidashi}
               style={{ fontSize: fontFukidashiSize }}
             >
-              Unit system you prefer
+              {language === "ja"
+                ? "使用したい地域の単位"
+                : "Unit system you prefer"}
             </p>
           </div>
           <div
@@ -3390,8 +3499,10 @@ function BriefExplanationNoEdit({
             onMouseOut={handleMouseOut}
           >
             <Image
-              src={"/scale.svg"}
-              alt="ingredient units icon"
+              src={"/icons/scale.svg"}
+              alt={
+                language === "ja" ? "アイコン材料単位" : "ingredient units icon"
+              }
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -3406,12 +3517,24 @@ function BriefExplanationNoEdit({
             value={regionUnit}
             onChange={onChangeIngredientsUnit}
           >
-            <option value="original">Original</option>
-            <option value="metric">Metric</option>
-            <option value="us">US</option>
-            <option value="japan">Japan</option>
-            <option value="australia">Australia</option>
-            <option value="metricCup">Metric cup (1cup = 250ml)</option>
+            <option value="original">
+              {language === "ja" ? "オリジナル" : "Original"}
+            </option>
+            <option value="metric">
+              {language === "ja" ? "メトリック" : "Metric"}
+            </option>
+            <option value="us">{language === "ja" ? "アメリカ" : "US"}</option>
+            <option value="japan">
+              {language === "ja" ? "日本" : "Japan"}
+            </option>
+            <option value="australia">
+              {language === "ja" ? "オーストラリア" : "Australia"}
+            </option>
+            <option value="metricCup">
+              {language === "ja"
+                ? "メトリックカップ (1カップ = 250ml)"
+                : "Metric cup (1cup = 250ml)"}
+            </option>
           </select>
 
           <div
@@ -3427,7 +3550,9 @@ function BriefExplanationNoEdit({
               className={styles.p__fukidashi}
               style={{ fontSize: fontFukidashiSize }}
             >
-              Temperatures used in the recipe
+              {language === "ja"
+                ? "このレシピで使用される温度"
+                : "Temperatures used in the recipe"}
             </p>
           </div>
           <div
@@ -3437,8 +3562,10 @@ function BriefExplanationNoEdit({
             onMouseOut={handleMouseOut}
           >
             <Image
-              src={"/temperature.svg"}
-              alt="ingredient units icon"
+              src={"/icons/temperature.svg"}
+              alt={
+                language === "ja" ? "アイコン温度単位" : "temperature unit icon"
+              }
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -3508,7 +3635,7 @@ function IngredientsNoEdit({
           })`,
         }}
       >
-        Ingredients
+        {language === "ja" ? "材料" : "Ingredients"}
       </h2>
       <div
         style={{
@@ -3645,7 +3772,7 @@ function InstructionsNoEdit({
         className={styles.header}
         style={{ marginBottom: headerSize, fontSize: headerSize }}
       >
-        Instructions
+        {language === "ja" ? "作り方" : "Instructions"}
       </h2>
       {preparation && (
         <div
@@ -3669,7 +3796,7 @@ function InstructionsNoEdit({
               alignSelf: "flex-start",
             }}
           >
-            Preparation
+            {language === "ja" ? "準備" : "Preparation"}
           </span>
           <p
             style={{
@@ -3703,7 +3830,9 @@ function InstructionsNoEdit({
         ))
       ) : (
         <p className={styles.no_content} style={{ fontSize }}>
-          There're no instructions
+          {language === "ja"
+            ? "作り方はまだセットされていません"
+            : "There're no instructions"}
         </p>
       )}
     </div>
@@ -3849,7 +3978,7 @@ function AboutThisRecipeNoEdit({
         className={styles.header}
         style={{ marginBottom: headerSize, fontSize: headerSize }}
       >
-        About this recipe
+        {language === "ja" ? "このレシピについて" : "About this recipe"}
       </h2>
       <div
         style={{
@@ -3873,7 +4002,10 @@ function AboutThisRecipeNoEdit({
             padding: "1.2% 1.5%",
           }}
         >
-          {description || "There's no description"}
+          {description ||
+            (language === "ja"
+              ? "レシピの説明はまだセットされていません"
+              : "There's no description")}
         </p>
       </div>
     </div>
@@ -3900,13 +4032,20 @@ function MemoriesNoEdit({
   const MAX_SLIDE = images.length - 1;
 
   //design
-  const width =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.9, "300px")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.65, "400px")
-      : getSize(recipeWidth, 0.55, "400px");
-  const height = parseInt(width) * 0.55 + "px";
+  const [width, setWidth] = useState("400px");
+  const [height, setHeight] = useState("220px");
+
+  useEffect(() => {
+    const memoriesWidth =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.9, "300px")
+        : mediaContext === "tablet"
+        ? getSize(recipeWidth, 0.65, "400px")
+        : getSize(recipeWidth, 0.55, "400px");
+
+    setWidth(memoriesWidth);
+    setHeight(parseInt(memoriesWidth) * 0.55 + "px");
+  }, [mediaContext, recipeWidth]);
 
   const [timeourId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const [curImage, setCurImage] = useState(0);
@@ -3947,7 +4086,7 @@ function MemoriesNoEdit({
         className={styles.header}
         style={{ marginBottom: headerSize, fontSize: headerSize }}
       >
-        Memories of the recipe
+        {language === "ja" ? "このレシピの思い出" : "Memories of the recipe"}
       </h2>
       <div
         style={{
@@ -4017,7 +4156,9 @@ function MemoriesNoEdit({
           </div>
         ) : (
           <p className={styles.no_content} style={{ fontSize, height: "100%" }}>
-            There're no memory images
+            {language === "ja"
+              ? "写真はまだセットされていません"
+              : "There're no memory images"}
           </p>
         )}
       </div>
@@ -4053,7 +4194,7 @@ function MemoryImgNoEdit({
       {image?.data && (
         <Image
           src={image.data}
-          alt={`memory image ${i + 1}`}
+          alt={`${language === "ja" ? "思い出写真" : "memory image"} ${i + 1}`}
           width={parseInt(width)}
           height={parseInt(height)}
         ></Image>
@@ -4094,7 +4235,7 @@ function CommentsNoEdit({
         className={styles.header}
         style={{ marginBottom: headerSize, fontSize: headerSize }}
       >
-        Comments
+        {language === "ja" ? "コメント" : "Comments"}
       </h2>
       <div
         style={{
@@ -4116,7 +4257,10 @@ function CommentsNoEdit({
             textAlign: comments ? "left" : "center",
           }}
         >
-          {comments || "There're no comments"}
+          {comments ||
+            (language === "ja"
+              ? "コメントはまだセットされていません"
+              : "There're no comments")}
         </p>
       </div>
     </div>
@@ -4148,14 +4292,33 @@ export function LoadingRecipe({
 export function Loading({ message }: { message: string }) {
   const mediaContext = useContext(MediaContext);
 
-  const imageSize =
-    mediaContext === "mobile"
-      ? 100
-      : mediaContext === "tablet"
-      ? 130
-      : mediaContext === "desktop"
-      ? 150
-      : 180;
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+
+    setLanguage(languageContext?.language);
+  }, [languageContext?.language]);
+
+  //design
+  const [imageSize, setImageSize] = useState(180);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setImageSize(
+      mediaContext === "mobile"
+        ? 100
+        : mediaContext === "tablet"
+        ? 130
+        : mediaContext === "desktop"
+        ? 150
+        : 180
+    );
+  }, [mediaContext]);
 
   return (
     <div
@@ -4204,7 +4367,7 @@ export function Loading({ message }: { message: string }) {
         <Image
           className={styles.img__uploading}
           src="/loading.png"
-          alt="loading icon"
+          alt={language === "ja" ? "アイコンロード中" : "loading icon"}
           width={imageSize}
           height={imageSize}
           priority

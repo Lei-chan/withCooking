@@ -1,6 +1,6 @@
 "use client";
 //react
-import React, { useEffect, useRef, useState, useContext } from "react";
+import React, { useEffect, useRef, useState, useContext, useMemo } from "react";
 //next.js
 import Image from "next/image";
 import styles from "./page.module.css";
@@ -34,7 +34,6 @@ import {
 } from "../lib/components/components";
 //library
 import { nanoid } from "nanoid";
-import { error } from "console";
 
 export default function MAIN() {
   const mediaContext = useContext(MediaContext);
@@ -45,6 +44,7 @@ export default function MAIN() {
 
   const searchRef = useRef(null);
 
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
   const [innerWidth, setInnerWidth] = useState(1440);
   const [innerHeight, setInnerHeight] = useState(600);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
@@ -52,23 +52,40 @@ export default function MAIN() {
   const [isMessageVisible, setIsMessageVisible] = useState(false);
   const [isDraggingX, setIsDraggingX] = useState(false);
   const [isDraggingY, setIsDraggingY] = useState(false);
-  const [recipeWidth, setRecipeWidth] = useState(
-    mediaContext === "mobile"
-      ? innerWidth + "px"
-      : mediaContext === "tablet"
-      ? innerWidth * 0.65 + "px"
-      : innerWidth * 0.55 + "px"
-  );
+  const [recipeWidth, setRecipeWidth] = useState(innerWidth * 0.55 + "px");
   const [timerHeight, setTimerHeight] = useState(innerHeight * 0.65 + "px");
-  const timerNoteWidth =
-    mediaContext === "mobile"
-      ? innerWidth + "px"
-      : innerWidth - parseFloat(recipeWidth) + "px";
+  const [timerNoteWidth, setTimerNoteWidth] = useState(
+    innerWidth - parseFloat(recipeWidth) + "px"
+  );
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
 
   useEffect(() => {
     setInnerWidth(window.innerWidth);
     setInnerHeight(window.innerHeight);
   }, []);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setRecipeWidth(
+      mediaContext === "mobile"
+        ? innerWidth + "px"
+        : mediaContext === "tablet"
+        ? innerWidth * 0.65 + "px"
+        : innerWidth * 0.55 + "px"
+    );
+    setTimerHeight(innerHeight * 0.65 + "px");
+    setTimerNoteWidth(
+      mediaContext === "mobile"
+        ? innerWidth + "px"
+        : innerWidth - parseFloat(recipeWidth) + "px"
+    );
+  }, [mediaContext, innerWidth, innerHeight, recipeWidth]);
 
   function handleMouseDownX() {
     setIsDraggingX(true);
@@ -160,7 +177,7 @@ export default function MAIN() {
         <Search
           searchRef={searchRef}
           mediaContext={mediaContext}
-          language={languageContext?.language || "en"}
+          language={language}
           userContext={userContext}
           innerWidth={innerWidth}
           isSearchVisible={isSearchVisible}
@@ -182,7 +199,7 @@ export default function MAIN() {
         )}
         <DropdownMenu
           mediaContext={mediaContext}
-          language={languageContext?.language || "en"}
+          language={language}
           isDropdownVisible={isDropdownVisible}
           onClickDropdown={handleToggleDropdown}
           onClickLogout={handleToggleLogout}
@@ -235,13 +252,13 @@ export default function MAIN() {
           ></div>
           <Timers
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             innerWidth={innerWidth}
             timerWidth={timerNoteWidth}
           />
           <Note
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             innerWidth={innerWidth}
             noteWidth={timerNoteWidth}
           />
@@ -269,25 +286,48 @@ function Search({
   onClickSearch: () => void;
 }) {
   const RECIPES_PER_PAGE = 6;
-  const searchMenuSize =
-    innerWidth *
-      (mediaContext === "mobile"
-        ? 0.7
-        : mediaContext === "tablet"
-        ? 0.5
-        : mediaContext === "desktop" && innerWidth <= 1100
-        ? 0.35
-        : 0.28) +
-    "px";
-  const fontSize =
-    parseFloat(searchMenuSize) *
-      (mediaContext === "mobile"
-        ? 0.07
-        : mediaContext === "tablet"
-        ? 0.06
-        : 0.055) +
-    "px";
-  const mainImageSize = parseFloat(searchMenuSize) * 0.2 + "px";
+
+  //design
+  const [searchMenuSize, setSearchMenuSize] = useState(
+    innerWidth * 0.28 + "px"
+  );
+  const [fontSize, setFontSize] = useState(
+    parseFloat(searchMenuSize) * 0.055 + "px"
+  );
+  const [mainImageSize, setMainImageSize] = useState(
+    parseFloat(searchMenuSize) * 0.2 + "px"
+  );
+
+  useEffect(() => {
+    const searchSize =
+      innerWidth *
+        (mediaContext === "mobile"
+          ? 0.7
+          : mediaContext === "tablet"
+          ? 0.5
+          : mediaContext === "desktop" && innerWidth <= 1100
+          ? 0.35
+          : 0.28) +
+      "px";
+
+    setSearchMenuSize(searchSize);
+
+    const fontSizeSearchEn =
+      parseFloat(searchSize) *
+        (mediaContext === "mobile"
+          ? 0.07
+          : mediaContext === "tablet"
+          ? 0.06
+          : 0.055) +
+      "px";
+    setFontSize(
+      language === "ja"
+        ? parseFloat(fontSizeSearchEn) * 0.9 + "px"
+        : fontSizeSearchEn
+    );
+
+    setMainImageSize(parseFloat(searchSize) * 0.2 + "px");
+  }, [mediaContext, innerWidth, language]);
 
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
   const [numberOfRecipes, setNumberOfRecipes] = useState(
@@ -340,7 +380,11 @@ function Search({
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
       console.error("Error while getting recipes", err.message);
-      setError("Server error while getting recipes 🙇‍♂️ Please retry again!");
+      setError(
+        language === "ja"
+          ? "レシピ取得中にサーバーエラーが発生しました🙇‍♂️もう一度試してください"
+          : "Server error while getting recipes 🙇‍♂️ Please retry again!"
+      );
     }
   }
 
@@ -414,20 +458,22 @@ function Search({
             style={{ fontSize: `calc(${fontSize} * 0.9)` }}
             name="keyword"
             type="search"
-            placeholder="Search your recipe"
+            placeholder={
+              language === "ja" ? "レシピを検索" : "Search your recipe"
+            }
           ></input>
           <button
             className={styles.btn__search}
             style={{ fontSize: `calc(${fontSize} * 0.7)` }}
             type="submit"
           >
-            Search
+            {language === "ja" ? "検索" : "Search"}
           </button>
         </form>
         <ul className={styles.search_results}>
           {message || isPending ? (
             <p className={styles.no_results} style={{ fontSize: fontSize }}>
-              {message || "Loading..."}
+              {message || language === "ja" ? "ロード中…" : "Loading..."}
             </p>
           ) : (
             recipes.map((recipe, i) => (
@@ -438,9 +484,9 @@ function Search({
               >
                 {recipe.mainImagePreview?.data ? (
                   <Image
-                    style={{ borderRadius: "50%" }}
+                    style={{ borderRadius: "50%", maxHeight: "95%" }}
                     src={recipe.mainImagePreview.data}
-                    alt="main image"
+                    alt={language === "ja" ? "メイン画像" : "main image"}
                     width={parseFloat(mainImageSize)}
                     height={parseFloat(mainImageSize)}
                   ></Image>
@@ -458,7 +504,9 @@ function Search({
                 {recipe.favorite && (
                   <Image
                     src="/icons/star-on.png"
-                    alt="favorite icon"
+                    alt={
+                      language === "ja" ? "アイコンお気に入り" : "favorite icon"
+                    }
                     width={parseFloat(mainImageSize) * 0.3}
                     height={parseFloat(mainImageSize) * 0.3}
                   ></Image>
@@ -467,36 +515,6 @@ function Search({
             ))
           )}
         </ul>
-        {/* {!isPending && curPage > 1 && (
-          <button
-            className={clsx(
-              styles.btn__pagination,
-              styles.btn__pagination_left
-            )}
-            type="button"
-            value="decrease"
-            onClick={handlePagination}
-          >
-            Page {curPage - 1}
-            <br />
-            &larr;
-          </button>
-        )}
-        {!isPending && curPage < numberOfPages && (
-          <button
-            className={clsx(
-              styles.btn__pagination,
-              styles.btn__pagination_right
-            )}
-            type="button"
-            value="increase"
-            onClick={handlePagination}
-          >
-            Page {curPage + 1}
-            <br />
-            &rarr;{" "}
-          </button>
-        )} */}
         <PaginationButtons
           mediaContext={mediaContext}
           fontSize={fontSize}
@@ -524,15 +542,23 @@ function DropdownMenu({
   onClickDropdown: () => void;
   onClickLogout: () => void;
 }) {
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4vw"
-      : mediaContext === "tablet"
-      ? "2.7vw"
-      : "1.8vw";
+  const [fontSize, setFontSize] = useState("1.8vw");
+
+  useEffect(() => {
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4vw"
+        : mediaContext === "tablet"
+        ? "2.7vw"
+        : "1.8vw";
+
+    setFontSize(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "vw" : fontSizeEn
+    );
+  }, [mediaContext, language]);
 
   //check if news has new info
-  const isNewsNew = news.some((news) => news.new);
+  const isNewsNew = useMemo(() => news.some((news) => news.new), [news]);
 
   return (
     <div
@@ -598,11 +624,11 @@ function DropdownMenu({
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/recipes.svg"}
-              alt="recipe icon"
+              alt={language === "ja" ? "アイコンレシピ" : "recipe icon"}
               width={25}
               height={25}
             ></Image>
-            <span>Recipes</span>
+            <span>{language === "ja" ? "レシピ" : "Recipes"}</span>
           </li>
         </Link>
         <Link
@@ -612,11 +638,11 @@ function DropdownMenu({
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/convert.svg"}
-              alt="converter icon"
+              alt={language === "ja" ? "アイコン単位変換" : "converter icon"}
               width={25}
               height={25}
             ></Image>
-            <span>Converter</span>
+            <span>{language === "ja" ? "単位変換" : "Converter"}</span>
           </li>
         </Link>
         <Link
@@ -626,11 +652,11 @@ function DropdownMenu({
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/account.svg"}
-              alt="account icon"
+              alt={language === "ja" ? "アイコンアカウント" : "account icon"}
               width={25}
               height={25}
             ></Image>
-            <span>Account</span>
+            <span>{language === "ja" ? "アカウント" : "Account"}</span>
           </li>
         </Link>
         <Link
@@ -640,11 +666,11 @@ function DropdownMenu({
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/news.svg"}
-              alt="news icon"
+              alt={language === "ja" ? "アイコンニュース" : "news icon"}
               width={25}
               height={25}
             ></Image>
-            <span>News</span>
+            <span>{language === "ja" ? "ニュース" : "News"}</span>
             {isNewsNew && (
               <span
                 style={{
@@ -664,11 +690,11 @@ function DropdownMenu({
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/howtouse.svg"}
-              alt="how to use icon"
+              alt={language === "ja" ? "アイコン使い方" : "how to use icon"}
               width={25}
               height={25}
             ></Image>
-            <span>How to use</span>
+            <span>{language === "ja" ? "使い方" : "How to use"}</span>
           </li>
         </Link>
         <Link
@@ -678,11 +704,13 @@ function DropdownMenu({
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/feedback.svg"}
-              alt="feedback icon"
+              alt={
+                language === "ja" ? "アイコンフィードバック" : "feedback icon"
+              }
               width={25}
               height={25}
             ></Image>
-            <span>Feedback</span>
+            <span>{language === "ja" ? "フィードバック" : "Feedback"}</span>
           </li>
         </Link>
         <li
@@ -692,11 +720,13 @@ function DropdownMenu({
         >
           <Image
             src={"/icons/logout.svg"}
-            alt="logout icon"
+            alt={language === "ja" ? "アイコンログアウト" : "logout icon"}
             width={25}
             height={25}
           ></Image>
-          <span style={{ color: "rgba(233, 4, 4, 1)" }}>Logout</span>
+          <span style={{ color: "rgba(233, 4, 4, 1)" }}>
+            {language === "ja" ? "ログアウト" : "Logout"}
+          </span>
         </li>
         <div
           style={{
@@ -738,14 +768,22 @@ function Timers({
   timerWidth: string;
 }) {
   const MAX_TIMERS = 10;
-  const fontSize =
-    mediaContext === "mobile"
-      ? getSize(timerWidth, 0.045, "3.5vw")
-      : mediaContext === "tablet"
-      ? getSize(timerWidth, 0.07, "2.7vw")
-      : mediaContext === "desktop" && innerWidth <= 1100
-      ? getSize(timerWidth, 0.035, "1.5vw")
-      : getSize(timerWidth, 0.031, "1.3vw");
+  const [fontSize, setFontSize] = useState(getSize(timerWidth, 0.031, "1.3vw"));
+
+  useEffect(() => {
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(timerWidth, 0.045, "3.5vw")
+        : mediaContext === "tablet"
+        ? getSize(timerWidth, 0.07, "2.7vw")
+        : mediaContext === "desktop" && innerWidth <= 1100
+        ? getSize(timerWidth, 0.035, "1.5vw")
+        : getSize(timerWidth, 0.031, "1.3vw");
+
+    setFontSize(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
+    );
+  }, [language, timerWidth]);
 
   const [timerKeys, setTimerKeys] = useState(
     Array(1)
@@ -788,7 +826,7 @@ function Timers({
           marginBottom: "5%",
         }}
       >
-        Timers
+        {language === "ja" ? "タイマー" : "Timers"}
       </h2>
       <div
         style={{
@@ -844,7 +882,7 @@ function Timers({
               onClick={handleAddTimers}
             >
               +<br />
-              Add
+              {language === "ja" ? "追加" : "Add"}
             </button>
           </div>
         )}
@@ -871,13 +909,28 @@ function Timer({
   const MAX_SECONDS = 59;
 
   //design
-  const fontSizeTimeInput = parseFloat(fontSize) * 1.2 + "px";
-  const fontSizeControlBtn = parseFloat(fontSize) * 0.9 + "px";
+  const [fontSizeInput, setFontSizeInput] = useState(
+    parseFloat(fontSize) * 1.2 + "px"
+  );
+  const [fontSizeBtn, setFontSizeBtn] = useState(
+    parseFloat(fontSize) * 0.9 + "px"
+  );
+
+  useEffect(() => {
+    setFontSizeInput(
+      parseFloat(fontSize) * (language === "ja" ? 1.1 : 1.2) + "px"
+    );
+    setFontSizeBtn(
+      parseFloat(fontSize) * (language === "ja" ? 0.7 : 0.9) + "px"
+    );
+  }, [fontSize]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const defaultTime = { hours: "", minutes: "", seconds: "" };
-  const [title, setTitle] = useState(`Timer ${index + 1}`);
+  const [title, setTitle] = useState(
+    `${language === "ja" ? "タイマー" : "Timer"} ${index + 1}`
+  );
   const [time, setTime] = useState(defaultTime);
   const [paused, setPaused] = useState(false);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
@@ -1046,6 +1099,7 @@ function Timer({
     if (!isTimerSet()) return;
 
     setTime(defaultTime);
+    setPaused(false);
   };
 
   return (
@@ -1092,7 +1146,7 @@ function Timer({
           fontSize: fontSize,
         }}
         type="text"
-        placeholder="Set title for timer"
+        placeholder={language === "ja" ? "名前" : "Set name"}
         value={title}
         onChange={handleChangeTitle}
       />
@@ -1110,30 +1164,30 @@ function Timer({
           <>
             <input
               className={styles.input__time}
-              style={{ fontSize: fontSizeTimeInput }}
+              style={{ fontSize: fontSizeInput }}
               name="hours"
               type="number"
-              placeholder="h"
+              placeholder={language === "ja" ? "時間" : "h"}
               min="0"
               max="23"
               defaultValue={time.hours}
             />
             <input
               className={styles.input__time}
-              style={{ fontSize: fontSizeTimeInput }}
+              style={{ fontSize: fontSizeInput }}
               name="minutes"
               type="number"
-              placeholder="min"
+              placeholder={language === "ja" ? "分" : "min"}
               min="0"
               max="59"
               defaultValue={time.minutes}
             />
             <input
               className={styles.input__time}
-              style={{ fontSize: fontSizeTimeInput }}
+              style={{ fontSize: fontSizeInput }}
               name="seconds"
               type="number"
-              placeholder="sec"
+              placeholder={language === "ja" ? "秒" : "sec"}
               min="0"
               max="59"
               defaultValue={time.seconds}
@@ -1165,18 +1219,24 @@ function Timer({
         <button
           className={styles.btn__control_timer}
           style={{
-            fontSize: fontSizeControlBtn,
+            fontSize: fontSizeBtn,
             backgroundColor: "greenyellow",
           }}
           type="submit"
           onClick={handleStop}
         >
-          {!isTimerSet() ? "Start" : "Stop"}
+          {!isTimerSet()
+            ? language === "ja"
+              ? "開始"
+              : "Start"
+            : language === "ja"
+            ? "停止"
+            : "Stop"}
         </button>
         <button
           className={styles.btn__control_timer}
           style={{
-            fontSize: fontSizeControlBtn,
+            fontSize: fontSizeBtn,
             backgroundColor: "rgb(255, 153, 0)",
           }}
           type="button"
@@ -1186,18 +1246,24 @@ function Timer({
           }}
           value={!paused ? "pause" : "start"}
         >
-          {!paused ? "Pause" : "Start"}
+          {!paused
+            ? language === "ja"
+              ? "一時停止"
+              : "pause"
+            : language === "ja"
+            ? "開始"
+            : "start"}
         </button>
         <button
           className={styles.btn__control_timer}
           style={{
-            fontSize: fontSizeControlBtn,
+            fontSize: fontSizeBtn,
             backgroundColor: "rgb(191, 52, 255)",
           }}
           type="reset"
           onClick={handleReset}
         >
-          Reset
+          {language === "ja" ? "リセット" : "Reset"}
         </button>
       </div>
     </form>
@@ -1215,6 +1281,22 @@ function Note({
   innerWidth: number;
   noteWidth: string;
 }) {
+  const [fontSize, setFontSize] = useState("1.3vw");
+
+  useEffect(() => {
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(noteWidth, 0.047, "4vw")
+        : mediaContext === "tablet"
+        ? getSize(noteWidth, 0.07, "2.7vw")
+        : mediaContext === "desktop" && innerWidth <= 1100
+        ? getSize(noteWidth, 0.04, "1.5vw")
+        : getSize(noteWidth, 0.03, "1.3vw");
+    setFontSize(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
+    );
+  }, [mediaContext, innerWidth, noteWidth, language]);
+
   return (
     <textarea
       style={{
@@ -1225,14 +1307,7 @@ function Note({
         width: "100%",
         overflowY: "auto",
         scrollbarColor: "rgb(255, 250, 209) rgb(255, 231, 92)",
-        fontSize:
-          mediaContext === "mobile"
-            ? getSize(noteWidth, 0.047, "4vw")
-            : mediaContext === "tablet"
-            ? getSize(noteWidth, 0.07, "2.7vw")
-            : mediaContext === "desktop" && innerWidth <= 1100
-            ? getSize(noteWidth, 0.04, "1.5vw")
-            : getSize(noteWidth, 0.03, "1.3vw"),
+        fontSize,
         letterSpacing:
           mediaContext === "mobile" || mediaContext === "tablet"
             ? "0.1vw"
@@ -1241,7 +1316,11 @@ function Note({
         zIndex: "1",
       }}
       contentEditable="true"
-      placeholder="Use this section for anything :)"
+      placeholder={
+        language === "ja"
+          ? "このセクションは自由に使用してください！"
+          : "Use this section for anything :)"
+      }
     ></textarea>
   );
 }
