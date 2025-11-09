@@ -1,4 +1,5 @@
 import { MESSAGE_TIMEOUT, PASSWORD_REGEX } from "../config/settings";
+import { TYPE_LANGUAGE } from "../config/type";
 
 export function wait(second: number = MESSAGE_TIMEOUT) {
   return new Promise((resolve) => {
@@ -32,3 +33,11 @@ export const validatePassword = (input: string) => {
 
   return passwordRegex.test(input);
 };
+
+export const getFontSizeForLanguage = (
+  language: TYPE_LANGUAGE,
+  fontSizeEnglish: string
+) =>
+  language === "ja"
+    ? parseFloat(fontSizeEnglish) * 0.9 + "vw"
+    : fontSizeEnglish;

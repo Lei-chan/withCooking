@@ -1,6 +1,6 @@
 "use client";
 //react
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 //next.js
 import Image from "next/image";
 import Link from "next/link";
@@ -8,18 +8,23 @@ import { redirect, RedirectType } from "next/navigation";
 //css
 import styles from "./page.module.css";
 //type
-import { TYPE_MEDIA, TYPE_RECIPE, TYPE_USER_CONTEXT } from "../lib/config/type";
+import {
+  TYPE_LANGUAGE,
+  TYPE_MEDIA,
+  TYPE_RECIPE,
+  TYPE_USER_CONTEXT,
+} from "../lib/config/type";
 //general methods
 import { getData, wait } from "@/app/lib/helpers/other";
 //methods for recipes
 import {
-  createMessage,
   getRecipesPerPage,
   calcNumberOfPages,
   getUserRecipes,
+  createMessage,
 } from "@/app/lib/helpers/recipes";
 //context
-import { MediaContext, UserContext } from "../lib/providers";
+import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //components
 import {
   MessageContainer,
@@ -28,47 +33,84 @@ import {
 
 export default function Recipes() {
   const mediaContext = useContext(MediaContext);
-  console.log(mediaContext);
   const userContext = useContext(UserContext);
-  const RECIPES_PER_PAGE =
-    mediaContext === "mobile"
-      ? 6
-      : mediaContext === "tablet" && window.innerWidth < 650
-      ? 12
-      : mediaContext === "tablet" && 650 <= window.innerWidth
-      ? 18
-      : mediaContext === "tablet" && 650 > window.innerWidth
-      ? 24
-      : 30;
+  console.log(mediaContext);
+
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
+  const [fontSize, setFontSize] = useState("1.5vw");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const innerWidth = window.innerWidth;
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4.5vw"
+        : mediaContext === "tablet" && innerWidth < 650
+        ? "3vw"
+        : mediaContext === "tablet" && 650 <= innerWidth
+        ? "2.5vw"
+        : mediaContext === "desktop" && innerWidth < 900
+        ? "2vw"
+        : mediaContext === "desktop" && 900 <= innerWidth
+        ? "1.5vw"
+        : "1.2vw";
+
+    setFontSize(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "vw" : fontSizeEn
+    );
+  }, [mediaContext, language]);
+
+  const [recipesPerPage, setRecipesPerPage] = useState(30);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setRecipesPerPage(
+      mediaContext === "mobile"
+        ? 6
+        : mediaContext === "tablet" && window.innerWidth < 650
+        ? 12
+        : mediaContext === "tablet" && 650 <= window.innerWidth
+        ? 18
+        : mediaContext === "tablet" && 650 > window.innerWidth
+        ? 24
+        : 30
+    );
+  }, [mediaContext]);
+
+  //don't modify numberOfTotle recipes
+  const [numbreOfTotalRecipes, setNumberOfTotalRecipes] = useState(
+    userContext?.numberOfRecipes || 0
+  );
+
   const [numberOfRecipes, setNumberOfRecipes] = useState(
     userContext?.numberOfRecipes || null
   );
-  const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
+
   const [numberOfPages, setNumberOfPages] = useState<number>(
     userContext?.numberOfRecipes
-      ? calcNumberOfPages(userContext.numberOfRecipes, RECIPES_PER_PAGE)
+      ? calcNumberOfPages(userContext.numberOfRecipes, recipesPerPage)
       : 0
   );
+
+  const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
   const [curPage, setCurPage] = useState<number>(1);
   const [keyword, setKeyword] = useState("");
 
   const [isPending, setIsPending] = useState<boolean>(true);
   const [error, setError] = useState("");
-
-  //design
-  const innerWidth = window.innerWidth;
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4.5vw"
-      : mediaContext === "tablet" && innerWidth < 650
-      ? "3vw"
-      : mediaContext === "tablet" && 650 <= innerWidth
-      ? "2.5vw"
-      : mediaContext === "desktop" && innerWidth < 900
-      ? "2vw"
-      : mediaContext === "desktop" && 900 <= innerWidth
-      ? "1.5vw"
-      : "1.2vw";
 
   function resetRecipes() {
     setRecipes([]);
@@ -77,18 +119,22 @@ export default function Recipes() {
 
   // //set numberOfRecipes for the first render
   useEffect(() => {
-    console.log(userContext?.numberOfRecipes);
     if (userContext?.numberOfRecipes === null || !userContext) return;
+
+    setNumberOfTotalRecipes(userContext.numberOfRecipes);
     setNumberOfRecipes(userContext.numberOfRecipes);
     setNumberOfPages(
-      calcNumberOfPages(userContext.numberOfRecipes, RECIPES_PER_PAGE)
+      calcNumberOfPages(userContext.numberOfRecipes, recipesPerPage)
     );
+
     (async () => {
       setIsPending(true);
       await setUserRecipes();
       setIsPending(false);
     })();
-  }, [userContext?.numberOfRecipes]);
+  }, [userContext?.numberOfRecipes, recipesPerPage]);
+
+  console.log(numberOfRecipes);
 
   async function setUserRecipes(key: string = "") {
     try {
@@ -97,21 +143,23 @@ export default function Recipes() {
 
       const data = await getUserRecipes(
         userContext?.accessToken,
-        (curPage - 1) * RECIPES_PER_PAGE,
-        RECIPES_PER_PAGE,
+        (curPage - 1) * recipesPerPage,
+        recipesPerPage,
         key
       );
 
       setRecipes(data.data);
       setNumberOfRecipes(data.numberOfRecipes);
-      setNumberOfPages(
-        calcNumberOfPages(data.numberOfRecipes, RECIPES_PER_PAGE)
-      );
+      setNumberOfPages(calcNumberOfPages(data.numberOfRecipes, recipesPerPage));
 
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
       console.error("Error while getting recipes", err.message);
-      setError("Server error while getting recipes 🙇‍♂️ Please retry again!");
+      setError(
+        language === "ja"
+          ? "レシピ取得中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+          : "Server error while getting recipes 🙇‍♂️ Please retry again!"
+      );
     }
   }
 
@@ -165,6 +213,7 @@ export default function Recipes() {
     >
       <SearchSection
         mediaContext={mediaContext}
+        language={language}
         fontSize={fontSize}
         curPage={curPage}
         numberOfPages={numberOfPages}
@@ -173,10 +222,11 @@ export default function Recipes() {
       />
       <RecipeContainer
         mediaContext={mediaContext}
+        language={language}
         userContext={userContext}
         fontSize={fontSize}
         isPending={isPending}
-        numberOfRecipes={numberOfRecipes}
+        numberOfTotalRecipes={numbreOfTotalRecipes}
         recipes={recipes}
         error={error}
         displayPending={displayPending}
@@ -198,6 +248,7 @@ export default function Recipes() {
 
 function SearchSection({
   mediaContext,
+  language,
   fontSize,
   curPage,
   numberOfPages,
@@ -205,6 +256,7 @@ function SearchSection({
   onSubmitSearch,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   curPage: number;
   numberOfPages: number;
@@ -248,8 +300,10 @@ function SearchSection({
           textAlign: "center",
         }}
       >{`${curPage} / ${numberOfPages} ${
-        numberOfPages === 1 ? "page" : "pages"
-      } (${numberOfCurRecipes} results)`}</p>
+        language === "ja" ? "ページ" : numberOfPages === 1 ? "page" : "pages"
+      } (${numberOfCurRecipes} ${
+        language === "ja" ? "レシピ" : "recipes"
+      })`}</p>
       <form
         style={{
           display: "flex",
@@ -281,7 +335,9 @@ function SearchSection({
           }}
           type="search"
           name="keyword"
-          placeholder="Search your recipe"
+          placeholder={
+            language === "ja" ? "レシピを検索" : "Search your recipe"
+          }
         />
         <button
           style={{
@@ -298,7 +354,7 @@ function SearchSection({
           }}
           type="submit"
         >
-          Search
+          {language === "ja" ? "検索" : "Search"}
         </button>
       </form>
       <Link href={"http://localhost:3000/recipes/create"}>
@@ -309,7 +365,7 @@ function SearchSection({
           }}
           type="button"
         >
-          Create
+          {language === "ja" ? "新規作成" : "Create"}
         </button>
       </Link>
     </div>
@@ -318,10 +374,11 @@ function SearchSection({
 
 function RecipeContainer({
   mediaContext,
+  language,
   userContext,
   fontSize,
   isPending,
-  numberOfRecipes,
+  numberOfTotalRecipes,
   recipes,
   error,
   displayPending,
@@ -329,57 +386,74 @@ function RecipeContainer({
   resetRecipes,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   isPending: boolean;
-  numberOfRecipes: number | null;
+  numberOfTotalRecipes: number;
   recipes: any[] | [];
   error: string;
   displayPending: (pendingOrNot: boolean) => void;
   displayError: (message: string) => void;
   resetRecipes: () => void;
 }) {
-  const NUMBER_OF_COLUMNS =
-    mediaContext === "mobile"
-      ? 1
-      : mediaContext === "tablet" && window.innerWidth < 650
-      ? 2
-      : mediaContext === "tablet" && 650 <= window.innerWidth
-      ? 3
-      : mediaContext === "tablet" && 650 > window.innerWidth
-      ? 4
-      : 5;
+  //design
+  const [numberOfColumns, setNumberOfColumns] = useState(5);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setNumberOfColumns(
+      mediaContext === "mobile"
+        ? 1
+        : mediaContext === "tablet" && window.innerWidth < 650
+        ? 2
+        : mediaContext === "tablet" && 650 <= window.innerWidth
+        ? 3
+        : mediaContext === "tablet" && 650 > window.innerWidth
+        ? 4
+        : 5
+    );
+  }, [mediaContext]);
+
+  //set recipes
   const RECIPES_PER_COLUMN = 6;
   const [recipesPerColumn, setRecipesPerColumn] = useState<any[]>(
-    new Array(NUMBER_OF_COLUMNS).fill([])
+    new Array(numberOfColumns).fill([])
   );
-  const [message, setMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[] | []>([]);
 
   //recipes for each column array[];
-  const getRecipesPerColumn = () => {
-    const recipesPerColumnArr = new Array(NUMBER_OF_COLUMNS).fill("");
+  const getRecipesPerColumn = useMemo(() => {
+    const recipesPerColumnArr = new Array(numberOfColumns).fill("");
 
     return recipesPerColumnArr.map((_, i) =>
       getRecipesPerPage(recipes, RECIPES_PER_COLUMN, i + 1)
     );
-  };
+  }, [recipes, numberOfColumns, RECIPES_PER_COLUMN]);
 
   useEffect(() => {
-    setRecipesPerColumn(getRecipesPerColumn());
+    setRecipesPerColumn(getRecipesPerColumn);
   }, [recipes]);
 
+  //select recipe
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[] | []>([]);
+
+  //message
+  const [message, setMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
   useEffect(() => {
-    const message = createMessage(
+    const msg = createMessage(
+      language,
       error,
       isPending,
-      numberOfRecipes,
+      numberOfTotalRecipes,
       recipes.length
     ) as string;
-    setMessage(message);
-  }, [error, isPending, numberOfRecipes, recipes.length]);
+
+    setMessage(msg);
+  }, [language, error, isPending, numberOfTotalRecipes, recipes.length]);
 
   function handleToggleSelectBtn() {
     isSelecting && setSelectedRecipeIds([]);
@@ -435,12 +509,18 @@ function RecipeContainer({
       resetRecipes();
       displayPending(false);
       setSuccessMessage(
-        `Recipe${selectedRecipeIds.length > 1 ? "s" : ""} deleted`
+        language === "ja"
+          ? "レシピが削除されました"
+          : `Recipe${selectedRecipeIds.length > 1 ? "s" : ""} deleted`
       );
       await wait();
       setSuccessMessage("");
     } catch (err: any) {
-      displayError("Server error while deleting recipe 🙇‍♂️ Please try again");
+      displayError(
+        language === "ja"
+          ? "レシピの削除中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+          : "Server error while deleting recipe 🙇‍♂️ Please try again"
+      );
       console.error(
         "Error while deleting recipe",
         err.message,
@@ -454,13 +534,12 @@ function RecipeContainer({
       style={{
         position: "relative",
         display: "grid",
-        gridTemplateColumns: `repeat(${NUMBER_OF_COLUMNS}, 1fr)`,
+        gridTemplateColumns: `repeat(${numberOfColumns}, 1fr)`,
         width: mediaContext === "mobile" ? "100%" : "90%",
         height: "73%",
         paddingTop:
           mediaContext === "mobile" || mediaContext === "tablet" ? "10%" : "3%",
         justifyItems: "center",
-        // backgroundColor: "orange",
       }}
       onSubmit={handleSubmitDeleteRecipe}
     >
@@ -483,7 +562,6 @@ function RecipeContainer({
           zIndex: "10",
           alignItems: "center",
           justifyContent: "end",
-          // backgroundColor: "blue",
         }}
       >
         {isSelecting && (
@@ -527,7 +605,13 @@ function RecipeContainer({
           type="button"
           onClick={handleToggleSelectBtn}
         >
-          {!isSelecting ? "Select Recipe" : "Stop Selecting"}
+          {!isSelecting
+            ? language === "ja"
+              ? "レシピを選択"
+              : "Select Recipe"
+            : language === "ja"
+            ? "選択を終了"
+            : "Stop Selecting"}
         </button>
       </div>
       {/* when there are no recipes => message, otherwise recipes */}
@@ -543,7 +627,6 @@ function RecipeContainer({
               height: "100%",
               zIndex: "1",
               overflow: "hidden",
-              // backgroundColor: "blue",
             }}
           >
             {recipes.map((recipe: TYPE_RECIPE, i: number) => {
@@ -578,6 +661,7 @@ function RecipeContainer({
                   <RecipePreview
                     key={i}
                     mediaContext={mediaContext}
+                    language={language}
                     fontSize={fontSize}
                     recipe={recipe}
                     isSelecting={isSelecting}
@@ -633,11 +717,13 @@ function RecipeContainer({
 
 function RecipePreview({
   mediaContext,
+  language,
   fontSize,
   recipe,
   isSelecting,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   recipe: any;
   isSelecting: boolean;
@@ -668,7 +754,7 @@ function RecipePreview({
         <Image
           style={{ borderRadius: "50%" }}
           src={recipe.mainImagePreview.data}
-          alt="main image"
+          alt={language === "ja" ? "メイン画像" : "main image"}
           width={parseFloat(mainImageSize)}
           height={parseFloat(mainImageSize)}
         ></Image>
@@ -694,7 +780,7 @@ function RecipePreview({
       {recipe.favorite && (
         <Image
           src="/icons/star-on.png"
-          alt="favorite icon"
+          alt={language === "ja" ? "アイコンお気に入り" : "favorite icon"}
           width={parseFloat(mainImageSize) / 3}
           height={parseFloat(mainImageSize) / 3}
         ></Image>

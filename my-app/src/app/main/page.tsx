@@ -40,8 +40,6 @@ export default function MAIN() {
   const languageContext = useContext(LanguageContext);
   const userContext = useContext(UserContext);
 
-  console.log(languageContext?.language);
-
   const searchRef = useRef(null);
 
   const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
@@ -58,6 +56,8 @@ export default function MAIN() {
     innerWidth - parseFloat(recipeWidth) + "px"
   );
 
+  console.log(window.innerWidth);
+
   useEffect(() => {
     if (!languageContext?.language) return;
 
@@ -65,12 +65,9 @@ export default function MAIN() {
   }, [languageContext?.language]);
 
   useEffect(() => {
-    setInnerWidth(window.innerWidth);
-    setInnerHeight(window.innerHeight);
-  }, []);
-
-  useEffect(() => {
     if (!mediaContext) return;
+
+    console.log(innerWidth, innerHeight);
 
     setRecipeWidth(
       mediaContext === "mobile"
@@ -86,6 +83,12 @@ export default function MAIN() {
         : innerWidth - parseFloat(recipeWidth) + "px"
     );
   }, [mediaContext, innerWidth, innerHeight, recipeWidth]);
+
+  useEffect(() => {
+    console.log(window.innerWidth);
+    setInnerWidth(window.innerWidth);
+    setInnerHeight(window.innerHeight);
+  }, []);
 
   function handleMouseDownX() {
     setIsDraggingX(true);
@@ -424,13 +427,14 @@ function Search({
 
   useEffect(() => {
     const message = createMessage(
+      language,
       error,
       isPending,
       numberOfRecipes,
       recipes.length
     ) as string;
     setMessage(message);
-  }, [error, isPending, numberOfRecipes, recipes.length]);
+  }, [language, error, isPending, numberOfRecipes, recipes.length]);
 
   return (
     <div
@@ -614,6 +618,7 @@ function DropdownMenu({
           overflow: "hidden",
           transition: "all 0.4s",
           fontSize,
+          backgroundColor: "orange",
           opacity: !isDropdownVisible ? 0 : 1,
         }}
       >

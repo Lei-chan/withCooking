@@ -5,11 +5,15 @@ import clsx from "clsx";
 //css
 import styles from "./page.module.css";
 //type
-import { TYPE_RECIPE } from "@/app/lib/config/type";
+import { TYPE_LANGUAGE, TYPE_RECIPE } from "@/app/lib/config/type";
 //general methods
 import { getData, getSize } from "@/app/lib/helpers/other";
 //context
-import { MediaContext, UserContext } from "@/app/lib/providers";
+import {
+  LanguageContext,
+  MediaContext,
+  UserContext,
+} from "@/app/lib/providers";
 //components
 import {
   Loading,
@@ -17,37 +21,60 @@ import {
   RecipeEdit,
   RecipeNoEdit,
 } from "@/app/lib/components/components";
-//library
-import { nanoid } from "nanoid";
 
 export default function Recipe() {
   const mediaContext = useContext(MediaContext);
   const userContext = useContext(UserContext);
+
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
+  const [recipeWidth, setRecipeWidth] = useState("50%");
+  const [fontSize, setFontSize] = useState("1.3vw");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const width =
+      window.innerWidth *
+        (mediaContext === "mobile"
+          ? 0.9
+          : mediaContext === "tablet"
+          ? 0.7
+          : 0.5) +
+      "px";
+
+    setRecipeWidth(width);
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(width, 0.045, "4.5vw")
+        : mediaContext === "tablet"
+        ? getSize(width, 0.034, "2.7vw")
+        : mediaContext === "desktop" && window.innerWidth <= 1100
+        ? getSize(width, 0.031, "1.5vw")
+        : getSize(width, 0.028, "1.3vw");
+
+    setFontSize(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
+    );
+  }, [mediaContext, language]);
+
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE>();
   const [edit, setEdit] = useState(false);
 
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
-
-  // ///design
-  const recipeWidth =
-    window.innerWidth *
-      (mediaContext === "mobile"
-        ? 0.9
-        : mediaContext === "tablet"
-        ? 0.7
-        : 0.5) +
-    "px";
-
-  const fontSize =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.045, "4.5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.034, "2.7vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
-      ? getSize(recipeWidth, 0.031, "1.5vw")
-      : getSize(recipeWidth, 0.028, "1.3vw");
 
   useEffect(() => {
     const id = window.location.hash.slice(1);
@@ -94,15 +121,6 @@ export default function Recipe() {
             : "2% 0",
       }}
     >
-      {/* {(error || message) && (
-        <ErrorMessageRecipe
-          mediaContext={mediaContext}
-          fontSize={fontSize}
-          error={error}
-          message={message}
-          mainOrRecipe="recipe"
-        />
-      )} */}
       {!recipe ? (
         <LoadingRecipe mediaContext={mediaContext} recipeWidth={recipeWidth} />
       ) : (
@@ -138,7 +156,7 @@ export default function Recipe() {
                 }}
                 onClick={handleToggleEdit}
               >
-                Recipe
+                {language === "ja" ? "レシピ" : "Recipe"}
               </button>
               <RecipeEdit
                 recipe={recipe}
@@ -177,7 +195,7 @@ export default function Recipe() {
                 type="button"
                 onClick={handleToggleEdit}
               >
-                Edit
+                {language === "ja" ? "編集" : "Edit"}
               </button>
               <RecipeNoEdit
                 mediaContext={mediaContext}
@@ -193,6 +211,10 @@ export default function Recipe() {
       )}
     </div>
   ) : (
-    <Loading message="Updating your recipe..." />
+    <Loading
+      message={
+        language === "ja" ? "レシピを更新中…" : "Updating your recipe..."
+      }
+    />
   );
 }

@@ -1,10 +1,14 @@
 "use client";
 //react
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 //css
 import styles from "./page.module.css";
 //type
-import { TYPE_INGREDIENT_UNIT, TYPE_MEDIA } from "../lib/config/type";
+import {
+  TYPE_INGREDIENT_UNIT,
+  TYPE_LANGUAGE,
+  TYPE_MEDIA,
+} from "../lib/config/type";
 //mehods to convert
 import {
   convertIngUnits,
@@ -12,59 +16,46 @@ import {
   convertTempUnits,
 } from "../lib/helpers/converter";
 //context
-import { MediaContext } from "../lib/providers";
-import { getReadableIngUnit } from "../lib/helpers/recipes";
+import { LanguageContext, MediaContext } from "../lib/providers";
+import { getTranslatedIngredientsUnit } from "../lib/helpers/recipes";
+import { getFontSizeForLanguage } from "../lib/helpers/other";
 
 export default function Converter() {
   const mediaContext = useContext(MediaContext);
 
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4.5vw"
-      : mediaContext === "tablet"
-      ? "2.5vw"
-      : mediaContext === "desktop"
-      ? "1.7vw"
-      : "1.3vw";
+  //language
+  const languageContext = useContext(LanguageContext);
 
-  const smallHeaderStyle = {
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
+  const [fontSize, setFontSize] = useState("1.3vw");
+  const [smallHeaderStyle, setSmallHeaderStyle] = useState<object>({
     color: "#795200ff",
     letterSpacing: "0.07vw",
     wordSpacing: "0.3vw",
-    fontSize: `calc(${fontSize} * 1.1)`,
-    margin: mediaContext === "mobile" ? "5% 0 3% 0" : "3% 0 2% 0",
-  };
-
-  const outputFontSize = `calc(${fontSize} * 1.1)`;
-
-  const boxStyle = {
+  });
+  const [outputFontSize, setOutputFontSize] = useState("1.5vw");
+  const [boxStyle, setBoxStyle] = useState({
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     backgroundColor: "antiquewhite",
     gap: "1%",
     borderRadius: "3px",
-    width:
-      mediaContext === "mobile"
-        ? "90%"
-        : mediaContext === "tablet"
-        ? "80%"
-        : "70%",
-    minHeight:
-      mediaContext === "mobile" || mediaContext === "tablet" ? "23%" : "20%",
+    width: "70%",
+    minHeight: "20%",
     maxHeight: "fit-content",
     fontSize,
-  };
-
-  const converterInnerStyle = {
-    width:
-      mediaContext === "mobile"
-        ? "90%"
-        : mediaContext === "tablet"
-        ? "85%"
-        : mediaContext === "desktop"
-        ? "75%"
-        : "70%",
+  });
+  const [converterInnerStyle, setConvertedInnerStyle] = useState({
+    width: "70%",
     display: "flex",
     flexDirection: "row",
     alignSelf: "center",
@@ -72,19 +63,89 @@ export default function Converter() {
     height: "fit-content",
     gap: "3%",
     marginTop: "3%",
-    marginBottom: mediaContext === "mobile" ? "0" : "2%",
-  };
-
-  const inputSelectStyle = {
-    minWidth: mediaContext === "mobile" ? "35%" : "25%",
-    maxWidth: "fit-content",
+    marginBottom: "2%",
+  });
+  const [inputSelectStyle, setInputSelectStyle] = useState({
+    minWidth: "25%",
+    maxWidth: "50%",
     textAlign: "center",
     letterSpacing: "0.07vw",
     borderRadius: "2%/7%",
     borderColor: "rgba(0, 0, 0, 0.404)",
     aspectRatio: "1/0.21",
     fontSize,
-  };
+  });
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4.5vw"
+        : mediaContext === "tablet"
+        ? "2.5vw"
+        : mediaContext === "desktop"
+        ? "1.7vw"
+        : "1.3vw";
+
+    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+
+    setFontSize(fontSizeFinal);
+    setSmallHeaderStyle({
+      color: "#795200ff",
+      letterSpacing: "0.07vw",
+      wordSpacing: "0.3vw",
+      fontSize: `calc(${fontSizeFinal} * 1.1)`,
+      margin: mediaContext === "mobile" ? "5% 0 3% 0" : "3% 0 2% 0",
+    });
+    setOutputFontSize(`calc(${fontSizeFinal} * 1.1)`);
+    setBoxStyle({
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      backgroundColor: "antiquewhite",
+      gap: "1%",
+      borderRadius: "3px",
+      width:
+        mediaContext === "mobile"
+          ? "90%"
+          : mediaContext === "tablet"
+          ? "80%"
+          : "70%",
+      minHeight:
+        mediaContext === "mobile" || mediaContext === "tablet" ? "23%" : "20%",
+      maxHeight: "fit-content",
+      fontSize: fontSizeFinal,
+    });
+    setConvertedInnerStyle({
+      width:
+        mediaContext === "mobile"
+          ? "90%"
+          : mediaContext === "tablet"
+          ? "85%"
+          : mediaContext === "desktop"
+          ? "75%"
+          : "70%",
+      display: "flex",
+      flexDirection: "row",
+      alignSelf: "center",
+      justifyContent: "left",
+      height: "fit-content",
+      gap: "3%",
+      marginTop: "3%",
+      marginBottom: mediaContext === "mobile" ? "0" : "2%",
+    });
+    setInputSelectStyle({
+      minWidth: mediaContext === "mobile" ? "35%" : "25%",
+      maxWidth: "50%",
+      textAlign: "center",
+      letterSpacing: "0.07vw",
+      borderRadius: "2%/7%",
+      borderColor: "rgba(0, 0, 0, 0.404)",
+      aspectRatio: "1/0.21",
+      fontSize: fontSizeFinal,
+    });
+  }, [language, mediaContext]);
 
   return (
     <div
@@ -107,27 +168,36 @@ export default function Converter() {
           letterSpacing: "0.1vw",
         }}
       >
-        Converter
+        {language === "ja" ? "単位変換" : "Converter"}
       </h1>
-      <h3 style={smallHeaderStyle}>Ingredient units</h3>
+      <h3 style={smallHeaderStyle}>
+        {language === "ja" ? "材料の単位" : "Ingredient units"}
+      </h3>
       <ConverterIng
         mediaContext={mediaContext}
+        language={language}
         boxStyle={boxStyle}
         converterInnerStyle={converterInnerStyle}
         inputSelectStyle={inputSelectStyle}
         outputFontSize={outputFontSize}
       />
-      <h3 style={smallHeaderStyle}>Tempareture units</h3>
+      <h3 style={smallHeaderStyle}>
+        {language === "ja" ? "温度の単位" : "Tempareture units"}
+      </h3>
       <ConverterTemp
         mediaContext={mediaContext}
+        language={language}
         boxStyle={boxStyle}
         converterInnerStyle={converterInnerStyle}
         inputSelectStyle={inputSelectStyle}
         outputFontSize={outputFontSize}
       />
-      <h3 style={smallHeaderStyle}>Length units</h3>
+      <h3 style={smallHeaderStyle}>
+        {language === "ja" ? "長さの単位" : "Length units"}
+      </h3>
       <ConverterLength
         mediaContext={mediaContext}
+        language={language}
         boxStyle={boxStyle}
         converterInnerStyle={converterInnerStyle}
         inputSelectStyle={inputSelectStyle}
@@ -139,12 +209,14 @@ export default function Converter() {
 
 function ConverterIng({
   mediaContext,
+  language,
   boxStyle,
   converterInnerStyle,
   inputSelectStyle,
   outputFontSize,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   boxStyle: object;
   converterInnerStyle: object;
   inputSelectStyle: object;
@@ -152,12 +224,6 @@ function ConverterIng({
 }) {
   //prettier-ignore
   type AllowedUnitsIng = "g"| "kg"| "oz"| "lb"| "ml"| "L"| "usCup"| "japaneseCup"| "imperialCup"| "riceCup"| "tsp"| "tbsp"| "australianTbsp";
-
-  // //prettier-ignore
-  // const allowedUnitsIng: TYPE_INGREDIENT_UNIT[] = [ "g", "kg", "oz", "lb", "ml", "L", "usCup", "japaneseCup", "imperialCup", "riceCup", "tsp", "tbsp", "australianTbsp"];
-
-  // const isAllowedUnitIng = (value: string): value is AllowedUnitsIng =>
-  //   allowedUnitsIng.includes(value as AllowedUnitsIng);
 
   const selectRefIng = useRef<HTMLSelectElement>(null);
   const [valueIng, setValueIng] = useState<number>();
@@ -180,25 +246,23 @@ function ConverterIng({
     const value = e.currentTarget.value;
     setIsMass(calcIsMass(value));
 
-    // if (!isAllowedUnitIng(value)) return;
     setUnitIngFrom(value as AllowedUnitsIng);
   }
 
   function handleSelectChangeIngTo(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.currentTarget.value;
 
-    // if (!isAllowedUnitIng(value)) return;
     setUnitIngTo(value as AllowedUnitsIng);
   }
 
-  const findResultIng = () => {
+  const findResultIng = useMemo(() => {
     const resultsObj = valueIng && convertIngUnits(valueIng, unitIngFrom);
 
     if (!resultsObj) return;
     const result = resultsObj[unitIngTo]?.amount;
 
     return result ? result : "";
-  };
+  }, [valueIng, unitIngFrom, unitIngTo]);
 
   //Manually reassign setUnitIngTo
   //1. When the select ele 'From' is changed and unitIngTo was same unit as that
@@ -216,15 +280,19 @@ function ConverterIng({
       setUnitIngTo(value as AllowedUnitsIng);
   }, [unitIngFrom]);
 
+  console.log(language);
+
   return (
     <div style={boxStyle}>
       {mediaContext !== "mobile" ? (
         <div style={converterInnerStyle}>
-          <label htmlFor="input__ingredient_amount">From</label>
+          <label htmlFor="input__ingredient_amount">
+            {language === "ja" ? "から" : "From"}
+          </label>
           <input
             style={inputSelectStyle}
             type="number"
-            placeholder="Amount"
+            placeholder={language === "ja" ? "量" : "Amount"}
             onChange={handleInputChangeIng}
           />
           <select
@@ -238,13 +306,35 @@ function ConverterIng({
             <option value="lb">lb</option>
             <option value="ml">ml</option>
             <option value="L">L</option>
-            <option value="usCup">cup (US)</option>
-            <option value="japaneseCup">cup (Japan)</option>
-            <option value="imperialCup">cup (1cup = 250ml)</option>
-            <option value="riceCup">rice cup</option>
-            <option value="tsp">tsp</option>
-            <option value="tbsp">tbsp</option>
-            <option value="australianTbsp">tbsp (Australia)</option>
+            <option value="usCup">
+              {language === "ja"
+                ? getTranslatedIngredientsUnit(language, "usCup")
+                : "cup (US)"}
+            </option>
+            <option value="japaneseCup">
+              {language === "ja"
+                ? getTranslatedIngredientsUnit(language, "japaneseCup")
+                : "cup (Japan)"}
+            </option>
+            <option value="imperialCup">
+              {language === "ja"
+                ? getTranslatedIngredientsUnit(language, "imperialCup")
+                : "cup (1cup = 250ml)"}
+            </option>
+            <option value="riceCup">
+              {getTranslatedIngredientsUnit(language, "riceCup")}
+            </option>
+            <option value="tsp">
+              {getTranslatedIngredientsUnit(language, "tsp")}
+            </option>
+            <option value="tbsp">
+              {getTranslatedIngredientsUnit(language, "tbsp")}
+            </option>
+            <option value="australianTbsp">
+              {language === "ja"
+                ? getTranslatedIngredientsUnit(language, "australianTbsp")
+                : "tbsp (Australia)"}
+            </option>
           </select>
           <label
             className={styles.label__to}
@@ -265,25 +355,51 @@ function ConverterIng({
             {!isMass && unitIngFrom !== "ml" && <option value="ml">ml</option>}
             {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
             {!isMass && unitIngFrom !== "usCup" && (
-              <option value="usCup">cup (US)</option>
+              <option value="usCup">
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "usCup")
+                  : "cup (US)"}
+              </option>
             )}
             {!isMass && unitIngFrom !== "japaneseCup" && (
-              <option value="japaneseCup">cup (Japan)</option>
+              <option value="japaneseCup">
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "japaneseCup")
+                  : "cup (Japan)"}
+              </option>
             )}
             {!isMass && unitIngFrom !== "imperialCup" && (
-              <option value="imperialCup">cup (1cup = 250ml)</option>
+              <option value="imperialCup">
+                {" "}
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "imperialCup")
+                  : "cup (1cup = 250ml)"}
+              </option>
             )}
             {!isMass && unitIngFrom !== "riceCup" && (
-              <option value="riceCup">rice cup</option>
+              <option value="riceCup">
+                {" "}
+                {getTranslatedIngredientsUnit(language, "riceCup")}
+              </option>
             )}
             {!isMass && unitIngFrom !== "tsp" && (
-              <option value="tsp">tsp</option>
+              <option value="tsp">
+                {" "}
+                {getTranslatedIngredientsUnit(language, "tsp")}
+              </option>
             )}
             {!isMass && unitIngFrom !== "tbsp" && (
-              <option value="tbsp">tbsp</option>
+              <option value="tbsp">
+                {" "}
+                {getTranslatedIngredientsUnit(language, "tbsp")}
+              </option>
             )}
             {!isMass && unitIngFrom !== "australianTbsp" && (
-              <option value="australianTbsp">tbsp (Australia)</option>
+              <option value="australianTbsp">
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "australianTbsp")
+                  : "tbsp (Australia)"}
+              </option>
             )}
           </select>
         </div>
@@ -294,7 +410,7 @@ function ConverterIng({
             <input
               style={inputSelectStyle}
               type="number"
-              placeholder="Amount"
+              placeholder={language === "ja" ? "量" : "Amount"}
               onChange={handleInputChangeIng}
             />
             <select
@@ -308,13 +424,35 @@ function ConverterIng({
               <option value="lb">lb</option>
               <option value="ml">ml</option>
               <option value="L">L</option>
-              <option value="usCup">cup (US)</option>
-              <option value="japaneseCup">cup (Japan)</option>
-              <option value="imperialCup">cup (1cup = 250ml)</option>
-              <option value="riceCup">rice cup</option>
-              <option value="tsp">tsp</option>
-              <option value="tbsp">tbsp</option>
-              <option value="australianTbsp">tbsp (Australia)</option>
+              <option value="usCup">
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "usCup")
+                  : "cup (US)"}
+              </option>
+              <option value="japaneseCup">
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "japaneseCup")
+                  : "cup (Japan)"}
+              </option>
+              <option value="imperialCup">
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "imperialCup")
+                  : "cup (1cup = 250ml)"}
+              </option>
+              <option value="riceCup">
+                {getTranslatedIngredientsUnit(language, "riceCup")}
+              </option>
+              <option value="tsp">
+                {getTranslatedIngredientsUnit(language, "tsp")}
+              </option>
+              <option value="tbsp">
+                {getTranslatedIngredientsUnit(language, "tbsp")}
+              </option>
+              <option value="australianTbsp">
+                {language === "ja"
+                  ? getTranslatedIngredientsUnit(language, "australianTbsp")
+                  : "tbsp (Australia)"}
+              </option>
             </select>
           </div>
           <div style={converterInnerStyle}>
@@ -339,25 +477,51 @@ function ConverterIng({
               )}
               {!isMass && unitIngFrom !== "L" && <option value="L">L</option>}
               {!isMass && unitIngFrom !== "usCup" && (
-                <option value="usCup">cup (US)</option>
+                <option value="usCup">
+                  {language === "ja"
+                    ? getTranslatedIngredientsUnit(language, "usCup")
+                    : "cup (US)"}
+                </option>
               )}
               {!isMass && unitIngFrom !== "japaneseCup" && (
-                <option value="japaneseCup">cup (Japan)</option>
+                <option value="japaneseCup">
+                  {language === "ja"
+                    ? getTranslatedIngredientsUnit(language, "japaneseCup")
+                    : "cup (Japan)"}
+                </option>
               )}
               {!isMass && unitIngFrom !== "imperialCup" && (
-                <option value="imperialCup">cup (1cup = 250ml)</option>
+                <option value="imperialCup">
+                  {" "}
+                  {language === "ja"
+                    ? getTranslatedIngredientsUnit(language, "imperialCup")
+                    : "cup (1cup = 250ml)"}
+                </option>
               )}
               {!isMass && unitIngFrom !== "riceCup" && (
-                <option value="riceCup">rice cup</option>
+                <option value="riceCup">
+                  {" "}
+                  {getTranslatedIngredientsUnit(language, "riceCup")}
+                </option>
               )}
               {!isMass && unitIngFrom !== "tsp" && (
-                <option value="tsp">tsp</option>
+                <option value="tsp">
+                  {" "}
+                  {getTranslatedIngredientsUnit(language, "tsp")}
+                </option>
               )}
               {!isMass && unitIngFrom !== "tbsp" && (
-                <option value="tbsp">tbsp</option>
+                <option value="tbsp">
+                  {" "}
+                  {getTranslatedIngredientsUnit(language, "tbsp")}
+                </option>
               )}
               {!isMass && unitIngFrom !== "australianTbsp" && (
-                <option value="australianTbsp">tbsp (Australia)</option>
+                <option value="australianTbsp">
+                  {language === "ja"
+                    ? getTranslatedIngredientsUnit(language, "australianTbsp")
+                    : "tbsp (Australia)"}
+                </option>
               )}
             </select>
           </div>
@@ -367,8 +531,10 @@ function ConverterIng({
         className={styles.container__output}
         style={{ fontSize: outputFontSize }}
       >
-        <p className={styles.output}>{findResultIng()}</p>
-        <span className={styles.unit}>{getReadableIngUnit(unitIngTo)}</span>
+        <p className={styles.output}>{findResultIng}</p>
+        <span className={styles.unit}>
+          {getTranslatedIngredientsUnit(language, unitIngTo)}
+        </span>
       </div>
     </div>
   );
@@ -376,12 +542,14 @@ function ConverterIng({
 
 function ConverterTemp({
   mediaContext,
+  language,
   boxStyle,
   converterInnerStyle,
   inputSelectStyle,
   outputFontSize,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   boxStyle: object;
   converterInnerStyle: object;
   inputSelectStyle: object;
@@ -478,12 +646,14 @@ function ConverterTemp({
 
 function ConverterLength({
   mediaContext,
+  language,
   boxStyle,
   converterInnerStyle,
   inputSelectStyle,
   outputFontSize,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   boxStyle: object;
   converterInnerStyle: object;
   inputSelectStyle: object;

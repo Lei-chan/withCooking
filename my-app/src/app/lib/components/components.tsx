@@ -28,8 +28,9 @@ import {
   getImageFileData,
   getIngGridTemplateColumnsStyle,
   getNextSlideIndex,
-  getReadableIngUnit,
   getTemperatures,
+  getTranslatedIngredientsUnit,
+  getTranslatedServingsUnit,
   isRecipeAllowed,
   updateConvertion,
   updateIngsForServings,
@@ -364,46 +365,74 @@ export function RecipeEdit({
   handleChangeEdit?: (editOrNot: boolean) => void | undefined;
 }) {
   const mediaContext = useContext(MediaContext);
-  const languageContext = useContext(LanguageContext);
   const userContext = useContext(UserContext);
+
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
+  const [recipeWidth, setRecipeWidth] = useState("50%");
+  const [fontSize, setFontSize] = useState("1.3vw");
+  const [headerSize, setHeaderSize] = useState(
+    parseFloat(fontSize) * 1.1 + "px"
+  );
+  const [marginTop, setMarginTop] = useState("30px");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const width =
+      window.innerWidth *
+        (mediaContext === "mobile"
+          ? 0.9
+          : mediaContext === "tablet"
+          ? 0.7
+          : 0.5) +
+      "px";
+
+    console.log("innner", window.innerWidth);
+
+    setRecipeWidth(width);
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(width, 0.045, "4.5vw")
+        : mediaContext === "tablet"
+        ? getSize(width, 0.034, "2.7vw")
+        : mediaContext === "desktop" && window.innerWidth <= 1100
+        ? getSize(width, 0.031, "1.5vw")
+        : getSize(width, 0.028, "1.3vw");
+
+    const fontSizeFinal =
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
+
+    setFontSize(fontSizeFinal);
+
+    setHeaderSize(parseFloat(fontSizeFinal) * 1.1 + "px");
+
+    setMarginTop(getSize(width, 0.11, "30px"));
+  }, [mediaContext, language]);
+
+  //recipe
   //set favorite and images when user change them and set other fields when user submits the recipe
   const [curRecipe, setCurRecipe] = useState<TYPE_RECIPE>(recipe);
-
-  const [isPending, setIsPending] = useState(false);
-  const [curError, setCurError] = useState(error);
-  const [message, setMessage] = useState("");
-
-  ///design
-  const recipeWidth =
-    window.innerWidth *
-      (mediaContext === "mobile"
-        ? 0.9
-        : mediaContext === "tablet"
-        ? 0.7
-        : 0.5) +
-    "px";
-
-  const fontSize =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.045, "4.5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.034, "2.7vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
-      ? getSize(recipeWidth, 0.031, "1.5vw")
-      : getSize(recipeWidth, 0.028, "1.3vw");
-  const headerSize =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.055, "5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.04, "3.5vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
-      ? getSize(recipeWidth, 0.035, "1.5vw")
-      : getSize(recipeWidth, 0.032, "1.3vw");
-  const marginTop = getSize(recipeWidth, 0.11, "30px");
 
   useEffect(() => {
     setCurRecipe(recipe);
   }, [recipe]);
+
+  //message
+  const [isPending, setIsPending] = useState(false);
+  const [curError, setCurError] = useState(error);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     setCurError(error);
@@ -717,7 +746,7 @@ export function RecipeEdit({
         >
           <ImageTitleEdit
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             curTitle={curRecipe.title}
@@ -728,7 +757,7 @@ export function RecipeEdit({
           />
           <BriefExplanationEdit
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             curRecipe={curRecipe}
@@ -736,7 +765,7 @@ export function RecipeEdit({
           />
           <IngredientsEdit
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             fontSize={fontSize}
             headerSize={headerSize}
             ingredients={curRecipe.ingredients}
@@ -744,7 +773,7 @@ export function RecipeEdit({
           />
           <InstructionsEdit
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -760,7 +789,7 @@ export function RecipeEdit({
           />
           <AboutThisRecipeEdit
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
@@ -768,7 +797,7 @@ export function RecipeEdit({
           />
           <MemoriesEdit
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             recipeWidth={recipeWidth}
             fontSize={fontSize}
             headerSize={headerSize}
@@ -780,7 +809,7 @@ export function RecipeEdit({
           />
           <CommentsEdit
             mediaContext={mediaContext}
-            language={languageContext?.language || "en"}
+            language={language}
             fontSize={fontSize}
             headerSize={headerSize}
             marginTop={marginTop}
@@ -837,7 +866,6 @@ export function ErrorMessageRecipe({
         fontSize: `calc(${fontSize} * ${mainOrRecipe === "main" ? 0.9 : 1.1})`,
         letterSpacing: "0.07vw",
         marginBottom: mediaContext === "mobile" ? "2%" : "1%",
-        // marginBottom: "1%",
       }}
     >
       {error || message}
@@ -859,8 +887,8 @@ export function BtnFavorite({
       style={{
         background: "none",
         backgroundImage: !favorite
-          ? 'url("/star-off.png")'
-          : 'url("/star-on.png")',
+          ? 'url("/icons/star-off.png")'
+          : 'url("/icons/star-on.png")',
         width:
           mediaContext === "mobile"
             ? "7%"
@@ -902,20 +930,32 @@ function ImageTitleEdit({
   deleteImage: () => void;
   displayError: (error: string) => void;
 }) {
-  const width =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.82, "250px")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.74, "400px")
-      : getSize(recipeWidth, 0.7, "440px");
-  const height =
-    parseInt(width) *
-      (mediaContext === "mobile"
-        ? 0.65
+  //design
+  const [width, setWidth] = useState("440px");
+  const [height, setHeight] = useState(parseFloat(width) * 0.6 + "px");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const imageTitleWidth =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.82, "250px")
         : mediaContext === "tablet"
-        ? 0.63
-        : 0.6) +
-    "px";
+        ? getSize(recipeWidth, 0.74, "400px")
+        : getSize(recipeWidth, 0.7, "440px");
+
+    setWidth(imageTitleWidth);
+
+    setHeight(
+      parseFloat(imageTitleWidth) *
+        (mediaContext === "mobile"
+          ? 0.65
+          : mediaContext === "tablet"
+          ? 0.63
+          : 0.6) +
+        "px"
+    );
+  }, [mediaContext, recipeWidth]);
 
   const [title, setTitle] = useState(curTitle);
 
@@ -958,7 +998,11 @@ function ImageTitleEdit({
       onChangeImage(mainImageFile, mainImagePreviewFile);
     } catch (err: any) {
       console.error("Error while resizing main image", err.message);
-      displayError("Server error while uploading image 🙇‍♂️ Please try again!");
+      displayError(
+        language === "ja"
+          ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+          : "Server error while uploading image 🙇‍♂️ Please try again!"
+      );
     }
   }
 
@@ -977,6 +1021,10 @@ function ImageTitleEdit({
               position: "relative",
               width:
                 mediaContext === "mobile" || mediaContext === "tablet"
+                  ? language === "ja"
+                    ? "70%"
+                    : "60%"
+                  : language === "ja"
                   ? "60%"
                   : "50%",
               height: "13%",
@@ -997,7 +1045,7 @@ function ImageTitleEdit({
               }}
               type="button"
             >
-              Upload image
+              {language === "ja" ? "画像をアップロード" : "Upload image"}
             </button>
             <input
               className={styles.input__file}
@@ -1029,7 +1077,7 @@ function ImageTitleEdit({
           ></button>
           <Image
             src={curImage.data}
-            alt="main image"
+            alt={language === "ja" ? "メイン画像" : "main image"}
             width={parseFloat(width)}
             height={parseFloat(height)}
           ></Image>
@@ -1069,7 +1117,15 @@ function ImageTitleEdit({
             color: "rgb(60, 0, 116)",
           }}
           name="title"
-          placeholder="Click here to set title"
+          placeholder={
+            language === "ja"
+              ? `${
+                  mediaContext !== "mobile" ? "クリックして" : ""
+                }タイトルをセット`
+              : `${
+                  mediaContext !== "mobile" ? "Click here to set" : "Set"
+                } title`
+          }
           value={title}
           onChange={handleChangeTitle}
         ></input>
@@ -1093,7 +1149,30 @@ function BriefExplanationEdit({
   curRecipe: TYPE_RECIPE;
   onClickFavorite: () => void;
 }) {
+  //design
+  const [width, setWidth] = useState("90%");
+  const [fontSizeBrief, setFontSizeBrief] = useState(
+    parseFloat(fontSize) * 0.95 + "px"
+  );
+  const [iconSize, setIconSize] = useState(parseFloat(fontSizeBrief));
+  const [fontFukidashiSize, setFontFukidashiSize] = useState(
+    `calc(${fontSizeBrief} * 0.9)`
+  );
+
+  useEffect(() => {
+    setWidth(getSize(recipeWidth, 0.9, "90%"));
+  }, [recipeWidth]);
+
+  useEffect(() => {
+    const fontSizeBri = parseFloat(fontSize) * 0.95 + "px";
+
+    setFontSizeBrief(fontSizeBri);
+    setIconSize(parseFloat(fontSizeBri));
+    setFontFukidashiSize(`calc(${fontSizeBri} * 0.9)`);
+  }, [fontSize]);
+
   const [mouseOver, setMouseOver] = useState([false, false, false]);
+
   const [author, setAuthour] = useState(curRecipe.author);
   const [servings, setServings] = useState(curRecipe.servings.servings);
   const [servingsUnit, setServingsUnit] = useState<TYPE_SERVINGS_UNIT>(
@@ -1105,28 +1184,6 @@ function BriefExplanationEdit({
   const [temperatureUnit, setTemperatureUnit] = useState(
     curRecipe.temperatures.unit
   );
-
-  // const [tempKeys, setTempKeys] = useState(
-  //   Array(NUMBER_OF_TEMPERATURES)
-  //     .fill("")
-  //     .map((_) => {
-  //       return { id: nanoid() };
-  //     })
-  // );
-
-  //design
-  const width = getSize(recipeWidth, 0.9, "90%");
-  const fontSizeBrief = parseFloat(fontSize) * 0.95 + "px";
-  const iconSize = parseFloat(fontSizeBrief);
-  const fontFukidashiSize = `calc(${fontSizeBrief} * 0.9)`;
-
-  // useEffect(() => {
-  //   setAuthour(curRecipe.author);
-  //   setServings(curRecipe.servings.servings);
-  //   setServingsUnit(curRecipe.servings.unit as TYPE_SERVINGS_UNIT);
-  //   setServingsCustomUnit(curRecipe.servings.customUnit);
-  //   setTemperatureUnit(curRecipe.temperatures.unit);
-  // }, [curRecipe]);
 
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     const index = e.currentTarget.dataset.icon;
@@ -1228,7 +1285,9 @@ function BriefExplanationEdit({
                     fontSize: fontFukidashiSize,
                   }}
                 >
-                  Name of the person who will make the recipe
+                  {language === "ja"
+                    ? "このレシピの作者"
+                    : "Name of the person who will make the recipe"}
                 </p>
               </div>
               <div
@@ -1238,18 +1297,18 @@ function BriefExplanationEdit({
                 onMouseOut={handleMouseOut}
               >
                 <Image
-                  src={"/person.svg"}
-                  alt="person icon"
+                  src={"/icons/person.svg"}
+                  alt={language === "ja" ? "アイコン 人" : "person icon"}
                   width={iconSize}
                   height={iconSize}
                 ></Image>
               </div>
               <input
-                key={nanoid()}
+                // key={nanoid()}
                 className={styles.input__brief_explanation}
                 style={{ width: "35%", fontSize }}
                 name="author"
-                placeholder="Author"
+                placeholder={language === "ja" ? "作者" : "Author"}
                 value={author}
                 onChange={handleChangeInput}
               ></input>
@@ -1271,8 +1330,9 @@ function BriefExplanationEdit({
                   className={styles.p__fukidashi}
                   style={{ fontSize: fontFukidashiSize }}
                 >
-                  Number of servings. If there isn't a unit you want to use in
-                  the selector, please select other and fill custom unit.
+                  {language === "ja"
+                    ? "このレシピの量。もし使いたい単位が選択肢にない場合、「その他」を選択し、「カスタム」に使用したい単位を入力してください"
+                    : "Number of servings. If there isn't a unit you want to use in the selector, please select other and fill custom unit."}
                 </p>
               </div>
               <div
@@ -1282,8 +1342,8 @@ function BriefExplanationEdit({
                 onMouseOut={handleMouseOut}
               >
                 <Image
-                  src={"/servings.svg"}
-                  alt="servings icon"
+                  src={"/icons/servings.svg"}
+                  alt={language === "ja" ? "アイコン 量" : "servings icon"}
                   width={iconSize}
                   height={iconSize}
                 ></Image>
@@ -1295,7 +1355,7 @@ function BriefExplanationEdit({
                 min="1"
                 max={MAX_SERVINGS}
                 name="servings"
-                placeholder="Servings"
+                placeholder={language === "ja" ? "レシピの量" : "Servings"}
                 value={servings || ""}
                 onChange={handleChangeInput}
               />
@@ -1306,19 +1366,31 @@ function BriefExplanationEdit({
                 value={servingsUnit}
                 onChange={handleChangeInput}
               >
-                <option value="people">people</option>
-                <option value="slices">slices</option>
-                <option value="pieces">pieces</option>
-                <option value="cups">cups</option>
-                <option value="bowls">bowls</option>
-                <option value="other">other</option>
+                <option value="people">
+                  {language === "ja" ? "人分" : "people"}
+                </option>
+                <option value="slices">
+                  {language === "ja" ? "スライス" : "slices"}
+                </option>
+                <option value="pieces">
+                  {language === "ja" ? "個分" : "pieces"}
+                </option>
+                <option value="cups">
+                  {language === "ja" ? "カップ分" : "cups"}
+                </option>
+                <option value="bowls">
+                  {language === "ja" ? "杯分" : "bowls"}
+                </option>
+                <option value="other">
+                  {language === "ja" ? "その他" : "other"}
+                </option>
               </select>
               {servingsUnit === "other" && (
                 <input
                   className={styles.input__brief_explanation}
                   style={{ width: "25%", fontSize }}
                   name="servingsCustomUnit"
-                  placeholder="custom"
+                  placeholder={language === "ja" ? "カスタム" : "custom"}
                   value={servingsCustomUnit}
                   onChange={handleChangeInput}
                 />
@@ -1345,7 +1417,9 @@ function BriefExplanationEdit({
                   fontSize: fontFukidashiSize,
                 }}
               >
-                Name of the person who will make the recipe
+                {language === "ja"
+                  ? "このレシピの作者"
+                  : "Name of the person who will make the recipe"}
               </p>
             </div>
             <div
@@ -1355,8 +1429,8 @@ function BriefExplanationEdit({
               onMouseOut={handleMouseOut}
             >
               <Image
-                src={"/person.svg"}
-                alt="person icon"
+                src={"/icons/person.svg"}
+                alt={language === "ja" ? "アイコン 人" : "person icon"}
                 width={iconSize}
                 height={iconSize}
               ></Image>
@@ -1368,7 +1442,7 @@ function BriefExplanationEdit({
                 fontSize,
               }}
               name="author"
-              placeholder="Author"
+              placeholder={language === "ja" ? "作者" : "Author"}
               value={author}
               onChange={handleChangeInput}
             ></input>
@@ -1391,13 +1465,14 @@ function BriefExplanationEdit({
                   className={styles.p__fukidashi}
                   style={{ fontSize: fontFukidashiSize }}
                 >
-                  Number of servings. If there isn't a unit you want to use in
-                  the selector, please select other and fill custom unit.
+                  {language === "ja"
+                    ? "このレシピの量。もし使いたい単位が選択肢にない場合、「その他」を選択し、「カスタム」に使用したい単位を入力してください"
+                    : "Number of servings. If there isn't a unit you want to use in the selector, please select other and fill custom unit."}
                 </p>
               </div>
               <Image
-                src={"/servings.svg"}
-                alt="servings icon"
+                src={"/icons/servings.svg"}
+                alt={language === "ja" ? "アイコン 量" : "servings icon"}
                 width={iconSize}
                 height={iconSize}
               ></Image>
@@ -1412,7 +1487,7 @@ function BriefExplanationEdit({
               min="1"
               max={MAX_SERVINGS}
               name="servings"
-              placeholder="Servings"
+              placeholder={language === "ja" ? "レシピの量" : "Servings"}
               value={servings || ""}
               onChange={handleChangeInput}
             />
@@ -1426,12 +1501,24 @@ function BriefExplanationEdit({
               value={servingsUnit}
               onChange={handleChangeInput}
             >
-              <option value="people">people</option>
-              <option value="slices">slices</option>
-              <option value="pieces">pieces</option>
-              <option value="cups">cups</option>
-              <option value="bowls">bowls</option>
-              <option value="other">other</option>
+              <option value="people">
+                {language === "ja" ? "人分" : "people"}
+              </option>
+              <option value="slices">
+                {language === "ja" ? "スライス" : "slices"}
+              </option>
+              <option value="pieces">
+                {language === "ja" ? "個分" : "pieces"}
+              </option>
+              <option value="cups">
+                {language === "ja" ? "カップ" : "cups"}
+              </option>
+              <option value="bowls">
+                {language === "ja" ? "杯分" : "bowls"}
+              </option>
+              <option value="other">
+                {language === "ja" ? "その他" : "other"}
+              </option>
             </select>
             {servingsUnit === "other" && (
               <input
@@ -1439,7 +1526,9 @@ function BriefExplanationEdit({
                 style={{ width: "20%", fontSize }}
                 name="servingsCustomUnit"
                 placeholder={
-                  mediaContext === "tablet" ? "custom" : "custom unit"
+                  language === "ja"
+                    ? `カスタム${mediaContext !== "tablet" ? "単位" : ""}`
+                    : `custom ${mediaContext !== "tablet" ? "unit" : ""}`
                 }
                 value={servingsCustomUnit}
                 onChange={handleChangeInput}
@@ -1471,7 +1560,9 @@ function BriefExplanationEdit({
               className={styles.p__fukidashi}
               style={{ fontSize: fontFukidashiSize }}
             >
-              Temperatures you use in the recipe (e.g. oven temperatures)
+              {language === "ja"
+                ? "このレシピで使われる温度（オーブンの温度など）"
+                : "Temperatures you use in the recipe (e.g. oven temperatures)"}
             </p>
           </div>
           <div
@@ -1482,8 +1573,8 @@ function BriefExplanationEdit({
             onMouseOut={handleMouseOut}
           >
             <Image
-              src={"/temperature.svg"}
-              alt="ingredient units icon"
+              src={"/icons/temperature.svg"}
+              alt={language === "ja" ? "アイコン 温度" : "temperature icon"}
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -1492,7 +1583,6 @@ function BriefExplanationEdit({
             .fill("")
             .map((_, i) => (
               <InputTempEdit
-                // key={keyObj.id}
                 key={i}
                 mediaContext={mediaContext}
                 language={language}
@@ -1503,15 +1593,6 @@ function BriefExplanationEdit({
                 i={i}
               />
             ))}
-          {/* {tempKeys.map((keyObj, i) => (
-            <InputTempEdit
-              key={keyObj.id}
-              mediaContext={mediaContext}
-              fontSize={fontSize}
-              temperature={curRecipe.temperatures.temperatures[i]}
-              i={i}
-            />
-          ))} */}
           <select
             className={styles.input__brief_explanation}
             style={{
@@ -1565,7 +1646,9 @@ function InputTempEdit({
       }}
       type="number"
       name={`temperature${i + 1}`}
-      placeholder={`${mediaContext === "mobile" ? "" : "Temp"} ${i + 1}`}
+      placeholder={`${
+        mediaContext === "mobile" ? "" : language === "ja" ? "温度" : "Temp"
+      } ${i + 1}`}
       value={temp !== undefined ? temp : ""}
       onChange={handleChangeTemp}
     ></input>
@@ -1640,7 +1723,7 @@ function IngredientsEdit({
           marginBottom: headerSize,
         }}
       >
-        Ingredients
+        {language === "ja" ? "材料" : "Ingredients"}
       </h2>
       <div
         style={{
@@ -1809,7 +1892,7 @@ function IngLineEdit({
           padding: "1%",
         }}
         name={`ingredient${i + 1}Name`}
-        placeholder={`Name ${i + 1}`}
+        placeholder={`${language === "ja" ? "材料" : "Ingredient"} ${i + 1}`}
         value={line.ingredient}
         onChange={handleChangeInput}
       ></input>
@@ -1822,7 +1905,7 @@ function IngLineEdit({
         }}
         type="number"
         name={`ingredient${i + 1}Amount`}
-        placeholder="Amount"
+        placeholder={language === "ja" ? "量" : "Amount"}
         value={line.amount || ""}
         onChange={handleChangeInput}
       ></input>
@@ -1843,18 +1926,32 @@ function IngLineEdit({
         <option value="oz">oz</option>
         <option value="ml">ml</option>
         <option value="L">L</option>
-        <option value="usCup">cup (US)</option>
-        <option value="japaneseCup">cup (Japan)</option>
-        <option value="imperialCup">cup (1cup = 250ml)</option>
-        <option value="riceCup">rice cup</option>
-        <option value="tsp">tsp</option>
-        <option value="tbsp">Tbsp</option>
-        <option value="australianTbsp">Tbsp (Australia)</option>
-        <option value="pinch">pinch</option>
-        <option value="can">can</option>
-        <option value="slice">slice</option>
-        <option value="other">Other</option>
-        <option value="noUnit">No unit</option>
+        <option value="usCup">
+          {language === "ja" ? "カップ（アメリカ）" : "cup (US)"}
+        </option>
+        <option value="japaneseCup">
+          {language === "ja" ? "カップ（日本）" : "cup (Japan)"}
+        </option>
+        <option value="imperialCup">
+          {language === "ja"
+            ? "メトリックカップ (1カップ = 250ml)"
+            : "Metric cup (1cup = 250ml)"}
+        </option>
+        <option value="riceCup">{language === "ja" ? "合" : "rice cup"}</option>
+        <option value="tsp">{language === "ja" ? "小さじ" : "tsp"}</option>
+        <option value="tbsp">{language === "ja" ? "大さじ" : "tbsp"}</option>
+        <option value="australianTbsp">
+          {language === "ja" ? "大さじ（オーストラリア）" : "tbsp (Australia)"}
+        </option>
+        <option value="pinch">{language === "ja" ? "つまみ" : "pinch"}</option>
+        <option value="can">{language === "ja" ? "缶" : "can"}</option>
+        <option value="slice">
+          {language === "ja" ? "スライス" : "slice"}
+        </option>
+        <option value="other">{language === "ja" ? "その他" : "Other"}</option>
+        <option value="noUnit">
+          {language === "ja" ? "単位なし" : "No unit"}
+        </option>
       </select>
       {line.unit === "other" && (
         <input
@@ -1862,7 +1959,7 @@ function IngLineEdit({
           style={{ width: "25%", padding: "1%", fontSize }}
           type="text"
           name={`ingredient${i + 1}CustomUnit`}
-          placeholder="Custom unit"
+          placeholder={language === "ja" ? "カスタム単位" : "Custom unit"}
           value={line.customUnit}
           onChange={handleChangeInput}
         />
@@ -2012,7 +2109,7 @@ function InstructionsEdit({
         className={styles.header}
         style={{ fontSize: headerSize, marginBottom: headerSize }}
       >
-        Instructions
+        {language === "ja" ? "作り方" : "Instructions"}
       </h2>
       <div
         style={{
@@ -2035,7 +2132,7 @@ function InstructionsEdit({
             alignSelf: "flex-start",
           }}
         >
-          Preparation
+          {language === "ja" ? "準備" : "Preparation"}
         </span>
         <textarea
           ref={textareaRef}
@@ -2049,7 +2146,11 @@ function InstructionsEdit({
             fontSize,
             letterSpacing: "0.05vw",
           }}
-          placeholder='Click here to add preparation steps (A bullet point will come up for each line when you press "Enter")'
+          placeholder={
+            language === "ja"
+              ? "クリックして事前準備としてやっておくことを追加してください（エンターキーを押すと、リストのように「・」が出てきます）"
+              : 'Click here to add preparation steps (A bullet point will come up for each line when you press "Enter")'
+          }
           name="preparation"
           value={textareaWithBullet}
           onFocus={handleToggleTextarea}
@@ -2120,15 +2221,24 @@ function InstructionEdit({
   displayError: (error: string) => void;
 }) {
   //design
-  const imageWidth =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.28, "100px")
-      : getSize(recipeWidth, 0.22, "140px");
+  const [imageWidth, setImageWidth] = useState("140px");
+  const [imageHeight, setImageHeaight] = useState("100px");
 
-  const imageHeight =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.2, "70px")
-      : getSize(recipeWidth, 0.15, "100px");
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setImageWidth(
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.28, "100px")
+        : getSize(recipeWidth, 0.22, "140px")
+    );
+
+    setImageHeaight(
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.2, "70px")
+        : getSize(recipeWidth, 0.15, "100px")
+    );
+  }, [mediaContext, recipeWidth]);
 
   async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
     try {
@@ -2150,7 +2260,11 @@ function InstructionEdit({
       );
     } catch (err: any) {
       console.error("Error while resizing instruction image", err.message);
-      displayError("Server error while uploading image 🙇‍♂️ Please try again!");
+      displayError(
+        language === "ja"
+          ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+          : "Server error while uploading image 🙇‍♂️ Please try again!"
+      );
     }
   }
 
@@ -2201,7 +2315,7 @@ function InstructionEdit({
           resize: "none",
         }}
         name={`instruction${i + 1}`}
-        placeholder={`Instruction ${i + 1}`}
+        placeholder={`${language === "ja" ? "作り方" : "Instruction"}${i + 1}`}
         value={instruction.instruction}
         onChange={handleChangeInstruction}
       ></textarea>
@@ -2236,7 +2350,11 @@ function InstructionEdit({
           <>
             <Image
               src={instruction.image.data}
-              alt={`instruction ${i + 1} image`}
+              alt={
+                language === "ja"
+                  ? `作り方${i + 1} 画像`
+                  : `instruction${i + 1} image`
+              }
               width={parseFloat(imageWidth)}
               height={parseFloat(imageHeight)}
             ></Image>
@@ -2307,7 +2425,7 @@ function AboutThisRecipeEdit({
         className={styles.header}
         style={{ marginBottom: headerSize, fontSize: headerSize }}
       >
-        About this recipe
+        {language === "ja" ? "このレシピについて" : "About this recipe"}
       </h2>
       <div
         style={{
@@ -2332,7 +2450,11 @@ function AboutThisRecipeEdit({
             border: "none",
           }}
           name="description"
-          placeholder="Click here to set an explanation for the recipe"
+          placeholder={
+            language === "ja"
+              ? "クリックしてこのレシピについての説明を追加しましょう"
+              : "Click here to set an explanation for the recipe"
+          }
           value={description}
           onChange={handleChangeDescription}
         ></textarea>
@@ -2364,16 +2486,25 @@ function MemoriesEdit({
   deleteImage: (i: number) => void;
   displayError: (error: string) => void;
 }) {
-  const [curImg, setCurImg] = useState(0);
-
   //design
-  const width =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.9, "300px")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.65, "400px")
-      : getSize(recipeWidth, 0.55, "400px");
-  const height = parseInt(width) * 0.55 + "px";
+  const [width, setWidth] = useState("400px");
+  const [height, setHeight] = useState("220px");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const memoriesWidth =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.9, "300px")
+        : mediaContext === "tablet"
+        ? getSize(recipeWidth, 0.65, "400px")
+        : getSize(recipeWidth, 0.55, "400px");
+
+    setWidth(memoriesWidth);
+    setHeight(parseInt(memoriesWidth) * 0.55 + "px");
+  }, [mediaContext, recipeWidth]);
+
+  const [curImg, setCurImg] = useState(0);
 
   async function handleChangeImg(e: React.ChangeEvent<HTMLInputElement>) {
     try {
@@ -2400,7 +2531,11 @@ function MemoriesEdit({
       onChangeImages(imageFiles);
     } catch (err: any) {
       console.error("Error while resizing memory images", err.message);
-      displayError("Server error while uploading images 🙇‍♂️ Please try again!");
+      displayError(
+        language === "ja"
+          ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+          : "Server error while uploading images 🙇‍♂️ Please try again!"
+      );
     }
   }
 
@@ -2431,7 +2566,7 @@ function MemoriesEdit({
         className={styles.header}
         style={{ marginBottom: headerSize, fontSize: headerSize }}
       >
-        Memories of the recipe
+        {language === "ja" ? "このレシピの思い出" : "Memories of the recipe"}
       </h2>
       <div
         style={{
@@ -2472,10 +2607,10 @@ function MemoriesEdit({
             <button
               className={clsx(styles.btn__img, styles.btn__upload_img)}
               style={{
-                width: "62%",
-                height: "18%",
-                top: "38%",
-                left: "25%",
+                width: language === "ja" ? "70%" : "62%",
+                height: "17%",
+                top: "39%",
+                left: language === "ja" ? "23%" : "25%",
                 fontSize,
                 letterSpacing: "0.07vw",
                 color: "rgba(255, 168, 7, 1)",
@@ -2483,7 +2618,7 @@ function MemoriesEdit({
               }}
               type="button"
             >
-              Upload images
+              {language === "ja" ? "画像をアップロード" : "Upload images"}
             </button>
             <input
               className={styles.input__file}
@@ -2587,7 +2722,7 @@ function MemoryImgEdit({
       ></button>
       <Image
         src={image.data}
-        alt={`memory image ${i + 1}`}
+        alt={`${language === "ja" ? "思い出画像" : "memory image"}${i + 1}`}
         width={parseFloat(width)}
         height={parseFloat(height)}
       ></Image>
@@ -2634,7 +2769,7 @@ function CommentsEdit({
         className={styles.header}
         style={{ fontSize: headerSize, marginBottom: headerSize }}
       >
-        Comments
+        {language === "ja" ? "コメント" : "Comments"}
       </h2>
       <div
         style={{
@@ -2656,7 +2791,11 @@ function CommentsEdit({
             padding: "3%",
           }}
           name="comments"
-          placeholder="Click here to set comments"
+          placeholder={
+            language === "ja"
+              ? "クリックしてコメントを追加しましょう"
+              : "Click here to add comments"
+          }
           value={comments}
           onChange={handleChangeComments}
         ></textarea>
@@ -2693,9 +2832,12 @@ export function RecipeNoEdit({
 
   ///design
   const [fontSize, setFontSize] = useState("1.3vw");
+  const [headerSize, setHeaderSize] = useState("1.3vw");
+  const [marginTop, setMarginTop] = useState("30px");
 
   useEffect(() => {
     if (!mediaContext) return;
+
     const fontSizeEn =
       mediaContext === "mobile"
         ? getSize(recipeWidth, 0.045, "4.5vw")
@@ -2705,31 +2847,14 @@ export function RecipeNoEdit({
         ? getSize(recipeWidth, 0.031, "1.5vw")
         : getSize(recipeWidth, 0.028, "1.3vw");
 
-    setFontSize(
-      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
-    );
-  }, [mediaContext, language, recipeWidth]);
+    const fontSizeFinal =
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
+    setFontSize(fontSizeFinal);
 
-  const [headerSize, setHeaderSize] = useState("1.3vw");
+    setHeaderSize(parseFloat(fontSizeFinal) * 1.1 + "px");
 
-  useEffect(() => {
-    setHeaderSize(parseFloat(fontSize) * 1.1 + "px");
-  }, [fontSize]);
-
-  const [marginTop, setMarginTop] = useState("30px");
-
-  useEffect(() => {
     setMarginTop(getSize(recipeWidth, 0.11, "30px"));
-  }, [recipeWidth]);
-
-  // const headerSize =
-  // mediaContext === "mobile"
-  // ? getSize(recipeWidth, 0.05, "5vw")
-  // : mediaContext === "tablet"
-  //     ? getSize(recipeWidth, 0.04, "3.5vw")
-  //     : mediaContext === "desktop" && window.innerWidth <= 1100
-  //     ? getSize(recipeWidth, 0.035, "1.5vw")
-  //     : getSize(recipeWidth, 0.032, "1.3vw");
+  }, [mediaContext, language, recipeWidth]);
 
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE | null>(userRecipe);
@@ -3402,7 +3527,7 @@ function BriefExplanationNoEdit({
           >
             <Image
               src={"/icons/person.svg"}
-              alt={language === "ja" ? "アイコン人" : "person icon"}
+              alt={language === "ja" ? "アイコン 人" : "person icon"}
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -3441,7 +3566,7 @@ function BriefExplanationNoEdit({
           >
             <Image
               src={"/icons/servings.svg"}
-              alt={language === "ja" ? "アイコン量" : "servings icon"}
+              alt={language === "ja" ? "アイコン 量" : "servings icon"}
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -3460,7 +3585,12 @@ function BriefExplanationNoEdit({
             />
           )}
           <span style={{ width: "20%", fontSize: fontSizeBrief }}>
-            {servingsUnit !== "other" ? servingsUnit : servingsCustomUnit}
+            {servingsUnit !== "other"
+              ? getTranslatedServingsUnit(
+                  language,
+                  (servingsUnit || "people") as TYPE_SERVINGS_UNIT
+                )
+              : servingsCustomUnit}
           </span>
         </div>
         <div
@@ -3501,7 +3631,9 @@ function BriefExplanationNoEdit({
             <Image
               src={"/icons/scale.svg"}
               alt={
-                language === "ja" ? "アイコン材料単位" : "ingredient units icon"
+                language === "ja"
+                  ? "アイコン 材料単位"
+                  : "ingredient units icon"
               }
               width={iconSize}
               height={iconSize}
@@ -3563,9 +3695,7 @@ function BriefExplanationNoEdit({
           >
             <Image
               src={"/icons/temperature.svg"}
-              alt={
-                language === "ja" ? "アイコン温度単位" : "temperature unit icon"
-              }
+              alt={language === "ja" ? "アイコン 温度" : "temperature icon"}
               width={iconSize}
               height={iconSize}
             ></Image>
@@ -3657,6 +3787,7 @@ function IngredientsNoEdit({
         {ingredients.map((ing, i) => (
           <IngLineNoEdit
             key={i}
+            language={language}
             fontSize={fontSize}
             servingsValue={servingsValue}
             ingredient={ing}
@@ -3669,11 +3800,13 @@ function IngredientsNoEdit({
 }
 
 function IngLineNoEdit({
+  language,
   fontSize,
   servingsValue,
   ingredient,
   regionUnit,
 }: {
+  language: TYPE_LANGUAGE;
   fontSize: string;
   servingsValue: number;
   ingredient: TYPE_INGREDIENT;
@@ -3684,7 +3817,7 @@ function IngLineNoEdit({
     unit: string;
   }>({
     amount: ingredient.amount,
-    unit: getReadableIngUnit(ingredient.unit),
+    unit: getTranslatedIngredientsUnit(language, ingredient.unit),
   });
 
   useEffect(() => {
@@ -3694,14 +3827,14 @@ function IngLineNoEdit({
     const newIngredient = !convertedIng
       ? {
           amount: ingredient.amount,
-          unit: getReadableIngUnit(ingredient.unit),
+          unit: getTranslatedIngredientsUnit(language, ingredient.unit),
         }
       : {
           amount: convertedIng.amount,
-          unit: getReadableIngUnit(convertedIng.unit),
+          unit: getTranslatedIngredientsUnit(language, convertedIng.unit),
         };
     setNewIngredient(newIngredient);
-  }, [ingredient, servingsValue, regionUnit]);
+  }, [language, ingredient, servingsValue, regionUnit]);
 
   return (
     <div
@@ -3723,19 +3856,43 @@ function IngLineNoEdit({
         }}
         type="checkbox"
       ></input>
-      <p>
-        {(newIngredient.amount !== 0 && newIngredient.unit === "g") ||
-        newIngredient.unit === "kg" ||
-        newIngredient.unit === "oz" ||
-        newIngredient.unit === "lb" ||
-        newIngredient.unit === "ml" ||
-        newIngredient.unit === "L"
-          ? newIngredient.amount
-          : fracty(newIngredient.amount)}{" "}
-        &nbsp;
-        {newIngredient.unit && `${newIngredient.unit} of`} &nbsp;
-        {ingredient.ingredient}
-      </p>
+      {language === "ja" ? (
+        <p>
+          {ingredient.ingredient}
+          &nbsp;&nbsp;
+          {(newIngredient.amount !== 0 && newIngredient.unit === "g") ||
+          newIngredient.unit === "kg" ||
+          newIngredient.unit === "oz" ||
+          newIngredient.unit === "lb" ||
+          newIngredient.unit === "ml" ||
+          newIngredient.unit === "L"
+            ? newIngredient.amount
+            : fracty(newIngredient.amount) || ""}
+          &nbsp;
+          {newIngredient.unit &&
+            newIngredient.unit !== "noUnit" &&
+            newIngredient.unit !== "単位なし" &&
+            `${newIngredient.unit}`}
+        </p>
+      ) : (
+        <p>
+          {(newIngredient.amount !== 0 && newIngredient.unit === "g") ||
+          newIngredient.unit === "kg" ||
+          newIngredient.unit === "oz" ||
+          newIngredient.unit === "lb" ||
+          newIngredient.unit === "ml" ||
+          newIngredient.unit === "L"
+            ? newIngredient.amount
+            : fracty(newIngredient.amount) || ""}
+          &nbsp;
+          {newIngredient.unit &&
+            newIngredient.unit !== "noUnit" &&
+            newIngredient.unit !== "単位なし" &&
+            `${newIngredient.unit}`}
+          &nbsp;&nbsp;
+          {ingredient.ingredient}
+        </p>
+      )}
     </div>
   );
 }

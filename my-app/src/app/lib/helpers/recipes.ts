@@ -1,10 +1,14 @@
 import {
   TYPE_INGREDIENT,
+  TYPE_INGREDIENT_UNIT,
   TYPE_INGREDIENTS,
+  TYPE_LANGUAGE,
   TYPE_MEDIA,
   TYPE_RECIPE,
   TYPE_REGION_UNIT,
+  TYPE_SERVINGS_UNIT,
 } from "../config/type";
+import { LanguageContext } from "../providers";
 import { convertIngUnits, convertTempUnits } from "./converter";
 import { getData } from "./other";
 
@@ -129,20 +133,6 @@ export const getIngGridTemplateColumnsStyle = (
     edit
     ? "auto"
     : "auto auto";
-};
-
-export const getReadableIngUnit = (unit: string) => {
-  let readableUnit;
-
-  if (unit === "usCup") readableUnit = "US cup";
-  else if (unit === "japaneseCup") readableUnit = "Japanese cup";
-  else if (unit === "imperialCup") readableUnit = "Imperial cup";
-  else if (unit === "riceCup") readableUnit = "rice cup";
-  else if (unit === "australianTbsp") readableUnit = "Australian tbsp";
-  else if (unit === "noUnit") readableUnit = "";
-  else readableUnit = unit;
-
-  return readableUnit;
 };
 
 export const updateIngsForServings = (
@@ -318,21 +308,72 @@ export const getOrderedRecipes = (recipes: any[]) =>
     });
 
 export const createMessage = (
+  language: TYPE_LANGUAGE,
   error: string,
   isPending: boolean,
-  numberOfUserRecipes: number | null,
-  numberOfCurPageRecipes: number
+  numberOfRecipes: number | null,
+  recipeLength: number
 ) => {
   if (error) return error;
 
-  if (isPending) return "Loading your recipes...";
+  if (isPending)
+    return language === "ja" ? "レシピをロード中…" : "Loading your recipes...";
 
-  if (numberOfUserRecipes === 0)
-    return "No recipes created yet. Let't start by creating a recipe :)";
+  if (numberOfRecipes === 0)
+    return language === "ja"
+      ? "まだレシピが作られていません。レシピを作ってwithCookingを始めましょう！"
+      : "No recipes created yet. Let't start by creating a recipe :)";
 
-  if (!numberOfCurPageRecipes)
-    return "No recipes found. Please try again with a different keyword :)";
+  if (!recipeLength)
+    return language === "ja"
+      ? "レシピが見つかりませんでした。別のキーワードで検索してください"
+      : "No recipes found. Please try again with a different keyword :)";
 
-  //otherwise no message
   return "";
+};
+
+export const getTranslatedServingsUnit = (
+  language: TYPE_LANGUAGE,
+  unit: TYPE_SERVINGS_UNIT
+) => {
+  if (language === "ja") {
+    if (unit === "people") return "人分";
+    if (unit === "slices") return "スライス";
+    if (unit === "pieces") return "個分";
+    if (unit === "cups") return "カップ";
+    if (unit === "bowls") return "杯分";
+    if (unit === "other") return "その他";
+  }
+
+  return unit;
+};
+
+export const getTranslatedIngredientsUnit = (
+  language: TYPE_LANGUAGE,
+  unit: string
+) => {
+  if (language === "ja") {
+    if (unit === "usCup") return "カップ（アメリカ）";
+    if (unit === "japaneseCup") return "カップ（日本）";
+    if (unit === "imperialCup") return "メトリックカップ (1カップ = 250ml)";
+    if (unit === "riceCup") return "合";
+    if (unit === "tsp") return "小さじ";
+    if (unit === "tbsp") return "大さじ";
+    if (unit === "australianTbsp") return "大さじ（オーストラリア）";
+    if (unit === "pinch") return "つまみ";
+    if (unit === "can") return "缶";
+    if (unit === "slice") return "スライス";
+    if (unit === "other") return "その他";
+    if (unit === "noUnit") return "単位なし";
+  }
+
+  if (language === "en") {
+    if (unit === "usCup") return "US cup";
+    if (unit === "japaneseCup") return "Japanese cup";
+    if (unit === "imperialCup") return "Imperial cup";
+    if (unit === "riceCup") return "rice cup";
+    if (unit === "australianTbsp") return "Australian tbsp";
+  }
+
+  return unit;
 };
