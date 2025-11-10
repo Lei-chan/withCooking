@@ -1,23 +1,38 @@
 const news = [
   {
     date: "2025-10-08T11:07:57.990Z",
-    title: "withCooking is now released!",
-    content: "withCooking is now released!",
+    title: {
+      en: "withCooking is now released!",
+      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
+    },
+    content: {
+      en: "withCooking is now released!",
+      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
+    },
   },
   {
     date: "2025-10-08T11:07:57.990Z",
-    title: "withCooking is now released!",
-    content: "withCooking is now released!",
+    title: {
+      en: "withCooking is now released!",
+      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
+    },
+    content: {
+      en: "withCooking is now released!",
+      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
+    },
   },
   {
     date: "2025-10-08T11:34:29.072Z",
-    title: "withCooking!",
-    content: "withCooking!",
+    title: { en: "withCooking!", ja: "withCooking(ウィズ・クッキング)" },
+    content: { en: "withCooking!", ja: "withCooking(ウィズ・クッキング)!" },
   },
   {
     date: "2025-10-25T11:34:29.072Z",
-    title: "withCooking!",
-    content: "withCooking is now released :)",
+    title: { en: "withCooking!", ja: "withCooking(ウィズ・クッキング)!" },
+    content: {
+      en: "withCooking is now released!",
+      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
+    },
   },
 ];
 

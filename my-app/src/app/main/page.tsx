@@ -36,27 +36,15 @@ import {
 import { nanoid } from "nanoid";
 
 export default function MAIN() {
-  const mediaContext = useContext(MediaContext);
-  const languageContext = useContext(LanguageContext);
-  const userContext = useContext(UserContext);
-
   const searchRef = useRef(null);
 
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-  const [innerWidth, setInnerWidth] = useState(1440);
-  const [innerHeight, setInnerHeight] = useState(600);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [isMessageVisible, setIsMessageVisible] = useState(false);
-  const [isDraggingX, setIsDraggingX] = useState(false);
-  const [isDraggingY, setIsDraggingY] = useState(false);
-  const [recipeWidth, setRecipeWidth] = useState(innerWidth * 0.55 + "px");
-  const [timerHeight, setTimerHeight] = useState(innerHeight * 0.65 + "px");
-  const [timerNoteWidth, setTimerNoteWidth] = useState(
-    innerWidth - parseFloat(recipeWidth) + "px"
-  );
+  const mediaContext = useContext(MediaContext);
+  const userContext = useContext(UserContext);
 
-  console.log(window.innerWidth);
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
 
   useEffect(() => {
     if (!languageContext?.language) return;
@@ -64,10 +52,22 @@ export default function MAIN() {
     setLanguage(languageContext.language);
   }, [languageContext?.language]);
 
+  //design
+  const [innerWidth, setInnerWidth] = useState(1440);
+  const [innerHeight, setInnerHeight] = useState(600);
+  const [recipeWidth, setRecipeWidth] = useState(innerWidth * 0.55 + "px");
+  const [timerHeight, setTimerHeight] = useState(innerHeight * 0.65 + "px");
+  const [timerNoteWidth, setTimerNoteWidth] = useState(
+    innerWidth - parseFloat(recipeWidth) + "px"
+  );
+
+  useEffect(() => {
+    setInnerWidth(window.innerWidth);
+    setInnerHeight(window.innerHeight);
+  }, []);
+
   useEffect(() => {
     if (!mediaContext) return;
-
-    console.log(innerWidth, innerHeight);
 
     setRecipeWidth(
       mediaContext === "mobile"
@@ -76,19 +76,26 @@ export default function MAIN() {
         ? innerWidth * 0.65 + "px"
         : innerWidth * 0.55 + "px"
     );
-    setTimerHeight(innerHeight * 0.65 + "px");
+  }, [mediaContext, innerWidth]);
+
+  useEffect(() => {
     setTimerNoteWidth(
       mediaContext === "mobile"
         ? innerWidth + "px"
         : innerWidth - parseFloat(recipeWidth) + "px"
     );
-  }, [mediaContext, innerWidth, innerHeight, recipeWidth]);
+  }, [mediaContext, innerWidth, recipeWidth]);
 
   useEffect(() => {
-    console.log(window.innerWidth);
-    setInnerWidth(window.innerWidth);
-    setInnerHeight(window.innerHeight);
-  }, []);
+    setTimerHeight(innerHeight * 0.65 + "px");
+  }, [innerHeight]);
+
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isMessageVisible, setIsMessageVisible] = useState(false);
+
+  const [isDraggingX, setIsDraggingX] = useState(false);
+  const [isDraggingY, setIsDraggingY] = useState(false);
 
   function handleMouseDownX() {
     setIsDraggingX(true);
@@ -333,25 +340,30 @@ function Search({
   }, [mediaContext, innerWidth, language]);
 
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
-  const [numberOfRecipes, setNumberOfRecipes] = useState(
-    userContext?.numberOfRecipes || null
-  );
+  //don't modify originalNumberOfRecipes
+  const [originalNumberOfRecipes, setOrigianlNumberOfRecipes] = useState(0);
   const [numberOfPages, setNumberOfPages] = useState<number>(0);
   const [curPage, setCurPage] = useState<number>(1);
 
   const [keyword, setKeyword] = useState("");
 
-  const [isPending, setIsPending] = useState<boolean>(true);
+  const [isPending, setIsPending] = useState<boolean>(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  // //set numberOfRecipes for the first render
+  //set originalNumberOfRecipes for the first render
   useEffect(() => {
-    if (userContext?.numberOfRecipes === null || !userContext) return;
-    setNumberOfRecipes(userContext.numberOfRecipes);
+    if (!userContext || userContext?.numberOfRecipes === null) return;
+
+    const originalNumberOfUserRecipes = userContext.numberOfRecipes;
+
+    setOrigianlNumberOfRecipes(originalNumberOfUserRecipes);
     setNumberOfPages(
-      calcNumberOfPages(userContext.numberOfRecipes, RECIPES_PER_PAGE)
+      calcNumberOfPages(originalNumberOfUserRecipes, RECIPES_PER_PAGE)
     );
+
+    if (!originalNumberOfUserRecipes) return;
+
     (async () => {
       setIsPending(true);
       await setUserRecipes();
@@ -363,7 +375,7 @@ function Search({
   async function setUserRecipes(key: string = "") {
     try {
       //If user doesn't have any recipes => return
-      if (!userContext?.numberOfRecipes) return;
+      if (!originalNumberOfRecipes) return;
 
       const RECIPES_PER_FETCH = 6;
 
@@ -375,7 +387,6 @@ function Search({
       );
 
       setRecipes(data.data);
-      setNumberOfRecipes(data.numberOfRecipes);
       setNumberOfPages(
         calcNumberOfPages(data.numberOfRecipes, RECIPES_PER_PAGE)
       );
@@ -393,12 +404,14 @@ function Search({
 
   //when curPage changes, change curRecipes too
   useEffect(() => {
+    if (!originalNumberOfRecipes) return;
+
     (async () => {
       setIsPending(true);
       await setUserRecipes(keyword);
       setIsPending(false);
     })();
-  }, [curPage, keyword]);
+  }, [curPage, keyword, originalNumberOfRecipes]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -430,11 +443,11 @@ function Search({
       language,
       error,
       isPending,
-      numberOfRecipes,
+      originalNumberOfRecipes,
       recipes.length
     ) as string;
     setMessage(message);
-  }, [language, error, isPending, numberOfRecipes, recipes.length]);
+  }, [language, error, isPending, originalNumberOfRecipes, recipes.length]);
 
   return (
     <div
@@ -475,9 +488,9 @@ function Search({
           </button>
         </form>
         <ul className={styles.search_results}>
-          {message || isPending ? (
+          {message ? (
             <p className={styles.no_results} style={{ fontSize: fontSize }}>
-              {message || language === "ja" ? "ロード中…" : "Loading..."}
+              {message}
             </p>
           ) : (
             recipes.map((recipe, i) => (

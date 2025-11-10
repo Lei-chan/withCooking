@@ -7,48 +7,83 @@ import { redirect, RedirectType } from "next/navigation";
 //css
 import styles from "./page.module.css";
 //type
-import { TYPE_RECIPE, TYPE_USER_CONTEXT } from "@/app/lib/config/type";
+import { TYPE_LANGUAGE, TYPE_USER_CONTEXT } from "@/app/lib/config/type";
 //settings
 import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_MIN_UPPERCASE,
   PASSWORD_MIN_LOWERCASE,
   PASSWORD_MIN_DIGIT,
+  PASSWORD_MIN_EACH,
 } from "../lib/config/settings";
 //general methods
-import { getData, wait } from "@/app/lib/helpers/other";
+import { getData, getFontSizeForLanguage, wait } from "@/app/lib/helpers/other";
 //context
-import { MediaContext, UserContext } from "../lib/providers";
+import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
+import { OverlayMessage } from "../lib/components/components";
 
 export default function Account() {
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
   const mediaContext = useContext(MediaContext);
+
+  const [formWidth, setFormWidth] = useState("40%");
+  const [fontSize, setFontSize] = useState("1.4vw");
+  const [smallHeaderSize, setSmallHeaderSize] = useState(
+    `calc(${fontSize} * 1.1)`
+  );
+  const [inputWidth, setInputWidth] = useState("55%");
+  const [btnSize, setBtnSize] = useState(`calc(${fontSize} * 0.9)`);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setFormWidth(
+      mediaContext === "mobile"
+        ? "84%"
+        : mediaContext === "tablet"
+        ? "60%"
+        : "40%"
+    );
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4.7vw"
+        : mediaContext === "tablet"
+        ? "3vw"
+        : mediaContext === "desktop"
+        ? "1.7vw"
+        : "1.4vw";
+    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+    setFontSize(fontSizeFinal);
+
+    setSmallHeaderSize(`calc(${fontSizeFinal} * 1.1)`);
+
+    setInputWidth(mediaContext === "mobile" ? "80%" : "55%");
+
+    setBtnSize(`calc(${fontSizeFinal} * 0.9)`);
+  }, [mediaContext, language]);
+
+  //user
   const userContext = useContext(UserContext);
   const [user, setUser] = useState<{
     email: string;
     recipes: any[] | [];
     createdAt: string;
   }>();
+
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-
-  //design
-  const formWidth =
-    mediaContext === "mobile"
-      ? "84%"
-      : mediaContext === "tablet"
-      ? "60%"
-      : "40%";
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4.7vw"
-      : mediaContext === "tablet"
-      ? "3vw"
-      : mediaContext === "desktop"
-      ? "1.7vw"
-      : "1.4vw";
-  const smallHeaderSize = `calc(${fontSize} * 1.1)`;
-  const inputWidth = mediaContext === "mobile" ? "80%" : "55%";
-  const btnSize = `calc(${fontSize} * 0.9)`;
+  const [isOverlayMsgVisible, setIsOverlayMsgVisible] = useState(false);
 
   async function getUser() {
     try {
@@ -61,11 +96,17 @@ export default function Account() {
 
       setUser(data.data);
 
+      console.log(data);
+
       //set newAccessToken for context when it's refreshed
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
       console.error("Error while getting user information", err.message);
-      setError("Server error 🙇‍♂️ Please try again!");
+      setError(
+        language === "ja"
+          ? "サーバーエラーが発生しました🙇‍♂️リロードして再びお試しください"
+          : "Server error 🙇‍♂️ Please reload this page and try again"
+      );
     }
   }
 
@@ -78,6 +119,12 @@ export default function Account() {
     await wait();
     setMessage("");
   }
+
+  function toggleMessageVisible() {
+    setIsOverlayMsgVisible(!isOverlayMsgVisible);
+  }
+
+  console.log(language);
 
   return (
     <div
@@ -102,7 +149,7 @@ export default function Account() {
           color: "#0d0081ff",
         }}
       >
-        Account Information
+        {language === "ja" ? "アカウント" : "Account"}
       </h1>
       {(error || message) && (
         <p
@@ -144,6 +191,7 @@ export default function Account() {
           }}
         >
           <Email
+            language={language}
             userContext={userContext}
             fontSize={fontSize}
             smallHeaderSize={smallHeaderSize}
@@ -153,6 +201,7 @@ export default function Account() {
             displayMessage={displayMessage}
           />
           <Password
+            language={language}
             userContext={userContext}
             fontSize={fontSize}
             smallHeaderSize={smallHeaderSize}
@@ -161,25 +210,31 @@ export default function Account() {
             displayMessage={displayMessage}
           />
           <Since
+            language={language}
             fontSize={fontSize}
             smallHeaderSize={smallHeaderSize}
             since={user.createdAt}
           />
           <CloseAccount
+            language={language}
             userContext={userContext}
             fontSize={fontSize}
             smallHeaderSize={smallHeaderSize}
             btnSize={btnSize}
             recipes={user.recipes || []}
-            displayMessage={displayMessage}
+            toggleMessageVisible={toggleMessageVisible}
           />
         </div>
+      )}
+      {isOverlayMsgVisible && (
+        <OverlayMessage option="message" content="close"></OverlayMessage>
       )}
     </div>
   );
 }
 
 function Email({
+  language,
   userContext,
   fontSize,
   smallHeaderSize,
@@ -188,6 +243,7 @@ function Email({
   email,
   displayMessage,
 }: {
+  language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   smallHeaderSize: string;
@@ -213,13 +269,20 @@ function Email({
       const [[name, value]] = [...new FormData(e.currentTarget)];
 
       const trimmedValue = typeof value === "string" && value.trim();
-      if (!trimmedValue) return setError("※ Please fill the field");
+      if (!trimmedValue)
+        return setError(
+          language === "ja" ? "※入力してください" : "※ Please fill the field"
+        );
 
       ///And change account info
       await updateEmail({ email: trimmedValue });
 
       setChange(false);
-      await displayMessage("Email updated successfully!");
+      await displayMessage(
+        language === "ja"
+          ? "メールアドレスが更新されました！"
+          : "Email updated successfully!"
+      );
     } catch (err: any) {
       setError(`※${err.message}`);
       console.error(
@@ -262,7 +325,7 @@ function Email({
   return (
     <form className={styles.box} onSubmit={handleSubmit}>
       <h3 className={styles.titles} style={{ fontSize: smallHeaderSize }}>
-        Email
+        {language === "ja" ? "メールアドレス" : "Email"}
       </h3>
       {change ? (
         <>
@@ -276,6 +339,7 @@ function Email({
             value={value}
             type="email"
             name="email"
+            placeholder={language === "ja" ? "メールアドレス" : "email"}
             onChange={handleChangeInput}
           />
           <p
@@ -286,8 +350,8 @@ function Email({
               fontSize,
             }}
           >
-            {error ? error : ""}
-            {isPending ? "Updating..." : ""}
+            {error && error}
+            {isPending && (language === "ja" ? "更新中…" : "Updating...")}
           </p>
         </>
       ) : (
@@ -298,13 +362,20 @@ function Email({
         style={{ fontSize: btnSize }}
         type="submit"
       >
-        {change ? "Submit" : "Change"}
+        {change
+          ? language === "ja"
+            ? "更新"
+            : "Submit"
+          : language === "ja"
+          ? "変更"
+          : "Change"}
       </button>
     </form>
   );
 }
 
 function Password({
+  language,
   userContext,
   fontSize,
   smallHeaderSize,
@@ -312,6 +383,7 @@ function Password({
   btnSize,
   displayMessage,
 }: {
+  language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   smallHeaderSize: string;
@@ -342,25 +414,24 @@ function Password({
         (dataArr) => typeof dataArr[1] === "string" && dataArr[1].trim()
       );
 
-      if (!curPassword && !newPassword) {
-        setErrorField("both");
-        return setError("※ Please fill the field");
-      }
+      if (!curPassword || !newPassword) {
+        if (!curPassword && !newPassword) setErrorField("both");
 
-      if (!curPassword) {
-        setErrorField("current");
-        return setError("※ Please fill the field");
-      }
+        if (!curPassword && newPassword) setErrorField("current");
 
-      if (!newPassword) {
-        setErrorField("new");
-        return setError("※ Please fill the field");
+        if (curPassword && !newPassword) setErrorField("new");
+
+        return setError(
+          language === "ja" ? "※ 入力してください" : "※ Please fill the field"
+        );
       }
 
       if (curPassword === newPassword) {
         setErrorField("both");
         return setError(
-          "※Same values were entered. Please enter different values."
+          language === "ja"
+            ? "※同じパスワードが入力されました。違うパスワードを入力して下さい"
+            : "※ Same values were entered. Please enter different values."
         );
       }
 
@@ -368,9 +439,13 @@ function Password({
       await updatePassword({ curPassword, newPassword });
 
       setChange(false);
-      await displayMessage("Password updated successfully!");
+      await displayMessage(
+        language === "ja"
+          ? "パスワードが更新されました！"
+          : "Password updated successfully!"
+      );
     } catch (err: any) {
-      setError(err.message);
+      setError(`※${err.message}`);
       setErrorField(err.statusCode === 401 ? "current" : "new");
       console.error(
         "Error while updating password",
@@ -396,7 +471,6 @@ function Password({
         body: JSON.stringify(passwordInfo),
       });
 
-      console.log(data);
       //set newAccessToken for context when it's refreshed
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err) {
@@ -407,7 +481,7 @@ function Password({
   return (
     <form className={styles.box} onSubmit={handleSubmit}>
       <h3 className={styles.titles} style={{ fontSize: smallHeaderSize }}>
-        Password
+        {language === "ja" ? "パスワード" : "Password"}
       </h3>
       {change ? (
         <>
@@ -415,21 +489,22 @@ function Password({
             style={{
               width: "90%",
               fontSize: `calc(${fontSize} * 0.95)`,
-              // backgroundColor: "blue",
             }}
           >
-            Use more than {PASSWORD_MIN_LENGTH} characters, including at least
-            <br />
-            {PASSWORD_MIN_UPPERCASE} uppercase, {PASSWORD_MIN_LOWERCASE}{" "}
-            lowercase, and {PASSWORD_MIN_DIGIT} digit
+            {language === "ja"
+              ? `${PASSWORD_MIN_LENGTH}文字以上で、大文字、小文字、数字をそれぞれ１つずつ以上使用してください`
+              : `Use more than ${PASSWORD_MIN_LENGTH} characters, including at least
+            ${PASSWORD_MIN_EACH} uppercase, lowercase, and digit`}
           </p>
           <PasswordInput
+            language={language}
             fontSize={fontSize}
             inputWidth={inputWidth}
             passwordType={"current"}
             errorField={errorField}
           />
           <PasswordInput
+            language={language}
             fontSize={fontSize}
             inputWidth={inputWidth}
             passwordType={"new"}
@@ -443,30 +518,34 @@ function Password({
               fontSize,
             }}
           >
-            {error ? error : ""}
-            {isPending ? "Updating..." : ""}
+            {error && error}
+            {isPending && (language === "ja" ? "更新中…" : "Updating...")}
           </p>
         </>
       ) : (
-        <p style={{ fontSize }}>Change password from here</p>
+        <p style={{ fontSize }}>
+          {language === "ja" ? "パスワードを変更する" : "Change password"}
+        </p>
       )}
       <button
         className={styles.btn__change}
         style={{ fontSize: btnSize }}
         type="submit"
       >
-        Change
+        {language === "ja" ? "変更" : "Change"}
       </button>
     </form>
   );
 }
 
 function PasswordInput({
+  language,
   fontSize,
   inputWidth,
   passwordType,
   errorField,
 }: {
+  language: TYPE_LANGUAGE;
   fontSize: string;
   inputWidth: string;
   passwordType: "current" | "new";
@@ -477,6 +556,18 @@ function PasswordInput({
   function handleToggleVisibility() {
     setInputType((prev) => (prev === "password" ? "text" : "password"));
   }
+
+  const getTranslatedPlaceholder = (
+    language: TYPE_LANGUAGE,
+    passwordType: "current" | "new"
+  ) => {
+    if (language === "ja")
+      return `${passwordType === "current" ? "現在の" : "新しい"}パスワード`;
+
+    return `${
+      passwordType.slice(0).toUpperCase() + passwordType.slice(1)
+    } password`;
+  };
 
   return (
     <>
@@ -494,7 +585,7 @@ function PasswordInput({
           }}
           type={inputType}
           minLength={8}
-          placeholder={`${passwordType} password`}
+          placeholder={getTranslatedPlaceholder(language, passwordType)}
           name={`${passwordType}Password`}
         />
         <button
@@ -510,40 +601,52 @@ function PasswordInput({
 }
 
 function Since({
+  language,
   fontSize,
   smallHeaderSize,
   since,
 }: {
+  language: TYPE_LANGUAGE;
   fontSize: string;
   smallHeaderSize: string;
   since: string;
 }) {
+  const [userRegion, setUserRegion] = useState("en-US");
+
+  useEffect(() => {
+    setUserRegion(navigator.language);
+  }, []);
+
   return (
     <div className={styles.box}>
       <h3 className={styles.titles} style={{ fontSize: smallHeaderSize }}>
-        Using withCooking Since
+        {language === "ja"
+          ? "withCookingを始めた日"
+          : "Using withCooking Since"}
       </h3>
       <p style={{ fontSize }}>
-        {new Intl.DateTimeFormat(navigator.language).format(new Date(since))}
+        {new Intl.DateTimeFormat(userRegion).format(new Date(since))}
       </p>
     </div>
   );
 }
 
 function CloseAccount({
+  language,
   userContext,
   fontSize,
   smallHeaderSize,
   btnSize,
   recipes,
-  displayMessage,
+  toggleMessageVisible,
 }: {
+  language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   smallHeaderSize: string;
   btnSize: string;
   recipes: any[] | [];
-  displayMessage: (message: string) => void;
+  toggleMessageVisible: () => void;
 }) {
   const [close, setClose] = useState(false);
   const [error, setError] = useState("");
@@ -558,12 +661,14 @@ function CloseAccount({
 
       await closeAccount();
       setClose(false);
-      await displayMessage(
-        "Thank you for using this app :) I hope to see you again!"
-      );
+      toggleMessageVisible();
+      await wait();
+      toggleMessageVisible();
     } catch (err: any) {
       setError(
-        "Server error while closing account 🙇‍♂️ Please try again this later"
+        language === "ja"
+          ? "アカウントの閉設中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+          : "Server error while closing account 🙇‍♂️ Please try again this later"
       );
       return console.error(
         "Error while closing account",
@@ -616,11 +721,19 @@ function CloseAccount({
       >
         {close && !isPending && !error && (
           <span>
-            Are you sure you want to close your account? <br /> ※Once you close
-            account, you can not go back!
+            {language === "ja"
+              ? "本当に退会してもよろしいですか？"
+              : "Are you sure you want to close your account?"}{" "}
+            <br />{" "}
+            {language === "ja"
+              ? "※一度退会してしまうと元に戻すことはできません！"
+              : "※ Once you close account, you can not go back!"}
           </span>
         )}
-        {isPending && "Closing your account..."}
+        {isPending &&
+          (language === "ja"
+            ? "アカウントを閉設しています…"
+            : "Closing your account...")}
         {error && error}
       </p>
       <button
@@ -628,7 +741,13 @@ function CloseAccount({
         style={{ fontSize: btnSize }}
         type="submit"
       >
-        {!close ? "Close" : "I'm sure"}
+        {!close
+          ? language === "ja"
+            ? "退会"
+            : "Close"
+          : language === "ja"
+          ? "はい"
+          : "I'm sure"}
       </button>
     </form>
   );

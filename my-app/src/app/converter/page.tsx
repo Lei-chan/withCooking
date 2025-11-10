@@ -4,11 +4,7 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 //css
 import styles from "./page.module.css";
 //type
-import {
-  TYPE_INGREDIENT_UNIT,
-  TYPE_LANGUAGE,
-  TYPE_MEDIA,
-} from "../lib/config/type";
+import { TYPE_LANGUAGE, TYPE_MEDIA } from "../lib/config/type";
 //mehods to convert
 import {
   convertIngUnits,
@@ -72,7 +68,8 @@ export default function Converter() {
     letterSpacing: "0.07vw",
     borderRadius: "2%/7%",
     borderColor: "rgba(0, 0, 0, 0.404)",
-    aspectRatio: "1/0.21",
+    height: "fit-content",
+    // aspectRatio: "1/0.21",
     fontSize,
   });
 
@@ -142,7 +139,7 @@ export default function Converter() {
       letterSpacing: "0.07vw",
       borderRadius: "2%/7%",
       borderColor: "rgba(0, 0, 0, 0.404)",
-      aspectRatio: "1/0.21",
+      height: "fit-content",
       fontSize: fontSizeFinal,
     });
   }, [language, mediaContext]);
@@ -156,7 +153,8 @@ export default function Converter() {
         textAlign: "center",
         justifyContent: "center",
         width: "100vw",
-        height: "100%",
+        minHeight: "100vh",
+        maxHeight: "fit-content",
         backgroundColor: "#6ddbb6",
         padding: "2% 0",
       }}
@@ -286,9 +284,7 @@ function ConverterIng({
     <div style={boxStyle}>
       {mediaContext !== "mobile" ? (
         <div style={converterInnerStyle}>
-          <label htmlFor="input__ingredient_amount">
-            {language === "ja" ? "から" : "From"}
-          </label>
+          <label htmlFor="input__ingredient_amount">From</label>
           <input
             style={inputSelectStyle}
             type="number"
@@ -576,7 +572,7 @@ function ConverterTemp({
           <input
             style={inputSelectStyle}
             type="number"
-            placeholder="Temperature"
+            placeholder={language === "ja" ? "温度" : "Temperature"}
             onChange={handleInputChangeTemp}
           />
           <select
@@ -605,7 +601,7 @@ function ConverterTemp({
             <input
               style={inputSelectStyle}
               type="number"
-              placeholder="Temperature"
+              placeholder={language === "ja" ? "温度" : "Temperature"}
               onChange={handleInputChangeTemp}
             />
             <select
@@ -661,6 +657,20 @@ function ConverterLength({
 }) {
   //prettier-ignore
   type AllowedUnitsLength = "mm" | "cm" | "m" | "inch" | "foot" | "yard";
+
+  //language
+  const getTranslatedLengthUnit = (
+    language: TYPE_LANGUAGE,
+    unit: AllowedUnitsLength
+  ) => {
+    if (language === "ja") {
+      if (unit === "inch") return "インチ";
+      if (unit === "foot") return "フィート";
+      if (unit === "yard") return "ヤード";
+    }
+
+    return unit;
+  };
 
   //prettier-ignore
   const allowedUnitsLength: AllowedUnitsLength[] = ["mm","cm","m","inch","foot","yard"];
@@ -719,7 +729,7 @@ function ConverterLength({
           <input
             style={inputSelectStyle}
             type="number"
-            placeholder="Length"
+            placeholder={language === "ja" ? "長さ" : "Length"}
             onChange={handleInputChangeLength}
           />
           <select
@@ -730,9 +740,15 @@ function ConverterLength({
             <option value="mm">mm</option>
             <option value="cm">cm</option>
             <option value="m">m</option>
-            <option value="inch">inch</option>
-            <option value="foot">foot</option>
-            <option value="yard">yard</option>
+            <option value="inch">
+              {getTranslatedLengthUnit(language, "inch")}
+            </option>
+            <option value="foot">
+              {getTranslatedLengthUnit(language, "foot")}
+            </option>
+            <option value="yard">
+              {getTranslatedLengthUnit(language, "yard")}
+            </option>
           </select>
           <label className={styles.label__to} htmlFor="select__length_unit_to">
             To
@@ -746,9 +762,21 @@ function ConverterLength({
             {unitLengthFrom !== "mm" && <option value="mm">mm</option>}
             {unitLengthFrom !== "cm" && <option value="cm">cm</option>}
             {unitLengthFrom !== "m" && <option value="m">m</option>}
-            {unitLengthFrom !== "inch" && <option value="inch">inch</option>}
-            {unitLengthFrom !== "foot" && <option value="foot">foot</option>}
-            {unitLengthFrom !== "yard" && <option value="yard">yard</option>}
+            {unitLengthFrom !== "inch" && (
+              <option value="inch">
+                {getTranslatedLengthUnit(language, "inch")}
+              </option>
+            )}
+            {unitLengthFrom !== "foot" && (
+              <option value="foot">
+                {getTranslatedLengthUnit(language, "foot")}
+              </option>
+            )}
+            {unitLengthFrom !== "yard" && (
+              <option value="yard">
+                {getTranslatedLengthUnit(language, "yard")}
+              </option>
+            )}
           </select>
         </div>
       ) : (
@@ -758,7 +786,7 @@ function ConverterLength({
             <input
               style={inputSelectStyle}
               type="number"
-              placeholder="Length"
+              placeholder={language === "ja" ? "長さ" : "Length"}
               onChange={handleInputChangeLength}
             />
             <select
@@ -769,9 +797,15 @@ function ConverterLength({
               <option value="mm">mm</option>
               <option value="cm">cm</option>
               <option value="m">m</option>
-              <option value="inch">inch</option>
-              <option value="foot">foot</option>
-              <option value="yard">yard</option>
+              <option value="inch">
+                {getTranslatedLengthUnit(language, "inch")}
+              </option>
+              <option value="foot">
+                {getTranslatedLengthUnit(language, "foot")}
+              </option>
+              <option value="yard">
+                {getTranslatedLengthUnit(language, "yard")}
+              </option>
             </select>
           </div>
           <div style={converterInnerStyle}>
@@ -790,9 +824,21 @@ function ConverterLength({
               {unitLengthFrom !== "mm" && <option value="mm">mm</option>}
               {unitLengthFrom !== "cm" && <option value="cm">cm</option>}
               {unitLengthFrom !== "m" && <option value="m">m</option>}
-              {unitLengthFrom !== "inch" && <option value="inch">inch</option>}
-              {unitLengthFrom !== "foot" && <option value="foot">foot</option>}
-              {unitLengthFrom !== "yard" && <option value="yard">yard</option>}
+              {unitLengthFrom !== "inch" && (
+                <option value="inch">
+                  {getTranslatedLengthUnit(language, "inch")}
+                </option>
+              )}
+              {unitLengthFrom !== "foot" && (
+                <option value="foot">
+                  {getTranslatedLengthUnit(language, "foot")}
+                </option>
+              )}
+              {unitLengthFrom !== "yard" && (
+                <option value="yard">
+                  {getTranslatedLengthUnit(language, "yard")}
+                </option>
+              )}
             </select>
           </div>
         </>
@@ -802,7 +848,9 @@ function ConverterLength({
         style={{ fontSize: outputFontSize }}
       >
         <p className={styles.output}>{findResultLength()}</p>
-        <span className={styles.unit}>{unitLengthTo}</span>
+        <span className={styles.unit}>
+          {getTranslatedLengthUnit(language, unitLengthTo)}
+        </span>
       </div>
     </div>
   );

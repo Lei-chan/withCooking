@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
 
     const recipeObj = user.toObject().recipes;
 
+    console.log(recipeObj);
     return NextResponse.json(
       {
         success: true,
@@ -103,11 +104,9 @@ export async function POST(req: NextRequest) {
         data: {
           _id: user._id,
           numberOfRecipes: recipeObj?.length || 0,
-          // email: user.email,
-
           //for now to debug
           recipes: recipeObj,
-
+          // email: user.email,
           // createdAt: user.createdAt,
         },
         accessToken,
@@ -146,14 +145,15 @@ export async function GET(req: NextRequest) {
     //change recipeId to _id for frontend
     const { recipes, ...others } = user.toObject();
 
-    const structuredRecipes = recipes.map((recipe: any) => {
-      const { recipeId, ...others } = recipe;
-      return {
-        _id: recipeId,
-        ...others,
-      };
-    });
-    console.log({ recipes: structuredRecipes, ...others });
+    const structuredRecipes = recipes.length
+      ? recipes.map((recipe: any) => {
+          const { recipeId, ...others } = recipe;
+          return {
+            _id: recipeId,
+            ...others,
+          };
+        })
+      : [];
 
     return NextResponse.json(
       {

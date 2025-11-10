@@ -1,41 +1,69 @@
 "use client";
 //react
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 //type
-import { TYPE_MEDIA } from "../lib/config/type";
+import { TYPE_LANGUAGE, TYPE_MEDIA } from "../lib/config/type";
 //context
-import { MediaContext } from "../lib/providers";
+import { LanguageContext, MediaContext } from "../lib/providers";
 //model for news
 import news from "../lib/models/news";
+import { getFontSizeForLanguage } from "../lib/helpers/other";
 
 export default function News() {
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  console.log(language);
+
+  //design
   const mediaContext = useContext(MediaContext);
   console.log(mediaContext);
   // console.log(new Date().toISOString());
 
-  const listWidth =
-    mediaContext === "mobile"
-      ? "85%"
-      : mediaContext === "tablet"
-      ? "70%"
-      : "60%";
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4.3vw"
-      : mediaContext === "tablet"
-      ? "2.8vw"
-      : mediaContext === "desktop"
-      ? "1.7vw"
-      : "1.4vw";
-  const listTitleSize = `calc(${fontSize} * 1.05)`;
+  const [listWidth, setListWidth] = useState("60%");
+  const [fontSize, setFontSize] = useState("1.7vw");
+  const [listTitleSize, setListTitleSize] = useState(
+    `calc(${fontSize} * 1.05)`
+  );
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setListWidth(
+      mediaContext === "mobile"
+        ? "85%"
+        : mediaContext === "tablet"
+        ? "70%"
+        : "60%"
+    );
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4.3vw"
+        : mediaContext === "tablet"
+        ? "2.6vw"
+        : mediaContext === "desktop"
+        ? "1.5vw"
+        : "1.3vw";
+    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+    setFontSize(fontSizeFinal);
+
+    setListTitleSize(`calc(${fontSizeFinal} * 1.05)`);
+  }, [mediaContext, language]);
 
   return (
     <div
       style={{
         backgroundColor: "#b3f8dbff",
         width: "100vw",
-        minHeight: "100vh",
-        maxHeight: "fit-content",
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
@@ -52,13 +80,13 @@ export default function News() {
           margin: fontSize,
         }}
       >
-        News
+        {language === "ja" ? "ニュース" : "News"}
       </h1>
       <div
         style={{
           backgroundColor: "#ffffffff",
           width: listWidth,
-          height: "75%",
+          height: "85%",
           borderRadius: "1%/1.5%",
           overflow: "hidden",
           boxShadow: "#0000005e 3px 3px 10px",
@@ -76,7 +104,7 @@ export default function News() {
           {news.map((news, i) => (
             <List
               key={i}
-              mediaContext={mediaContext}
+              language={language}
               fontSize={fontSize}
               listTitleSize={listTitleSize}
               news={news}
@@ -89,16 +117,27 @@ export default function News() {
 }
 
 function List({
-  mediaContext,
+  language,
   fontSize,
   listTitleSize,
   news,
 }: {
-  mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   listTitleSize: string;
-  news: { date: string; title: string; content: string; new: boolean };
+  news: {
+    date: string;
+    title: { en: string; ja: string };
+    content: { en: string; ja: string };
+    new: boolean;
+  };
 }) {
+  const [userRegion, setUserRegion] = useState("en-US");
+
+  useEffect(() => {
+    setUserRegion(navigator.language);
+  }, []);
+
   return (
     <li
       style={{
@@ -142,7 +181,6 @@ function List({
               style={{
                 color: "#750079ff",
                 textDecoration: "#750079ff underline",
-                // color: "orange",
                 marginRight: "2%",
                 fontSize: `calc(${fontSize} * 0.8)`,
                 letterSpacing: "0.05vw",
@@ -153,9 +191,7 @@ function List({
             </span>
           )}
           <span style={{ fontSize }}>
-            {Intl.DateTimeFormat(navigator.language).format(
-              new Date(news.date)
-            )}
+            {new Intl.DateTimeFormat(userRegion).format(new Date(news.date))}
           </span>
         </div>
         <h4
@@ -163,11 +199,10 @@ function List({
             fontSize: listTitleSize,
             letterSpacing: "0.1vw",
             color: "orangered",
-            // textDecoration: "orangered underline",
             marginTop: listTitleSize,
           }}
         >
-          {news.title}
+          {news.title[language]}
         </h4>
       </div>
       <p
@@ -179,11 +214,9 @@ function List({
           wordSpacing: "0.2vw",
           marginTop: "1%",
           padding: "2%",
-          // textOverflow: "clip",
-          // backgroundColor: "blue",
         }}
       >
-        {news.content}
+        {news.content[language]}
       </p>
     </li>
   );

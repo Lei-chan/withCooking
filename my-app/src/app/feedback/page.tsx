@@ -1,28 +1,43 @@
 "use client";
 //react
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 //next.js
 import Link from "next/link";
 //context
-import { MediaContext } from "../lib/providers";
+import { LanguageContext, MediaContext } from "../lib/providers";
+import { getFontSizeForLanguage } from "../lib/helpers/other";
+import { TYPE_LANGUAGE } from "../lib/config/type";
 
 export default function Feedback() {
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
   const mediaContext = useContext(MediaContext);
 
-  const boxWidth =
-    mediaContext === "mobile"
-      ? "90%"
-      : mediaContext === "tablet"
-      ? "75%"
-      : "60%";
-  const fontSize =
-    mediaContext === "mobile"
-      ? "4.5vw"
-      : mediaContext === "tablet"
-      ? "2.7vw"
-      : mediaContext === "desktop"
-      ? "1.6vw"
-      : "1.4vw";
+  const [fontSize, setFontSize] = useState("1.6vw");
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4.5vw"
+        : mediaContext === "tablet"
+        ? "2.7vw"
+        : mediaContext === "desktop"
+        ? "1.6vw"
+        : "1.4vw";
+
+    setFontSize(getFontSizeForLanguage(language, fontSizeEn));
+  }, [mediaContext, language]);
 
   return (
     <div
@@ -46,13 +61,20 @@ export default function Feedback() {
           margin: "0 4%",
         }}
       >
-        Thank you always for using withCooking 🍳✨
+        {language === "ja"
+          ? "いつもwithCooking (ウィズ・クッキング) をご利用いただきありがとうございます🍳✨"
+          : "Thank you always for using withCooking 🍳✨"}
       </h2>
       <div
         style={{
           backgroundColor: "#fffc55ff",
           height: "50%",
-          width: boxWidth,
+          width:
+            mediaContext === "mobile"
+              ? "90%"
+              : mediaContext === "tablet"
+              ? "75%"
+              : "60%",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -69,16 +91,21 @@ export default function Feedback() {
         }}
       >
         <p>
-          It will help if you could send a feedback about this website from
-          here!
+          {language === "ja"
+            ? "こちらのフォームからウェブサイトに関するご意見・ご感想をいただければとても助かります！"
+            : "It will help if you could send a feedback about this website from here!"}
         </p>
         <Link
           href={""} //later!
           style={{ fontSize, letterSpacing: "0.07vw", margin: "2% 0" }}
         >
-          Feedback from here
+          {language === "ja" ? "ご意見・ご感想フォーム" : "Feedback form"}
         </Link>
-        <p>I will keep tryning to make a better website!</p>
+        <p>
+          {language === "ja"
+            ? "今後も、よりよいウェブサイトになるよう頑張ってまいります！"
+            : "I will keep tryning to make a better website!"}
+        </p>
       </div>
     </div>
   );

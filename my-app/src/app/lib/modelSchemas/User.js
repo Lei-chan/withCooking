@@ -15,19 +15,21 @@ const UserSchema = new mongoose.Schema(
       required: [true, "Password is required."],
       select: false,
     },
-    recipes: {
-      recipeId: String,
-      mainImagePreview: Object,
-      title: String,
-      author: String,
-      favorite: Boolean,
-      ingredients: Array,
-      createdAt: String,
-      updatedAt: String,
-    },
+    recipes: Array,
   },
   { timestamps: true }
 );
+
+//  recipes: {
+//     recipeId: String,
+//     mainImagePreview: Object,
+//     title: String,
+//     author: String,
+//     favorite: Boolean,
+//     ingredients: Array,
+//     createdAt: String,
+//     updatedAt: String,
+//   },
 
 UserSchema.methods.comparePassword = async function (password) {
   try {

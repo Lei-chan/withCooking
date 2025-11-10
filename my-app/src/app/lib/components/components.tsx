@@ -143,12 +143,9 @@ export function OverlayMessage({
   toggleLogout,
 }: {
   option: "message" | "question";
-  content: "welcome" | "logout";
+  content: "welcome" | "logout" | "close";
   toggleLogout?: () => void;
 }) {
-  const mediaContext = useContext(MediaContext);
-  const userContext = useContext(UserContext);
-
   //language
   const languageContext = useContext(LanguageContext);
 
@@ -158,6 +155,8 @@ export function OverlayMessage({
     if (!languageContext?.language) return;
     setLanguage(languageContext.language);
   }, [languageContext?.language]);
+
+  const mediaContext = useContext(MediaContext);
 
   //design
   const [fontSize, setFontSize] = useState("1.6vw");
@@ -176,6 +175,8 @@ export function OverlayMessage({
     );
   }, [mediaContext, language]);
 
+  const userContext = useContext(UserContext);
+
   const [isVisible, setIsVisible] = useState(true);
 
   function getMessage() {
@@ -184,13 +185,13 @@ export function OverlayMessage({
     if (content === "welcome")
       message = (
         <p>
-          {languageContext?.language === "ja" ? "こんにちは！" : "Welcome!"}
+          {language === "ja" ? "こんにちは！" : "Welcome!"}
           <br />
-          {languageContext?.language === "ja"
+          {language === "ja"
             ? "今日もお会いできて嬉しいです！"
             : "It's nice to see you :)"}
           <br />
-          {languageContext?.language === "ja"
+          {language === "ja"
             ? "さあ、クッキングを始めましょう！"
             : "Let's start cooking!"}
         </p>
@@ -199,16 +200,25 @@ export function OverlayMessage({
     if (content === "logout")
       message = (
         <p>
-          {languageContext?.language === "ja"
+          {language === "ja"
             ? "ログアウトしてよろしいですか？"
             : "Are you sure you want to log out?"}
+        </p>
+      );
+
+    if (content === "close")
+      message = (
+        <p>
+          {language === "ja"
+            ? "これまでご利用いただきありがとうございました！また会えるのを楽しみにしています！"
+            : "Thank you for using this app :) I hope to see you again!"}
         </p>
       );
 
     return message;
   }
 
-  //only for welcome message
+  //for welcome message
   function handleClose() {
     setIsVisible(false);
   }
@@ -263,16 +273,18 @@ export function OverlayMessage({
           borderRadius: "7px",
         }}
       >
-        <button
-          className={styles.btn__x}
-          style={{ fontSize }}
-          onClick={() => {
-            content === "welcome" && handleClose();
-            content === "logout" && toggleLogout && toggleLogout();
-          }}
-        >
-          &times;
-        </button>
+        {content !== "close" && (
+          <button
+            className={styles.btn__x}
+            style={{ fontSize }}
+            onClick={() => {
+              content === "welcome" && handleClose();
+              content === "logout" && toggleLogout && toggleLogout();
+            }}
+          >
+            &times;
+          </button>
+        )}
         {getMessage()}
         {option === "question" && (
           <button
@@ -280,7 +292,7 @@ export function OverlayMessage({
             style={{ fontSize: `calc(${fontSize} * 0.75)` }}
             onClick={handleLogout}
           >
-            {languageContext?.language === "ja" ? "はい" : "I'm sure"}
+            {language === "ja" ? "はい" : "I'm sure"}
           </button>
         )}
       </div>

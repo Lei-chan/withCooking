@@ -1158,7 +1158,7 @@ function OverlayCreateAccount({
         body: JSON.stringify(accountInfo),
       });
 
-      userContext?.login(data.accessToken, data.data.numberOfRecipes);
+      userContext?.firstLogin(data.accessToken, data.data.numberOfRecipes);
     } catch (err: any) {
       throw err;
     }
