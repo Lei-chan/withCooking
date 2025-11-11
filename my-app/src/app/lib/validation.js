@@ -48,6 +48,14 @@ export const recipeSchema = z.object({
   updatedAt: z.iso.datetime(),
 });
 
+export const recipeLinkSchema = z.object({
+  title: z.string(),
+  favorite: z.boolean(),
+  link: z.string(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+});
+
 export const userSchema = z.object({
   email: z
     .string()

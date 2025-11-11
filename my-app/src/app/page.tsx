@@ -476,7 +476,14 @@ function BottomHalf({
             }}
           ></button>
         </Link>
-        <Link className={styles.link__footer} href="">
+        <Link
+          className={styles.link__footer}
+          href={
+            language === "ja"
+              ? "https://docs.google.com/forms/d/e/1FAIpQLScD6G3Lh1SIkn5nCCEfrj-xErbjsTjieTy5kypzNt3OCmxQPw/viewform?usp=header"
+              : "https://docs.google.com/forms/d/e/1FAIpQLScJcmHthVly_ssZImDRh-AnC7cPRzKUnBtC9SgzaWRwv7HLfw/viewform?usp=header"
+          }
+        >
           <button
             className={styles.link__button}
             style={{

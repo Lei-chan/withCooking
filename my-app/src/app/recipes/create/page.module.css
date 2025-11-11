@@ -1,0 +1,40 @@
+.btn__scratch,
+.btn__link {
+  font-weight: 500;
+  aspect-ratio: 1;
+  padding: 0 2%;
+  border-radius: 50%;
+  border: none;
+  color: black;
+  box-shadow: rgba(0, 0, 0, 0.384) 3px 3px 6px;
+}
+
+.btn__scratch {
+  background-image: linear-gradient(rgb(188, 255, 2), rgb(2, 250, 2));
+  letter-spacing: 1px;
+}
+
+.btn__scratch:hover {
+  background-image: linear-gradient(rgb(238, 255, 2), rgb(184, 250, 2));
+}
+
+.btn__link {
+  background-image: linear-gradient(rgb(143, 255, 212), rgb(0, 217, 255));
+}
+
+.btn__link:hover {
+  background-image: linear-gradient(rgb(188, 253, 255), rgb(128, 255, 244));
+}
+
+.btn__upload {
+  font-weight: bold;
+  color: white;
+  border: none;
+  background-image: linear-gradient(rgba(255, 188, 2, 1), rgba(250, 122, 2, 1));
+  padding: 1.5%;
+  border-radius: 3px;
+}
+
+.btn__upload:hover {
+  background-image: linear-gradient(rgb(238, 255, 2), rgb(250, 192, 2));
+}

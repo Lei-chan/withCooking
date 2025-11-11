@@ -34,6 +34,14 @@ export type TYPE_RECIPE = {
   updatedAt?: string;
 };
 
+export type TYPE_RECIPE_LINK = {
+  title: string;
+  favorite: boolean;
+  link: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type TYPE_INSTRUCTION = {
   instruction: string;
   image: TYPE_FILE | undefined;

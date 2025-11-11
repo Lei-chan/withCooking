@@ -96,7 +96,11 @@ export default function Feedback() {
             : "It will help if you could send a feedback about this website from here!"}
         </p>
         <Link
-          href={""} //later!
+          href={
+            language === "ja"
+              ? "https://docs.google.com/forms/d/e/1FAIpQLScD6G3Lh1SIkn5nCCEfrj-xErbjsTjieTy5kypzNt3OCmxQPw/viewform?usp=header"
+              : "https://docs.google.com/forms/d/e/1FAIpQLScJcmHthVly_ssZImDRh-AnC7cPRzKUnBtC9SgzaWRwv7HLfw/viewform?usp=header"
+          }
           style={{ fontSize, letterSpacing: "0.07vw", margin: "2% 0" }}
         >
           {language === "ja" ? "ご意見・ご感想フォーム" : "Feedback form"}
