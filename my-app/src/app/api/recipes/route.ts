@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 //database
 import mongoose from "mongoose";
-import { ObjectId } from "mongodb";
 import connectDB from "../../lib/mongoDB";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
 //schema
@@ -17,19 +16,8 @@ import {
 } from "@/app/lib/config/type";
 //methods for authentication
 import { authenticateToken, refreshAccessToken } from "@/app/lib/auth";
-
-function getId(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
-  const id = searchParams.get("id");
-
-  if (!mongoose.isValidObjectId(id)) {
-    const err: any = new Error("Invalid Id provided");
-    err.statusCode = 400;
-    throw err;
-  }
-
-  return id;
-}
+//general methods
+import { downloadFile, getId } from "@/app/lib/helpers/api";
 
 function uploadFile(bucket: any, file: TYPE_FILE, metadata: any) {
   return new Promise((resolve, reject) => {
@@ -54,29 +42,6 @@ function uploadFile(bucket: any, file: TYPE_FILE, metadata: any) {
 
     uploadStream.on("error", () =>
       reject(new Error("Error while uploading file"))
-    );
-  });
-}
-
-export function downloadFile(bucket: any, file: any) {
-  return new Promise((resolve, reject) => {
-    const downloadStream = bucket.openDownloadStream(
-      file.fileId instanceof mongoose.Types.ObjectId
-        ? file.fileId
-        : new mongoose.Types.ObjectId(file.fileId)
-    );
-
-    const chunks: any[] = [];
-    downloadStream.on("data", (chunk: any) => chunks.push(chunk));
-
-    downloadStream.on("end", () => {
-      const buffer = Buffer.concat(chunks);
-      const parsedBuffer = JSON.parse(buffer.toString("utf-8"));
-      resolve(parsedBuffer);
-    });
-
-    downloadStream.on("error", () =>
-      reject(new Error("Error while downloading files"))
     );
   });
 }
@@ -110,6 +75,7 @@ function uploadMemoryImages(
   );
 }
 
+//For recipe created from scratch
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
@@ -200,76 +166,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
-  try {
-    await connectDB();
-    const bucket = getGridFSBucket();
-
-    const id = getId(req);
-
-    const recipe = await Recipe.findById(id).select("-__v");
-
-    if (!recipe) {
-      const err: any = new Error("Recipe not found");
-      err.statusCode = 404;
-      throw err;
-    }
-
-    const mainImage = recipe.mainImage
-      ? await downloadFile(bucket, recipe.mainImage)
-      : undefined;
-
-    // const mainImagePreview = recipe.mainImagePreview
-    //   ? await downloadFile(bucket, recipe.mainImagePreview)
-    //   : undefined;
-
-    const instructionImages = await Promise.all(
-      recipe.instructions.map(
-        (inst: {
-          instruction: string;
-          image: TYPE_CONVERTED_FILE | undefined;
-        }) =>
-          inst.image
-            ? downloadFile(bucket, inst.image)
-            : Promise.resolve(undefined)
-      )
-    );
-
-    const memoryImages = recipe.memoryImages.length
-      ? await Promise.all(
-          recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-            downloadFile(bucket, image)
-          )
-        )
-      : [];
-
-    const recipeObj = recipe.toObject();
-
-    //mainImagePreview image => data won't be sent since it won't be used, other images => data will be sent since it'll be used
-    const newRecipe = { ...recipeObj };
-    newRecipe.mainImage = mainImage;
-    newRecipe.instructions = recipeObj.instructions.map(
-      (
-        inst: { instruction: string; image: TYPE_CONVERTED_FILE | undefined },
-        i: number
-      ) => {
-        return { instruction: inst.instruction, image: instructionImages[i] };
-      }
-    );
-    newRecipe.memoryImages = memoryImages;
-
-    return NextResponse.json(
-      { success: true, data: newRecipe },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message },
-      { status: err.statusCode || 500 }
-    );
-  }
-}
-
+//For recipe created from scratch
 export async function PUT(req: NextRequest) {
   try {
     await connectDB();
@@ -445,6 +342,82 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+//For recipe created both from scratch and from external link
+export async function GET(req: NextRequest) {
+  try {
+    await connectDB();
+
+    const id = getId(req);
+
+    const recipe = await Recipe.findById(id).select("-__v");
+
+    if (!recipe) {
+      const err: any = new Error("Recipe not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const recipeObj = recipe.toObject();
+
+    let newRecipe;
+    if ("link" in recipeObj) {
+      newRecipe = recipe;
+    } else {
+      const bucket = getGridFSBucket();
+
+      const mainImage = recipe.mainImage
+        ? await downloadFile(bucket, recipe.mainImage)
+        : undefined;
+
+      const instructionImages = recipe.instructions.length
+        ? await Promise.all(
+            recipe.instructions.map(
+              (inst: {
+                instruction: string;
+                image: TYPE_CONVERTED_FILE | undefined;
+              }) =>
+                inst.image
+                  ? downloadFile(bucket, inst.image)
+                  : Promise.resolve(undefined)
+            )
+          )
+        : [];
+
+      const memoryImages = recipe.memoryImages.length
+        ? await Promise.all(
+            recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
+              downloadFile(bucket, image)
+            )
+          )
+        : [];
+
+      //mainImagePreview image => data won't be sent since it won't be used, other images => data will be sent since it'll be used
+      newRecipe = { ...recipeObj };
+      newRecipe.mainImage = mainImage;
+      newRecipe.instructions = recipeObj.instructions.map(
+        (
+          inst: { instruction: string; image: TYPE_CONVERTED_FILE | undefined },
+          i: number
+        ) => {
+          return { instruction: inst.instruction, image: instructionImages[i] };
+        }
+      );
+      newRecipe.memoryImages = memoryImages;
+    }
+
+    return NextResponse.json(
+      { success: true, data: newRecipe },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, error: err.message },
+      { status: err.statusCode || 500 }
+    );
+  }
+}
+
+//For recipe created both from scratch and external link
 export async function DELETE(req: NextRequest) {
   try {
     await connectDB();
@@ -477,21 +450,23 @@ export async function DELETE(req: NextRequest) {
 
     //delete instruction images from bucket
     const promiseDeleteInstructionImages = recipes.flatMap((recipe) =>
-      recipe.instructions.map(
-        (inst: {
-          instruction: string;
-          image: TYPE_CONVERTED_FILE | undefined;
-        }) =>
-          inst.image
-            ? bucket.delete(new mongoose.Types.ObjectId(inst.image.fileId))
-            : Promise.resolve(undefined)
-      )
+      recipe.instructions?.length
+        ? recipe.instructions.map(
+            (inst: {
+              instruction: string;
+              image: TYPE_CONVERTED_FILE | undefined;
+            }) =>
+              inst.image
+                ? bucket.delete(new mongoose.Types.ObjectId(inst.image.fileId))
+                : Promise.resolve(undefined)
+          )
+        : Promise.resolve(undefined)
     );
     await Promise.all(promiseDeleteInstructionImages);
 
     //delete memoryImages from bucket
     const promiseDeleteMemoryImages = recipes.flatMap((recipe) =>
-      recipe.memoryImages.length
+      recipe.memoryImages?.length
         ? recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
             bucket.delete(new mongoose.Types.ObjectId(image.fileId))
           )

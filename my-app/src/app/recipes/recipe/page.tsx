@@ -5,7 +5,11 @@ import clsx from "clsx";
 //css
 import styles from "./page.module.css";
 //type
-import { TYPE_LANGUAGE, TYPE_RECIPE } from "@/app/lib/config/type";
+import {
+  TYPE_LANGUAGE,
+  TYPE_RECIPE,
+  TYPE_RECIPE_LINK,
+} from "@/app/lib/config/type";
 //general methods
 import { getData, getSize } from "@/app/lib/helpers/other";
 //context
@@ -19,6 +23,8 @@ import {
   Loading,
   LoadingRecipe,
   RecipeEdit,
+  RecipeLinkEdit,
+  RecipeLinkNoEdit,
   RecipeNoEdit,
 } from "@/app/lib/components/components";
 
@@ -39,6 +45,7 @@ export default function Recipe() {
 
   //design
   const [recipeWidth, setRecipeWidth] = useState("50%");
+  const [iframeHeight, setIframeHeight] = useState(400);
   const [fontSize, setFontSize] = useState("1.3vw");
 
   useEffect(() => {
@@ -55,6 +62,9 @@ export default function Recipe() {
 
     setRecipeWidth(width);
 
+    const height = window.innerHeight * 0.8;
+    setIframeHeight(height);
+
     const fontSizeEn =
       mediaContext === "mobile"
         ? getSize(width, 0.045, "4.5vw")
@@ -70,7 +80,7 @@ export default function Recipe() {
   }, [mediaContext, language]);
 
   //don't modify recipe value unless the recipe is changed
-  const [recipe, setRecipe] = useState<TYPE_RECIPE>();
+  const [recipe, setRecipe] = useState<TYPE_RECIPE | TYPE_RECIPE_LINK>();
   const [edit, setEdit] = useState(false);
 
   const [isPending, setIsPending] = useState(false);
@@ -87,7 +97,15 @@ export default function Recipe() {
 
       setRecipe(data.data);
     } catch (err: any) {
-      setError(err.message);
+      err.statusCode === 404
+        ? setError(
+            language === "ja" ? "レシピが見つかりません！" : "Recipe not found!"
+          )
+        : setError(
+            language === "ja"
+              ? "レシピのロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+              : "Server error while loading recipe 🙇‍♂️ Please try again"
+          );
       console.error(
         "Error while loading recipe",
         err.message,
@@ -158,12 +176,20 @@ export default function Recipe() {
               >
                 {language === "ja" ? "レシピ" : "Recipe"}
               </button>
-              <RecipeEdit
-                recipe={recipe}
-                error={error}
-                createOrUpdate="update"
-                handleChangeEdit={handleToggleEdit}
-              />
+              {"link" in recipe ? (
+                <RecipeLinkEdit
+                  recipe={recipe}
+                  createOrEdit="edit"
+                  handleChangeEdit={handleToggleEdit}
+                />
+              ) : (
+                <RecipeEdit
+                  recipe={recipe}
+                  error={error}
+                  createOrUpdate="update"
+                  handleChangeEdit={handleToggleEdit}
+                />
+              )}
             </>
           ) : (
             <>
@@ -197,14 +223,23 @@ export default function Recipe() {
               >
                 {language === "ja" ? "編集" : "Edit"}
               </button>
-              <RecipeNoEdit
-                mediaContext={mediaContext}
-                userContext={userContext}
-                recipeWidth={recipeWidth}
-                error={error}
-                mainOrRecipe="recipe"
-                userRecipe={recipe}
-              />
+              {"link" in recipe ? (
+                <RecipeLinkNoEdit
+                  recipeWidth={parseFloat(recipeWidth)}
+                  recipeHeight={iframeHeight}
+                  recipe={recipe}
+                  mainOrRecipe="recipe"
+                />
+              ) : (
+                <RecipeNoEdit
+                  mediaContext={mediaContext}
+                  userContext={userContext}
+                  recipeWidth={recipeWidth}
+                  error={error}
+                  mainOrRecipe="recipe"
+                  userRecipe={recipe}
+                />
+              )}
             </>
           )}
         </>

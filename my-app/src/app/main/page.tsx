@@ -11,9 +11,10 @@ import {
   TYPE_MEDIA,
   TYPE_RECIPE,
   TYPE_LANGUAGE,
+  TYPE_RECIPE_LINK,
 } from "../lib/config/type";
 //general methods
-import { getSize } from "@/app/lib/helpers/other";
+import { getData, getSize } from "@/app/lib/helpers/other";
 //methods for recipes
 import {
   createMessage,
@@ -30,6 +31,7 @@ import {
   LanguageSelect,
   OverlayMessage,
   PaginationButtons,
+  RecipeLinkNoEdit,
   RecipeNoEdit,
 } from "../lib/components/components";
 //library
@@ -38,13 +40,14 @@ import { nanoid } from "nanoid";
 export default function MAIN() {
   const searchRef = useRef(null);
 
-  const mediaContext = useContext(MediaContext);
   const userContext = useContext(UserContext);
 
   //language
   const languageContext = useContext(LanguageContext);
 
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>(
+    languageContext?.language || "en"
+  );
 
   useEffect(() => {
     if (!languageContext?.language) return;
@@ -53,6 +56,8 @@ export default function MAIN() {
   }, [languageContext?.language]);
 
   //design
+  const mediaContext = useContext(MediaContext);
+
   const [innerWidth, setInnerWidth] = useState(1440);
   const [innerHeight, setInnerHeight] = useState(600);
   const [recipeWidth, setRecipeWidth] = useState(innerWidth * 0.55 + "px");
@@ -223,17 +228,15 @@ export default function MAIN() {
               "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
             width: recipeWidth,
             height: "100%",
-            overflowY: "scroll",
+            overflowY: "auto",
             scrollbarColor: "rgb(255, 255, 232) rgb(253, 231, 157)",
           }}
         >
-          <RecipeNoEdit
+          <Recipe
             mediaContext={mediaContext}
+            language={language}
             userContext={userContext}
             recipeWidth={recipeWidth}
-            error=""
-            mainOrRecipe="main"
-            userRecipe={null}
           />
         </section>
 
@@ -275,6 +278,127 @@ export default function MAIN() {
         </section>
       </div>
     </div>
+  );
+}
+
+function Recipe({
+  mediaContext,
+  language,
+  userContext,
+  recipeWidth,
+}: {
+  mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
+  userContext: TYPE_USER_CONTEXT;
+  recipeWidth: string;
+}) {
+  //design
+  const [recipeHeight, setRecipeHeight] = useState(400);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+    setRecipeHeight(window.innerHeight);
+  }, []);
+
+  const [recipe, setRecipe] = useState<TYPE_RECIPE | TYPE_RECIPE_LINK | null>(
+    null
+  );
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    handleHashChange();
+
+    window.addEventListener("hashchange", handleHashChange);
+
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [language]);
+
+  async function handleHashChange() {
+    const id = window.location.hash.slice(1);
+    if (!id)
+      return setMessage(
+        language === "ja"
+          ? "レシピを検索してクッキングを始めましょう！"
+          : "Let's start cooking by selecting your recipe :)"
+      );
+    await getRecipe(id);
+  }
+
+  async function getRecipe(id: string) {
+    try {
+      setIsLoading(true);
+      setMessage("");
+      setError("");
+      const recipeData = await getData(`/api/recipes?id=${id}`, {
+        method: "GET",
+      });
+
+      setRecipe(recipeData.data);
+      setIsLoading(false);
+    } catch (err: any) {
+      setIsLoading(false);
+      err.statusCode === 404
+        ? setError(
+            language === "ja" ? "レシピが見つかりません！" : "Recipe not fount!"
+          )
+        : setError(
+            language === "ja"
+              ? "レシピのロード中にエラーが発生しました🙇‍♂️もう一度試してください"
+              : "Server error while loading recipe 🙇‍♂️ Please try again"
+          );
+      console.error(
+        "Error while loading recipe",
+        err.message,
+        err.statusCode || 500
+      );
+    }
+  }
+
+  return (
+    <>
+      {(error || message || isLoading) && (
+        <div
+          className={styles.no_results}
+          style={{
+            fontSize: getSize(
+              recipeWidth,
+              language === "ja" ? 0.04 : 0.043,
+              "2.5vw"
+            ),
+          }}
+        >
+          {error ||
+            message ||
+            (language === "ja"
+              ? "レシピをロード中…"
+              : "Loading your recipe...")}
+        </div>
+      )}
+      {!message &&
+        !error &&
+        !isLoading &&
+        recipe &&
+        ("link" in recipe ? (
+          <RecipeLinkNoEdit
+            recipeWidth={parseFloat(recipeWidth)}
+            recipeHeight={recipeHeight}
+            recipe={recipe}
+            mainOrRecipe="main"
+          />
+        ) : (
+          <RecipeNoEdit
+            mediaContext={mediaContext}
+            userContext={userContext}
+            recipeWidth={recipeWidth}
+            error=""
+            mainOrRecipe="main"
+            userRecipe={recipe}
+          />
+        ))}
+    </>
   );
 }
 
@@ -460,7 +584,7 @@ function Search({
         zIndex: "10",
         transition: "all 0.3s",
         transform: !isSearchVisible ? "translateX(-100%)" : "translateX(0%)",
-        fontSize: fontSize,
+        fontSize,
       }}
     >
       <button
@@ -534,6 +658,7 @@ function Search({
         </ul>
         <PaginationButtons
           mediaContext={mediaContext}
+          language={language}
           fontSize={fontSize}
           styles={styles}
           curPage={curPage}

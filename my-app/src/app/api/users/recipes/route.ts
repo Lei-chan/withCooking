@@ -1,16 +1,17 @@
 //next.js
 import { NextRequest, NextResponse } from "next/server";
-//schema
-import User from "@/app/lib/modelSchemas/User";
 //database
 import connectDB from "@/app/lib/mongoDB";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
+//schema
+import User from "@/app/lib/modelSchemas/User";
 //method for file downloading
-import { downloadFile } from "../../recipes/route";
+import { downloadFile } from "@/app/lib/helpers/api";
 //methods for authentication
 import { refreshAccessToken, authenticateToken } from "@/app/lib/auth";
 //methods for recipes
 import { getOrderedRecipes } from "@/app/lib/helpers/recipes";
+import { convertRecipeToUserRecipe } from "@/app/lib/helpers/api";
 
 //_id in Recipe is recipeId in User recipes
 
@@ -52,9 +53,10 @@ export async function GET(req: NextRequest) {
 
             return (
               recipe.title.toLowerCase().includes(structuredKeyword) ||
-              recipe.ingredients.find((ing: any) =>
-                ing.ingredient.toLowerCase().includes(structuredKeyword)
-              )
+              (recipe.ingredients &&
+                recipe.ingredients.find((ing: any) =>
+                  ing.ingredient.toLowerCase().includes(structuredKeyword)
+                ))
             );
           })
         : recipes;
@@ -111,27 +113,9 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
-    const {
-      _id,
-      mainImagePreview,
-      title,
-      author,
-      favorite,
-      ingredients,
-      createdAt,
-      updatedAt,
-      ...others
-    } = await req.json();
-    const newBody = {
-      recipeId: _id,
-      mainImagePreview,
-      title,
-      author,
-      favorite,
-      ingredients,
-      createdAt,
-      updatedAt,
-    };
+    const body = await req.json();
+    const newBody = convertRecipeToUserRecipe(body);
+
     let { id, newAccessToken } = await authenticateToken(req);
 
     //try to refresh accessToken when access token is expired
@@ -163,7 +147,6 @@ export async function POST(req: NextRequest) {
         };
       });
 
-    console.log("POST: user recipes", structuredRecipes);
     return NextResponse.json(
       {
         success: true,
@@ -185,27 +168,8 @@ export async function PUT(req: NextRequest) {
   try {
     await connectDB();
 
-    const {
-      _id,
-      mainImagePreview,
-      title,
-      author,
-      favorite,
-      ingredients,
-      createdAt,
-      updatedAt,
-      ...others
-    } = await req.json();
-    const newBody = {
-      recipeId: _id,
-      mainImagePreview,
-      title,
-      author,
-      favorite,
-      ingredients,
-      createdAt,
-      updatedAt,
-    };
+    const body = await req.json();
+    const newBody = convertRecipeToUserRecipe(body);
 
     let { id, newAccessToken } = await authenticateToken(req);
 
@@ -241,7 +205,6 @@ export async function PUT(req: NextRequest) {
           ...others,
         };
       });
-    console.log("PUT: user recipes", structuredRecipes);
 
     return NextResponse.json(
       {

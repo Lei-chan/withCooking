@@ -35,11 +35,12 @@ export type TYPE_RECIPE = {
 };
 
 export type TYPE_RECIPE_LINK = {
+  _id?: string;
   title: string;
   favorite: boolean;
   link: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type TYPE_INSTRUCTION = {

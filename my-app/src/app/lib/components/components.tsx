@@ -17,6 +17,7 @@ import {
   TYPE_REGION_UNIT,
   TYPE_SERVINGS_UNIT,
   TYPE_USER_CONTEXT,
+  TYPE_RECIPE_LINK,
 } from "../config/type";
 import {
   MAX_SERVINGS,
@@ -34,13 +35,20 @@ import {
   isRecipeAllowed,
   updateConvertion,
   updateIngsForServings,
+  uploadRecipeCreate,
   uploadRecipeUpdate,
 } from "../helpers/recipes";
-import { getData, getSize, wait } from "../helpers/other";
+import {
+  getData,
+  getFontSizeForLanguage,
+  getSize,
+  wait,
+} from "../helpers/other";
 import { convertIngUnits } from "../helpers/converter";
 import { LanguageContext, MediaContext, UserContext } from "../providers";
 import fracty from "fracty";
 import { nanoid } from "nanoid";
+import CreateRecipe from "@/app/recipes/create/page";
 
 export function LanguageSelect({
   fontSize,
@@ -302,6 +310,7 @@ export function OverlayMessage({
 
 export function PaginationButtons({
   mediaContext,
+  language,
   fontSize,
   styles,
   curPage,
@@ -310,6 +319,7 @@ export function PaginationButtons({
   onClickPagination,
 }: {
   mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
   fontSize: string;
   styles: any;
   curPage: number;
@@ -317,20 +327,37 @@ export function PaginationButtons({
   isPending: boolean;
   onClickPagination: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
-  const languageContext = useContext(LanguageContext);
+  const [fontSizePagination, setFontSizePagination] = useState(
+    `calc(${fontSize} * 0.8)`
+  );
+  const [padding, setPadding] = useState("0.5% 1%");
 
-  const fontSizePagination =
-    mediaContext === "mobile"
-      ? fontSize
-      : mediaContext === "tablet"
-      ? `calc(${fontSize} * 0.9)`
-      : `calc(${fontSize} * 0.8)`;
-  const padding =
-    mediaContext === "mobile"
-      ? "1% 2%"
-      : mediaContext === "tablet"
-      ? "0.7% 1.2%"
-      : "0.5% 1%";
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setFontSizePagination(
+      mediaContext === "mobile"
+        ? fontSize
+        : mediaContext === "tablet"
+        ? `calc(${fontSize} * 0.9)`
+        : `calc(${fontSize} * 0.8)`
+    );
+  }, [mediaContext, fontSize]);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setPadding(
+      mediaContext === "mobile"
+        ? "1% 2%"
+        : mediaContext === "tablet"
+        ? "0.2% 1.2%"
+        : mediaContext === "desktop"
+        ? "1%"
+        : "0.8%"
+    );
+  }, [mediaContext]);
+
   return (
     <div className={styles.container__pagination}>
       {!isPending && curPage > 1 && (
@@ -340,9 +367,9 @@ export function PaginationButtons({
           value="decrease"
           onClick={onClickPagination}
         >
-          {`${languageContext?.language === "ja" ? "ページ" : "Page"} ${
-            curPage - 1
-          }`}
+          {mediaContext === "mobile" || mediaContext === "tablet"
+            ? `${curPage - 1}`
+            : `${language === "ja" ? "ページ" : "Page"} ${curPage - 1}`}
           <br />
           &larr;
         </button>
@@ -354,9 +381,9 @@ export function PaginationButtons({
           value="increase"
           onClick={onClickPagination}
         >
-          {`${languageContext?.language === "ja" ? "ページ" : "Page"} ${
-            curPage + 1
-          }`}
+          {mediaContext === "mobile" || mediaContext === "tablet"
+            ? `${curPage + 1}`
+            : `${language === "ja" ? "ページ" : "Page"} ${curPage + 1}`}
           <br />
           &rarr;
         </button>
@@ -645,10 +672,8 @@ export function RecipeEdit({
 
       recipeData =
         createOrUpdate === "create"
-          ? await uploadRecipeCreate(newRecipe)
+          ? await uploadRecipeCreate(newRecipe, userContext)
           : await uploadRecipeUpdate(newRecipe, userContext);
-
-      // setCurRecipe(recipeData);
 
       setIsPending(false);
       handleChangeEdit && handleChangeEdit(false);
@@ -689,38 +714,6 @@ export function RecipeEdit({
 
     createOrUpdate === "create" &&
       redirect(`/recipes/recipe#${recipeData._id}`, RedirectType.replace);
-  }
-
-  async function uploadRecipeCreate(recipe: TYPE_RECIPE) {
-    try {
-      ///store new recipe in recipes database and user info database
-      const recipeData = await getData("/api/recipes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(recipe),
-      });
-
-      recipeData.newAccessToken &&
-        userContext?.login(recipeData.newAccessToken);
-
-      //connect the recipe data id to user recipe data id
-      const userData = await getData("/api/users/recipes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: `Bearer ${userContext?.accessToken}`,
-        },
-        body: JSON.stringify({ ...recipeData.data }),
-      });
-
-      userData.newAccessToken && userContext?.login(userData.newAccessToken);
-
-      userContext?.addNumberOfRecipes();
-
-      return recipeData.data;
-    } catch (err) {
-      throw err;
-    }
   }
 
   return !isPending ? (
@@ -2834,7 +2827,9 @@ export function RecipeNoEdit({
   //language
   const languageContext = useContext(LanguageContext);
 
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>(
+    languageContext?.language || "en"
+  );
 
   useEffect(() => {
     if (!languageContext?.language) return;
@@ -2880,10 +2875,8 @@ export function RecipeNoEdit({
   );
   const [regionUnit, setRegionUnit] = useState<TYPE_REGION_UNIT>("original");
 
-  const [isLoading, setIsLoading] = useState<boolean>();
   const [curError, setCurError] = useState(error);
   const [successMessage, setSuccessMessage] = useState("");
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     userRecipe && setStateInit(userRecipe);
@@ -2895,61 +2888,6 @@ export function RecipeNoEdit({
     setFavorite(recipe.favorite);
     setServingsValue(recipe.servings.servings);
     setRegionUnit("original");
-  }
-
-  //Only for main
-  useEffect(() => {
-    if (mainOrRecipe === "recipe") return;
-
-    handleHashChange();
-
-    window.addEventListener("hashchange", handleHashChange);
-
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, [mainOrRecipe, languageContext?.language]);
-
-  async function handleHashChange() {
-    const id = window.location.hash.slice(1);
-    if (!id)
-      return setMessage(
-        languageContext?.language === "ja"
-          ? "レシピを検索してクッキングを始めましょう！"
-          : "Let's start cooking by selecting your recipe :)"
-      );
-    await getRecipe(id);
-  }
-
-  async function getRecipe(id: string) {
-    try {
-      setIsLoading(true);
-      setCurError("");
-      const recipeData = await getData(`/api/recipes?id=${id}`, {
-        method: "GET",
-      });
-
-      setStateInit(recipeData.data);
-
-      setIsLoading(false);
-    } catch (err: any) {
-      setIsLoading(false);
-      setCurError(
-        language === "ja"
-          ? "レシピのロード中にエラーが発生しました🙇‍♂️もう一度試してください"
-          : "Server error while loading recipe 🙇‍♂️ Please try again"
-      );
-      console.error(
-        "Error while loading recipe",
-        err.message,
-        err.statusCode || 500
-      );
-    }
-  }
-
-  function handleClickEdit() {
-    const id = window.location.hash.slice(1);
-    if (!id) return;
-
-    redirect(`/recipes/recipe#${id}`, RedirectType.replace);
   }
 
   function handleChangeServings(e: React.ChangeEvent<HTMLInputElement>) {
@@ -3026,144 +2964,113 @@ export function RecipeNoEdit({
           mainOrRecipe={mainOrRecipe}
         />
       )}
-      {(isLoading ||
-        !recipe ||
-        !curRecipe ||
-        (!servingsValue && servingsValue !== 0) ||
-        favorite === undefined) &&
-      mainOrRecipe === "main" ? (
-        <MessageContainer
-          message={
-            isLoading
-              ? language === "ja"
-                ? "レシピをロード中…"
-                : "Loading your recipe..."
-              : message
-          }
-          fontSize={`calc(${fontSize} * 1.3)`}
-          letterSpacing={"0.05vw"}
-          wordSpacing={"0.3vw"}
+      <form
+        style={{
+          position: "relative",
+          textAlign: "center",
+          backgroundImage:
+            "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+          width: mainOrRecipe === "main" ? "100%" : recipeWidth,
+          height: "fit-content",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding:
+            mainOrRecipe === "main"
+              ? "10% 0"
+              : mediaContext === "mobile"
+              ? "6% 0"
+              : "3% 0",
+          borderRadius:
+            mainOrRecipe === "main"
+              ? "0"
+              : mediaContext === "mobile"
+              ? "5px"
+              : "10px",
+          color: "black",
+          boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
+        }}
+      >
+        {mainOrRecipe === "main" && (
+          <ButtonEditMain
+            mediaContext={mediaContext}
+            language={language}
+            fontSize={headerSize}
+            handleClickEdit={handleClickEdit}
+          />
+        )}
+        <ImageTitleNoEdit
+          mediaContext={mediaContext}
+          language={languageContext?.language || "ja"}
+          recipeWidth={recipeWidth}
+          mainOrRecipe={mainOrRecipe}
+          fontSize={fontSize}
+          image={recipe?.mainImage}
+          title={recipe?.title || ""}
         />
-      ) : (
-        <form
-          style={{
-            position: "relative",
-            textAlign: "center",
-            backgroundImage:
-              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-            width: mainOrRecipe === "main" ? "100%" : recipeWidth,
-            height: "fit-content",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding:
-              mainOrRecipe === "main"
-                ? "10% 0"
-                : mediaContext === "mobile"
-                ? "6% 0"
-                : "3% 0",
-            borderRadius:
-              mainOrRecipe === "main"
-                ? "0"
-                : mediaContext === "mobile"
-                ? "5px"
-                : "10px",
-            color: "black",
-            boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
-          }}
-        >
-          {mainOrRecipe === "main" && (
-            <button
-              className={clsx(styles.btn__img, styles.btn__edit)}
-              style={{
-                color: "blueviolet",
-                backgroundImage: "url(/icons/pencile.svg)",
-                width:
-                  mediaContext === "mobile" || mediaContext === "tablet"
-                    ? "20%"
-                    : "15%",
-                top: mediaContext === "mobile" ? "0.2%" : "0.4%",
-                right: mediaContext === "mobile" ? "10%" : "5%",
-                fontSize: headerSize,
-              }}
-              type="button"
-              onClick={handleClickEdit}
-            >
-              {language === "ja" ? "編集" : "Edit"}
-            </button>
-          )}
-          <ImageTitleNoEdit
-            mediaContext={mediaContext}
-            language={languageContext?.language || "ja"}
-            recipeWidth={recipeWidth}
-            mainOrRecipe={mainOrRecipe}
-            fontSize={fontSize}
-            image={recipe?.mainImage}
-            title={recipe?.title || ""}
-          />
-          <BriefExplanationNoEdit
-            mediaContext={mediaContext}
-            language={languageContext?.language || "ja"}
-            recipeWidth={recipeWidth}
-            mainOrRecipe={mainOrRecipe}
-            fontSize={fontSize}
-            curRecipe={curRecipe}
-            originalServingsValue={recipe?.servings.servings || 0}
-            servingsValue={servingsValue || 0}
-            favorite={favorite || false}
-            regionUnit={regionUnit}
-            onChangeServings={handleChangeServings}
-            onChangeIngredientsUnit={handleChangeIngredientsUnit}
-            onClickFavorite={handleClickFavorite}
-          />
-          <IngredientsNoEdit
-            mediaContext={mediaContext}
-            language={languageContext?.language || "ja"}
-            mainOrRecipe={mainOrRecipe}
-            fontSize={fontSize}
-            headerSize={headerSize}
-            servingsValue={servingsValue || 0}
-            ingredients={curRecipe?.ingredients || []}
-            regionUnit={regionUnit}
-          />
-          <InstructionsNoEdit
-            mediaContext={mediaContext}
-            language={languageContext?.language || "ja"}
-            recipeWidth={recipeWidth}
-            fontSize={fontSize}
-            headerSize={headerSize}
-            marginTop={marginTop}
-            preparation={recipe?.preparation || ""}
-            instructions={recipe?.instructions || []}
-          />
-          <AboutThisRecipeNoEdit
-            mediaContext={mediaContext}
-            language={languageContext?.language || "ja"}
-            mainOrRecipe={mainOrRecipe}
-            fontSize={fontSize}
-            headerSize={headerSize}
-            marginTop={marginTop}
-            description={recipe?.description || ""}
-          />
-          <MemoriesNoEdit
-            mediaContext={mediaContext}
-            language={languageContext?.language || "ja"}
-            recipeWidth={recipeWidth}
-            fontSize={fontSize}
-            headerSize={headerSize}
-            marginTop={marginTop}
-            images={recipe?.memoryImages || []}
-          />
-          <CommentsNoEdit
-            mediaContext={mediaContext}
-            language={languageContext?.language || "ja"}
-            fontSize={fontSize}
-            headerSize={headerSize}
-            marginTop={marginTop}
-            comments={recipe?.comments || ""}
-          />
+        <BriefExplanationNoEdit
+          mediaContext={mediaContext}
+          language={languageContext?.language || "ja"}
+          recipeWidth={recipeWidth}
+          mainOrRecipe={mainOrRecipe}
+          fontSize={fontSize}
+          curRecipe={curRecipe}
+          originalServingsValue={recipe?.servings.servings || 0}
+          servingsValue={servingsValue || 0}
+          favorite={favorite || false}
+          regionUnit={regionUnit}
+          onChangeServings={handleChangeServings}
+          onChangeIngredientsUnit={handleChangeIngredientsUnit}
+          onClickFavorite={handleClickFavorite}
+        />
+        <IngredientsNoEdit
+          mediaContext={mediaContext}
+          language={languageContext?.language || "ja"}
+          mainOrRecipe={mainOrRecipe}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          servingsValue={servingsValue || 0}
+          ingredients={curRecipe?.ingredients || []}
+          regionUnit={regionUnit}
+        />
+        <InstructionsNoEdit
+          mediaContext={mediaContext}
+          language={languageContext?.language || "ja"}
+          recipeWidth={recipeWidth}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
+          preparation={recipe?.preparation || ""}
+          instructions={recipe?.instructions || []}
+        />
+        <AboutThisRecipeNoEdit
+          mediaContext={mediaContext}
+          language={languageContext?.language || "ja"}
+          mainOrRecipe={mainOrRecipe}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
+          description={recipe?.description || ""}
+        />
+        <MemoriesNoEdit
+          mediaContext={mediaContext}
+          language={languageContext?.language || "ja"}
+          recipeWidth={recipeWidth}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
+          images={recipe?.memoryImages || []}
+        />
+        <CommentsNoEdit
+          mediaContext={mediaContext}
+          language={languageContext?.language || "ja"}
+          fontSize={fontSize}
+          headerSize={headerSize}
+          marginTop={marginTop}
+          comments={recipe?.comments || ""}
+        />
 
-          {/* <div className={styles.container__nutrition_facts}>
+        {/* <div className={styles.container__nutrition_facts}>
           <div className={styles.nutrition_facts}>
             <div className={styles.container__h3_input}>
               <h3>Nutrition Facts</h3>
@@ -3232,10 +3139,49 @@ export function RecipeNoEdit({
               </p> 
           </div>
         </div> */}
-        </form>
-      )}
+      </form>
     </>
   );
+}
+
+function ButtonEditMain({
+  mediaContext,
+  language,
+  fontSize,
+  handleClickEdit,
+}: {
+  mediaContext: TYPE_MEDIA;
+  language: TYPE_LANGUAGE;
+  fontSize: string;
+  handleClickEdit: () => void;
+}) {
+  return (
+    <button
+      className={clsx(styles.btn__img, styles.btn__edit)}
+      style={{
+        color: "blueviolet",
+        backgroundImage: "url(/icons/pencile.svg)",
+        width:
+          mediaContext === "mobile" || mediaContext === "tablet"
+            ? "20%"
+            : "15%",
+        top: mediaContext === "mobile" ? "0.2%" : "0.4%",
+        right: mediaContext === "mobile" ? "10%" : "5%",
+        fontSize,
+      }}
+      type="button"
+      onClick={handleClickEdit}
+    >
+      {language === "ja" ? "編集" : "Edit"}
+    </button>
+  );
+}
+
+function handleClickEdit() {
+  const id = window.location.hash.slice(1);
+  if (!id) return;
+
+  redirect(`/recipes/recipe#${id}`, RedirectType.replace);
 }
 
 function ImageTitleNoEdit({
@@ -3824,6 +3770,9 @@ function IngLineNoEdit({
   ingredient: TYPE_INGREDIENT;
   regionUnit: TYPE_REGION_UNIT;
 }) {
+  //don't modify originalIngredient
+  const [originalIngredient, setOriginalIngredient] = useState(ingredient);
+  //to modify, use newIngredient
   const [newIngredient, setNewIngredient] = useState<{
     amount: number;
     unit: string;
@@ -3872,14 +3821,16 @@ function IngLineNoEdit({
         <p>
           {ingredient.ingredient}
           &nbsp;&nbsp;
-          {(newIngredient.amount !== 0 && newIngredient.unit === "g") ||
-          newIngredient.unit === "kg" ||
-          newIngredient.unit === "oz" ||
-          newIngredient.unit === "lb" ||
-          newIngredient.unit === "ml" ||
-          newIngredient.unit === "L"
+          {!originalIngredient.amount
+            ? ""
+            : (newIngredient.amount !== 0 && newIngredient.unit === "g") ||
+              newIngredient.unit === "kg" ||
+              newIngredient.unit === "oz" ||
+              newIngredient.unit === "lb" ||
+              newIngredient.unit === "ml" ||
+              newIngredient.unit === "L"
             ? newIngredient.amount
-            : fracty(newIngredient.amount) || ""}
+            : fracty(newIngredient.amount)}
           &nbsp;
           {newIngredient.unit &&
             newIngredient.unit !== "noUnit" &&
@@ -3888,14 +3839,16 @@ function IngLineNoEdit({
         </p>
       ) : (
         <p>
-          {(newIngredient.amount !== 0 && newIngredient.unit === "g") ||
-          newIngredient.unit === "kg" ||
-          newIngredient.unit === "oz" ||
-          newIngredient.unit === "lb" ||
-          newIngredient.unit === "ml" ||
-          newIngredient.unit === "L"
+          {!originalIngredient.amount
+            ? ""
+            : (newIngredient.amount !== 0 && newIngredient.unit === "g") ||
+              newIngredient.unit === "kg" ||
+              newIngredient.unit === "oz" ||
+              newIngredient.unit === "lb" ||
+              newIngredient.unit === "ml" ||
+              newIngredient.unit === "L"
             ? newIngredient.amount
-            : fracty(newIngredient.amount) || ""}
+            : fracty(newIngredient.amount)}
           &nbsp;
           {newIngredient.unit &&
             newIngredient.unit !== "noUnit" &&
@@ -4432,6 +4385,382 @@ function CommentsNoEdit({
               : "There're no comments")}
         </p>
       </div>
+    </div>
+  );
+}
+
+export function RecipeLinkEdit({
+  recipe,
+  createOrEdit,
+  handleChangeEdit,
+}: {
+  recipe: TYPE_RECIPE_LINK;
+  createOrEdit: "create" | "edit";
+  handleChangeEdit?: () => void;
+}) {
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
+  const mediaContext = useContext(MediaContext);
+
+  const [fontSize, setFontSize] = useState("1.5vw");
+  const [smallHeaderSize, setSmallHeaderSize] = useState(
+    `calc(${fontSize} * 1.2)`
+  );
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? "4.7vw"
+        : mediaContext === "tablet"
+        ? "2.7vw"
+        : mediaContext === "desktop"
+        ? "1.5vw"
+        : "1.3vw";
+
+    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+    setFontSize(fontSizeFinal);
+
+    setSmallHeaderSize(`calc(${fontSizeFinal} * 1.2)`);
+  }, [mediaContext, language]);
+
+  const userContext = useContext(UserContext);
+
+  const [link, setLink] = useState(recipe.link);
+  const [title, setTitle] = useState(recipe.title);
+  const [favorite, setFavorite] = useState(recipe.favorite);
+
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isPending, setIsPending] = useState(false);
+
+  function handleChangeInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const target = e.currentTarget;
+
+    if (target.name === "title") setTitle(target.value);
+    if (target.name === "link") setLink(target.value);
+    if (target.name === "favorite") setFavorite(target.checked);
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    let recipeData;
+    try {
+      e.preventDefault();
+
+      setError("");
+      setIsPending(true);
+
+      const formData = new FormData(e.currentTarget);
+
+      const link = String(formData.get("link")).trim();
+      const title = String(formData.get("title")).trim();
+      const favorite = formData.get("favorite");
+
+      //validate link
+      const isValidLink = URL.canParse(link);
+
+      if (!isValidLink)
+        return setError(
+          language === "ja"
+            ? "有効なリンクを入力して下さい"
+            : "Please enter valid link"
+        );
+
+      if (!title)
+        return setError(
+          language === "ja"
+            ? "レシピの名前を入力してください"
+            : "Please enter the recipe name"
+        );
+
+      const newRecipeFromLink = {
+        _id: recipe._id || undefined,
+        title,
+        link,
+        favorite: favorite === "on" ? true : false,
+        createdAt:
+          createOrEdit === "create"
+            ? new Date().toISOString()
+            : recipe.createdAt,
+        updatedAt: new Date().toISOString(),
+      };
+
+      //send recipe
+      recipeData =
+        createOrEdit === "create"
+          ? await uploadRecipeCreate(newRecipeFromLink, userContext)
+          : await uploadRecipeUpdate(newRecipeFromLink, userContext);
+
+      console.log(recipeData);
+      setIsPending(false);
+      setMessage(
+        language === "ja"
+          ? `レシピが${createOrEdit === "create" ? "作成" : "更新"}されました！`
+          : `Recipe ${
+              createOrEdit === "create" ? "created" : "updated"
+            } successfully!`
+      );
+      createOrEdit === "edit" && handleChangeEdit && handleChangeEdit();
+    } catch (err: any) {
+      setIsPending(false);
+      setError(
+        `${
+          language === "ja"
+            ? `レシピの${
+                createOrEdit === "create" ? "作成" : "更新"
+              }中にサーバーエラーが発生しました🙇‍♂️`
+            : `Server error while ${
+                createOrEdit === "create" ? "creating" : "updating"
+              } recipe 🙇‍♂️`
+        } ${err.message}`
+      );
+      console.error(err.message, err.statusCode || 500);
+    }
+
+    redirect(`/recipes/recipe#${recipeData._id}`);
+  }
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        height: "100vh",
+      }}
+    >
+      {(error || message || isPending) && (
+        <p
+          style={{
+            fontSize: `calc(${fontSize} * 1.1)`,
+            backgroundColor: error
+              ? "orangered"
+              : message
+              ? "rgba(10, 231, 39, 1)"
+              : "rgba(109, 221, 127, 1)",
+            color: "white",
+            borderRadius: "5px",
+            padding: "1% 2%",
+            width:
+              mediaContext === "mobile"
+                ? "90%"
+                : mediaContext === "tablet"
+                ? "70%"
+                : mediaContext === "desktop"
+                ? "50%"
+                : "40%",
+            marginBottom:
+              mediaContext === "mobile"
+                ? "3%"
+                : mediaContext === "tablet"
+                ? "2%"
+                : "1%",
+          }}
+        >
+          {error ||
+            message ||
+            (language === "ja" ? "レシピを作成中…" : "Creating recipe...")}
+        </p>
+      )}
+      <form
+        style={{
+          width:
+            mediaContext === "mobile"
+              ? "90%"
+              : mediaContext === "tablet"
+              ? "70%"
+              : mediaContext === "desktop"
+              ? "50%"
+              : "40%",
+          height: "fit-content",
+          backgroundColor: "rgba(250, 255, 207, 1)",
+          borderRadius: "5px",
+          boxShadow: "rgba(0, 0, 0, 0.29) 3px 3px 10px",
+          padding: `${smallHeaderSize} 2%`,
+          letterSpacing: language !== "ja" ? "1px" : "0",
+        }}
+        onSubmit={handleSubmit}
+      >
+        <div>
+          <h5
+            style={{
+              fontSize: smallHeaderSize,
+              marginBottom: fontSize,
+            }}
+          >
+            {language === "ja"
+              ? "レシピのリンクを入力してください"
+              : "Enter recipe link"}
+          </h5>
+          <input
+            style={{
+              fontSize,
+              marginBottom: smallHeaderSize,
+              width: "70%",
+              padding: "0.5%",
+              letterSpacing: language !== "ja" ? "0.5px" : "0",
+            }}
+            type="url"
+            name="link"
+            placeholder={language === "ja" ? "レシピのリンク" : "recipe link"}
+            required
+            value={link}
+            onChange={handleChangeInput}
+          ></input>
+        </div>
+        <div>
+          <h5
+            style={{
+              fontSize: smallHeaderSize,
+              marginBottom: fontSize,
+            }}
+          >
+            {language === "ja"
+              ? "レシピの名前を入力してください"
+              : "Enter recipe name"}
+          </h5>
+          <input
+            style={{
+              fontSize,
+              marginBottom: smallHeaderSize,
+              width: "70%",
+              padding: "0.5%",
+              letterSpacing: language !== "ja" ? "0.5px" : "0",
+            }}
+            name="title"
+            placeholder={language === "ja" ? "レシピの名前" : "recipe title"}
+            required
+            value={title}
+            onChange={handleChangeInput}
+          ></input>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: smallHeaderSize,
+            height: "fit-content",
+            gap: "2%",
+          }}
+        >
+          <span style={{ fontSize }}>
+            {language === "ja"
+              ? "お気に入りとして登録する"
+              : "Save this recipe as favorite"}
+          </span>
+          <input
+            style={{ width: smallHeaderSize, height: smallHeaderSize }}
+            type="checkbox"
+            name="favorite"
+            value={favorite ? "on" : ""}
+            onChange={handleChangeInput}
+          ></input>
+        </div>
+        <button
+          className={styles.btn__upload_recipe_link}
+          style={{
+            fontSize,
+            letterSpacing: language !== "ja" ? "1px" : "0",
+          }}
+          type="submit"
+        >
+          {language === "ja" ? "アップロード" : "Upload"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+export function RecipeLinkNoEdit({
+  recipeWidth,
+  recipeHeight,
+  recipe,
+  mainOrRecipe,
+}: {
+  recipeWidth: number;
+  recipeHeight: number;
+  recipe: TYPE_RECIPE_LINK;
+  mainOrRecipe: "main" | "recipe";
+}) {
+  //language
+  const languageContext = useContext(LanguageContext);
+
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>(
+    languageContext?.language || "en"
+  );
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
+  //design
+  const mediaContext = useContext(MediaContext);
+
+  const [fontSize, setFontSize] = useState("1.7vw");
+
+  useEffect(() => {
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth + "px", 0.046, "4.5vw")
+        : mediaContext === "tablet"
+        ? getSize(recipeWidth + "px", 0.036, "2.7vw")
+        : mediaContext === "desktop" && window.innerWidth <= 1100
+        ? getSize(recipeWidth + "px", 0.032, "1.5vw")
+        : getSize(recipeWidth + "px", 0.03, "1.3vw");
+
+    setFontSize(language === "ja" ? `calc(${fontSizeEn} * 0.9)` : fontSizeEn);
+  }, [mediaContext, recipeWidth, language]);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      {mainOrRecipe === "main" && (
+        <ButtonEditMain
+          mediaContext={mediaContext}
+          language={language}
+          fontSize={fontSize}
+          handleClickEdit={handleClickEdit}
+        />
+      )}
+      <iframe
+        title="external recipe link"
+        width={recipeWidth}
+        height={recipeHeight}
+        src={recipe.link}
+        loading="lazy"
+      ></iframe>
+      <p style={{ width: recipeWidth, marginTop: "1%" }}>
+        {language === "ja"
+          ? "レシピリンクのウェブサイトのセキュリティの問題により、ここにそのサイトを表示できない場合があります。その場合は、こちらのリンクから直接そのサイトにアクセスしてください。"
+          : "The website of the recipe link might refuse to be displayed here for a secrity reason. When you can't see the web page, please click this link and go directly to the website"}
+      </p>
+      <a href={recipe.link}>
+        {language === "ja"
+          ? `${recipe.title}のリンク`
+          : `Link of ${recipe.title}`}
+      </a>
     </div>
   );
 }

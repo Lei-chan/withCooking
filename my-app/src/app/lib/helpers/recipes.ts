@@ -1,20 +1,57 @@
 import {
   TYPE_INGREDIENT,
-  TYPE_INGREDIENT_UNIT,
   TYPE_INGREDIENTS,
   TYPE_LANGUAGE,
   TYPE_MEDIA,
   TYPE_RECIPE,
+  TYPE_RECIPE_LINK,
   TYPE_REGION_UNIT,
   TYPE_SERVINGS_UNIT,
 } from "../config/type";
-import { LanguageContext } from "../providers";
 import { convertIngUnits, convertTempUnits } from "./converter";
 import { getData } from "./other";
 
-//upload recipe
+//create recipe
+export const uploadRecipeCreate = async (
+  recipe: TYPE_RECIPE | TYPE_RECIPE_LINK,
+  userContext: any
+) => {
+  try {
+    ///store new recipe in recipes database and user info database
+    const recipeData = await getData(
+      `/api/recipes${"link" in recipe ? "/link" : ""}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recipe),
+      }
+    );
+
+    recipeData.newAccessToken && userContext?.login(recipeData.newAccessToken);
+
+    //connect the recipe data id to user recipe data id
+    const userData = await getData("/api/users/recipes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `Bearer ${userContext?.accessToken}`,
+      },
+      body: JSON.stringify({ ...recipeData.data }),
+    });
+
+    userData.newAccessToken && userContext?.login(userData.newAccessToken);
+
+    userContext?.addNumberOfRecipes();
+
+    return recipeData.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+//update recipe
 export const uploadRecipeUpdate = async (
-  recipe: TYPE_RECIPE,
+  recipe: TYPE_RECIPE | TYPE_RECIPE_LINK,
   userContext: any
 ) => {
   try {
@@ -22,11 +59,14 @@ export const uploadRecipeUpdate = async (
     const { _id, ...others } = recipe;
 
     ///store new recipe in recipes database and user info database
-    const recipeData = await getData(`/api/recipes?id=${_id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(others),
-    });
+    const recipeData = await getData(
+      `/api/recipes${"link" in recipe ? "/link" : ""}?id=${_id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(others),
+      }
+    );
     recipeData.newAccessToken && userContext?.login(recipeData.newAccessToken);
 
     //connect the recipe data id to user recipe data id
@@ -62,22 +102,54 @@ export const isRecipeAllowed = (recipe: TYPE_RECIPE) =>
     ? false
     : true;
 
-// ////local units are more important to convert to different units later
-// export const getRegion = (ingredients: any) => {
-//   const servingsUnit = ingredients.reduce((acc: any, ing: any) => {
-//     if (ing.unit === "US cup") return "us";
-//     if (ing.unit === "Japanese cup") return "japan";
-//     if (ing.unit === "Imperial cup") return "metricCup";
-//     if (ing.unit === "Australian Tbsp") return "australia";
-
-//     if (acc !== "metric") return acc;
-
-//     return "metric";
-//   }, "metric");
-//   return servingsUnit;
-// };
-
 //brief explanation
+//translation
+export const getTranslatedServingsUnit = (
+  language: TYPE_LANGUAGE,
+  unit: TYPE_SERVINGS_UNIT
+) => {
+  if (language === "ja") {
+    if (unit === "people") return "人分";
+    if (unit === "slices") return "スライス";
+    if (unit === "pieces") return "個分";
+    if (unit === "cups") return "カップ";
+    if (unit === "bowls") return "杯分";
+    if (unit === "other") return "その他";
+  }
+
+  return unit;
+};
+
+export const getTranslatedIngredientsUnit = (
+  language: TYPE_LANGUAGE,
+  unit: string
+) => {
+  if (language === "ja") {
+    if (unit === "usCup") return "カップ（アメリカ）";
+    if (unit === "japaneseCup") return "カップ（日本）";
+    if (unit === "imperialCup") return "メトリックカップ (1カップ = 250ml)";
+    if (unit === "riceCup") return "合";
+    if (unit === "tsp") return "小さじ";
+    if (unit === "tbsp") return "大さじ";
+    if (unit === "australianTbsp") return "大さじ（オーストラリア）";
+    if (unit === "pinch") return "つまみ";
+    if (unit === "can") return "缶";
+    if (unit === "slice") return "スライス";
+    if (unit === "other") return "その他";
+    if (unit === "noUnit") return "単位なし";
+  }
+
+  if (language === "en") {
+    if (unit === "usCup") return "US cup";
+    if (unit === "japaneseCup") return "Japanese cup";
+    if (unit === "imperialCup") return "Imperial cup";
+    if (unit === "riceCup") return "rice cup";
+    if (unit === "australianTbsp") return "Australian tbsp";
+  }
+
+  return unit;
+};
+
 //returns recipe with updated convertion
 export const updateConvertion = (recipe: TYPE_RECIPE) => {
   const newRecipe = { ...recipe };
@@ -178,6 +250,90 @@ export const getImageFileData = (file: File, uri: any) => {
   };
 };
 
+//recipes page
+export const getUserRecipes = async (
+  accessToken: any,
+  startIndex: number,
+  recipesPerRequest: number,
+  keyword: string = ""
+) => {
+  try {
+    const data = await getData(
+      `/api/users/recipes?startIndex=${startIndex}&endIndex=${
+        startIndex + recipesPerRequest
+      }${keyword ? `&keyword=${keyword}` : ""}`,
+      {
+        method: "GET",
+        headers: { authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    return data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const calcNumberOfPages = (
+  recipeLength: number,
+  recipesPerPage: number
+) => Math.ceil(recipeLength / recipesPerPage);
+
+export const getRecipesPerPage = (
+  filteredRecipes: TYPE_RECIPE[],
+  numberRecipesPerPage: number,
+  curPage: number
+) => {
+  const startIndex = (curPage - 1) * numberRecipesPerPage;
+  const endIndex = startIndex + numberRecipesPerPage;
+  const recipesPerPage = filteredRecipes.slice(startIndex, endIndex);
+
+  return recipesPerPage ? recipesPerPage : [];
+};
+
+export const getOrderedRecipes = (recipes: any[]) =>
+  recipes
+    .toSorted((a: any, b: any) => {
+      const titleA = a.title.toLowerCase();
+      const titleB = b.title.toLowerCase();
+
+      if (titleA < titleB) return -1;
+      if (titleA > titleB) return 1;
+
+      return 0;
+    })
+    .toSorted((a: any, b: any) => {
+      if (a.favorite && !b.favorite) return -1;
+      if (!a.favorite && b.favorite) return 1;
+
+      return 0;
+    });
+
+export const createMessage = (
+  language: TYPE_LANGUAGE,
+  error: string,
+  isPending: boolean,
+  numberOfRecipes: number | null,
+  recipeLength: number
+) => {
+  if (error) return error;
+
+  if (isPending)
+    return language === "ja" ? "レシピをロード中…" : "Loading your recipes...";
+
+  if (numberOfRecipes === 0)
+    return language === "ja"
+      ? "まだレシピが作られていません。レシピを作ってwithCookingを始めましょう！"
+      : "No recipes created yet. Let't start by creating a recipe :)";
+
+  if (!recipeLength)
+    return language === "ja"
+      ? "レシピが見つかりませんでした。別のキーワードで検索してください"
+      : "No recipes found. Please try again with a different keyword :)";
+
+  return "";
+};
+
 //nutrition data
 // //success!
 // export const getNutritionData = async function (
@@ -235,145 +391,3 @@ export const getImageFileData = (file: File, uri: any) => {
 //     console.error(err);
 //   }
 // };
-
-//recipes page
-export const getUserRecipes = async (
-  accessToken: any,
-  startIndex: number,
-  recipesPerRequest: number,
-  keyword: string = ""
-) => {
-  try {
-    const data = await getData(
-      `/api/users/recipes?startIndex=${startIndex}&endIndex=${
-        startIndex + recipesPerRequest
-      }${keyword ? `&keyword=${keyword}` : ""}`,
-      {
-        method: "GET",
-        headers: { authorization: `Bearer ${accessToken}` },
-      }
-    );
-
-    return data;
-  } catch (err) {
-    throw err;
-  }
-};
-
-export const calcNumberOfPages = (
-  recipeLength: number,
-  recipesPerPage: number
-) => Math.ceil(recipeLength / recipesPerPage);
-
-export const getRecipesPerPage = (
-  filteredRecipes: TYPE_RECIPE[],
-  numberRecipesPerPage: number,
-  curPage: number
-) => {
-  const startIndex = (curPage - 1) * numberRecipesPerPage;
-  const endIndex = startIndex + numberRecipesPerPage;
-  const recipesPerPage = filteredRecipes.slice(startIndex, endIndex);
-
-  return recipesPerPage ? recipesPerPage : [];
-};
-
-// export const getFilteredRecipes = (recipes: any[] | [], value: string) => {
-//   const structuredValue = value.trim().toLowerCase();
-//   const filteredRecipes = recipes.filter(
-//     (recipe: any) =>
-//       recipe.title.toLocaleLowerCase().includes(structuredValue) ||
-//       recipe.ingredients.find((ing: TYPE_INGREDIENT) =>
-//         ing.ingredient.toLowerCase().includes(structuredValue)
-//       )
-//   );
-//   return filteredRecipes;
-// };
-
-export const getOrderedRecipes = (recipes: any[]) =>
-  recipes
-    .toSorted((a: any, b: any) => {
-      const titleA = a.title.toLowerCase();
-      const titleB = b.title.toLowerCase();
-
-      if (titleA < titleB) return -1;
-      if (titleA > titleB) return 1;
-
-      return 0;
-    })
-    .toSorted((a: any, b: any) => {
-      if (a.favorite && !b.favorite) return -1;
-      if (!a.favorite && b.favorite) return 1;
-
-      return 0;
-    });
-
-export const createMessage = (
-  language: TYPE_LANGUAGE,
-  error: string,
-  isPending: boolean,
-  numberOfRecipes: number | null,
-  recipeLength: number
-) => {
-  if (error) return error;
-
-  if (isPending)
-    return language === "ja" ? "レシピをロード中…" : "Loading your recipes...";
-
-  if (numberOfRecipes === 0)
-    return language === "ja"
-      ? "まだレシピが作られていません。レシピを作ってwithCookingを始めましょう！"
-      : "No recipes created yet. Let't start by creating a recipe :)";
-
-  if (!recipeLength)
-    return language === "ja"
-      ? "レシピが見つかりませんでした。別のキーワードで検索してください"
-      : "No recipes found. Please try again with a different keyword :)";
-
-  return "";
-};
-
-export const getTranslatedServingsUnit = (
-  language: TYPE_LANGUAGE,
-  unit: TYPE_SERVINGS_UNIT
-) => {
-  if (language === "ja") {
-    if (unit === "people") return "人分";
-    if (unit === "slices") return "スライス";
-    if (unit === "pieces") return "個分";
-    if (unit === "cups") return "カップ";
-    if (unit === "bowls") return "杯分";
-    if (unit === "other") return "その他";
-  }
-
-  return unit;
-};
-
-export const getTranslatedIngredientsUnit = (
-  language: TYPE_LANGUAGE,
-  unit: string
-) => {
-  if (language === "ja") {
-    if (unit === "usCup") return "カップ（アメリカ）";
-    if (unit === "japaneseCup") return "カップ（日本）";
-    if (unit === "imperialCup") return "メトリックカップ (1カップ = 250ml)";
-    if (unit === "riceCup") return "合";
-    if (unit === "tsp") return "小さじ";
-    if (unit === "tbsp") return "大さじ";
-    if (unit === "australianTbsp") return "大さじ（オーストラリア）";
-    if (unit === "pinch") return "つまみ";
-    if (unit === "can") return "缶";
-    if (unit === "slice") return "スライス";
-    if (unit === "other") return "その他";
-    if (unit === "noUnit") return "単位なし";
-  }
-
-  if (language === "en") {
-    if (unit === "usCup") return "US cup";
-    if (unit === "japaneseCup") return "Japanese cup";
-    if (unit === "imperialCup") return "Imperial cup";
-    if (unit === "riceCup") return "rice cup";
-    if (unit === "australianTbsp") return "Australian tbsp";
-  }
-
-  return unit;
-};

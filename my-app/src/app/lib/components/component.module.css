@@ -181,6 +181,18 @@
   letter-spacing: 0.03vw;
 }
 
+.btn__upload_recipe_link {
+  font-weight: bold;
+  color: white;
+  border: none;
+  background-image: linear-gradient(rgba(255, 188, 2, 1), rgba(250, 122, 2, 1));
+  padding: 1.5%;
+  border-radius: 3px;
+}
+
+.btn__upload_recipe_link:hover {
+  background-image: linear-gradient(rgb(238, 255, 2), rgb(250, 192, 2));
+}
 /* 
 .container__nutrition_facts {
   width: 95%;

@@ -12,6 +12,7 @@ import {
   TYPE_LANGUAGE,
   TYPE_MEDIA,
   TYPE_RECIPE,
+  TYPE_RECIPE_LINK,
   TYPE_USER_CONTEXT,
 } from "../lib/config/type";
 //general methods
@@ -32,10 +33,6 @@ import {
 } from "@/app/lib/components/components";
 
 export default function Recipes() {
-  const mediaContext = useContext(MediaContext);
-  const userContext = useContext(UserContext);
-  console.log(mediaContext);
-
   //language
   const languageContext = useContext(LanguageContext);
 
@@ -47,6 +44,8 @@ export default function Recipes() {
   }, [languageContext?.language]);
 
   //design
+  const mediaContext = useContext(MediaContext);
+
   const [fontSize, setFontSize] = useState("1.5vw");
 
   useEffect(() => {
@@ -90,6 +89,8 @@ export default function Recipes() {
     );
   }, [mediaContext]);
 
+  const userContext = useContext(UserContext);
+
   //don't modify numberOfTotle recipes
   const [numbreOfTotalRecipes, setNumberOfTotalRecipes] = useState(
     userContext?.numberOfRecipes || 0
@@ -105,7 +106,9 @@ export default function Recipes() {
       : 0
   );
 
-  const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  const [recipes, setRecipes] = useState<
+    (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | []
+  >([]);
   const [curPage, setCurPage] = useState<number>(1);
   const [keyword, setKeyword] = useState("");
 
@@ -133,8 +136,6 @@ export default function Recipes() {
       setIsPending(false);
     })();
   }, [userContext?.numberOfRecipes, recipesPerPage]);
-
-  console.log(numberOfRecipes);
 
   async function setUserRecipes(key: string = "") {
     try {
@@ -235,6 +236,7 @@ export default function Recipes() {
       />
       <PaginationButtons
         mediaContext={mediaContext}
+        language={language}
         fontSize={fontSize}
         styles={styles}
         curPage={curPage}
