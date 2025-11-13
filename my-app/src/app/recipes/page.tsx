@@ -4,7 +4,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 //next.js
 import Image from "next/image";
 import Link from "next/link";
-import { redirect, RedirectType } from "next/navigation";
+import { useRouter } from "next/navigation";
 //css
 import styles from "./page.module.css";
 //type
@@ -31,6 +31,7 @@ import {
   MessageContainer,
   PaginationButtons,
 } from "@/app/lib/components/components";
+import { Router } from "next/router";
 
 export default function Recipes() {
   //language
@@ -96,10 +97,6 @@ export default function Recipes() {
     userContext?.numberOfRecipes || 0
   );
 
-  const [numberOfRecipes, setNumberOfRecipes] = useState(
-    userContext?.numberOfRecipes || null
-  );
-
   const [numberOfPages, setNumberOfPages] = useState<number>(
     userContext?.numberOfRecipes
       ? calcNumberOfPages(userContext.numberOfRecipes, recipesPerPage)
@@ -125,7 +122,6 @@ export default function Recipes() {
     if (userContext?.numberOfRecipes === null || !userContext) return;
 
     setNumberOfTotalRecipes(userContext.numberOfRecipes);
-    setNumberOfRecipes(userContext.numberOfRecipes);
     setNumberOfPages(
       calcNumberOfPages(userContext.numberOfRecipes, recipesPerPage)
     );
@@ -150,7 +146,6 @@ export default function Recipes() {
       );
 
       setRecipes(data.data);
-      setNumberOfRecipes(data.numberOfRecipes);
       setNumberOfPages(calcNumberOfPages(data.numberOfRecipes, recipesPerPage));
 
       data.newAccessToken && userContext?.login(data.newAccessToken);
@@ -730,12 +725,15 @@ function RecipePreview({
   recipe: any;
   isSelecting: boolean;
 }) {
+  //design
   const mainImageSize = mediaContext === "mobile" ? "50px" : "46px";
+
+  const router = useRouter();
 
   function handleClickPreview(e: React.MouseEvent<HTMLElement>) {
     const id = e.currentTarget.id;
 
-    redirect(`/recipes/recipe#${id}`, RedirectType.replace);
+    router.push(`/recipes/${id}`);
   }
 
   return (

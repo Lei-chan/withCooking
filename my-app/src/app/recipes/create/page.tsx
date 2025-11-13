@@ -136,6 +136,8 @@ export default function CreateRecipe() {
       )}
       {createFrom === "scratch" && (
         <RecipeEdit
+          language={language}
+          mediaContext={mediaContext}
           recipe={{
             favorite: false,
             mainImage: undefined,
@@ -190,6 +192,8 @@ export default function CreateRecipe() {
       )}
       {createFrom === "link" && (
         <RecipeLinkEdit
+          language={language}
+          mediaContext={mediaContext}
           recipe={{ title: "", favorite: false, link: "" }}
           createOrEdit="create"
         />

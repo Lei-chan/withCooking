@@ -1,10 +1,15 @@
 "use client";
-import React, { useContext, useEffect, useRef, useState } from "react";
+//react
+import { useContext, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import Resizer from "react-image-file-resizer";
-import { redirect, RedirectType } from "next/navigation";
+//next.js
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+//css
 import styles from "./component.module.css";
+//type
 import {
   TYPE_FILE,
   TYPE_INGREDIENT,
@@ -19,11 +24,13 @@ import {
   TYPE_USER_CONTEXT,
   TYPE_RECIPE_LINK,
 } from "../config/type";
+//settings
 import {
   MAX_SERVINGS,
   NUMBER_OF_TEMPERATURES,
   SLIDE_TRANSITION_SEC,
 } from "../config/settings";
+//methods for recipe
 import {
   calcTransitionXSlider,
   getImageFileData,
@@ -38,46 +45,45 @@ import {
   uploadRecipeCreate,
   uploadRecipeUpdate,
 } from "../helpers/recipes";
-import {
-  getData,
-  getFontSizeForLanguage,
-  getSize,
-  wait,
-} from "../helpers/other";
+//method for convertion
 import { convertIngUnits } from "../helpers/converter";
-import { LanguageContext, MediaContext, UserContext } from "../providers";
+//general methods
+import { getFontSizeForLanguage, getSize, wait } from "../helpers/other";
+//context
+import { LanguageContext, UserContext } from "../providers";
+//libraries
 import fracty from "fracty";
 import { nanoid } from "nanoid";
-import CreateRecipe from "@/app/recipes/create/page";
 
 export function LanguageSelect({
+  mediaContext,
   fontSize,
   position,
   minWidth,
   backgroundColor,
   color,
 }: {
+  mediaContext: TYPE_MEDIA;
   fontSize: string;
   position: any;
   minWidth: string;
   backgroundColor: string;
   color: string;
 }) {
-  const mediaContext = useContext(MediaContext);
   const languageContext = useContext(LanguageContext);
 
   const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
 
   function handleChangeLanguage(e: React.ChangeEvent<HTMLSelectElement>) {
     const value = e.currentTarget.value as TYPE_LANGUAGE;
     setLanguage(value);
     languageContext?.updateLanguage(value);
   }
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
 
   return (
     <select
@@ -146,26 +152,18 @@ export function MessageContainer({
 }
 
 export function OverlayMessage({
+  language,
+  mediaContext,
   option,
   content,
   toggleLogout,
 }: {
+  language: TYPE_LANGUAGE;
+  mediaContext: TYPE_MEDIA;
   option: "message" | "question";
   content: "welcome" | "logout" | "close";
   toggleLogout?: () => void;
 }) {
-  //language
-  const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
-
-  const mediaContext = useContext(MediaContext);
-
   //design
   const [fontSize, setFontSize] = useState("1.6vw");
 
@@ -183,6 +181,8 @@ export function OverlayMessage({
     );
   }, [mediaContext, language]);
 
+  //others
+  const router = useRouter();
   const userContext = useContext(UserContext);
 
   const [isVisible, setIsVisible] = useState(true);
@@ -235,7 +235,7 @@ export function OverlayMessage({
   function handleLogout() {
     userContext?.logout();
 
-    redirect("/", RedirectType.replace);
+    router.push("/");
   }
 
   return (
@@ -309,8 +309,8 @@ export function OverlayMessage({
 }
 
 export function PaginationButtons({
-  mediaContext,
   language,
+  mediaContext,
   fontSize,
   styles,
   curPage,
@@ -318,8 +318,8 @@ export function PaginationButtons({
   isPending,
   onClickPagination,
 }: {
-  mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
+  mediaContext: TYPE_MEDIA;
   fontSize: string;
   styles: any;
   curPage: number;
@@ -393,29 +393,35 @@ export function PaginationButtons({
 }
 
 export function RecipeEdit({
+  language,
+  mediaContext,
   recipe,
   error,
   createOrUpdate,
   handleChangeEdit = undefined,
 }: {
+  language: TYPE_LANGUAGE;
+  mediaContext: TYPE_MEDIA;
   recipe: TYPE_RECIPE;
   error: string;
   createOrUpdate: "create" | "update";
   handleChangeEdit?: (editOrNot: boolean) => void | undefined;
 }) {
-  const mediaContext = useContext(MediaContext);
+  const router = useRouter();
+
+  // const mediaContext = useContext(MediaContext);
   const userContext = useContext(UserContext);
 
   //language
-  const languageContext = useContext(LanguageContext);
+  // const languageContext = useContext(LanguageContext);
 
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+  // const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
 
-  useEffect(() => {
-    if (!languageContext?.language) return;
+  // useEffect(() => {
+  //   if (!languageContext?.language) return;
 
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  //   setLanguage(languageContext.language);
+  // }, [languageContext?.language]);
 
   //design
   const [recipeWidth, setRecipeWidth] = useState("50%");
@@ -426,7 +432,7 @@ export function RecipeEdit({
   const [marginTop, setMarginTop] = useState("30px");
 
   useEffect(() => {
-    if (!mediaContext) return;
+    // if (!mediaContext) return;
 
     const width =
       window.innerWidth *
@@ -662,7 +668,7 @@ export function RecipeEdit({
 
       if (!isRecipeAllowed(newRecipe)) {
         const err: any = new Error(
-          languageContext?.language === "ja"
+          language === "ja"
             ? "一つ以上の欄を入力してください"
             : "Please fill more than one input field"
         );
@@ -678,7 +684,7 @@ export function RecipeEdit({
       setIsPending(false);
       handleChangeEdit && handleChangeEdit(false);
       setMessage(
-        languageContext?.language === "ja"
+        language === "ja"
           ? `レシピの${
               createOrUpdate === "create" ? "作成" : "更新"
             }が完了しました！`
@@ -690,10 +696,13 @@ export function RecipeEdit({
         await wait();
         setMessage("");
       }
+
+      if (createOrUpdate === "create")
+        router.push(`/recipes/${recipeData._id}`);
     } catch (err: any) {
       setIsPending(false);
       setCurError(
-        languageContext?.language === "ja"
+        language === "ja"
           ? `レシピ作成中にサーバーエラーが発生しました🙇‍♂️ ${
               err.statusCode === 400
                 ? err.message
@@ -711,9 +720,6 @@ export function RecipeEdit({
         err.statusCode || 500
       );
     }
-
-    createOrUpdate === "create" &&
-      redirect(`/recipes/recipe#${recipeData._id}`, RedirectType.replace);
   }
 
   return !isPending ? (
@@ -825,15 +831,17 @@ export function RecipeEdit({
             style={{ fontSize: headerSize, marginTop: headerSize }}
             type="submit"
           >
-            {languageContext?.language === "ja" ? "アップロード" : "Upload"}
+            {language === "ja" ? "アップロード" : "Upload"}
           </button>
         </form>
       )}
     </>
   ) : (
     <Loading
+      language={language}
+      mediaContext={mediaContext}
       message={
-        languageContext?.language === "ja"
+        language === "ja"
           ? `レシピを${createOrUpdate === "create" ? "作成" : "更新"}中…`
           : `${
               createOrUpdate === "create" ? "Creating" : "Updating"
@@ -2810,6 +2818,7 @@ function CommentsEdit({
 }
 
 export function RecipeNoEdit({
+  language,
   mediaContext,
   userContext,
   recipeWidth,
@@ -2817,6 +2826,7 @@ export function RecipeNoEdit({
   mainOrRecipe,
   userRecipe = null,
 }: {
+  language: TYPE_LANGUAGE;
   mediaContext: TYPE_MEDIA;
   userContext: TYPE_USER_CONTEXT;
   recipeWidth: string;
@@ -2824,19 +2834,6 @@ export function RecipeNoEdit({
   mainOrRecipe: "main" | "recipe";
   userRecipe: TYPE_RECIPE | null;
 }) {
-  //language
-  const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>(
-    languageContext?.language || "en"
-  );
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-
-    setLanguage(languageContext?.language);
-  }, [languageContext?.language]);
-
   ///design
   const [fontSize, setFontSize] = useState("1.3vw");
   const [headerSize, setHeaderSize] = useState("1.3vw");
@@ -2910,7 +2907,6 @@ export function RecipeNoEdit({
     setRegionUnit(value);
   }
 
-  console.log(curRecipe);
   //update recipe only edit is false
   async function handleClickFavorite() {
     try {
@@ -2996,12 +2992,11 @@ export function RecipeNoEdit({
             mediaContext={mediaContext}
             language={language}
             fontSize={headerSize}
-            handleClickEdit={handleClickEdit}
           />
         )}
         <ImageTitleNoEdit
           mediaContext={mediaContext}
-          language={languageContext?.language || "ja"}
+          language={language}
           recipeWidth={recipeWidth}
           mainOrRecipe={mainOrRecipe}
           fontSize={fontSize}
@@ -3010,7 +3005,7 @@ export function RecipeNoEdit({
         />
         <BriefExplanationNoEdit
           mediaContext={mediaContext}
-          language={languageContext?.language || "ja"}
+          language={language}
           recipeWidth={recipeWidth}
           mainOrRecipe={mainOrRecipe}
           fontSize={fontSize}
@@ -3025,7 +3020,7 @@ export function RecipeNoEdit({
         />
         <IngredientsNoEdit
           mediaContext={mediaContext}
-          language={languageContext?.language || "ja"}
+          language={language}
           mainOrRecipe={mainOrRecipe}
           fontSize={fontSize}
           headerSize={headerSize}
@@ -3035,7 +3030,7 @@ export function RecipeNoEdit({
         />
         <InstructionsNoEdit
           mediaContext={mediaContext}
-          language={languageContext?.language || "ja"}
+          language={language}
           recipeWidth={recipeWidth}
           fontSize={fontSize}
           headerSize={headerSize}
@@ -3045,7 +3040,7 @@ export function RecipeNoEdit({
         />
         <AboutThisRecipeNoEdit
           mediaContext={mediaContext}
-          language={languageContext?.language || "ja"}
+          language={language}
           mainOrRecipe={mainOrRecipe}
           fontSize={fontSize}
           headerSize={headerSize}
@@ -3054,7 +3049,7 @@ export function RecipeNoEdit({
         />
         <MemoriesNoEdit
           mediaContext={mediaContext}
-          language={languageContext?.language || "ja"}
+          language={language}
           recipeWidth={recipeWidth}
           fontSize={fontSize}
           headerSize={headerSize}
@@ -3063,7 +3058,7 @@ export function RecipeNoEdit({
         />
         <CommentsNoEdit
           mediaContext={mediaContext}
-          language={languageContext?.language || "ja"}
+          language={language}
           fontSize={fontSize}
           headerSize={headerSize}
           marginTop={marginTop}
@@ -3148,13 +3143,13 @@ function ButtonEditMain({
   mediaContext,
   language,
   fontSize,
-  handleClickEdit,
 }: {
   mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
   fontSize: string;
-  handleClickEdit: () => void;
 }) {
+  const router = useRouter();
+
   return (
     <button
       className={clsx(styles.btn__img, styles.btn__edit)}
@@ -3170,18 +3165,18 @@ function ButtonEditMain({
         fontSize,
       }}
       type="button"
-      onClick={handleClickEdit}
+      onClick={() => handleClickEdit(router)}
     >
       {language === "ja" ? "編集" : "Edit"}
     </button>
   );
 }
 
-function handleClickEdit() {
+function handleClickEdit(router: any) {
   const id = window.location.hash.slice(1);
   if (!id) return;
 
-  redirect(`/recipes/recipe#${id}`, RedirectType.replace);
+  router.push(`/recipes/${id}`);
 }
 
 function ImageTitleNoEdit({
@@ -4390,27 +4385,22 @@ function CommentsNoEdit({
 }
 
 export function RecipeLinkEdit({
+  language,
+  mediaContext,
   recipe,
   createOrEdit,
   handleChangeEdit,
 }: {
+  language: TYPE_LANGUAGE;
+  mediaContext: TYPE_MEDIA;
   recipe: TYPE_RECIPE_LINK;
   createOrEdit: "create" | "edit";
   handleChangeEdit?: () => void;
 }) {
-  //language
-  const languageContext = useContext(LanguageContext);
+  const router = useRouter();
 
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
-
+  console.log(mediaContext);
   //design
-  const mediaContext = useContext(MediaContext);
-
   const [fontSize, setFontSize] = useState("1.5vw");
   const [smallHeaderSize, setSmallHeaderSize] = useState(
     `calc(${fontSize} * 1.2)`
@@ -4511,6 +4501,8 @@ export function RecipeLinkEdit({
             } successfully!`
       );
       createOrEdit === "edit" && handleChangeEdit && handleChangeEdit();
+
+      createOrEdit === "create" && router.push(`/recipes/${recipeData._id}`);
     } catch (err: any) {
       setIsPending(false);
       setError(
@@ -4526,8 +4518,6 @@ export function RecipeLinkEdit({
       );
       console.error(err.message, err.statusCode || 500);
     }
-
-    redirect(`/recipes/recipe#${recipeData._id}`);
   }
 
   return (
@@ -4686,30 +4676,22 @@ export function RecipeLinkEdit({
 }
 
 export function RecipeLinkNoEdit({
+  language,
+  mediaContext,
   recipeWidth,
   recipeHeight,
   recipe,
   mainOrRecipe,
 }: {
+  language: TYPE_LANGUAGE;
+  mediaContext: TYPE_MEDIA;
   recipeWidth: number;
   recipeHeight: number;
   recipe: TYPE_RECIPE_LINK;
   mainOrRecipe: "main" | "recipe";
 }) {
-  //language
-  const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>(
-    languageContext?.language || "en"
-  );
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
-
   //design
-  const mediaContext = useContext(MediaContext);
+  // const mediaContext = useContext(MediaContext);
 
   const [fontSize, setFontSize] = useState("1.7vw");
 
@@ -4741,7 +4723,6 @@ export function RecipeLinkNoEdit({
           mediaContext={mediaContext}
           language={language}
           fontSize={fontSize}
-          handleClickEdit={handleClickEdit}
         />
       )}
       <iframe
@@ -4756,11 +4737,11 @@ export function RecipeLinkNoEdit({
           ? "レシピリンクのウェブサイトのセキュリティの問題により、ここにそのサイトを表示できない場合があります。その場合は、こちらのリンクから直接そのサイトにアクセスしてください。"
           : "The website of the recipe link might refuse to be displayed here for a secrity reason. When you can't see the web page, please click this link and go directly to the website"}
       </p>
-      <a href={recipe.link}>
+      <Link href={recipe.link}>
         {language === "ja"
           ? `${recipe.title}のリンク`
           : `Link of ${recipe.title}`}
-      </a>
+      </Link>
     </div>
   );
 }
@@ -4787,20 +4768,15 @@ export function LoadingRecipe({
   );
 }
 
-export function Loading({ message }: { message: string }) {
-  const mediaContext = useContext(MediaContext);
-
-  //language
-  const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-
-    setLanguage(languageContext?.language);
-  }, [languageContext?.language]);
-
+export function Loading({
+  language,
+  mediaContext,
+  message,
+}: {
+  language: TYPE_LANGUAGE;
+  mediaContext: TYPE_MEDIA;
+  message: string;
+}) {
   //design
   const [imageSize, setImageSize] = useState(180);
 

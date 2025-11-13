@@ -1,10 +1,8 @@
 import * as z from "zod";
 import {
   MAX_SERVINGS,
-  PASSWORD_MIN_DIGIT,
   PASSWORD_MIN_LENGTH,
-  PASSWORD_MIN_LOWERCASE,
-  PASSWORD_MIN_UPPERCASE,
+  PASSWORD_MIN_EACH,
   PASSWORD_REGEX,
 } from "./config/settings";
 
@@ -67,7 +65,7 @@ export const userSchema = z.object({
     .trim()
     .regex(
       PASSWORD_REGEX,
-      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit`
+      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_EACH} lowercase, uppercase, and digit`
     ),
   recipes: z
     .array({
@@ -88,7 +86,7 @@ export const passwordUpdateSchema = z.object({
     .trim()
     .regex(
       PASSWORD_REGEX,
-      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters long, with at least ${PASSWORD_MIN_LOWERCASE} lowercase, ${PASSWORD_MIN_UPPERCASE} uppercase, and ${PASSWORD_MIN_DIGIT} digit`
+      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_EACH} lowercase, uppercase, and digit`
     ),
 });
 

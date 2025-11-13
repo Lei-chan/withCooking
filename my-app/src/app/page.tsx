@@ -1,51 +1,56 @@
 "use client";
 //react
 import { useEffect, useState, useContext, useMemo } from "react";
-import clsx from "clsx";
 import { useInView } from "react-intersection-observer";
 //next.js
 import Image from "next/image";
 import Link from "next/link";
-import { redirect, RedirectType } from "next/navigation";
+import { useRouter } from "next/navigation";
 //css
 import styles from "./page.module.css";
 //type
 import { TYPE_LANGUAGE, TYPE_MEDIA } from "./lib/config/type";
 //settings
-import {
-  PASSWORD_MIN_DIGIT,
-  PASSWORD_MIN_EACH,
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_MIN_LOWERCASE,
-  PASSWORD_MIN_UPPERCASE,
-} from "./lib/config/settings";
+import { PASSWORD_MIN_EACH, PASSWORD_MIN_LENGTH } from "./lib/config/settings";
 //general methods
-import { getData } from "@/app/lib/helpers/other";
+import { getData, getFontSizeForLanguage } from "@/app/lib/helpers/other";
 //context
 import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
 //model
 import homeDetails from "./lib/models/homeDetails";
+//component
 import { LanguageSelect } from "./lib/components/components";
 
 export default function Home() {
-  const mediaContext = useContext(MediaContext);
+  //language
   const languageContext = useContext(LanguageContext);
-  const userContext = useContext(UserContext);
 
-  console.log(languageContext?.language);
+  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
+
+  useEffect(() => {
+    if (!languageContext?.language) return;
+    setLanguage(languageContext.language);
+  }, [languageContext?.language]);
+
   //design
-  let fontSize;
-  if (languageContext?.language === "ja")
-    fontSize =
-      mediaContext === "mobile"
-        ? "3.8vw"
-        : mediaContext === "tablet"
-        ? "2.3vw"
-        : mediaContext === "desktop"
-        ? "1.6vw"
-        : "1.3vw";
-  else
-    fontSize =
+  const mediaContext = useContext(MediaContext);
+  const [fontSize, setFontSize] = useState("1.6vw");
+  const [headerSize, setHeaderSize] = useState(`calc(${fontSize} * 1.5)`);
+  const [warningFontSize, setWarningFontSize] = useState(
+    `calc(${fontSize} * 1.1)`
+  );
+  const [inputWrapperWidth, setInputWrapperWidth] = useState("65%");
+  const [btnXDesign, setBtnXDesign] = useState({
+    top: "-2%",
+    fontSize: "2.5vw",
+  });
+  const [eyeOnWidth, setEyeOnWidth] = useState("9.3%");
+  const [eyeOffWidth, setEyeOffWidth] = useState(`calc(${eyeOnWidth} - 1%)`);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    const fontSizeEn =
       mediaContext === "mobile"
         ? "4vw"
         : mediaContext === "tablet"
@@ -53,80 +58,44 @@ export default function Home() {
         : mediaContext === "desktop"
         ? "1.8vw"
         : "1.5vw";
-  const warningFontSize = `calc(${fontSize} * 1.1)`;
-  const inputWrapperDesign = {
-    position: "relative",
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    width:
+    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+    setFontSize(fontSizeFinal);
+
+    setHeaderSize(`calc(${fontSizeFinal} * 1.5)`);
+
+    setWarningFontSize(`calc(${fontSizeFinal} * 1.1)`);
+
+    setBtnXDesign({
+      top: "-2%",
+      fontSize: `calc(${fontSizeEn} * 1.9)`,
+    });
+  }, [mediaContext, language]);
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setInputWrapperWidth(
       mediaContext === "mobile"
         ? "72%"
         : mediaContext === "tablet"
         ? "68%"
-        : "65%",
+        : "65%"
+    );
 
-    height: "fit-content",
-    margin: "4% auto 6% auto",
-  };
-  const btnXDesign = {
-    top:
-      mediaContext === "mobile"
-        ? "-1%"
-        : mediaContext === "tablet"
-        ? "-1%"
-        : "0%",
-    fontSize:
-      mediaContext === "mobile"
-        ? "7vw"
-        : mediaContext === "tablet"
-        ? "4vw"
-        : mediaContext === "desktop"
-        ? "2.5vw"
-        : "2.2vw",
-  };
-  const headingDesign = {
-    fontSize:
-      mediaContext === "mobile"
-        ? "7vw"
-        : mediaContext === "tablet"
-        ? "3.8vw"
-        : mediaContext === "desktop"
-        ? "2.6vw"
-        : "2.1vw",
-  };
-  const eyeOnDesign = {
-    width:
+    const eyeOnWid =
       mediaContext === "mobile"
         ? "12%"
         : mediaContext === "tablet"
         ? "10%"
         : mediaContext === "desktop"
         ? "9.3%"
-        : "9%",
-  };
-  const eyeOffDesign = {
-    width:
-      mediaContext === "mobile"
-        ? "11%"
-        : mediaContext === "tablet"
-        ? "9%"
-        : mediaContext === "desktop"
-        ? "8.3%"
-        : "8%",
-  };
-  const btnSubmitDesign = {
-    fontSize:
-      mediaContext === "mobile"
-        ? "4.3vw"
-        : mediaContext === "tablet"
-        ? "2.6vw"
-        : mediaContext === "desktop"
-        ? "1.6vw"
-        : "1.4vw",
-    marginTop:
-      mediaContext === "mobile" ? "0" : mediaContext === "tablet" ? "1%" : "2%",
-  };
+        : "9%";
+    setEyeOnWidth(eyeOnWid);
+    setEyeOffWidth(`calc(${eyeOnWid} - 1%)`);
+  }, [mediaContext]);
+
+  //userContext
+  const userContext = useContext(UserContext);
 
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -178,6 +147,7 @@ export default function Home() {
         }}
       >
         <LanguageSelect
+          mediaContext={mediaContext}
           fontSize={fontSize}
           position="absolute"
           minWidth={mediaContext === "mobile" ? "35%" : "10%"}
@@ -279,12 +249,11 @@ export default function Home() {
         userContext={userContext}
         fontSize={fontSize}
         warningFontSize={warningFontSize}
-        inputWrapperDesign={inputWrapperDesign}
+        inputWrapperWidth={inputWrapperWidth}
         btnXDesign={btnXDesign}
-        headingDesign={headingDesign}
-        eyeOnDesign={eyeOnDesign}
-        eyeOffDesign={eyeOffDesign}
-        btnSubmitDesign={btnSubmitDesign}
+        headerSize={headerSize}
+        eyeOnWidth={eyeOnWidth}
+        eyeOffWidth={eyeOffWidth}
         show={showLogin ? true : false}
         onClickX={handleToggleLogin}
         onClickOutside={handleToggleLogin}
@@ -295,12 +264,11 @@ export default function Home() {
         userContext={userContext}
         fontSize={fontSize}
         warningFontSize={warningFontSize}
-        inputWrapperDesign={inputWrapperDesign}
+        inputWrapperWidth={inputWrapperWidth}
         btnXDesign={btnXDesign}
-        headingDesign={headingDesign}
-        eyeOnDesign={eyeOnDesign}
-        eyeOffDesign={eyeOffDesign}
-        btnSubmitDesign={btnSubmitDesign}
+        headerSize={headerSize}
+        eyeOnWidth={eyeOnWidth}
+        eyeOffWidth={eyeOffWidth}
         show={showSignup ? true : false}
         onClickX={handleToggleSignup}
         onClickOutside={handleToggleSignup}
@@ -830,12 +798,11 @@ function OverlayLogin({
   userContext,
   fontSize,
   warningFontSize,
-  inputWrapperDesign,
+  inputWrapperWidth,
   btnXDesign,
-  headingDesign,
-  eyeOnDesign,
-  eyeOffDesign,
-  btnSubmitDesign,
+  headerSize,
+  eyeOnWidth,
+  eyeOffWidth,
   show,
   onClickX,
   onClickOutside,
@@ -845,25 +812,32 @@ function OverlayLogin({
   userContext: any;
   fontSize: string;
   warningFontSize: string;
-  inputWrapperDesign: object;
+  inputWrapperWidth: string;
   btnXDesign: object;
-  headingDesign: object;
-  eyeOnDesign: object;
-  eyeOffDesign: object;
-  btnSubmitDesign: object;
+  headerSize: string;
+  eyeOnWidth: string;
+  eyeOffWidth: string;
   show: Boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
+  const router = useRouter();
+
   //design
-  const formWidth =
-    mediaContext === "mobile"
-      ? "85%"
-      : mediaContext === "tablet"
-      ? "50%"
-      : mediaContext === "desktop"
-      ? "35%"
-      : "30%";
+  const [formWidth, setFormWidth] = useState("35%");
+
+  useEffect(() => {
+    setFormWidth(
+      mediaContext === "mobile"
+        ? "85%"
+        : mediaContext === "tablet"
+        ? "50%"
+        : mediaContext === "desktop"
+        ? "35%"
+        : "30%"
+    );
+  }, [mediaContext]);
+
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -904,6 +878,9 @@ function OverlayLogin({
         email: trimmedEmail,
         password: trimmedPassword,
       });
+
+      //go to main
+      router.push("/main");
     } catch (err: any) {
       setError(
         `${
@@ -921,8 +898,6 @@ function OverlayLogin({
         err.statusCode || 500
       );
     }
-    //redirect to main
-    redirect("/main", RedirectType.replace);
   };
 
   async function login(accountInfo: { email: string; password: string }) {
@@ -965,6 +940,7 @@ function OverlayLogin({
           : `${language === "ja" ? "ログイン中…" : "Loging in..."}`}
       </p>
       <form
+        className={styles.form}
         style={{
           position: "relative",
           width: formWidth,
@@ -983,10 +959,19 @@ function OverlayLogin({
         >
           &times;
         </button>
-        <h2 style={headingDesign}>
+        <h2
+          className={styles.h2}
+          style={{
+            fontSize: headerSize,
+            paddingTop: mediaContext === "mobile" ? "2%" : "0",
+          }}
+        >
           {language === "ja" ? "ログイン" : "Login"}
         </h2>
-        <div className={styles.input_wrapper} style={inputWrapperDesign}>
+        <div
+          className={styles.input_wrapper}
+          style={{ width: inputWrapperWidth }}
+        >
           <input
             className={styles.input}
             style={{
@@ -1001,7 +986,10 @@ function OverlayLogin({
             placeholder={language === "ja" ? "メールアドレス" : "email"}
           />
         </div>
-        <div className={styles.input_wrapper} style={inputWrapperDesign}>
+        <div
+          className={styles.input_wrapper}
+          style={{ width: inputWrapperWidth }}
+        >
           <input
             className={styles.input}
             style={{
@@ -1016,28 +1004,27 @@ function OverlayLogin({
             placeholder={language === "ja" ? "パスワード" : "password"}
           />
           <button
-            className={clsx(
-              styles.btn__eye,
-              isPasswordVisible && styles.hidden
-            )}
-            style={eyeOnDesign}
+            className={styles.btn__eye}
+            style={{
+              width: eyeOffWidth,
+              opacity: isPasswordVisible ? "0" : "1",
+            }}
             type="button"
             onClick={handleTogglePassword}
           ></button>
           <button
-            className={clsx(
-              styles.btn__image,
-              styles.btn__eye_off,
-              !isPasswordVisible && styles.hidden
-            )}
-            style={eyeOffDesign}
+            className={styles.btn__eye_off}
+            style={{
+              width: eyeOnWidth,
+              opacity: !isPasswordVisible ? "0" : "1",
+            }}
             type="button"
             onClick={handleTogglePassword}
           ></button>
         </div>
         <button
           className={styles.btn__submit_login}
-          style={btnSubmitDesign}
+          style={{ fontSize }}
           type="submit"
         >
           {language === "ja" ? "ログイン" : "Log in"}
@@ -1053,12 +1040,11 @@ function OverlayCreateAccount({
   userContext,
   fontSize,
   warningFontSize,
-  inputWrapperDesign,
+  inputWrapperWidth,
   btnXDesign,
-  headingDesign,
-  eyeOnDesign,
-  eyeOffDesign,
-  btnSubmitDesign,
+  headerSize,
+  eyeOnWidth,
+  eyeOffWidth,
   show,
   onClickX,
   onClickOutside,
@@ -1068,36 +1054,46 @@ function OverlayCreateAccount({
   userContext: any;
   fontSize: string;
   warningFontSize: string;
-  inputWrapperDesign: object;
+  inputWrapperWidth: string;
   btnXDesign: object;
-  headingDesign: object;
-  eyeOnDesign: object;
-  eyeOffDesign: object;
-  btnSubmitDesign: object;
+  headerSize: string;
+  eyeOnWidth: string;
+  eyeOffWidth: string;
   show: Boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
+  const router = useRouter();
+
   //design
-  const formWidth =
-    mediaContext === "mobile"
-      ? "80%"
-      : mediaContext === "tablet"
-      ? "50%"
-      : mediaContext === "desktop"
-      ? "39%"
-      : "39%";
-  const h4Design = {
-    fontSize:
-      mediaContext === "mobile"
-        ? "4.5vw"
-        : mediaContext === "tablet"
-        ? "2.7vw"
-        : mediaContext === "desktop"
-        ? "1.55vw"
-        : "1.5vw",
+  const [formWidth, setFormWidth] = useState("39%");
+  const [h4Design, setH4Design] = useState({
+    fontSize: "1.55vw",
     letterSpacing: "0.08vw",
-  };
+  });
+
+  useEffect(() => {
+    if (!mediaContext) return;
+
+    setFormWidth(
+      mediaContext === "mobile"
+        ? "80%"
+        : mediaContext === "tablet"
+        ? "50%"
+        : "39%"
+    );
+    setH4Design({
+      fontSize:
+        mediaContext === "mobile"
+          ? "4.5vw"
+          : mediaContext === "tablet"
+          ? "2.7vw"
+          : mediaContext === "desktop"
+          ? "1.55vw"
+          : "1.5vw",
+      letterSpacing: "0.08vw",
+    });
+  }, [mediaContext]);
 
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -1134,6 +1130,8 @@ function OverlayCreateAccount({
       }
 
       await createAccount({ email: trimmedEmail, password: trimmedPassword });
+
+      router.push("/main");
     } catch (err: any) {
       setError(
         `${
@@ -1144,14 +1142,12 @@ function OverlayCreateAccount({
       );
       setErrorFields(err.message.includes("email") ? "email" : "password");
 
-      return console.error(
+      console.error(
         "error while creating account",
         err.message,
         err.statusCode
       );
     }
-
-    redirect("/main", RedirectType.replace);
   };
 
   async function createAccount(accountInfo: {
@@ -1200,6 +1196,7 @@ function OverlayCreateAccount({
           : "Creating your account..."}
       </p>
       <form
+        className={styles.form}
         style={{
           backgroundImage:
             "linear-gradient(rgb(221, 255, 96), rgb(114, 221, 43))",
@@ -1223,7 +1220,7 @@ function OverlayCreateAccount({
         >
           &times;
         </button>
-        <h2 style={headingDesign}>
+        <h2 className={styles.h2} style={{ fontSize: headerSize }}>
           {language === "ja" ? "アカウント作成" : "Sign-up"}
         </h2>
         <h4 style={h4Design}>
@@ -1232,16 +1229,9 @@ function OverlayCreateAccount({
             : "Please enter your email address"}
         </h4>
         <div
+          className={styles.input_wrapper}
           style={{
-            ...inputWrapperDesign,
-            height:
-              mediaContext === "mobile"
-                ? "8%"
-                : mediaContext === "tablet"
-                ? "7%"
-                : mediaContext === "desktop"
-                ? "7%"
-                : "5%",
+            width: inputWrapperWidth,
           }}
         >
           <input
@@ -1288,16 +1278,9 @@ function OverlayCreateAccount({
             : `Use ${PASSWORD_MIN_LENGTH} letters at minimum, including at least ${PASSWORD_MIN_EACH} uppercase, lowercase, and digit`}
         </p>
         <div
+          className={styles.input_wrapper}
           style={{
-            ...inputWrapperDesign,
-            height:
-              mediaContext === "mobile"
-                ? "8%"
-                : mediaContext === "tablet"
-                ? "7%"
-                : mediaContext === "desktop"
-                ? "7%"
-                : "5%",
+            width: inputWrapperWidth,
           }}
         >
           <input
@@ -1314,28 +1297,27 @@ function OverlayCreateAccount({
             placeholder={language === "ja" ? "パスワード" : "password"}
           ></input>
           <button
-            className={clsx(
-              styles.btn__eye,
-              isPasswordVisible && styles.hidden
-            )}
-            style={eyeOnDesign}
+            className={styles.btn__eye}
+            style={{
+              width: eyeOffWidth,
+              opacity: isPasswordVisible ? "0" : "1",
+            }}
             type="button"
             onClick={handleTogglePassword}
           ></button>
           <button
-            className={clsx(
-              styles.btn__image,
-              styles.btn__eye_off,
-              !isPasswordVisible && styles.hidden
-            )}
-            style={eyeOffDesign}
+            className={styles.btn__eye_off}
+            style={{
+              width: eyeOnWidth,
+              opacity: !isPasswordVisible ? "0" : "1",
+            }}
             type="button"
             onClick={handleTogglePassword}
           ></button>
         </div>
         <button
-          className={styles.btn__signup}
-          style={btnSubmitDesign}
+          className={styles.btn__signup_submit}
+          style={{ fontSize }}
           type="submit"
         >
           {language === "ja" ? "登録" : "Sign up"}

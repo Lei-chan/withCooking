@@ -9,13 +9,7 @@ import styles from "./page.module.css";
 //type
 import { TYPE_LANGUAGE, TYPE_USER_CONTEXT } from "@/app/lib/config/type";
 //settings
-import {
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_MIN_UPPERCASE,
-  PASSWORD_MIN_LOWERCASE,
-  PASSWORD_MIN_DIGIT,
-  PASSWORD_MIN_EACH,
-} from "../lib/config/settings";
+import { PASSWORD_MIN_LENGTH, PASSWORD_MIN_EACH } from "../lib/config/settings";
 //general methods
 import { getData, getFontSizeForLanguage, wait } from "@/app/lib/helpers/other";
 //context
@@ -96,8 +90,6 @@ export default function Account() {
 
       setUser(data.data);
 
-      console.log(data);
-
       //set newAccessToken for context when it's refreshed
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
@@ -123,8 +115,6 @@ export default function Account() {
   function toggleMessageVisible() {
     setIsOverlayMsgVisible(!isOverlayMsgVisible);
   }
-
-  console.log(language);
 
   return (
     <div
@@ -227,7 +217,12 @@ export default function Account() {
         </div>
       )}
       {isOverlayMsgVisible && (
-        <OverlayMessage option="message" content="close"></OverlayMessage>
+        <OverlayMessage
+          language={language}
+          mediaContext={mediaContext}
+          option="message"
+          content="close"
+        ></OverlayMessage>
       )}
     </div>
   );
@@ -565,7 +560,7 @@ function PasswordInput({
       return `${passwordType === "current" ? "現在の" : "新しい"}パスワード`;
 
     return `${
-      passwordType.slice(0).toUpperCase() + passwordType.slice(1)
+      passwordType.slice(0, 1).toUpperCase() + passwordType.slice(1)
     } password`;
   };
 

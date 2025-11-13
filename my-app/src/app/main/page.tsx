@@ -158,8 +158,6 @@ export default function MAIN() {
     setIsMessageVisible(!isMessageVisible);
   }
 
-  console.log(mediaContext);
-
   return (
     <div
       style={{ width: "100vw", height: "100vh" }}
@@ -168,10 +166,17 @@ export default function MAIN() {
       onMouseMove={handleMouseMoveRecipe}
     >
       {userContext?.isMessageVisible && (
-        <OverlayMessage option="message" content="welcome" />
+        <OverlayMessage
+          language={language}
+          mediaContext={mediaContext}
+          option="message"
+          content="welcome"
+        />
       )}
       {isMessageVisible && (
         <OverlayMessage
+          language={language}
+          mediaContext={mediaContext}
           option="question"
           content="logout"
           toggleLogout={handleToggleLogout}
@@ -357,49 +362,45 @@ function Recipe({
     }
   }
 
-  return (
-    <>
-      {(error || message || isLoading) && (
-        <div
-          className={styles.no_results}
-          style={{
-            fontSize: getSize(
-              recipeWidth,
-              language === "ja" ? 0.04 : 0.043,
-              "2.5vw"
-            ),
-          }}
-        >
-          {error ||
-            message ||
-            (language === "ja"
-              ? "レシピをロード中…"
-              : "Loading your recipe...")}
-        </div>
-      )}
-      {!message &&
-        !error &&
-        !isLoading &&
-        recipe &&
-        ("link" in recipe ? (
-          <RecipeLinkNoEdit
-            recipeWidth={parseFloat(recipeWidth)}
-            recipeHeight={recipeHeight}
-            recipe={recipe}
-            mainOrRecipe="main"
-          />
-        ) : (
-          <RecipeNoEdit
-            mediaContext={mediaContext}
-            userContext={userContext}
-            recipeWidth={recipeWidth}
-            error=""
-            mainOrRecipe="main"
-            userRecipe={recipe}
-          />
-        ))}
-    </>
-  );
+  if (error || message || isLoading)
+    return (
+      <div
+        className={styles.no_results}
+        style={{
+          fontSize: getSize(
+            recipeWidth,
+            language === "ja" ? 0.04 : 0.043,
+            "2.5vw"
+          ),
+        }}
+      >
+        {error ||
+          message ||
+          (language === "ja" ? "レシピをロード中…" : "Loading your recipe...")}
+      </div>
+    );
+
+  if (!message && !error && !isLoading && recipe)
+    return "link" in recipe ? (
+      <RecipeLinkNoEdit
+        language={language}
+        mediaContext={mediaContext}
+        recipeWidth={parseFloat(recipeWidth)}
+        recipeHeight={recipeHeight}
+        recipe={recipe}
+        mainOrRecipe="main"
+      />
+    ) : (
+      <RecipeNoEdit
+        language={language}
+        mediaContext={mediaContext}
+        userContext={userContext}
+        recipeWidth={recipeWidth}
+        error=""
+        mainOrRecipe="main"
+        userRecipe={recipe}
+      />
+    );
 }
 
 function Search({
@@ -884,6 +885,7 @@ function DropdownMenu({
           }}
         >
           <LanguageSelect
+            mediaContext={mediaContext}
             fontSize={`calc(${fontSize} * 0.8)`}
             position="relative"
             minWidth="50%"

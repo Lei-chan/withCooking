@@ -14,17 +14,19 @@ import {
   MIN_DESKTOP,
   MIN_TABLET,
 } from "./config/media";
-import { TYPE_MEDIA, TYPE_LANGUAGE, TYPE_USER_CONTEXT } from "./config/type";
+import {
+  TYPE_MEDIA,
+  TYPE_LANGUAGE,
+  TYPE_USER_CONTEXT,
+  TYPE_LANGUAGE_CONTEXT,
+} from "./config/type";
 import { MESSAGE_TIMEOUT } from "./config/settings";
 import { wait } from "./helpers/other";
 
 //mediaContext
 export const MediaContext = createContext<TYPE_MEDIA>("desktop");
 
-export const LanguageContext = createContext<{
-  language: TYPE_LANGUAGE;
-  updateLanguage: (nav: string) => void;
-} | null>(null);
+export const LanguageContext = createContext<TYPE_LANGUAGE_CONTEXT>(null);
 
 //userContext
 export const UserContext = createContext<TYPE_USER_CONTEXT>(null);
