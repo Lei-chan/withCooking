@@ -2,23 +2,35 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
-import { access } from "fs";
+
+//type
+interface MyJwtPayload extends jwt.JwtPayload {
+  userId: string;
+}
 
 export function generateAccessToken(userId: string) {
-  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-  });
+  return jwt.sign(
+    { userId },
+    process.env.ACCESS_TOKEN_SECRET as string,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    } as jwt.SignOptions
+  );
 }
 
 export function generateRefreshToken(userId: string) {
-  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
-    expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-  });
+  return jwt.sign(
+    { userId },
+    process.env.REFRESH_TOKEN_SECRET as string,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    } as jwt.SignOptions
+  );
 }
 
 export function verifyAccessToken(token: string) {
   try {
-    return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    return jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string);
   } catch (err) {
     return null;
   }
@@ -26,7 +38,7 @@ export function verifyAccessToken(token: string) {
 
 export function verifyRefreshToken(token: string) {
   try {
-    return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET as string);
   } catch (err) {
     return null;
   }
@@ -40,15 +52,11 @@ export async function authenticateToken(req: NextRequest) {
     //for when user reloaded and accessToken info disappeared
     if (!accessToken) return await refreshAccessToken();
 
-    // if (!accessToken) {
-    //   const err: any = new Error("Access token required.");
-    //   err.statusCode = 401;
-    //   throw err;
-    // }
-
     const decoded = verifyAccessToken(accessToken);
 
-    return { id: decoded?.userId, newAccessToken: null };
+    const userId = decoded ? (decoded as MyJwtPayload).userId : undefined;
+
+    return { id: userId, newAccessToken: null };
   } catch (err) {
     throw err;
   }
@@ -66,7 +74,7 @@ export async function refreshAccessToken() {
       throw err;
     }
 
-    const id = decodedRefresh.userId;
+    const id = (decodedRefresh as MyJwtPayload).userId;
 
     const newAccessToken = generateAccessToken(id);
 

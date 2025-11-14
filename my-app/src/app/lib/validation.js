@@ -65,7 +65,7 @@ export const userSchema = z.object({
     .trim()
     .regex(
       PASSWORD_REGEX,
-      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_EACH} lowercase, uppercase, and digit`
+      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters long, with at least ${PASSWORD_MIN_EACH} lowercase, uppercase, and digit`
     ),
   recipes: z
     .array({
@@ -86,7 +86,7 @@ export const passwordUpdateSchema = z.object({
     .trim()
     .regex(
       PASSWORD_REGEX,
-      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters logn, with at least ${PASSWORD_MIN_EACH} lowercase, uppercase, and digit`
+      `Please set password that is more than ${PASSWORD_MIN_LENGTH} characters long, with at least ${PASSWORD_MIN_EACH} lowercase, uppercase, and digit`
     ),
 });
 

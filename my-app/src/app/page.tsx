@@ -8,18 +8,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 //css
 import styles from "./page.module.css";
+//context
+import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
 //type
 import { TYPE_LANGUAGE, TYPE_MEDIA } from "./lib/config/type";
 //settings
 import { PASSWORD_MIN_EACH, PASSWORD_MIN_LENGTH } from "./lib/config/settings";
-//general methods
-import { getData, getFontSizeForLanguage } from "@/app/lib/helpers/other";
-//context
-import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
 //model
 import homeDetails from "./lib/models/homeDetails";
 //component
 import { LanguageSelect } from "./lib/components/components";
+//general methods
+import {
+  generateErrorMessage,
+  getData,
+  getFontSizeForLanguage,
+} from "@/app/lib/helpers/other";
 
 export default function Home() {
   //language
@@ -206,16 +210,16 @@ export default function Home() {
             }}
           >
             {languageContext?.language === "ja"
-              ? "このウェブサイトには、クッキングの時に「こんなものがあったらよかったのにな～」といったものが詰まっています！"
-              : 'In this app, these kinds of features which you think "that would be nice if there were..." for cooking are stuffed!'}
+              ? "このウェブサイトには、クッキングの時に「こんなものがあったらよかったのにな～」といった機能が集まっています！"
+              : `In this app, you'll find all those "It'd be nice if this existed..." cooking features packed in one place!`}
             <br />
             {languageContext?.language === "ja"
-              ? "複数のタイマーをセットして料理ができたり、メモができたり、簡単に自分が作ったレシピをタイトルや材料で検索出来たり、料理の時によく使われる単位を変換できたり、自分がつっくたレシピを整理された形で保管できたり…。"
-              : "Cook with a recipe using multiple timers or memo, easily search your recipe by title or ingredient, convert units frequently used for cook, manage your recipes, etc."}
+              ? "料理をしながら複数のタイマーをセットして、メモができたり、簡単に自分のレシピをタイトルや材料で検索出来たり、料理の時によく使われる単位を変換できたり、自分のお気に入りのレシピを整理された形で保管できたり…。"
+              : "Use multiple timers or memos while following a recipe, easily search your recipes by title or ingredient, convert commonly used cooking units, manage your recipe collection, and more."}
             <br />
             {languageContext?.language === "ja"
-              ? "この、シンプルだけれどとても便利なウェブサイトが、あなたのクッキング仲間となるでしょう！"
-              : "This simple but userful app will become your cooking buddy :)"}
+              ? "この、シンプルだけれど便利なウェブサイトが、あなたのクッキング仲間となるでしょう！"
+              : "This simple but useful website will become your new cooking buddy :)"}
           </p>
         </div>
         <div
@@ -792,6 +796,7 @@ function Explanation({
     </div>
   );
 }
+
 function OverlayLogin({
   mediaContext,
   language,
@@ -882,21 +887,23 @@ function OverlayLogin({
       //go to main
       router.push("/main");
     } catch (err: any) {
-      setError(
-        `${
-          language === "ja"
-            ? "ログイン中にエラーが発生しました"
-            : "Server error while loging in"
-        } ${err.message}`
-      );
-      err.message.includes("password") && setErrorFields("password");
-      err.message.includes("email") && setErrorFields("email");
-
-      return console.error(
+      console.error(
         "Error while loging in",
         err.message,
         err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "user");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "ログイン中にエラーが発生しました🙇‍♂️もう一度お試し下さい"
+            : "Server error while loging in 🙇‍♂️ Please try again")
+      );
+
+      err.message.includes("password") && setErrorFields("password");
+      err.message.includes("email") && setErrorFields("email");
     }
   };
 
@@ -1133,20 +1140,23 @@ function OverlayCreateAccount({
 
       router.push("/main");
     } catch (err: any) {
-      setError(
-        `${
-          language === "ja"
-            ? "アカウントの作成中にエラーが発生しました"
-            : "Server error while creating account"
-        } ${err.message}`
-      );
-      setErrorFields(err.message.includes("email") ? "email" : "password");
-
       console.error(
         "error while creating account",
         err.message,
-        err.statusCode
+        err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "user");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "アカウントの作成中にサーバーエラーが発生しました🙇‍♂️もう一度お試し下さい"
+            : "Server error while creating account 🙇‍♂️ Please try again")
+      );
+
+      err.message.includes("password") && setErrorFields("password");
+      err.message.includes("email") && setErrorFields("email");
     }
   };
 

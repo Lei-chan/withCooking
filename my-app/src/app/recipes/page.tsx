@@ -16,7 +16,12 @@ import {
   TYPE_USER_CONTEXT,
 } from "../lib/config/type";
 //general methods
-import { getData, wait } from "@/app/lib/helpers/other";
+import {
+  authErrorRedirect,
+  generateErrorMessage,
+  getData,
+  wait,
+} from "@/app/lib/helpers/other";
 //methods for recipes
 import {
   getRecipesPerPage,
@@ -31,9 +36,10 @@ import {
   MessageContainer,
   PaginationButtons,
 } from "@/app/lib/components/components";
-import { Router } from "next/router";
 
 export default function Recipes() {
+  const router = useRouter();
+
   //language
   const languageContext = useContext(LanguageContext);
 
@@ -150,12 +156,22 @@ export default function Recipes() {
 
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
-      console.error("Error while getting recipes", err.message);
-      setError(
-        language === "ja"
-          ? "レシピ取得中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
-          : "Server error while getting recipes 🙇‍♂️ Please retry again!"
+      console.error(
+        "Error while getting recipes",
+        err.message,
+        err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "user");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "レシピ取得中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+            : "Server error while getting recipes 🙇‍♂️ Please retry again!")
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 
@@ -394,6 +410,8 @@ function RecipeContainer({
   displayError: (message: string) => void;
   resetRecipes: () => void;
 }) {
+  const router = useRouter();
+
   //design
   const [numberOfColumns, setNumberOfColumns] = useState(5);
 
@@ -513,16 +531,22 @@ function RecipeContainer({
       await wait();
       setSuccessMessage("");
     } catch (err: any) {
-      displayError(
-        language === "ja"
-          ? "レシピの削除中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
-          : "Server error while deleting recipe 🙇‍♂️ Please try again"
-      );
       console.error(
         "Error while deleting recipe",
         err.message,
         err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "user");
+
+      displayError(
+        errorMessage ||
+          (language === "ja"
+            ? "レシピの削除中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+            : "Server error while deleting recipe 🙇‍♂️ Please try again")
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 

@@ -1,68 +1,39 @@
 "use client";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
 import { LanguageContext, MediaContext } from "../lib/providers";
-import howToUse from "../lib/models/howToUse";
 import clsx from "clsx";
-import { check } from "zod";
 import { MIN_TABLET } from "../lib/config/media";
 import { getFontSizeForLanguage } from "../lib/helpers/other";
-import { TYPE_LANGUAGE } from "../lib/config/type";
 
 export default function HowToUse() {
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
   const mediaContext = useContext(MediaContext);
 
-  const [fontSize, setFontSize] = useState("1.5vw");
-  const [fontHeaderSize, setFontHeaderSize] = useState(
-    `calc(${fontSize} * 1.1)`
-  );
-  const [imageSizeNormalWidth, setImageSizeNormalWidth] = useState(600);
-  const [imageSizeNormalHeight, setImageSizeNormalHeight] = useState(
-    imageSizeNormalWidth * 0.5
-  );
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? "5vw"
-        : mediaContext === "tablet"
-        ? "2.7vw"
-        : mediaContext === "desktop"
-        ? "1.8vw"
-        : "1.5vw";
-    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
-    setFontSize(fontSizeFinal);
-
-    setFontHeaderSize(`calc(${fontSizeFinal} * 1.1)`);
-  }, [mediaContext, language]);
-
-  useEffect(() => {
-    const imageWidth =
-      mediaContext === "mobile"
-        ? 300
-        : mediaContext === "tablet"
-        ? 500
-        : mediaContext === "desktop"
-        ? 600
-        : 650;
-    setImageSizeNormalWidth(imageWidth);
-
-    setImageSizeNormalHeight(imageWidth * 0.5);
-  }, [mediaContext]);
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "5vw"
+      : mediaContext === "tablet"
+      ? "2.7vw"
+      : mediaContext === "desktop"
+      ? "1.8vw"
+      : "1.5vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+  const fontHeaderSize = `calc(${fontSizeFinal} * 1.1)`;
+  const imageSizeNormalWidth =
+    mediaContext === "mobile"
+      ? 300
+      : mediaContext === "tablet"
+      ? 500
+      : mediaContext === "desktop"
+      ? 600
+      : 650;
+  const imageSizeNormalHeight = imageSizeNormalWidth * 0.5;
 
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [keyword, setKeyword] = useState("");
@@ -125,6 +96,88 @@ export default function HowToUse() {
     closeAccountRef,
     indexRef,
   ];
+
+  //titles
+  const mainTitle = language === "ja" ? "メインページ" : "Main Page";
+  const mainSetRecipeTitle =
+    language === "ja"
+      ? "どうすればレシピをセットできますか？"
+      : "How can I set a recipe?";
+  const mainResizeTitle =
+    language === "ja"
+      ? "どのようにレシピ、タイマー、ノートのサイズを調整できますか？"
+      : "How can I adjust the recipe, timer, and notes sizes?";
+  const mainTimersTitle =
+    language === "ja"
+      ? "どのようにタイマーを使用できますか？"
+      : "How can I use timers?";
+  const mainMemosTitle =
+    language === "ja"
+      ? "どのようにメモ欄を使用できますか？"
+      : "How do memos work?";
+  const mainDropdownTitle =
+    language === "ja"
+      ? "どうすれば別のページに移動することができますか？"
+      : "How can I go to different pages?";
+  const mainLogoutTitle =
+    language === "ja"
+      ? "どうやってログアウトできますか？"
+      : "How can I log out?";
+  const recipesTitle =
+    language === "ja"
+      ? "レシピまとめ、レシピ作成、レシピページ"
+      : "Recipes, Create Recipe, Recipe Page";
+  const createRecipeTitle =
+    language === "ja"
+      ? "どのようにレシピを作ることができますか？"
+      : "How can I create a recipe?";
+  const editRecipeTitle =
+    language === "ja"
+      ? "どのようにレシピを編集することができますか？"
+      : "How can I edit a recipe?";
+  const deleteRecipeTitle =
+    language === "ja"
+      ? "どのようにレシピを削除することができますか？"
+      : "How can I delete a recipe?";
+
+  const shareRecipeTitle =
+    language === "ja"
+      ? "どのようにレシピをシェアすることができますか？"
+      : "How can I share a recipe?";
+  const moreAboutRecipeTitle =
+    language === "ja"
+      ? "レシピでできることをもっと詳しく教えてください！"
+      : "Tell me more about what I can do with a recipe!";
+  const converterTitle =
+    language === "ja" ? "単位変換ぺージ" : "Converter Page";
+  const converterDetailsTitle =
+    language === "ja"
+      ? "単位変換ページでは何ができますか？"
+      : "What can I do on the converter page?";
+  const feedbackTitle =
+    language === "ja" ? "フィードバックページ" : "Feedback Page";
+  const feedbackDetailsTitle =
+    language === "ja"
+      ? "フィードバックページでは何ができますか？"
+      : "What can I do on the feedback page?";
+  const newsTitle = language === "ja" ? "ニュースページ" : "News Page";
+  const newsDetailsTitle =
+    language === "ja"
+      ? "ニュースページでは何ができますか？"
+      : "What can I do on the news page?";
+  const accountTitle = language === "ja" ? "アカウントページ" : "Account Page";
+  const checkAccountTitle =
+    language === "ja"
+      ? "どのように自分のアカウント情報を確認できますか？"
+      : "How can I check my account information?";
+  const changeAccountTitle =
+    language === "ja"
+      ? "どのように自分のアカウント情報を変更することができますか？"
+      : "How can I change my account information?";
+  const closeAccountTitle =
+    language === "ja"
+      ? "どうやって退会することができますか？"
+      : "How can I close my account?";
 
   function handleClickSearch() {
     setIsSearchVisible(!isSearchVisible);
@@ -418,7 +471,7 @@ export default function HowToUse() {
         style={{
           color: "#6e6c00ff",
           letterSpacing: "0.1vw",
-          fontSize: `calc(${fontSize} * 1.9)`,
+          fontSize: `calc(${fontSizeFinal} * 1.9)`,
           marginBottom: "4%",
         }}
       >
@@ -454,7 +507,7 @@ export default function HowToUse() {
               textAlign: "center",
               justifyContent: "center",
               backgroundColor: "#fffebbff",
-              fontSize,
+              fontSize: fontSizeFinal,
               color: "#b44200ff",
               boxShadow: "#00000046 2px 2px 7px",
               borderRadius: "6px",
@@ -482,7 +535,7 @@ export default function HowToUse() {
         >
           <input
             style={{
-              fontSize,
+              fontSize: fontSizeFinal,
               width:
                 mediaContext === "mobile"
                   ? "75%"
@@ -576,7 +629,7 @@ export default function HowToUse() {
             flexDirection: "column",
             alignItems: "center",
             width: "100%",
-            fontSize,
+            fontSize: fontSizeFinal,
           }}
           ref={indexRef}
         >
@@ -585,129 +638,93 @@ export default function HowToUse() {
             style={{ fontSize: fontHeaderSize }}
             onClick={handleClickMain}
           >
-            {language === "ja" ? "メインページ" : "Main Page"}
+            {mainTitle}
           </a>
           <a className={styles.a} onClick={handleClickMainSetRecipe}>
-            {language === "ja"
-              ? "どうすればレシピをセットできますか？"
-              : "How can I set a recipe?"}
+            {mainSetRecipeTitle}
           </a>
           <a className={styles.a} onClick={handleClickMainAdjust}>
-            {language === "ja"
-              ? "どのようにレシピ、タイマー、ノートのサイズを調整できますか？"
-              : "How can I adjust the recipe, timer, and notes sizes?"}
+            {mainResizeTitle}
           </a>
           <a className={styles.a} onClick={handleClickMainTimers}>
-            {language === "ja"
-              ? "どのようにタイマーを使用できますか？"
-              : "How can I use timers?"}
+            {mainTimersTitle}
           </a>
           <a className={styles.a} onClick={handleClickMainNotes}>
-            {language === "ja"
-              ? "どのようにノートを使用できますか？"
-              : "How do notes work?"}
+            {mainMemosTitle}
           </a>
           <a className={styles.a} onClick={handleClickMainDropdown}>
-            {language === "ja"
-              ? "どうすれば別のページに移動することができますか？"
-              : "How can I go to different pages?"}
+            {mainDropdownTitle}
           </a>
           <a className={styles.a} onClick={handleClickMainLogout}>
-            {language === "ja"
-              ? "どうやってログアウトできますか？"
-              : "How can I log out?"}
+            {mainLogoutTitle}
           </a>
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
             onClick={handleClickRecipes}
           >
-            {language === "ja"
-              ? "レシピまとめ、レシピ作成、レシピページ"
-              : "Recipes, Create Recipe, Recipe Page"}
+            {recipesTitle}
           </a>
           <a className={styles.a} onClick={handleClickCreateRecipe}>
-            {language === "ja"
-              ? "どのようにレシピを作ることができますか？"
-              : "How can I create a recipe?"}
+            {createRecipeTitle}
           </a>
           <a className={styles.a} onClick={handleClickEditRecipe}>
-            {language === "ja"
-              ? "どのようにレシピを編集することができますか？"
-              : "How can I edit a recipe?"}
+            {editRecipeTitle}
           </a>
           <a className={styles.a} onClick={handleClickDeleteRecipe}>
-            {language === "ja"
-              ? "どのようにレシピを削除することができますか？"
-              : "How can I delete a recipe?"}
+            {deleteRecipeTitle}
           </a>
           <a className={styles.a} onClick={handleClickShareRecipe}>
-            {language === "ja"
-              ? "どのようにレシピをシェアすることができますか？"
-              : "How can I share a recipe?"}
+            {shareRecipeTitle}
           </a>
           <a className={styles.a} onClick={handleClickMoreAboutRecipe}>
-            {language === "ja"
-              ? "レシピでできることをもっと詳しく教えてください！"
-              : "Tell me more about what I can do with a recipe!"}
+            {moreAboutRecipeTitle}
           </a>
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
             onClick={handleClickConverter}
           >
-            {language === "ja" ? "単位変換ぺージ" : "Converter Page"}
+            {converterTitle}
           </a>
           <a className={styles.a} onClick={handleClickConverterDetails}>
-            {language === "ja"
-              ? "単位変換ページでは何ができますか？"
-              : "What can I do on the converter page?"}
+            {converterDetailsTitle}
           </a>
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
             onClick={handleClickFeedback}
           >
-            {language === "ja" ? "フィードバックページ" : "Feedback Page"}
+            {feedbackTitle}
           </a>
           <a className={styles.a} onClick={handleClickFeedbackDetails}>
-            {language === "ja"
-              ? "フィードバックページでは何ができますか？"
-              : "What can I do on the feedback page?"}
+            {feedbackDetailsTitle}
           </a>
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
             onClick={handleClickNews}
           >
-            {language === "ja" ? "ニュースページ" : "News Page"}
+            {newsTitle}
           </a>
           <a className={styles.a} onClick={handleClickNewsDetails}>
-            {language === "ja"
-              ? "ニュースページでは何ができますか？"
-              : "What can I do on the news page?"}
+            {newsDetailsTitle}
           </a>
           <a
             className={clsx(styles.small_header, styles.a__small_header)}
             style={{ fontSize: fontHeaderSize }}
             onClick={handleClickAccount}
           >
-            {language === "ja" ? "アカウントページ" : "Account Page"}
+            {accountTitle}
           </a>
           <a className={styles.a} onClick={handleClickCheckAccount}>
-            {language === "ja"
-              ? "どのように自分のアカウント情報を確認できますか？"
-              : "How can I check my account information?"}
+            {checkAccountTitle}
           </a>
           <a className={styles.a} onClick={handleClickChangeAccount}>
-            {language === "ja"
-              ? "どのように自分のアカウント情報を変更することができますか？"
-              : "How can I change my account information?"}
+            {changeAccountTitle}
           </a>
           <a className={styles.a} onClick={handleClickCloseAccount}>
-            {language === "ja"
-              ? "どうやって退会することができますか？"
-              : "How can I close my account?"}
+            {closeAccountTitle}
           </a>
         </div>
       </div>
@@ -724,7 +741,7 @@ export default function HowToUse() {
           style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
           ref={mainRef}
         >
-          {language === "ja" ? "メインページ" : "Main Page"}
+          {mainTitle}
         </h3>
         <Image
           src="/how-to-use/main.webp"
@@ -739,9 +756,7 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どうすればレシピをセットできますか？"
-              : "How can I set a recipe?"}
+            {mainSetRecipeTitle}
           </p>
           <Image
             src="/how-to-use/main-search.webp"
@@ -759,10 +774,10 @@ export default function HowToUse() {
             width={imageSizeNormalWidth * 0.9}
             height={imageSizeNormalHeight * 1.1}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "左上にある三本線のボタンをクリックしてください。タイトルか材料でレシピを検索してください。途中までの記入でも検索できます。セットしたいレシピをクリックしてください。"
-              : "Click the top left three line button. Search your recipe by either the title or ingredient. An incomplete title or ingredient works too. Click the recipe you want to set."}
+              : "Click the three-line button in the top left. Search your recipes by title or ingredient—partial words work too. Then, click the recipe you want to select."}
           </p>
         </div>
         <div className={styles.container__answer} ref={mainAdjustRef}>
@@ -772,9 +787,7 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのようにレシピ、タイマー、ノートのサイズを調整できますか？"
-              : "How can I adjust the recipe, timer, and notes sizes?"}
+            {mainResizeTitle}
           </p>
           <Image
             src="/how-to-use/main-adjust.gif"
@@ -786,14 +799,11 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? `レシピ、タイマー・ノートの横幅、またはタイマーとノートの高さを調整するには、まずマウス・指を２つのエリアを隔てている間に置き、そのまま動かしたい方向にマウス・指を動かしてください。タブレットサイズ (${MIN_TABLET}px) 以上のデバイスからの利用でのみご利用いただける機能です。`
-              : `To change the recipe and timer/notes width, or the
-            timer and notes height, place your cursor onto where the two sections
-            are separated, and drag it to where you want to move it to.
-            You can use the feature only when you are using a device larger
-            than the tablet size(${MIN_TABLET}px).`}
+              : `To adjust the width of the recipe and timers/memos sections, or the height of the timers or memos section, place your cursor on the devider between the two sections and drag it to your desired position.
+            This feature is available only when using a device larger than tablet size(${MIN_TABLET}px).`}
           </p>
         </div>
         <div className={styles.container__answer} ref={mainTimersRef}>
@@ -803,9 +813,7 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのようにタイマーを使用できますか？"
-              : "How can I use timers?"}
+            {mainTimersTitle}
           </p>
           <Image
             src="/how-to-use/main-timers.webp"
@@ -815,11 +823,11 @@ export default function HowToUse() {
           ></Image>
           <p
             className={styles.p__answer}
-            style={{ fontSize, whiteSpace: "wrap" }}
+            style={{ fontSize: fontSizeFinal, whiteSpace: "wrap" }}
           >
             {language === "ja"
-              ? "数字を時間、分、秒と書いてある欄に入力し、開始ボタンを押してください。最大のセット可能な時間は23時間59分59秒です。タイマーが終了したら、アラーム音が鳴ります 🍳タイマーを一時停止する：一時停止ボタンを押してください 🍳一時停止したタイマーを開始する：開始ボタンを押してください 🍳タイマーのアラームを止める：停止ボタンを押してください 🍳タイマーをリセットする：リセットボタンを押してください 🍳タイマーの名前を変更する：タイマーの一番上にある欄の名前を変更してください 🍳タイマーを追加する：+追加ボタンを押してください。１０個まで追加できます。 🍳タイマーを消去する：右上のｘボタンを押してください"
-              : "Put numbers in the h (hours), min (minutes), and sec (seconds) input fields, and click the start button. Maximum allowed time is 23h59min59sec. When a timer finished, the alarm will go off. 🍳 To pause timer : Click the Pause button 🍳 To restart timer : Click the Start button 🍳 To stop timer alarm : Click the Stop button 🍳 To reset timer : Clic the reset button 🍳 To change timer title : Change name in the top input field 🍳 To add timer : Click the +Add button. You can add 10 timers at maximum. 🍳 To delete timer : Click the top right x button"}
+              ? "数字を時間、分、秒と書いてある欄に入力し、開始を押します。最大のセット可能な時間は23時間59分59秒です。タイマーが終了したら、アラーム音が鳴ります 🍳タイマーを一時停止する：一時停止を押す 🍳停止したタイマーを再開する：開始を押す 🍳タイマーのアラームを止める：停止を押す 🍳タイマーをリセットする：リセットを押す 🍳タイマーの名前を変更する：タイマーの一番上にある欄の名前を変更する 🍳タイマーを追加する：+追加ボタンを押す（１０個まで追加可能） 🍳タイマーを消去する：右上のｘボタンを押す"
+              : "Enter the numbers in the h (hours), min (minutes), and sec (seconds) fields, then click Start. The maximum allowed time is 23h 59m 59s. When a timer finishes, an alarm will sound. 🍳 To pause a timer : Click Pause 🍳 To restart a timer : Click Start 🍳 To stop the alarm : Click Stop 🍳 To reset a timer : Clic reset 🍳 To change  a timer's title : Edit the name in the top input field 🍳 To add a timer : Click +Add (up to 10 timers at total) 🍳 To delete a  timer : Click the x button in the top right"}
           </p>
         </div>
         <div className={styles.container__answer} ref={mainNotesRef}>
@@ -829,20 +837,18 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのようにノートを使用できますか？"
-              : "How do notes work?"}
+            {mainMemosTitle}
           </p>
           <Image
             src="/how-to-use/main-notes.webp"
-            alt={language === "ja" ? "ノート画像" : "Notes image"}
+            alt={language === "ja" ? "メモ画像" : "Memos image"}
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "ここにはなんでも好きなことを入力できます。ここに書かれた内容は、ページをリロードするか、他のページに移動をすると消えてしまいます。"
-              : "You can write anything you want here. What you write will disappear when you reload the page or go to a different page."}
+              ? "なんでも好きなことを入力できます。ここに書かれた内容は、ページをリロードするか、他のページに移動をすると消えてしまいます。"
+              : "You can write anything you want here. Your memos will disappear when you reload the page or navigate away."}
           </p>
         </div>
         <div className={styles.container__answer} ref={mainDropdownRef}>
@@ -852,9 +858,7 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どうすれば別のページに移動することができますか？"
-              : "How can I go to different pages?"}
+            {mainDropdownTitle}
           </p>
           <Image
             src="/how-to-use/main-dropdown.webp"
@@ -866,10 +870,10 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "右上にある三本線のボタンを押してください。行きたいページをクリックすればそのページに移動することができます。"
-              : "Click the top right three line button. You can go to the page you want to go by clicking the page."}
+              : "Click the three-line button in the top right. Then select the page you want to go to."}
           </p>
         </div>
         <div className={styles.container__answer} ref={mainLogoutRef}>
@@ -880,9 +884,7 @@ export default function HowToUse() {
             }}
             ref={mainLogoutRef}
           >
-            {language === "ja"
-              ? "どうやってログアウトできますか？"
-              : "How can I log out?"}
+            {mainLogoutTitle}
           </p>
           <Image
             src="/how-to-use/others-logout.webp"
@@ -890,10 +892,10 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.6}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "右上にある三本線のボタンを押してください。ログアウトと書かれているところを押し、メッセージの「はい」というボタンを押してログアウトできます。"
-              : `Click the top right three line button. You can log out by clicking the bottom Logout button and the "I'm sure" button in the message.`}
+              : `Click the three-line button in the top right. Then click the Logout button in the bottom and  "I'm sure" in the message.`}
           </p>
         </div>
         <h3
@@ -901,9 +903,7 @@ export default function HowToUse() {
           style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
           ref={recipesRef}
         >
-          {language === "ja"
-            ? "レシピまとめ、レシピ作成、レシピページ"
-            : "Recipes, Create Recipe, Recipe Page"}
+          {recipesTitle}
         </h3>
         <Image
           src="/how-to-use/recipes.webp"
@@ -913,7 +913,10 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <p className={styles.p__answer} style={{ fontSize, marginTop: "1%" }}>
+        <p
+          className={styles.p__answer}
+          style={{ fontSize: fontSizeFinal, marginTop: "1%" }}
+        >
           {language === "ja" ? "レシピまとめページ画像" : "Recipes page image"}
         </p>
         <Image
@@ -926,7 +929,10 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
-        <p className={styles.p__answer} style={{ fontSize, marginTop: "1%" }}>
+        <p
+          className={styles.p__answer}
+          style={{ fontSize: fontSizeFinal, marginTop: "1%" }}
+        >
           {language === "ja" ? "レシピページ画像" : "Recipe page image"}
         </p>
         <Image
@@ -935,7 +941,10 @@ export default function HowToUse() {
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight * 1.7}
         ></Image>
-        <p className={styles.p__answer} style={{ fontSize, marginTop: "1%" }}>
+        <p
+          className={styles.p__answer}
+          style={{ fontSize: fontSizeFinal, marginTop: "1%" }}
+        >
           {language === "ja"
             ? "レシピページ画像（編集）"
             : "Recipe page (edit) image"}
@@ -947,14 +956,12 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのようにレシピを作ることができますか？"
-              : "How can I create a recipe?"}
+            {createRecipeTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "レシピまとめページの右上にある新規作成ボタンを押します。レシピ作成ページに移動するので、フォームを入力してアップロードボタンを押してください。"
-              : "Click the top right create button on the recipes page. You can go to the create recipe page. Fill the form and click the upload button."}
+              : "Click the create button in the top right of the Recipes page to go to the recipe creation screen. Fill out the form and click Upload"}
           </p>
           <Image
             src="/how-to-use/recipe-create1.webp"
@@ -980,14 +987,12 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのようにレシピを編集することができますか？"
-              : "How can I edit a recipe?"}
+            {editRecipeTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "レシピまとめページで、編集したいレシピをクリックしてください。レシピページに移動します。"
-              : "Click the recipe you want to edit on the recipes page. You can go to the recipe page."}
+              : "Click the recipe you want to edit on the Recipes page to open its Recipe page."}
           </p>
           <Image
             src="/how-to-use/recipe-no-edit.webp"
@@ -999,10 +1004,10 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "右上にある編集と書いてあるボタンを押してください。"
-              : "Click the top right Edit button to edit the recipe."}
+              : "Click Edit in the top right."}
           </p>
           <Image
             src="/how-to-use/recipe-edit.webp"
@@ -1012,10 +1017,10 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.7}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "フォームにある内容を変更して、アップロードボタンを押してください。"
-              : "Change the form content and click the upload button."}
+              : "Edit the form content, then click Upload."}
           </p>
         </div>
         <div className={styles.container__answer} ref={deleteRecipeRef}>
@@ -1025,14 +1030,12 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのようにレシピを削除することができますか？"
-              : "How can I delete a recipe?"}
+            {deleteRecipeTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "レシピまとめページのレシピを選択と書いてあるボタンを押します。"
-              : "Click the select recipe button on the recipes page."}
+              : "Click the Select Recipe button on the Recipes page."}
           </p>
           <Image
             src="/how-to-use/recipes-select.webp"
@@ -1040,10 +1043,10 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "削除したいレシピの横にあるチェックボックスをチェックしてください。ページをまたいでの選択はできません。ゴミ箱のボタンを押しレシピを削除してください。削除をせずにレシピ選択をやめたい場合は、選択をやめるボタンを押してください。"
-              : "Click the checkboxes next to the recipes you want to delete. You can not select recipes on multiple pages. Click the trash can button to delete them. When you want to quit selecting recipes without deleting them, click the stop selecting button."}
+              : "Click the checkboxes next to the recipes you want to delete.(You cannot select recipes across multiple pages.) Then click the trash can icon to delete them. If you want to stop selecting recipes without deleting them, click the Stop Selecting button."}
           </p>
         </div>
         <div className={styles.container__answer} ref={shareRecipeRef}>
@@ -1053,14 +1056,12 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのようにレシピをシェアすることができますか？"
-              : "How can I share a recipe?"}
+            {shareRecipeTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "レシピまとめページでシェアしたいレシピをクリックします。レシピページに移動します。リンクをコピーしてシェアしてください。"
-              : "Click the recipe you want to share on the recipes page and go to the recipe page. Copy the link and share it with anyone."}
+              : "Click the recipe you want to share on the Recipes page to open its Recipe page. Then copy the link and share it with anyone."}
           </p>
         </div>
         <div className={styles.container__answer} ref={moreAboutRecipeRef}>
@@ -1070,39 +1071,37 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "レシピでできることをもっと詳しく教えてください！"
-              : "Tell me more about what I can do with a recipe!"}
+            {moreAboutRecipeTitle}
           </p>
           <Image
             src="/how-to-use/brief-explanation.webp"
             alt={
               language === "ja"
-                ? "レシピ量、地域、温度単位の変更画像"
-                : "Change servings, region, and temperature units image"
+                ? "レシピ分量、単位システム、温度単位の変更画像"
+                : "Change servings, unit systems, and temperature units image"
             }
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.6}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "レシピの量、地域、温度の単位を変換できます。単位を変更すると、変換された材料の量や単位、温度が自動的に表示されます。"
-              : "You can change servings, regions, and temperature units used in a recipe. When you change them, converted ingredient amounts, units, and temperatures will be automatically displayed."}
+              ? "レシピの分量を変更したり、どの単位システムを使用したいかを選んだり、温度の単位を変換することができます。このサイトが瞬時に計算をして、変換された材料や温度を画面に表示します。"
+              : "You can adjust the number of servings, choose your preferred unit system, and switch temperature units. This website will instantly calculate and display the converted ingredient amounts and temperatures."}
           </p>
           <Image
             src="/how-to-use/recipe-ing.webp"
             alt={
               language === "ja"
                 ? "レシピ材料チェックリスト画像"
-                : "Recipe ingredients checkbox  image"
+                : "Recipe ingredients checkbox image"
             }
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 0.9}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "どの材料を追加したのか忘れないように、各材料にチェックを入れていくことができます。"
-              : "You can check each ingredient, so you won't forget which one you've already added."}
+              : "You can check off each ingredient so you won't forget which ones you've already added."}
           </p>
         </div>
         <h3
@@ -1110,7 +1109,7 @@ export default function HowToUse() {
           style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
           ref={converterRef}
         >
-          {language === "ja" ? "単位変換ページ" : "Converter Page"}
+          {converterTitle}
         </h3>
         <Image
           src="/how-to-use/converter.webp"
@@ -1127,14 +1126,12 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "単位変換ページでは何ができますか？"
-              : "What can I do on the converter page?"}
+            {converterDetailsTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "グラムやオンス等の材料の単位、温度の単位（℉、 ℃）、センチやインチ等の長さの単位を変換できます。"
-              : "You can convert ingredient units (e.g. grams, oz), temperature units (℉, ℃), and length units (e.g. cm, inches)!"}
+              : "You can convert ingredient units (e.g., grams, oz), temperature units (℉/℃), and length units (e.g., cm, inches)."}
           </p>
           <Image
             src="/how-to-use/converter-ing.webp"
@@ -1162,7 +1159,7 @@ export default function HowToUse() {
           style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
           ref={feedbackRef}
         >
-          {language === "ja" ? "フィードバックページ" : "Feedback Page"}
+          {feedbackTitle}
         </h3>
         <Image
           src="/how-to-use/feedback.webp"
@@ -1181,11 +1178,10 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "フィードバックページでは何ができますか？"
-              : "What can I do on the feedback page?"}
+            {feedbackDetailsTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          {/* from here! */}
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "このウェブサイトに対するご意見・ご感想を送ることができます。このサイトについてどう思うのか、またバグを見つけた場合にフィードバックを送っていただけると非常に助かります！"
               : "You can send a feedback about the website! I appreciete if you give me any thoughts about the site or tell me about bugs you encounter!"}
@@ -1196,7 +1192,7 @@ export default function HowToUse() {
           style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
           ref={newsRef}
         >
-          {language === "ja" ? "ニュースページ" : "News Page"}
+          {newsTitle}
         </h3>
         <Image
           src="/how-to-use/news.webp"
@@ -1211,11 +1207,9 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "ニュースページでは何ができますか？"
-              : "What can I do on the news page?"}
+            {newsDetailsTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "このウェブサイトのニュースをチェックすることができます。新しい機能や、バグの情報などを掲載していきます。"
               : "You can check news about the website, such as new features or bugs information."}
@@ -1226,7 +1220,7 @@ export default function HowToUse() {
           style={{ fontSize: `calc(${fontHeaderSize} * 1.1)` }}
           ref={accountRef}
         >
-          {language === "ja" ? "アカウントページ" : "Account Page"}
+          {accountTitle}
         </h3>
         <Image
           src="/how-to-use/account.webp"
@@ -1243,11 +1237,9 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのように自分のアカウント情報を確認できますか？"
-              : "How can I check my account information?"}
+            {checkAccountTitle}
           </p>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "アカウント情報はアカウントページから確認できます。セキュリティー上の問題から、パスワードの確認はできません。"
               : "You can check your account information on the account page. You can't check your password for a security reason."}
@@ -1260,9 +1252,7 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どのように自分のアカウント情報を変更することができますか？"
-              : "How can I change my account information?"}
+            {changeAccountTitle}
           </p>
           <Image
             src="/how-to-use/account-email.webp"
@@ -1274,7 +1264,7 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.1}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "アカウントページで、メールアドレス欄に新しいメールアドレスを入力し、更新ボタンを押してください。"
               : "Put new email in the input field and click the Submit button on the account page."}
@@ -1287,7 +1277,7 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.1}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "アカウントページで、現在のパスワードと新しいパスワードをそれぞれの欄に入力し、変更ボタンを押してください。"
               : "Put your current password and new password in the input fields, and click the Change button on the account page."}
@@ -1300,9 +1290,7 @@ export default function HowToUse() {
               fontSize: fontHeaderSize,
             }}
           >
-            {language === "ja"
-              ? "どうやって退会することができますか？"
-              : "How can I close my account?"}
+            {closeAccountTitle}
           </p>
           <Image
             src="/how-to-use/account-close.webp"
@@ -1310,7 +1298,7 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.1}
           ></Image>
-          <p className={styles.p__answer} style={{ fontSize }}>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "アカウントページで一番下の退会ボタンを押し、注意書きの下にある「はい」と書いてあるボタンを押して退会できます。"
               : "Close your account by clicking the Close and I'm sure button below the disclaimer on the account page."}

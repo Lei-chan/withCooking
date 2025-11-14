@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }
@@ -336,7 +336,7 @@ export async function PUT(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }
@@ -411,7 +411,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }
@@ -489,7 +489,7 @@ export async function DELETE(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }

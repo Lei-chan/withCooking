@@ -3,7 +3,7 @@
 import { useEffect, useState, useContext } from "react";
 import clsx from "clsx";
 //next.js
-import { redirect, RedirectType } from "next/navigation";
+import { useRouter } from "next/navigation";
 //css
 import styles from "./page.module.css";
 //type
@@ -11,12 +11,20 @@ import { TYPE_LANGUAGE, TYPE_USER_CONTEXT } from "@/app/lib/config/type";
 //settings
 import { PASSWORD_MIN_LENGTH, PASSWORD_MIN_EACH } from "../lib/config/settings";
 //general methods
-import { getData, getFontSizeForLanguage, wait } from "@/app/lib/helpers/other";
+import {
+  authErrorRedirect,
+  generateErrorMessage,
+  getData,
+  getFontSizeForLanguage,
+  wait,
+} from "@/app/lib/helpers/other";
 //context
 import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 import { OverlayMessage } from "../lib/components/components";
 
 export default function Account() {
+  const router = useRouter();
+
   //language
   const languageContext = useContext(LanguageContext);
 
@@ -93,12 +101,22 @@ export default function Account() {
       //set newAccessToken for context when it's refreshed
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
-      console.error("Error while getting user information", err.message);
-      setError(
-        language === "ja"
-          ? "サーバーエラーが発生しました🙇‍♂️リロードして再びお試しください"
-          : "Server error 🙇‍♂️ Please reload this page and try again"
+      console.error(
+        "Error while getting user information",
+        err.message,
+        err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "user");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "サーバーエラーが発生しました🙇‍♂️リロードして再びお試しください"
+            : "Server error 🙇‍♂️ Please reload this page and try again")
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 
@@ -181,6 +199,7 @@ export default function Account() {
           }}
         >
           <Email
+            router={router}
             language={language}
             userContext={userContext}
             fontSize={fontSize}
@@ -191,6 +210,7 @@ export default function Account() {
             displayMessage={displayMessage}
           />
           <Password
+            router={router}
             language={language}
             userContext={userContext}
             fontSize={fontSize}
@@ -206,6 +226,7 @@ export default function Account() {
             since={user.createdAt}
           />
           <CloseAccount
+            router={router}
             language={language}
             userContext={userContext}
             fontSize={fontSize}
@@ -229,6 +250,7 @@ export default function Account() {
 }
 
 function Email({
+  router,
   language,
   userContext,
   fontSize,
@@ -238,6 +260,7 @@ function Email({
   email,
   displayMessage,
 }: {
+  router: any;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
@@ -279,12 +302,22 @@ function Email({
           : "Email updated successfully!"
       );
     } catch (err: any) {
-      setError(`※${err.message}`);
       console.error(
         "Error while updating email",
         err.message,
         err.statusCode || ""
       );
+
+      const errorMessage = generateErrorMessage(language, err, "user");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "メールアドレス更新中にエラーが発生しました🙇‍♂️もう一度お試し下さい"
+            : "Server error while updating email 🙇‍♂️ Please try again")
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     } finally {
       setIsPending(false);
     }
@@ -301,7 +334,6 @@ function Email({
         body: JSON.stringify(emailInfo),
       });
 
-      console.log(data);
       setValue(data.data.email);
 
       //set newAccessToken for context when it's refreshed
@@ -370,6 +402,7 @@ function Email({
 }
 
 function Password({
+  router,
   language,
   userContext,
   fontSize,
@@ -378,6 +411,7 @@ function Password({
   btnSize,
   displayMessage,
 }: {
+  router: any;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
@@ -440,13 +474,28 @@ function Password({
           : "Password updated successfully!"
       );
     } catch (err: any) {
-      setError(`※${err.message}`);
-      setErrorField(err.statusCode === 401 ? "current" : "new");
       console.error(
         "Error while updating password",
         err.message,
         err.statusCode || ""
       );
+
+      const errorMessage = generateErrorMessage(language, err, "user");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "パスワードの更新中にエラーが発生しました🙇‍♂️もう一度お試し下さい"
+            : "Server error while updating password 🙇‍♂️ Please try again")
+      );
+
+      setErrorField(
+        err.statusCode === 401 && err.name === "ValidationError"
+          ? "current"
+          : "new"
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     } finally {
       setIsPending(false);
     }
@@ -627,6 +676,7 @@ function Since({
 }
 
 function CloseAccount({
+  router,
   language,
   userContext,
   fontSize,
@@ -635,6 +685,7 @@ function CloseAccount({
   recipes,
   toggleMessageVisible,
 }: {
+  router: any;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
@@ -659,22 +710,31 @@ function CloseAccount({
       toggleMessageVisible();
       await wait();
       toggleMessageVisible();
+
+      //go to home page
+      router.push("/");
     } catch (err: any) {
-      setError(
-        language === "ja"
-          ? "アカウントの閉設中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
-          : "Server error while closing account 🙇‍♂️ Please try again this later"
-      );
-      return console.error(
+      console.error(
         "Error while closing account",
         err.message,
-        err.statusCode || ""
+        err.statusCode || 500
+      );
+
+      const errorMessage = generateErrorMessage(
+        language,
+        err.statusCode,
+        "user"
+      );
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "アカウントの閉設中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+            : "Server error while closing account 🙇‍♂️ Please try again this later")
       );
     } finally {
       setIsPending(false);
     }
-
-    redirect("/", RedirectType.replace);
   }
 
   async function closeAccount() {

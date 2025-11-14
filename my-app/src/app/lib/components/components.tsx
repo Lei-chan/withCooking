@@ -48,7 +48,13 @@ import {
 //method for convertion
 import { convertIngUnits } from "../helpers/converter";
 //general methods
-import { getFontSizeForLanguage, getSize, wait } from "../helpers/other";
+import {
+  authErrorRedirect,
+  generateErrorMessage,
+  getFontSizeForLanguage,
+  getSize,
+  wait,
+} from "../helpers/other";
 //context
 import { LanguageContext, UserContext } from "../providers";
 //libraries
@@ -701,24 +707,22 @@ export function RecipeEdit({
         router.push(`/recipes/${recipeData._id}`);
     } catch (err: any) {
       setIsPending(false);
-      setCurError(
-        language === "ja"
-          ? `レシピ作成中にサーバーエラーが発生しました🙇‍♂️ ${
-              err.statusCode === 400
-                ? err.message
-                : "後ほどもう一度試してください"
-            }`
-          : `Server error while creating recipe 🙇‍♂️ ${
-              err.statusCode === 400
-                ? err.message
-                : "Please try again this later"
-            }`
-      );
-      return console.error(
+      console.error(
         "Error while creating recipe",
         err.message,
         err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "recipe");
+
+      setCurError(
+        errorMessage ||
+          (language === "ja"
+            ? "レシピ作成中にサーバーエラーが発生しました🙇‍♂️ もう一度お試しください"
+            : "Server error while creating recipe 🙇‍♂️ Please try again")
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 
@@ -1010,7 +1014,11 @@ function ImageTitleEdit({
 
       onChangeImage(mainImageFile, mainImagePreviewFile);
     } catch (err: any) {
-      console.error("Error while resizing main image", err.message);
+      console.error(
+        "Error while resizing main image",
+        err.message,
+        err.statusCode || 500
+      );
       displayError(
         language === "ja"
           ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
@@ -2272,7 +2280,11 @@ function InstructionEdit({
         "base64"
       );
     } catch (err: any) {
-      console.error("Error while resizing instruction image", err.message);
+      console.error(
+        "Error while resizing instruction image",
+        err.message,
+        err.statusCode || 500
+      );
       displayError(
         language === "ja"
           ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
@@ -2543,11 +2555,15 @@ function MemoriesEdit({
 
       onChangeImages(imageFiles);
     } catch (err: any) {
-      console.error("Error while resizing memory images", err.message);
+      console.error(
+        "Error while resizing memory images",
+        err.message,
+        err.statusCode || 500
+      );
       displayError(
         language === "ja"
           ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
-          : "Server error while uploading images 🙇‍♂️ Please try again!"
+          : "Server error while uploading images 🙇‍♂️ Please try again"
       );
     }
   }
@@ -2834,6 +2850,8 @@ export function RecipeNoEdit({
   mainOrRecipe: "main" | "recipe";
   userRecipe: TYPE_RECIPE | null;
 }) {
+  const router = useRouter();
+
   ///design
   const [fontSize, setFontSize] = useState("1.3vw");
   const [headerSize, setHeaderSize] = useState("1.3vw");
@@ -2934,18 +2952,22 @@ export function RecipeNoEdit({
       setSuccessMessage("");
     } catch (err: any) {
       setSuccessMessage("");
-      setCurError(
-        `${
-          language === "ja"
-            ? "レシピの更新中にエラーが発生しました🙇‍♂️もう一度試してください"
-            : "Server error while updating recipe 🙇‍♂️"
-        } ${err.message}`
-      );
       console.error(
         "Error while updating recipe",
         err.message,
         err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "recipe");
+
+      setCurError(
+        errorMessage ||
+          (language === "ja"
+            ? "お気に入り情報の更新中にエラーが発生しました🙇‍♂️もう一度お試しください"
+            : "Server error while updating favorite status 🙇‍♂️ Please try again")
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 
@@ -4399,7 +4421,6 @@ export function RecipeLinkEdit({
 }) {
   const router = useRouter();
 
-  console.log(mediaContext);
   //design
   const [fontSize, setFontSize] = useState("1.5vw");
   const [smallHeaderSize, setSmallHeaderSize] = useState(
@@ -4505,18 +4526,28 @@ export function RecipeLinkEdit({
       createOrEdit === "create" && router.push(`/recipes/${recipeData._id}`);
     } catch (err: any) {
       setIsPending(false);
+      console.error(
+        `Error while ${
+          createOrEdit === "create" ? "creating" : "updating"
+        } recipe`,
+        err.message,
+        err.statusCode || 500
+      );
+
+      const errorMessage = generateErrorMessage(language, err, "recipe");
+
       setError(
-        `${
-          language === "ja"
+        errorMessage ||
+          (language === "ja"
             ? `レシピの${
                 createOrEdit === "create" ? "作成" : "更新"
-              }中にサーバーエラーが発生しました🙇‍♂️`
+              }中にサーバーエラーが発生しました🙇‍♂️もう一度お試し下さい`
             : `Server error while ${
                 createOrEdit === "create" ? "creating" : "updating"
-              } recipe 🙇‍♂️`
-        } ${err.message}`
+              } recipe 🙇‍♂️ Please try again`)
       );
-      console.error(err.message, err.statusCode || 500);
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 
@@ -4691,8 +4722,6 @@ export function RecipeLinkNoEdit({
   mainOrRecipe: "main" | "recipe";
 }) {
   //design
-  // const mediaContext = useContext(MediaContext);
-
   const [fontSize, setFontSize] = useState("1.7vw");
 
   useEffect(() => {

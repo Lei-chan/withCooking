@@ -1,7 +1,10 @@
 "use client";
 //react
-import React, { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import clsx from "clsx";
+//next.js
+import Link from "next/link";
+import { useParams } from "next/navigation";
 //css
 import styles from "./page.module.css";
 //type
@@ -10,8 +13,6 @@ import {
   TYPE_RECIPE,
   TYPE_RECIPE_LINK,
 } from "@/app/lib/config/type";
-//general methods
-import { getData, getSize } from "@/app/lib/helpers/other";
 //context
 import {
   LanguageContext,
@@ -20,16 +21,18 @@ import {
 } from "@/app/lib/providers";
 //components
 import {
-  Loading,
   LoadingRecipe,
   RecipeEdit,
   RecipeLinkEdit,
   RecipeLinkNoEdit,
   RecipeNoEdit,
 } from "@/app/lib/components/components";
-import { notFound } from "next/navigation";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+//general methods
+import {
+  generateErrorMessage,
+  getData,
+  getSize,
+} from "@/app/lib/helpers/other";
 
 export default function Recipe() {
   const params = useParams<{ id: string }>();
@@ -92,7 +95,6 @@ export default function Recipe() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // const id = window.location.hash.slice(1);
     (async () => await getRecipe(params.id))();
   }, [edit]);
 
@@ -102,19 +104,19 @@ export default function Recipe() {
 
       setRecipe(data.data);
     } catch (err: any) {
-      err.statusCode === 404
-        ? setError(
-            language === "ja" ? "レシピが見つかりません！" : "Recipe not found!"
-          )
-        : setError(
-            language === "ja"
-              ? "レシピのロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
-              : "Server error while loading recipe 🙇‍♂️ Please try again"
-          );
       console.error(
         "Error while loading recipe",
         err.message,
         err.statusCode || 500
+      );
+
+      const errorMessage = generateErrorMessage(language, err, "recipe");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "レシピのロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+            : "Server error while loading recipe 🙇‍♂️ Please try again")
       );
     }
   }

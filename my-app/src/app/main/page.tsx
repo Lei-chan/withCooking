@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState, useContext, useMemo } from "react";
 import Image from "next/image";
 import styles from "./page.module.css";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 //type
 import {
   TYPE_USER_CONTEXT,
@@ -14,7 +15,13 @@ import {
   TYPE_RECIPE_LINK,
 } from "../lib/config/type";
 //general methods
-import { getData, getSize } from "@/app/lib/helpers/other";
+import {
+  authErrorRedirect,
+  generateErrorMessage,
+  getData,
+  getSize,
+  wait,
+} from "@/app/lib/helpers/other";
 //methods for recipes
 import {
   createMessage,
@@ -297,6 +304,7 @@ function Recipe({
   userContext: TYPE_USER_CONTEXT;
   recipeWidth: string;
 }) {
+  const router = useRouter();
   //design
   const [recipeHeight, setRecipeHeight] = useState(400);
 
@@ -345,20 +353,22 @@ function Recipe({
       setIsLoading(false);
     } catch (err: any) {
       setIsLoading(false);
-      err.statusCode === 404
-        ? setError(
-            language === "ja" ? "レシピが見つかりません！" : "Recipe not fount!"
-          )
-        : setError(
-            language === "ja"
-              ? "レシピのロード中にエラーが発生しました🙇‍♂️もう一度試してください"
-              : "Server error while loading recipe 🙇‍♂️ Please try again"
-          );
       console.error(
         "Error while loading recipe",
         err.message,
         err.statusCode || 500
       );
+
+      const errorMessage = generateErrorMessage(language, err, "recipe");
+
+      setError(
+        errorMessage ||
+          (language === "ja"
+            ? "レシピのロード中にエラーが発生しました🙇‍♂️もう一度お試しください"
+            : "Server error while loading recipe 🙇‍♂️ Please try again")
+      );
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 
@@ -420,9 +430,10 @@ function Search({
   searchRef: any;
   onClickSearch: () => void;
 }) {
-  const RECIPES_PER_PAGE = 6;
+  const router = useRouter();
 
   //design
+  const RECIPES_PER_PAGE = 6;
   const [searchMenuSize, setSearchMenuSize] = useState(
     innerWidth * 0.28 + "px"
   );
@@ -519,11 +530,17 @@ function Search({
       data.newAccessToken && userContext?.login(data.newAccessToken);
     } catch (err: any) {
       console.error("Error while getting recipes", err.message);
+
+      const errorMessage = generateErrorMessage(language, err, "recipe");
+
       setError(
-        language === "ja"
-          ? "レシピ取得中にサーバーエラーが発生しました🙇‍♂️もう一度試してください"
-          : "Server error while getting recipes 🙇‍♂️ Please retry again!"
+        errorMessage ||
+          (language === "ja"
+            ? "レシピ取得中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
+            : "Server error while getting recipes 🙇‍♂️ Please retry again")
       );
+
+      await authErrorRedirect(router, err.statusCode);
     }
   }
 

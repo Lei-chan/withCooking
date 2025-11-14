@@ -72,15 +72,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   //language
-  const updateLanguage = useCallback(
-    (nav: string) => {
-      nav.slice(0, 2) === "ja" ? setLanguage("ja") : setLanguage("en");
-    },
-    [language]
-  );
+  const updateLanguage = useCallback((nav: string) => {
+    nav.slice(0, 2) === "ja" ? setLanguage("ja") : setLanguage("en");
 
+    localStorage.setItem("language", nav);
+  }, []);
+
+  //set language data in localStorage when user reloads page
   useEffect(() => {
-    updateLanguage(navigator.language);
+    const languageInStorage = localStorage.getItem("language");
+
+    updateLanguage(languageInStorage || navigator.language);
   }, []);
 
   const languageContextValue = useMemo(
@@ -101,7 +103,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     []
   );
 
-  // //set numberOfRecipes stored in localStorage to state when user reloads page
+  //set numberOfRecipes stored in localStorage to state when user reloads page
   useEffect(() => {
     const storedNumberOfRecipes = localStorage.getItem("numberOfRecipes");
 
@@ -119,6 +121,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    localStorage.removeItem("language");
     localStorage.removeItem("numberOfRecipes");
     setNumberOfRecipes(0);
     setAccessToken("");

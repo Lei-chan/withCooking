@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 //schema
 import User from "@/app/lib/modelSchemas/User";
 //database
-import connectDB, { getGridFSBucket } from "@/app/lib/mongoDB";
+import connectDB from "@/app/lib/mongoDB";
 //zod validation
 import {
   passwordUpdateSchema,
@@ -19,7 +19,6 @@ import {
   refreshAccessToken,
   hashPassword,
 } from "@/app/lib/auth";
-import { GridFSBucket } from "mongodb";
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,6 +37,7 @@ export async function POST(req: NextRequest) {
       if (existingUser) {
         const err: any = new Error("This email already exists");
         err.statusCode = 400;
+        err.name = "EmailDuplicationError";
         throw err;
       }
 
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
       if (!isValidPassword) {
         const err: any = new Error("Invalid password is provided");
         err.statusCode = 401;
+        err.name = "ValidationError";
         throw err;
       }
     }
@@ -94,7 +95,6 @@ export async function POST(req: NextRequest) {
 
     const recipeObj = user.toObject().recipes;
 
-    console.log(recipeObj);
     return NextResponse.json(
       {
         success: true,
@@ -104,10 +104,6 @@ export async function POST(req: NextRequest) {
         data: {
           _id: user._id,
           numberOfRecipes: recipeObj?.length || 0,
-          //for now to debug
-          recipes: recipeObj,
-          // email: user.email,
-          // createdAt: user.createdAt,
         },
         accessToken,
       },
@@ -115,7 +111,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }
@@ -165,7 +161,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }
@@ -214,6 +210,7 @@ export async function PATCH(req: NextRequest) {
       if (!isValidPassword) {
         const err: any = new Error("Invalid password is provided");
         err.statusCode = 401;
+        err.name = "ValidationError";
         throw err;
       }
 
@@ -235,6 +232,7 @@ export async function PATCH(req: NextRequest) {
       if (existingUser) {
         const err: any = new Error("This email already exists");
         err.statusCode = 400;
+        err.name = "EmailDuplicationError";
         throw err;
       }
 
@@ -267,7 +265,7 @@ export async function PATCH(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }
@@ -302,7 +300,7 @@ export async function DELETE(req: NextRequest) {
     );
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err.message },
+      { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
     );
   }
