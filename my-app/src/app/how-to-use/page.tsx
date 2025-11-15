@@ -105,8 +105,8 @@ export default function HowToUse() {
       : "How can I set a recipe?";
   const mainResizeTitle =
     language === "ja"
-      ? "どのようにレシピ、タイマー、ノートのサイズを調整できますか？"
-      : "How can I adjust the recipe, timer, and notes sizes?";
+      ? "どのようにレシピ、タイマー、メモのサイズを調整できますか？"
+      : "How can I resize the recipe, timer, and memos?";
   const mainTimersTitle =
     language === "ja"
       ? "どのようにタイマーを使用できますか？"
@@ -139,7 +139,6 @@ export default function HowToUse() {
     language === "ja"
       ? "どのようにレシピを削除することができますか？"
       : "How can I delete a recipe?";
-
   const shareRecipeTitle =
     language === "ja"
       ? "どのようにレシピをシェアすることができますか？"
@@ -147,24 +146,24 @@ export default function HowToUse() {
   const moreAboutRecipeTitle =
     language === "ja"
       ? "レシピでできることをもっと詳しく教えてください！"
-      : "Tell me more about what I can do with a recipe!";
+      : "Tell me more about what I can do with recipes!";
   const converterTitle =
     language === "ja" ? "単位変換ぺージ" : "Converter Page";
   const converterDetailsTitle =
     language === "ja"
       ? "単位変換ページでは何ができますか？"
-      : "What can I do on the converter page?";
+      : "What can I do on the Converter page?";
   const feedbackTitle =
     language === "ja" ? "フィードバックページ" : "Feedback Page";
   const feedbackDetailsTitle =
     language === "ja"
       ? "フィードバックページでは何ができますか？"
-      : "What can I do on the feedback page?";
+      : "What can I do on the Feedback page?";
   const newsTitle = language === "ja" ? "ニュースページ" : "News Page";
   const newsDetailsTitle =
     language === "ja"
       ? "ニュースページでは何ができますか？"
-      : "What can I do on the news page?";
+      : "What can I do on the News page?";
   const accountTitle = language === "ja" ? "アカウントページ" : "Account Page";
   const checkAccountTitle =
     language === "ja"
@@ -195,6 +194,7 @@ export default function HowToUse() {
     target.querySelector("input")?.blur();
   }
 
+  //callback functions for scrollIntoView
   function handleClickUpArrow() {
     if (screenTopRef?.current)
       screenTopRef.current.scrollIntoView({
@@ -203,7 +203,6 @@ export default function HowToUse() {
       });
   }
 
-  //callback functions for scrollIntoView
   function handleClickMain() {
     if (mainRef?.current)
       mainRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -475,7 +474,7 @@ export default function HowToUse() {
           marginBottom: "4%",
         }}
       >
-        {language === "ja" ? "使い方" : "How to use"}
+        {language === "ja" ? "使い方" : "How To Use"}
       </h1>
       <div
         style={{
@@ -895,7 +894,7 @@ export default function HowToUse() {
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "右上にある三本線のボタンを押してください。ログアウトと書かれているところを押し、メッセージの「はい」というボタンを押してログアウトできます。"
-              : `Click the three-line button in the top right. Then click the Logout button in the bottom and  "I'm sure" in the message.`}
+              : `Click the three-line button in the top right. Then click the Logout button in the bottom and  "I'm Sure" in the message.`}
           </p>
         </div>
         <h3
@@ -960,8 +959,8 @@ export default function HowToUse() {
           </p>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "レシピまとめページの右上にある新規作成ボタンを押します。レシピ作成ページに移動するので、フォームを入力してアップロードボタンを押してください。"
-              : "Click the create button in the top right of the Recipes page to go to the recipe creation screen. Fill out the form and click Upload"}
+              ? "レシピまとめページの右上にある新規作成ボタンを押し、レシピ作成ページに移動します。はじめからというボタンと外部のリンクからというボタンができます。一からオリジナルのレシピを作りたいという場合は「はじめから」、別のサイトからお気に入りのレシピを登録したいという場合は「外部のリンクから」を選択します。その後、フォームを入力しアップロードを押してください。"
+              : `Click the create button in the top right of the Recipes page to go to the recipe creation screen. Two buttons will appear: From Scratch and From an External Link. Select From Scratch when you want to create your own original recipe, and select From an External Link when you want to register your favorite recipe from another website. Then fill out the form and click Upload.`}
           </p>
           <Image
             src="/how-to-use/recipe-create1.webp"
@@ -1045,7 +1044,7 @@ export default function HowToUse() {
           ></Image>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "削除したいレシピの横にあるチェックボックスをチェックしてください。ページをまたいでの選択はできません。ゴミ箱のボタンを押しレシピを削除してください。削除をせずにレシピ選択をやめたい場合は、選択をやめるボタンを押してください。"
+              ? "削除したいレシピの横にあるチェックボックスをチェックしてください。ページをまたいでの選択はできません。ゴミ箱のボタンを押しレシピを削除してください。削除をせずにレシピ選択をやめたい場合は、選択を終了ボタンを押してください。"
               : "Click the checkboxes next to the recipes you want to delete.(You cannot select recipes across multiple pages.) Then click the trash can icon to delete them. If you want to stop selecting recipes without deleting them, click the Stop Selecting button."}
           </p>
         </div>
@@ -1183,8 +1182,8 @@ export default function HowToUse() {
           {/* from here! */}
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "このウェブサイトに対するご意見・ご感想を送ることができます。このサイトについてどう思うのか、またバグを見つけた場合にフィードバックを送っていただけると非常に助かります！"
-              : "You can send a feedback about the website! I appreciete if you give me any thoughts about the site or tell me about bugs you encounter!"}
+              ? "このウェブサイトに対するご意見・ご感想を送ることができます。このサイトについてどう思うのか、またバグを見つけた際にフィードバックを送っていただけると非常に助かります！"
+              : "You can send feedback about the website! I'd appreciete any thoughts you have or any bugs you encounter!"}
           </p>
         </div>
         <h3
@@ -1211,8 +1210,8 @@ export default function HowToUse() {
           </p>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "このウェブサイトのニュースをチェックすることができます。新しい機能や、バグの情報などを掲載していきます。"
-              : "You can check news about the website, such as new features or bugs information."}
+              ? "このウェブサイトの新しい情報をチェックすることができます。新機能の紹介や、バグの情報などを掲載していきます。"
+              : "You can check updates about the website, such as new features or bug information."}
           </p>
         </div>
         <h3
@@ -1242,7 +1241,7 @@ export default function HowToUse() {
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "アカウント情報はアカウントページから確認できます。セキュリティー上の問題から、パスワードの確認はできません。"
-              : "You can check your account information on the account page. You can't check your password for a security reason."}
+              : "You can view your account information on the Account page. For security reasons, your password cannot be displayed."}
           </p>
         </div>
         <div className={styles.container__answer} ref={changeAccountRef}>
@@ -1266,8 +1265,8 @@ export default function HowToUse() {
           ></Image>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "アカウントページで、メールアドレス欄に新しいメールアドレスを入力し、更新ボタンを押してください。"
-              : "Put new email in the input field and click the Submit button on the account page."}
+              ? "アカウントページで、メールアドレス欄に新しいメールアドレスを入力し、更新を押してください。"
+              : "Enter new email in the input field and click Submit on the Account page."}
           </p>
           <Image
             src="/how-to-use/account-password.webp"
@@ -1279,8 +1278,8 @@ export default function HowToUse() {
           ></Image>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "アカウントページで、現在のパスワードと新しいパスワードをそれぞれの欄に入力し、変更ボタンを押してください。"
-              : "Put your current password and new password in the input fields, and click the Change button on the account page."}
+              ? "アカウントページで、現在のパスワードと新しいパスワードをそれぞれの欄に入力し、変更を押してください。"
+              : "Enter your current password and your new password in the input fields, the click Change on the Account page."}
           </p>
         </div>
         <div className={styles.container__answer} ref={closeAccountRef}>
@@ -1301,7 +1300,7 @@ export default function HowToUse() {
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "アカウントページで一番下の退会ボタンを押し、注意書きの下にある「はい」と書いてあるボタンを押して退会できます。"
-              : "Close your account by clicking the Close and I'm sure button below the disclaimer on the account page."}
+              : `Close your account by clicking Close and then "I'm Sure" under the disclaimer on the Account page.`}
           </p>
         </div>
       </div>

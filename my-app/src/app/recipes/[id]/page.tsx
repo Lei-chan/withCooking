@@ -7,12 +7,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 //css
 import styles from "./page.module.css";
-//type
-import {
-  TYPE_LANGUAGE,
-  TYPE_RECIPE,
-  TYPE_RECIPE_LINK,
-} from "@/app/lib/config/type";
 //context
 import {
   LanguageContext,
@@ -27,66 +21,61 @@ import {
   RecipeLinkNoEdit,
   RecipeNoEdit,
 } from "@/app/lib/components/components";
+//type
+import {
+  TYPE_LANGUAGE,
+  TYPE_RECIPE,
+  TYPE_RECIPE_LINK,
+} from "@/app/lib/config/type";
 //general methods
 import {
   generateErrorMessage,
   getData,
   getSize,
 } from "@/app/lib/helpers/other";
+import { handler } from "next/dist/build/templates/app-route";
 
 export default function Recipe() {
   const params = useParams<{ id: string }>();
+  const userContext = useContext(UserContext);
 
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
   const mediaContext = useContext(MediaContext);
-
-  const [recipeWidth, setRecipeWidth] = useState("50%");
-  const [iframeHeight, setIframeHeight] = useState(400);
-  const [fontSize, setFontSize] = useState("1.3vw");
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+  const recipeWidth =
+    windowWidth *
+      (mediaContext === "mobile"
+        ? 0.9
+        : mediaContext === "tablet"
+        ? 0.7
+        : 0.5) +
+    "px";
+  const iframeHeight = windowHeight * 0.8;
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? getSize(recipeWidth, 0.045, "4.5vw")
+      : mediaContext === "tablet"
+      ? getSize(recipeWidth, 0.034, "2.7vw")
+      : mediaContext === "desktop" && window.innerWidth <= 1100
+      ? getSize(recipeWidth, 0.031, "1.5vw")
+      : getSize(recipeWidth, 0.028, "1.3vw");
+  const fontSizeFinal =
+    language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
 
   useEffect(() => {
-    if (!mediaContext) return;
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
+    };
+    window.addEventListener("resize", handleResize);
 
-    const width =
-      window.innerWidth *
-        (mediaContext === "mobile"
-          ? 0.9
-          : mediaContext === "tablet"
-          ? 0.7
-          : 0.5) +
-      "px";
-
-    setRecipeWidth(width);
-
-    const height = window.innerHeight * 0.8;
-    setIframeHeight(height);
-
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? getSize(width, 0.045, "4.5vw")
-        : mediaContext === "tablet"
-        ? getSize(width, 0.034, "2.7vw")
-        : mediaContext === "desktop" && window.innerWidth <= 1100
-        ? getSize(width, 0.031, "1.5vw")
-        : getSize(width, 0.028, "1.3vw");
-
-    setFontSize(
-      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
-    );
-  }, [mediaContext, language]);
-
-  const userContext = useContext(UserContext);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE | TYPE_RECIPE_LINK>();
@@ -155,7 +144,7 @@ export default function Recipe() {
           <h1
             className={styles.no_content}
             style={{
-              fontSize: `calc(${fontSize} * 2.5)`,
+              fontSize: `calc(${fontSizeFinal} * 2.5)`,
             }}
           >
             {error}
@@ -192,7 +181,7 @@ export default function Recipe() {
                   : mediaContext === "tablet"
                   ? "15%"
                   : "7%",
-              fontSize: `calc(${fontSize} * ${
+              fontSize: `calc(${fontSizeFinal} * ${
                 mediaContext === "mobile" ? 1.4 : 1.3
               })`,
             }}
@@ -243,7 +232,7 @@ export default function Recipe() {
                   : mediaContext === "tablet"
                   ? "15%"
                   : "10%",
-              fontSize: `calc(${fontSize} * ${
+              fontSize: `calc(${fontSizeFinal} * ${
                 mediaContext === "mobile" ? 1.5 : 1.4
               })`,
             }}

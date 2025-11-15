@@ -5,57 +5,38 @@ import React, { useContext, useEffect, useState } from "react";
 import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext } from "@/app/lib/providers";
+//componets
+import { RecipeEdit, RecipeLinkEdit } from "@/app/lib/components/components";
 //type
 import { TYPE_LANGUAGE } from "@/app/lib/config/type";
 //general method
 import { getFontSizeForLanguage } from "@/app/lib/helpers/other";
-//componets
-import { RecipeEdit, RecipeLinkEdit } from "@/app/lib/components/components";
 
 export default function CreateRecipe() {
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>(
-    languageContext?.language || "en"
-  );
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
   const mediaContext = useContext(MediaContext);
-
-  const [fontSize, setFontSize] = useState("1.5vw");
-  const [btnStyle, setBtnStyle] = useState<object>();
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    const fontSizeEn =
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "4.7vw"
+      : mediaContext === "tablet"
+      ? "2.7vw"
+      : mediaContext === "desktop"
+      ? "1.5vw"
+      : "1.3vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+  const btnStyle = {
+    fontSize: fontSizeFinal,
+    width:
       mediaContext === "mobile"
-        ? "4.7vw"
+        ? "35%"
         : mediaContext === "tablet"
-        ? "2.7vw"
-        : mediaContext === "desktop"
-        ? "1.5vw"
-        : "1.3vw";
-
-    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
-    setFontSize(fontSizeFinal);
-
-    setBtnStyle({
-      fontSize: fontSizeFinal,
-      width:
-        mediaContext === "mobile"
-          ? "35%"
-          : mediaContext === "tablet"
-          ? "20%"
-          : "15%",
-    });
-  }, [mediaContext, language]);
+        ? "20%"
+        : "15%",
+  };
 
   type CreateFrom = "scratch" | "link" | null;
   const [createFrom, setCreateFrom] = useState<CreateFrom>(null);
@@ -98,7 +79,7 @@ export default function CreateRecipe() {
         >
           <h2
             style={{
-              fontSize: `calc(${fontSize} * 1.7)
+              fontSize: `calc(${fontSizeFinal} * 1.7)
           `,
               color: "brown",
             }}
@@ -124,7 +105,7 @@ export default function CreateRecipe() {
               name="scratch"
               onClick={handleClickFrom}
             >
-              {language === "ja" ? "始めから" : "From scratch"}
+              {language === "ja" ? "はじめから" : "From Scratch"}
             </button>
             <button
               className={styles.btn__link}
@@ -132,7 +113,7 @@ export default function CreateRecipe() {
               name="link"
               onClick={handleClickFrom}
             >
-              {language === "ja" ? "外部リンクから" : "From external link"}
+              {language === "ja" ? "外部のリンクから" : "From an External Link"}
             </button>
           </div>
         </div>

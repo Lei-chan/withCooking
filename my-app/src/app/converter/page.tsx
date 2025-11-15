@@ -3,6 +3,8 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
 //css
 import styles from "./page.module.css";
+//context
+import { LanguageContext, MediaContext } from "../lib/providers";
 //type
 import { TYPE_LANGUAGE, TYPE_MEDIA } from "../lib/config/type";
 //mehods to convert
@@ -11,47 +13,62 @@ import {
   convertLengthUnits,
   convertTempUnits,
 } from "../lib/helpers/converter";
-//context
-import { LanguageContext, MediaContext } from "../lib/providers";
+//method for recipe
 import { getTranslatedIngredientsUnit } from "../lib/helpers/recipes";
+//general method
 import { getFontSizeForLanguage } from "../lib/helpers/other";
 
 export default function Converter() {
-  const mediaContext = useContext(MediaContext);
-
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
-  const [fontSize, setFontSize] = useState("1.3vw");
-  const [smallHeaderStyle, setSmallHeaderStyle] = useState<object>({
+  const mediaContext = useContext(MediaContext);
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "4.5vw"
+      : mediaContext === "tablet"
+      ? "2.5vw"
+      : mediaContext === "desktop"
+      ? "1.7vw"
+      : "1.3vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+  const smallHeaderStyle = {
     color: "#795200ff",
     letterSpacing: "0.07vw",
     wordSpacing: "0.3vw",
-  });
-  const [outputFontSize, setOutputFontSize] = useState("1.5vw");
-  const [boxStyle, setBoxStyle] = useState({
+    fontSize: `calc(${fontSizeFinal} * 1.1)`,
+    margin: mediaContext === "mobile" ? "5% 0 3% 0" : "3% 0 2% 0",
+  };
+  const outputFontSize = `calc(${fontSizeFinal} * 1.1)`;
+  const boxStyle = {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     backgroundColor: "antiquewhite",
     gap: "1%",
     borderRadius: "3px",
-    width: "70%",
-    minHeight: "20%",
+    width:
+      mediaContext === "mobile"
+        ? "90%"
+        : mediaContext === "tablet"
+        ? "80%"
+        : "70%",
+    minHeight:
+      mediaContext === "mobile" || mediaContext === "tablet" ? "23%" : "20%",
     maxHeight: "fit-content",
-    fontSize,
-  });
-  const [converterInnerStyle, setConvertedInnerStyle] = useState({
-    width: "70%",
+    fontSize: fontSizeFinal,
+  };
+  const converterInnerStyle = {
+    width:
+      mediaContext === "mobile"
+        ? "90%"
+        : mediaContext === "tablet"
+        ? "85%"
+        : mediaContext === "desktop"
+        ? "75%"
+        : "70%",
     display: "flex",
     flexDirection: "row",
     alignSelf: "center",
@@ -59,90 +76,18 @@ export default function Converter() {
     height: "fit-content",
     gap: "3%",
     marginTop: "3%",
-    marginBottom: "2%",
-  });
-  const [inputSelectStyle, setInputSelectStyle] = useState({
-    minWidth: "25%",
+    marginBottom: mediaContext === "mobile" ? "0" : "2%",
+  };
+  const inputSelectStyle = {
+    minWidth: mediaContext === "mobile" ? "35%" : "25%",
     maxWidth: "50%",
     textAlign: "center",
     letterSpacing: "0.07vw",
     borderRadius: "2%/7%",
     borderColor: "rgba(0, 0, 0, 0.404)",
     height: "fit-content",
-    // aspectRatio: "1/0.21",
-    fontSize,
-  });
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? "4.5vw"
-        : mediaContext === "tablet"
-        ? "2.5vw"
-        : mediaContext === "desktop"
-        ? "1.7vw"
-        : "1.3vw";
-
-    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
-
-    setFontSize(fontSizeFinal);
-    setSmallHeaderStyle({
-      color: "#795200ff",
-      letterSpacing: "0.07vw",
-      wordSpacing: "0.3vw",
-      fontSize: `calc(${fontSizeFinal} * 1.1)`,
-      margin: mediaContext === "mobile" ? "5% 0 3% 0" : "3% 0 2% 0",
-    });
-    setOutputFontSize(`calc(${fontSizeFinal} * 1.1)`);
-    setBoxStyle({
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      backgroundColor: "antiquewhite",
-      gap: "1%",
-      borderRadius: "3px",
-      width:
-        mediaContext === "mobile"
-          ? "90%"
-          : mediaContext === "tablet"
-          ? "80%"
-          : "70%",
-      minHeight:
-        mediaContext === "mobile" || mediaContext === "tablet" ? "23%" : "20%",
-      maxHeight: "fit-content",
-      fontSize: fontSizeFinal,
-    });
-    setConvertedInnerStyle({
-      width:
-        mediaContext === "mobile"
-          ? "90%"
-          : mediaContext === "tablet"
-          ? "85%"
-          : mediaContext === "desktop"
-          ? "75%"
-          : "70%",
-      display: "flex",
-      flexDirection: "row",
-      alignSelf: "center",
-      justifyContent: "left",
-      height: "fit-content",
-      gap: "3%",
-      marginTop: "3%",
-      marginBottom: mediaContext === "mobile" ? "0" : "2%",
-    });
-    setInputSelectStyle({
-      minWidth: mediaContext === "mobile" ? "35%" : "25%",
-      maxWidth: "50%",
-      textAlign: "center",
-      letterSpacing: "0.07vw",
-      borderRadius: "2%/7%",
-      borderColor: "rgba(0, 0, 0, 0.404)",
-      height: "fit-content",
-      fontSize: fontSizeFinal,
-    });
-  }, [language, mediaContext]);
+    fontSize: fontSizeFinal,
+  };
 
   return (
     <div
@@ -162,14 +107,14 @@ export default function Converter() {
       <h1
         style={{
           color: "#21038bff",
-          fontSize: `calc(${fontSize} * 1.4)`,
+          fontSize: `calc(${fontSizeFinal} * 1.4)`,
           letterSpacing: "0.1vw",
         }}
       >
         {language === "ja" ? "単位変換" : "Converter"}
       </h1>
       <h3 style={smallHeaderStyle}>
-        {language === "ja" ? "材料の単位" : "Ingredient units"}
+        {language === "ja" ? "材料の単位" : "Ingredient Units"}
       </h3>
       <ConverterIng
         mediaContext={mediaContext}
@@ -180,7 +125,7 @@ export default function Converter() {
         outputFontSize={outputFontSize}
       />
       <h3 style={smallHeaderStyle}>
-        {language === "ja" ? "温度の単位" : "Tempareture units"}
+        {language === "ja" ? "温度の単位" : "Tempareture Units"}
       </h3>
       <ConverterTemp
         mediaContext={mediaContext}
@@ -191,7 +136,7 @@ export default function Converter() {
         outputFontSize={outputFontSize}
       />
       <h3 style={smallHeaderStyle}>
-        {language === "ja" ? "長さの単位" : "Length units"}
+        {language === "ja" ? "長さの単位" : "Length Units"}
       </h3>
       <ConverterLength
         mediaContext={mediaContext}

@@ -34,7 +34,7 @@ const homeDetails = [
     image: "/home/recipe-brief.webp",
     explanation: {
       en: "You can adjust the number of servings, choose your preferred unit system, and switch temperature units for  any recipe your created. This website will instantly calculate and display the converted ingredient amounts and temperatures!",
-      ja: "あなたが作ったレシピ内で、レシピの分量を変更したり、どの単位システムを使用したいかを選んだり、温度の単位を変換することができます。このサイトが瞬時に計算をして、変換された材料や温度を画面に表示します！",
+      ja: "あなたが作ったレシピ内で、レシピの分量の変更、どの単位システムを使用したいかの選択、温度の単位の変換を行うことができます。このサイトが瞬時に計算をして、変換された材料や温度を画面に表示します！",
     },
     heightRatio: 0.8,
   },

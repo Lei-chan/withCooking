@@ -6,6 +6,18 @@ import Image from "next/image";
 import styles from "./page.module.css";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+//context
+import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
+//model
+import news from "@/app/lib/models/news";
+//components
+import {
+  LanguageSelect,
+  OverlayMessage,
+  PaginationButtons,
+  RecipeLinkNoEdit,
+  RecipeNoEdit,
+} from "../lib/components/components";
 //type
 import {
   TYPE_USER_CONTEXT,
@@ -19,8 +31,8 @@ import {
   authErrorRedirect,
   generateErrorMessage,
   getData,
+  getFontSizeForLanguage,
   getSize,
-  wait,
 } from "@/app/lib/helpers/other";
 //methods for recipes
 import {
@@ -28,79 +40,45 @@ import {
   calcNumberOfPages,
   getUserRecipes,
 } from "@/app/lib/helpers/recipes";
-//context
-import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
-//media
-import news from "@/app/lib/models/news";
-
-//components
-import {
-  LanguageSelect,
-  OverlayMessage,
-  PaginationButtons,
-  RecipeLinkNoEdit,
-  RecipeNoEdit,
-} from "../lib/components/components";
 //library
 import { nanoid } from "nanoid";
 
 export default function MAIN() {
   const searchRef = useRef(null);
-
   const userContext = useContext(UserContext);
 
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>(
-    languageContext?.language || "en"
-  );
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
   const mediaContext = useContext(MediaContext);
 
-  const [innerWidth, setInnerWidth] = useState(1440);
-  const [innerHeight, setInnerHeight] = useState(600);
-  const [recipeWidth, setRecipeWidth] = useState(innerWidth * 0.55 + "px");
-  const [timerHeight, setTimerHeight] = useState(innerHeight * 0.65 + "px");
-  const [timerNoteWidth, setTimerNoteWidth] = useState(
-    innerWidth - parseFloat(recipeWidth) + "px"
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+  const [recipeWidth, setRecipeWidth] = useState(
+    mediaContext === "mobile"
+      ? windowWidth + "px"
+      : mediaContext === "tablet"
+      ? windowWidth * 0.65 + "px"
+      : windowWidth * 0.55 + "px"
   );
+  const [timerMemoWidth, setTimerMemoWidth] = useState(
+    mediaContext === "mobile"
+      ? windowWidth + "px"
+      : windowWidth - parseFloat(recipeWidth) + "px"
+  );
+  const [timerHeight, setTimerHeight] = useState(windowHeight * 0.65 + "px");
 
   useEffect(() => {
-    setInnerWidth(window.innerWidth);
-    setInnerHeight(window.innerHeight);
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setWindowHeight(window.innerHeight);
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    setRecipeWidth(
-      mediaContext === "mobile"
-        ? innerWidth + "px"
-        : mediaContext === "tablet"
-        ? innerWidth * 0.65 + "px"
-        : innerWidth * 0.55 + "px"
-    );
-  }, [mediaContext, innerWidth]);
-
-  useEffect(() => {
-    setTimerNoteWidth(
-      mediaContext === "mobile"
-        ? innerWidth + "px"
-        : innerWidth - parseFloat(recipeWidth) + "px"
-    );
-  }, [mediaContext, innerWidth, recipeWidth]);
-
-  useEffect(() => {
-    setTimerHeight(innerHeight * 0.65 + "px");
-  }, [innerHeight]);
 
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
@@ -127,6 +105,7 @@ export default function MAIN() {
     if (isDraggingX) {
       const positioX = e.clientX;
       setRecipeWidth(`${positioX}px`);
+      setTimerMemoWidth(windowWidth - positioX + "px");
     }
 
     if (isDraggingY) {
@@ -206,7 +185,7 @@ export default function MAIN() {
           mediaContext={mediaContext}
           language={language}
           userContext={userContext}
-          innerWidth={innerWidth}
+          innerWidth={windowWidth}
           isSearchVisible={isSearchVisible}
           onClickSearch={handleToggleSearch}
         />
@@ -249,6 +228,7 @@ export default function MAIN() {
             language={language}
             userContext={userContext}
             recipeWidth={recipeWidth}
+            innerHeight={windowHeight}
           />
         </section>
 
@@ -278,14 +258,14 @@ export default function MAIN() {
           <Timers
             mediaContext={mediaContext}
             language={language}
-            innerWidth={innerWidth}
-            timerWidth={timerNoteWidth}
+            innerWidth={windowWidth}
+            timerWidth={timerMemoWidth}
           />
-          <Note
+          <Memos
             mediaContext={mediaContext}
             language={language}
-            innerWidth={innerWidth}
-            noteWidth={timerNoteWidth}
+            innerWidth={windowWidth}
+            memoWidth={timerMemoWidth}
           />
         </section>
       </div>
@@ -298,20 +278,15 @@ function Recipe({
   language,
   userContext,
   recipeWidth,
+  innerHeight,
 }: {
   mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   recipeWidth: string;
+  innerHeight: number;
 }) {
   const router = useRouter();
-  //design
-  const [recipeHeight, setRecipeHeight] = useState(400);
-
-  useEffect(() => {
-    if (!mediaContext) return;
-    setRecipeHeight(window.innerHeight);
-  }, []);
 
   const [recipe, setRecipe] = useState<TYPE_RECIPE | TYPE_RECIPE_LINK | null>(
     null
@@ -396,7 +371,7 @@ function Recipe({
         language={language}
         mediaContext={mediaContext}
         recipeWidth={parseFloat(recipeWidth)}
-        recipeHeight={recipeHeight}
+        recipeHeight={innerHeight}
         recipe={recipe}
         mainOrRecipe="main"
       />
@@ -434,51 +409,34 @@ function Search({
 
   //design
   const RECIPES_PER_PAGE = 6;
-  const [searchMenuSize, setSearchMenuSize] = useState(
-    innerWidth * 0.28 + "px"
-  );
-  const [fontSize, setFontSize] = useState(
-    parseFloat(searchMenuSize) * 0.055 + "px"
-  );
-  const [mainImageSize, setMainImageSize] = useState(
-    parseFloat(searchMenuSize) * 0.2 + "px"
-  );
-
-  useEffect(() => {
-    const searchSize =
-      innerWidth *
-        (mediaContext === "mobile"
-          ? 0.7
-          : mediaContext === "tablet"
-          ? 0.5
-          : mediaContext === "desktop" && innerWidth <= 1100
-          ? 0.35
-          : 0.28) +
-      "px";
-
-    setSearchMenuSize(searchSize);
-
-    const fontSizeSearchEn =
-      parseFloat(searchSize) *
-        (mediaContext === "mobile"
-          ? 0.07
-          : mediaContext === "tablet"
-          ? 0.06
-          : 0.055) +
-      "px";
-    setFontSize(
-      language === "ja"
-        ? parseFloat(fontSizeSearchEn) * 0.9 + "px"
-        : fontSizeSearchEn
-    );
-
-    setMainImageSize(parseFloat(searchSize) * 0.2 + "px");
-  }, [mediaContext, innerWidth, language]);
+  const searchMenuSize =
+    innerWidth *
+      (mediaContext === "mobile"
+        ? 0.7
+        : mediaContext === "tablet"
+        ? 0.5
+        : mediaContext === "desktop" && innerWidth <= 1100
+        ? 0.35
+        : 0.28) +
+    "px";
+  const fontSizeEn =
+    parseFloat(searchMenuSize) *
+      (mediaContext === "mobile"
+        ? 0.07
+        : mediaContext === "tablet"
+        ? 0.06
+        : 0.055) +
+    "px";
+  const fontSizeFinal =
+    language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
+  const mainImageSize = parseFloat(searchMenuSize) * 0.2 + "px";
 
   const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
   //don't modify originalNumberOfRecipes
-  const [originalNumberOfRecipes, setOrigianlNumberOfRecipes] = useState(0);
-  const [numberOfPages, setNumberOfPages] = useState<number>(0);
+  const originalNumberOfRecipes = userContext?.numberOfRecipes || 0;
+  const [numberOfPages, setNumberOfPages] = useState<number>(
+    calcNumberOfPages(originalNumberOfRecipes, RECIPES_PER_PAGE)
+  );
   const [curPage, setCurPage] = useState<number>(1);
 
   const [keyword, setKeyword] = useState("");
@@ -489,23 +447,18 @@ function Search({
 
   //set originalNumberOfRecipes for the first render
   useEffect(() => {
-    if (!userContext || userContext?.numberOfRecipes === null) return;
+    if (originalNumberOfRecipes === 0) return;
 
-    const originalNumberOfUserRecipes = userContext.numberOfRecipes;
-
-    setOrigianlNumberOfRecipes(originalNumberOfUserRecipes);
     setNumberOfPages(
-      calcNumberOfPages(originalNumberOfUserRecipes, RECIPES_PER_PAGE)
+      calcNumberOfPages(originalNumberOfRecipes, RECIPES_PER_PAGE)
     );
-
-    if (!originalNumberOfUserRecipes) return;
 
     (async () => {
       setIsPending(true);
       await setUserRecipes();
       setIsPending(false);
     })();
-  }, [userContext?.numberOfRecipes]);
+  }, [originalNumberOfRecipes]);
 
   //6 recipes per fetch
   async function setUserRecipes(key: string = "") {
@@ -602,7 +555,7 @@ function Search({
         zIndex: "10",
         transition: "all 0.3s",
         transform: !isSearchVisible ? "translateX(-100%)" : "translateX(0%)",
-        fontSize,
+        fontSize: fontSizeFinal,
       }}
     >
       <button
@@ -614,7 +567,7 @@ function Search({
         <form className={styles.container__search} onSubmit={handleSubmit}>
           <input
             id={styles.input__search}
-            style={{ fontSize: `calc(${fontSize} * 0.9)` }}
+            style={{ fontSize: `calc(${fontSizeFinal} * 0.9)` }}
             name="keyword"
             type="search"
             placeholder={
@@ -623,7 +576,7 @@ function Search({
           ></input>
           <button
             className={styles.btn__search}
-            style={{ fontSize: `calc(${fontSize} * 0.7)` }}
+            style={{ fontSize: `calc(${fontSizeFinal} * 0.7)` }}
             type="submit"
           >
             {language === "ja" ? "検索" : "Search"}
@@ -631,7 +584,10 @@ function Search({
         </form>
         <ul className={styles.search_results}>
           {message ? (
-            <p className={styles.no_results} style={{ fontSize: fontSize }}>
+            <p
+              className={styles.no_results}
+              style={{ fontSize: fontSizeFinal }}
+            >
               {message}
             </p>
           ) : (
@@ -677,7 +633,7 @@ function Search({
         <PaginationButtons
           mediaContext={mediaContext}
           language={language}
-          fontSize={fontSize}
+          fontSize={fontSizeFinal}
           styles={styles}
           curPage={curPage}
           numberOfPages={numberOfPages}
@@ -702,20 +658,13 @@ function DropdownMenu({
   onClickDropdown: () => void;
   onClickLogout: () => void;
 }) {
-  const [fontSize, setFontSize] = useState("1.8vw");
-
-  useEffect(() => {
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? "4vw"
-        : mediaContext === "tablet"
-        ? "2.7vw"
-        : "1.8vw";
-
-    setFontSize(
-      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "vw" : fontSizeEn
-    );
-  }, [mediaContext, language]);
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "4vw"
+      : mediaContext === "tablet"
+      ? "2.7vw"
+      : "1.8vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
 
   //check if news has new info
   const isNewsNew = useMemo(() => news.some((news) => news.new), [news]);
@@ -773,7 +722,7 @@ function DropdownMenu({
           boxShadow: "rgba(0, 0, 0, 0.315) 4px 4px 10px",
           overflow: "hidden",
           transition: "all 0.4s",
-          fontSize,
+          fontSize: fontSizeFinal,
           backgroundColor: "orange",
           opacity: !isDropdownVisible ? 0 : 1,
         }}
@@ -835,7 +784,7 @@ function DropdownMenu({
             {isNewsNew && (
               <span
                 style={{
-                  fontSize: `calc(${fontSize} * 0.9)`,
+                  fontSize: `calc(${fontSizeFinal} * 0.9)`,
                   color: "orangered",
                 }}
               >
@@ -855,7 +804,7 @@ function DropdownMenu({
               width={25}
               height={25}
             ></Image>
-            <span>{language === "ja" ? "使い方" : "How to use"}</span>
+            <span>{language === "ja" ? "使い方" : "How To Use"}</span>
           </li>
         </Link>
         <Link
@@ -903,13 +852,15 @@ function DropdownMenu({
         >
           <LanguageSelect
             mediaContext={mediaContext}
-            fontSize={`calc(${fontSize} * 0.8)`}
+            fontSize={`calc(${fontSizeFinal} * 0.8)`}
             position="relative"
             minWidth="50%"
             backgroundColor="transparent"
             color="rgba(3, 46, 124, 1)"
           />
-          <p style={{ fontSize: `calc(${fontSize} * 0.8)`, color: "brown" }}>
+          <p
+            style={{ fontSize: `calc(${fontSizeFinal} * 0.8)`, color: "brown" }}
+          >
             Ver 1.0.0
           </p>
         </div>
@@ -929,23 +880,18 @@ function Timers({
   innerWidth: number;
   timerWidth: string;
 }) {
+  //design
   const MAX_TIMERS = 10;
-  const [fontSize, setFontSize] = useState(getSize(timerWidth, 0.031, "1.3vw"));
-
-  useEffect(() => {
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? getSize(timerWidth, 0.045, "3.5vw")
-        : mediaContext === "tablet"
-        ? getSize(timerWidth, 0.07, "2.7vw")
-        : mediaContext === "desktop" && innerWidth <= 1100
-        ? getSize(timerWidth, 0.035, "1.5vw")
-        : getSize(timerWidth, 0.031, "1.3vw");
-
-    setFontSize(
-      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
-    );
-  }, [language, timerWidth]);
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? getSize(timerWidth, 0.045, "3.5vw")
+      : mediaContext === "tablet"
+      ? getSize(timerWidth, 0.07, "2.7vw")
+      : mediaContext === "desktop" && innerWidth <= 1100
+      ? getSize(timerWidth, 0.035, "1.5vw")
+      : getSize(timerWidth, 0.031, "1.3vw");
+  const fontSizeFinal =
+    language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
 
   const [timerKeys, setTimerKeys] = useState(
     Array(1)
@@ -983,7 +929,7 @@ function Timers({
     >
       <h2
         style={{
-          fontSize: `calc(${fontSize} * 1.4)`,
+          fontSize: `calc(${fontSizeFinal} * 1.4)`,
           letterSpacing: "0.1vw",
           marginBottom: "5%",
         }}
@@ -1008,7 +954,7 @@ function Timers({
               ? "95%"
               : "90%",
           height: "fit-content",
-          fontSize: fontSize,
+          fontSize: fontSizeFinal,
         }}
       >
         {timerKeys.map((keyObj, i) => (
@@ -1016,7 +962,7 @@ function Timers({
             key={keyObj.id}
             mediaContext={mediaContext}
             language={language}
-            fontSize={fontSize}
+            fontSize={fontSizeFinal}
             index={i}
             onClickDelete={handleDeleteTimers}
           />
@@ -1039,7 +985,7 @@ function Timers({
                 padding: "4%",
                 backgroundImage:
                   "linear-gradient(rgb(251, 255, 0), rgb(255, 217, 0))",
-                fontSize: `calc(${fontSize} * 0.9)`,
+                fontSize: `calc(${fontSizeFinal} * 0.9)`,
               }}
               onClick={handleAddTimers}
             >
@@ -1071,21 +1017,10 @@ function Timer({
   const MAX_SECONDS = 59;
 
   //design
-  const [fontSizeInput, setFontSizeInput] = useState(
-    parseFloat(fontSize) * 1.2 + "px"
-  );
-  const [fontSizeBtn, setFontSizeBtn] = useState(
-    parseFloat(fontSize) * 0.9 + "px"
-  );
-
-  useEffect(() => {
-    setFontSizeInput(
-      parseFloat(fontSize) * (language === "ja" ? 1.1 : 1.2) + "px"
-    );
-    setFontSizeBtn(
-      parseFloat(fontSize) * (language === "ja" ? 0.7 : 0.9) + "px"
-    );
-  }, [fontSize]);
+  const fontSizeInput =
+    parseFloat(fontSize) * (language === "ja" ? 1.1 : 1.2) + "px";
+  const fontSizeBtn =
+    parseFloat(fontSize) * (language === "ja" ? 0.7 : 0.9) + "px";
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -1308,7 +1243,7 @@ function Timer({
           fontSize: fontSize,
         }}
         type="text"
-        placeholder={language === "ja" ? "名前" : "Set name"}
+        placeholder={language === "ja" ? "名前" : "Set a name"}
         value={title}
         onChange={handleChangeTitle}
       />
@@ -1432,32 +1367,27 @@ function Timer({
   );
 }
 
-function Note({
+function Memos({
   mediaContext,
   language,
   innerWidth,
-  noteWidth,
+  memoWidth,
 }: {
   mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
   innerWidth: number;
-  noteWidth: string;
+  memoWidth: string;
 }) {
-  const [fontSize, setFontSize] = useState("1.3vw");
-
-  useEffect(() => {
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? getSize(noteWidth, 0.047, "4vw")
-        : mediaContext === "tablet"
-        ? getSize(noteWidth, 0.07, "2.7vw")
-        : mediaContext === "desktop" && innerWidth <= 1100
-        ? getSize(noteWidth, 0.04, "1.5vw")
-        : getSize(noteWidth, 0.03, "1.3vw");
-    setFontSize(
-      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
-    );
-  }, [mediaContext, innerWidth, noteWidth, language]);
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? getSize(memoWidth, 0.047, "4vw")
+      : mediaContext === "tablet"
+      ? getSize(memoWidth, 0.07, "2.7vw")
+      : mediaContext === "desktop" && innerWidth <= 1100
+      ? getSize(memoWidth, 0.04, "1.5vw")
+      : getSize(memoWidth, 0.03, "1.3vw");
+  const fontSizeFinal =
+    language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
 
   return (
     <textarea
@@ -1469,7 +1399,7 @@ function Note({
         width: "100%",
         overflowY: "auto",
         scrollbarColor: "rgb(255, 250, 209) rgb(255, 231, 92)",
-        fontSize,
+        fontSize: fontSizeFinal,
         letterSpacing:
           mediaContext === "mobile" || mediaContext === "tablet"
             ? "0.1vw"

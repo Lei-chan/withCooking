@@ -10,14 +10,14 @@ import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 //context
 import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
-//type
-import { TYPE_LANGUAGE, TYPE_MEDIA } from "./lib/config/type";
-//settings
-import { PASSWORD_MIN_EACH, PASSWORD_MIN_LENGTH } from "./lib/config/settings";
 //model
 import homeDetails from "./lib/models/homeDetails";
 //component
 import { LanguageSelect } from "./lib/components/components";
+//type
+import { TYPE_LANGUAGE, TYPE_MEDIA } from "./lib/config/type";
+//settings
+import { PASSWORD_MIN_EACH, PASSWORD_MIN_LENGTH } from "./lib/config/settings";
 //general methods
 import {
   generateErrorMessage,
@@ -26,80 +26,44 @@ import {
 } from "@/app/lib/helpers/other";
 
 export default function Home() {
+  const userContext = useContext(UserContext);
+
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
   const mediaContext = useContext(MediaContext);
-  const [fontSize, setFontSize] = useState("1.6vw");
-  const [headerSize, setHeaderSize] = useState(`calc(${fontSize} * 1.5)`);
-  const [warningFontSize, setWarningFontSize] = useState(
-    `calc(${fontSize} * 1.1)`
-  );
-  const [inputWrapperWidth, setInputWrapperWidth] = useState("65%");
-  const [btnXDesign, setBtnXDesign] = useState({
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "4vw"
+      : mediaContext === "tablet"
+      ? "2.5vw"
+      : mediaContext === "desktop"
+      ? "1.8vw"
+      : "1.5vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+  const headerSize = `calc(${fontSizeFinal} * 1.5)`;
+  const warningFontSize = `calc(${fontSizeFinal} * 1.1)`;
+  const inputWrapperWidth =
+    mediaContext === "mobile"
+      ? "72%"
+      : mediaContext === "tablet"
+      ? "68%"
+      : "65%";
+  const btnXDesign = {
     top: "-2%",
-    fontSize: "2.5vw",
-  });
-  const [eyeOnWidth, setEyeOnWidth] = useState("9.3%");
-  const [eyeOffWidth, setEyeOffWidth] = useState(`calc(${eyeOnWidth} - 1%)`);
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? "4vw"
-        : mediaContext === "tablet"
-        ? "2.5vw"
-        : mediaContext === "desktop"
-        ? "1.8vw"
-        : "1.5vw";
-    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
-    setFontSize(fontSizeFinal);
-
-    setHeaderSize(`calc(${fontSizeFinal} * 1.5)`);
-
-    setWarningFontSize(`calc(${fontSizeFinal} * 1.1)`);
-
-    setBtnXDesign({
-      top: "-2%",
-      fontSize: `calc(${fontSizeEn} * 1.9)`,
-    });
-  }, [mediaContext, language]);
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    setInputWrapperWidth(
-      mediaContext === "mobile"
-        ? "72%"
-        : mediaContext === "tablet"
-        ? "68%"
-        : "65%"
-    );
-
-    const eyeOnWid =
-      mediaContext === "mobile"
-        ? "12%"
-        : mediaContext === "tablet"
-        ? "10%"
-        : mediaContext === "desktop"
-        ? "9.3%"
-        : "9%";
-    setEyeOnWidth(eyeOnWid);
-    setEyeOffWidth(`calc(${eyeOnWid} - 1%)`);
-  }, [mediaContext]);
-
-  //userContext
-  const userContext = useContext(UserContext);
+    fontSize: `calc(${fontSizeEn} * 1.9)`,
+  };
+  const eyeOnWidth =
+    mediaContext === "mobile"
+      ? "12%"
+      : mediaContext === "tablet"
+      ? "10%"
+      : mediaContext === "desktop"
+      ? "9.3%"
+      : "9%";
+  const eyeOffWidth = `calc(${eyeOnWidth} - 1%)`;
 
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -152,7 +116,7 @@ export default function Home() {
       >
         <LanguageSelect
           mediaContext={mediaContext}
-          fontSize={fontSize}
+          fontSize={fontSizeFinal}
           position="absolute"
           minWidth={mediaContext === "mobile" ? "35%" : "10%"}
           backgroundColor="white"
@@ -160,8 +124,8 @@ export default function Home() {
         />
         <Buttons
           mediaContext={mediaContext}
-          language={languageContext?.language || "en"}
-          fontSize={fontSize}
+          language={language}
+          fontSize={fontSizeFinal}
           onLoginClick={handleToggleLogin}
           onSignupClick={handleToggleSignup}
         />
@@ -206,18 +170,18 @@ export default function Home() {
             style={{
               width: "100%",
               lineHeight: "150%",
-              fontSize,
+              fontSize: fontSizeFinal,
             }}
           >
-            {languageContext?.language === "ja"
+            {language === "ja"
               ? "このウェブサイトには、クッキングの時に「こんなものがあったらよかったのにな～」といった機能が集まっています！"
               : `In this app, you'll find all those "It'd be nice if this existed..." cooking features packed in one place!`}
             <br />
-            {languageContext?.language === "ja"
+            {language === "ja"
               ? "料理をしながら複数のタイマーをセットして、メモができたり、簡単に自分のレシピをタイトルや材料で検索出来たり、料理の時によく使われる単位を変換できたり、自分のお気に入りのレシピを整理された形で保管できたり…。"
               : "Use multiple timers or memos while following a recipe, easily search your recipes by title or ingredient, convert commonly used cooking units, manage your recipe collection, and more."}
             <br />
-            {languageContext?.language === "ja"
+            {language === "ja"
               ? "この、シンプルだけれど便利なウェブサイトが、あなたのクッキング仲間となるでしょう！"
               : "This simple but useful website will become your new cooking buddy :)"}
           </p>
@@ -231,11 +195,11 @@ export default function Home() {
               "linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.185))",
             color: " #ff8800ff",
             letterSpacing: "0.05vw",
-            fontSize,
+            fontSize: fontSizeFinal,
           }}
         >
           <p>
-            {languageContext?.language === "ja"
+            {language === "ja"
               ? "詳細はスクロールしてチェック"
               : "Scroll for more details"}
           </p>
@@ -244,14 +208,14 @@ export default function Home() {
       </div>
       <BottomHalf
         mediaContext={mediaContext}
-        language={languageContext?.language || "en"}
-        fontSize={fontSize}
+        language={language}
+        fontSize={fontSizeFinal}
       />
       <OverlayLogin
         mediaContext={mediaContext}
-        language={languageContext?.language || "en"}
+        language={language}
         userContext={userContext}
-        fontSize={fontSize}
+        fontSize={fontSizeFinal}
         warningFontSize={warningFontSize}
         inputWrapperWidth={inputWrapperWidth}
         btnXDesign={btnXDesign}
@@ -264,9 +228,9 @@ export default function Home() {
       />
       <OverlayCreateAccount
         mediaContext={mediaContext}
-        language={languageContext?.language || "en"}
+        language={language}
         userContext={userContext}
-        fontSize={fontSize}
+        fontSize={fontSizeFinal}
         warningFontSize={warningFontSize}
         inputWrapperWidth={inputWrapperWidth}
         btnXDesign={btnXDesign}
@@ -295,6 +259,7 @@ function Buttons({
   onSignupClick: () => void;
 }) {
   const btnFontSize = `calc(${fontSize} * 1.2)`;
+
   return (
     <div
       style={{
@@ -332,7 +297,7 @@ function Buttons({
         }}
         onClick={onSignupClick}
       >
-        {language === "en" ? "Sign up" : "登録"}
+        {language === "en" ? "Sign-up" : "登録"}
       </button>
     </div>
   );
@@ -629,6 +594,8 @@ function Explanation({
       : mediaContext === "tablet"
       ? "10%"
       : "7%";
+
+  //check if title is too long
   const TITLE_TOO_LONG =
     mediaContext === "mobile" ? 25 : mediaContext === "tablet" ? 35 : 45;
   const isTitleLong = useMemo(
@@ -829,19 +796,14 @@ function OverlayLogin({
   const router = useRouter();
 
   //design
-  const [formWidth, setFormWidth] = useState("35%");
-
-  useEffect(() => {
-    setFormWidth(
-      mediaContext === "mobile"
-        ? "85%"
-        : mediaContext === "tablet"
-        ? "50%"
-        : mediaContext === "desktop"
-        ? "35%"
-        : "30%"
-    );
-  }, [mediaContext]);
+  const formWidth =
+    mediaContext === "mobile"
+      ? "85%"
+      : mediaContext === "tablet"
+      ? "50%"
+      : mediaContext === "desktop"
+      ? "35%"
+      : "30%";
 
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -1034,7 +996,7 @@ function OverlayLogin({
           style={{ fontSize }}
           type="submit"
         >
-          {language === "ja" ? "ログイン" : "Log in"}
+          {language === "ja" ? "ログイン" : "Log In"}
         </button>
       </form>
     </div>
@@ -1073,34 +1035,23 @@ function OverlayCreateAccount({
   const router = useRouter();
 
   //design
-  const [formWidth, setFormWidth] = useState("39%");
-  const [h4Design, setH4Design] = useState({
-    fontSize: "1.55vw",
-    letterSpacing: "0.08vw",
-  });
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    setFormWidth(
+  const formWidth =
+    mediaContext === "mobile"
+      ? "80%"
+      : mediaContext === "tablet"
+      ? "50%"
+      : "39%";
+  const h4Design = {
+    fontSize:
       mediaContext === "mobile"
-        ? "80%"
+        ? "4.5vw"
         : mediaContext === "tablet"
-        ? "50%"
-        : "39%"
-    );
-    setH4Design({
-      fontSize:
-        mediaContext === "mobile"
-          ? "4.5vw"
-          : mediaContext === "tablet"
-          ? "2.7vw"
-          : mediaContext === "desktop"
-          ? "1.55vw"
-          : "1.5vw",
-      letterSpacing: "0.08vw",
-    });
-  }, [mediaContext]);
+        ? "2.7vw"
+        : mediaContext === "desktop"
+        ? "1.55vw"
+        : "1.5vw",
+    letterSpacing: "0.08vw",
+  };
 
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -1330,7 +1281,7 @@ function OverlayCreateAccount({
           style={{ fontSize }}
           type="submit"
         >
-          {language === "ja" ? "登録" : "Sign up"}
+          {language === "ja" ? "登録" : "Sign Up"}
         </button>
       </form>
     </div>

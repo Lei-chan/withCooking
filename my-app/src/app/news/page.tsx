@@ -12,51 +12,27 @@ import { getFontSizeForLanguage } from "../lib/helpers/other";
 export default function News() {
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
-
-  console.log(language);
+  const language = languageContext?.language || "en";
 
   //design
-  const mediaContext = useContext(MediaContext);
-  console.log(mediaContext);
   // console.log(new Date().toISOString());
-
-  const [listWidth, setListWidth] = useState("60%");
-  const [fontSize, setFontSize] = useState("1.7vw");
-  const [listTitleSize, setListTitleSize] = useState(
-    `calc(${fontSize} * 1.05)`
-  );
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    setListWidth(
-      mediaContext === "mobile"
-        ? "85%"
-        : mediaContext === "tablet"
-        ? "70%"
-        : "60%"
-    );
-
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? "4.3vw"
-        : mediaContext === "tablet"
-        ? "2.6vw"
-        : mediaContext === "desktop"
-        ? "1.5vw"
-        : "1.3vw";
-    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
-    setFontSize(fontSizeFinal);
-
-    setListTitleSize(`calc(${fontSizeFinal} * 1.05)`);
-  }, [mediaContext, language]);
+  const mediaContext = useContext(MediaContext);
+  const listWidth =
+    mediaContext === "mobile"
+      ? "85%"
+      : mediaContext === "tablet"
+      ? "70%"
+      : "60%";
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "4.3vw"
+      : mediaContext === "tablet"
+      ? "2.6vw"
+      : mediaContext === "desktop"
+      ? "1.5vw"
+      : "1.3vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+  const listTitleSize = `calc(${fontSizeFinal} * 1.05)`;
 
   return (
     <div
@@ -74,10 +50,10 @@ export default function News() {
     >
       <h1
         style={{
-          fontSize: `calc(${fontSize} * 1.4)`,
+          fontSize: `calc(${fontSizeFinal} * 1.4)`,
           letterSpacing: "0.1vw",
           color: "#0d0081ff",
-          margin: fontSize,
+          margin: fontSizeFinal,
         }}
       >
         {language === "ja" ? "ニュース" : "News"}
@@ -105,7 +81,7 @@ export default function News() {
             <List
               key={i}
               language={language}
-              fontSize={fontSize}
+              fontSize={fontSizeFinal}
               listTitleSize={listTitleSize}
               news={news}
             />

@@ -6,6 +6,10 @@ import clsx from "clsx";
 import { useRouter } from "next/navigation";
 //css
 import styles from "./page.module.css";
+//context
+import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
+//component
+import { OverlayMessage } from "../lib/components/components";
 //type
 import { TYPE_LANGUAGE, TYPE_USER_CONTEXT } from "@/app/lib/config/type";
 //settings
@@ -18,9 +22,6 @@ import {
   getFontSizeForLanguage,
   wait,
 } from "@/app/lib/helpers/other";
-//context
-import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
-import { OverlayMessage } from "../lib/components/components";
 
 export default function Account() {
   const router = useRouter();
@@ -28,52 +29,29 @@ export default function Account() {
   //language
   const languageContext = useContext(LanguageContext);
 
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
   const mediaContext = useContext(MediaContext);
 
-  const [formWidth, setFormWidth] = useState("40%");
-  const [fontSize, setFontSize] = useState("1.4vw");
-  const [smallHeaderSize, setSmallHeaderSize] = useState(
-    `calc(${fontSize} * 1.1)`
-  );
-  const [inputWidth, setInputWidth] = useState("55%");
-  const [btnSize, setBtnSize] = useState(`calc(${fontSize} * 0.9)`);
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    setFormWidth(
-      mediaContext === "mobile"
-        ? "84%"
-        : mediaContext === "tablet"
-        ? "60%"
-        : "40%"
-    );
-
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? "4.7vw"
-        : mediaContext === "tablet"
-        ? "3vw"
-        : mediaContext === "desktop"
-        ? "1.7vw"
-        : "1.4vw";
-    const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
-    setFontSize(fontSizeFinal);
-
-    setSmallHeaderSize(`calc(${fontSizeFinal} * 1.1)`);
-
-    setInputWidth(mediaContext === "mobile" ? "80%" : "55%");
-
-    setBtnSize(`calc(${fontSizeFinal} * 0.9)`);
-  }, [mediaContext, language]);
+  const formWidth =
+    mediaContext === "mobile"
+      ? "84%"
+      : mediaContext === "tablet"
+      ? "60%"
+      : "40%";
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "4.7vw"
+      : mediaContext === "tablet"
+      ? "3vw"
+      : mediaContext === "desktop"
+      ? "1.7vw"
+      : "1.4vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+  const smallHeaderSize = `calc(${fontSizeFinal} * 1.1)`;
+  const inputWidth = mediaContext === "mobile" ? "80%" : "55%";
+  const btnSize = `calc(${fontSizeFinal} * 0.9)`;
 
   //user
   const userContext = useContext(UserContext);
@@ -150,10 +128,10 @@ export default function Account() {
     >
       <h1
         style={{
-          fontSize: `calc(${fontSize} * 1.3)`,
+          fontSize: `calc(${fontSizeFinal} * 1.3)`,
           letterSpacing: "0.1vw",
           wordSpacing: "0.3vw",
-          margin: fontSize,
+          margin: fontSizeFinal,
           color: "#0d0081ff",
         }}
       >
@@ -167,7 +145,7 @@ export default function Account() {
             padding: "1% 3%",
             borderRadius: "2% / 19%",
             color: "white",
-            fontSize,
+            fontSize: fontSizeFinal,
             letterSpacing: "0.07vw",
           }}
         >
@@ -202,7 +180,7 @@ export default function Account() {
             router={router}
             language={language}
             userContext={userContext}
-            fontSize={fontSize}
+            fontSize={fontSizeFinal}
             smallHeaderSize={smallHeaderSize}
             inputWidth={inputWidth}
             btnSize={btnSize}
@@ -213,7 +191,7 @@ export default function Account() {
             router={router}
             language={language}
             userContext={userContext}
-            fontSize={fontSize}
+            fontSize={fontSizeFinal}
             smallHeaderSize={smallHeaderSize}
             inputWidth={inputWidth}
             btnSize={btnSize}
@@ -221,7 +199,7 @@ export default function Account() {
           />
           <Since
             language={language}
-            fontSize={fontSize}
+            fontSize={fontSizeFinal}
             smallHeaderSize={smallHeaderSize}
             since={user.createdAt}
           />
@@ -229,7 +207,7 @@ export default function Account() {
             router={router}
             language={language}
             userContext={userContext}
-            fontSize={fontSize}
+            fontSize={fontSizeFinal}
             smallHeaderSize={smallHeaderSize}
             btnSize={btnSize}
             recipes={user.recipes || []}
@@ -451,7 +429,7 @@ function Password({
         if (curPassword && !newPassword) setErrorField("new");
 
         return setError(
-          language === "ja" ? "※ 入力してください" : "※ Please fill the field"
+          language === "ja" ? "※入力してください" : "※ Please fill the field"
         );
       }
 
@@ -754,7 +732,7 @@ function CloseAccount({
         },
       });
 
-      //delete accessToken from context and numberOfRecipes from localStorage
+      //delete accessToken from context and numberOfRecipes and language prefernece from localStorage
       userContext?.logout();
     } catch (err) {
       throw err;
@@ -778,11 +756,11 @@ function CloseAccount({
           <span>
             {language === "ja"
               ? "本当に退会してもよろしいですか？"
-              : "Are you sure you want to close your account?"}{" "}
-            <br />{" "}
+              : "Are you sure you want to close your account?"}
+            <br />
             {language === "ja"
               ? "※一度退会してしまうと元に戻すことはできません！"
-              : "※ Once you close account, you can not go back!"}
+              : "※ Once you close your account, you cannot undo this action!"}
           </span>
         )}
         {isPending &&
@@ -802,7 +780,7 @@ function CloseAccount({
             : "Close"
           : language === "ja"
           ? "はい"
-          : "I'm sure"}
+          : "I'm Sure"}
       </button>
     </form>
   );

@@ -7,6 +7,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 //css
 import styles from "./page.module.css";
+//context
+import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
+//components
+import {
+  MessageContainer,
+  PaginationButtons,
+} from "@/app/lib/components/components";
 //type
 import {
   TYPE_LANGUAGE,
@@ -20,6 +27,7 @@ import {
   authErrorRedirect,
   generateErrorMessage,
   getData,
+  getFontSizeForLanguage,
   wait,
 } from "@/app/lib/helpers/other";
 //methods for recipes
@@ -29,84 +37,54 @@ import {
   getUserRecipes,
   createMessage,
 } from "@/app/lib/helpers/recipes";
-//context
-import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
-//components
-import {
-  MessageContainer,
-  PaginationButtons,
-} from "@/app/lib/components/components";
 
 export default function Recipes() {
   const router = useRouter();
+  const userContext = useContext(UserContext);
 
   //language
   const languageContext = useContext(LanguageContext);
-
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
-
-  useEffect(() => {
-    if (!languageContext?.language) return;
-    setLanguage(languageContext.language);
-  }, [languageContext?.language]);
+  const language = languageContext?.language || "en";
 
   //design
   const mediaContext = useContext(MediaContext);
-
-  const [fontSize, setFontSize] = useState("1.5vw");
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    const innerWidth = window.innerWidth;
-
-    const fontSizeEn =
-      mediaContext === "mobile"
-        ? "4.5vw"
-        : mediaContext === "tablet" && innerWidth < 650
-        ? "3vw"
-        : mediaContext === "tablet" && 650 <= innerWidth
-        ? "2.5vw"
-        : mediaContext === "desktop" && innerWidth < 900
-        ? "2vw"
-        : mediaContext === "desktop" && 900 <= innerWidth
-        ? "1.5vw"
-        : "1.2vw";
-
-    setFontSize(
-      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "vw" : fontSizeEn
-    );
-  }, [mediaContext, language]);
-
-  const [recipesPerPage, setRecipesPerPage] = useState(30);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const fontSizeEn =
+    mediaContext === "mobile"
+      ? "4.5vw"
+      : mediaContext === "tablet" && windowWidth < 650
+      ? "3vw"
+      : mediaContext === "tablet" && 650 <= windowWidth
+      ? "2.5vw"
+      : mediaContext === "desktop" && windowWidth < 900
+      ? "2vw"
+      : mediaContext === "desktop" && 900 <= windowWidth
+      ? "1.5vw"
+      : "1.2vw";
+  const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
+  const recipesPerPage =
+    mediaContext === "mobile"
+      ? 6
+      : mediaContext === "tablet" && windowWidth < 650
+      ? 12
+      : mediaContext === "tablet" && 650 <= windowWidth
+      ? 18
+      : mediaContext === "tablet" && 650 > windowWidth
+      ? 24
+      : 30;
 
   useEffect(() => {
-    if (!mediaContext) return;
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
 
-    setRecipesPerPage(
-      mediaContext === "mobile"
-        ? 6
-        : mediaContext === "tablet" && window.innerWidth < 650
-        ? 12
-        : mediaContext === "tablet" && 650 <= window.innerWidth
-        ? 18
-        : mediaContext === "tablet" && 650 > window.innerWidth
-        ? 24
-        : 30
-    );
-  }, [mediaContext]);
-
-  const userContext = useContext(UserContext);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   //don't modify numberOfTotle recipes
-  const [numbreOfTotalRecipes, setNumberOfTotalRecipes] = useState(
-    userContext?.numberOfRecipes || 0
-  );
+  const numbreOfTotalRecipes = userContext?.numberOfRecipes || 0;
 
   const [numberOfPages, setNumberOfPages] = useState<number>(
-    userContext?.numberOfRecipes
-      ? calcNumberOfPages(userContext.numberOfRecipes, recipesPerPage)
-      : 0
+    calcNumberOfPages(numbreOfTotalRecipes, recipesPerPage)
   );
 
   const [recipes, setRecipes] = useState<
@@ -125,24 +103,21 @@ export default function Recipes() {
 
   // //set numberOfRecipes for the first render
   useEffect(() => {
-    if (userContext?.numberOfRecipes === null || !userContext) return;
+    if (numbreOfTotalRecipes === 0) return;
 
-    setNumberOfTotalRecipes(userContext.numberOfRecipes);
-    setNumberOfPages(
-      calcNumberOfPages(userContext.numberOfRecipes, recipesPerPage)
-    );
+    setNumberOfPages(calcNumberOfPages(numbreOfTotalRecipes, recipesPerPage));
 
     (async () => {
       setIsPending(true);
       await setUserRecipes();
       setIsPending(false);
     })();
-  }, [userContext?.numberOfRecipes, recipesPerPage]);
+  }, [numbreOfTotalRecipes, recipesPerPage]);
 
   async function setUserRecipes(key: string = "") {
     try {
       //If user doesn't have any recipes => return
-      if (!userContext?.numberOfRecipes) return;
+      if (numbreOfTotalRecipes === 0) return;
 
       const data = await getUserRecipes(
         userContext?.accessToken,
@@ -226,7 +201,7 @@ export default function Recipes() {
       <SearchSection
         mediaContext={mediaContext}
         language={language}
-        fontSize={fontSize}
+        fontSize={fontSizeFinal}
         curPage={curPage}
         numberOfPages={numberOfPages}
         numberOfCurRecipes={recipes?.length || 0}
@@ -236,7 +211,7 @@ export default function Recipes() {
         mediaContext={mediaContext}
         language={language}
         userContext={userContext}
-        fontSize={fontSize}
+        fontSize={fontSizeFinal}
         isPending={isPending}
         numberOfTotalRecipes={numbreOfTotalRecipes}
         recipes={recipes}
@@ -248,7 +223,7 @@ export default function Recipes() {
       <PaginationButtons
         mediaContext={mediaContext}
         language={language}
-        fontSize={fontSize}
+        fontSize={fontSizeFinal}
         styles={styles}
         curPage={curPage}
         numberOfPages={numberOfPages}
@@ -349,7 +324,7 @@ function SearchSection({
           type="search"
           name="keyword"
           placeholder={
-            language === "ja" ? "レシピを検索" : "Search your recipe"
+            language === "ja" ? "レシピを検索" : "search your recipes"
           }
         />
         <button
@@ -413,23 +388,16 @@ function RecipeContainer({
   const router = useRouter();
 
   //design
-  const [numberOfColumns, setNumberOfColumns] = useState(5);
-
-  useEffect(() => {
-    if (!mediaContext) return;
-
-    setNumberOfColumns(
-      mediaContext === "mobile"
-        ? 1
-        : mediaContext === "tablet" && window.innerWidth < 650
-        ? 2
-        : mediaContext === "tablet" && 650 <= window.innerWidth
-        ? 3
-        : mediaContext === "tablet" && 650 > window.innerWidth
-        ? 4
-        : 5
-    );
-  }, [mediaContext]);
+  const numberOfColumns =
+    mediaContext === "mobile"
+      ? 1
+      : mediaContext === "tablet" && window.innerWidth < 650
+      ? 2
+      : mediaContext === "tablet" && 650 <= window.innerWidth
+      ? 3
+      : mediaContext === "tablet" && 650 > window.innerWidth
+      ? 4
+      : 5;
 
   //set recipes
   const RECIPES_PER_COLUMN = 6;
@@ -749,10 +717,10 @@ function RecipePreview({
   recipe: any;
   isSelecting: boolean;
 }) {
+  const router = useRouter();
+
   //design
   const mainImageSize = mediaContext === "mobile" ? "50px" : "46px";
-
-  const router = useRouter();
 
   function handleClickPreview(e: React.MouseEvent<HTMLElement>) {
     const id = e.currentTarget.id;
