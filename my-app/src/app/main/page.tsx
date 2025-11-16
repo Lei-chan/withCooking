@@ -769,7 +769,7 @@ function DropdownMenu({
             <span>{language === "ja" ? "単位変換" : "Converter"}</span>
           </li>
         </Link>
-        <Link className={styles.link__dropdown} href="${WEBSITE_URL}/account">
+        <Link className={styles.link__dropdown} href={`${WEBSITE_URL}/account`}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/account.svg"}
@@ -780,7 +780,7 @@ function DropdownMenu({
             <span>{language === "ja" ? "アカウント" : "Account"}</span>
           </li>
         </Link>
-        <Link className={styles.link__dropdown} href="${WEBSITE_URL}/news">
+        <Link className={styles.link__dropdown} href={`${WEBSITE_URL}/news`}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/news.svg"}
@@ -803,7 +803,7 @@ function DropdownMenu({
         </Link>
         <Link
           className={styles.link__dropdown}
-          href="${WEBSITE_URL}/how-to-use"
+          href={`${WEBSITE_URL}/how-to-use`}
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
@@ -815,7 +815,10 @@ function DropdownMenu({
             <span>{language === "ja" ? "使い方" : "How To Use"}</span>
           </li>
         </Link>
-        <Link className={styles.link__dropdown} href="${WEBSITE_URL}/feedback">
+        <Link
+          className={styles.link__dropdown}
+          href={`${WEBSITE_URL}/feedback`}
+        >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/feedback.svg"}
