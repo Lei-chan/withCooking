@@ -223,8 +223,6 @@ function ConverterIng({
       setUnitIngTo(value as AllowedUnitsIng);
   }, [unitIngFrom]);
 
-  console.log(language);
-
   return (
     <div style={boxStyle}>
       {mediaContext !== "mobile" ? (

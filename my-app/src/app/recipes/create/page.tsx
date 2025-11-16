@@ -43,7 +43,6 @@ export default function CreateRecipe() {
 
   function handleClickFrom(e: React.MouseEvent<HTMLButtonElement>) {
     const targetName = e.currentTarget.name;
-    console.log(targetName);
     setCreateFrom(targetName as CreateFrom);
   }
 

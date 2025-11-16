@@ -572,7 +572,7 @@ function Explanation({
   fontSize: string;
   detail: {
     title: { en: string; ja: string };
-    image: string;
+    image: { en: string; ja: string };
     explanation: { en: string; ja: string };
     heightRatio: number;
   };
@@ -639,7 +639,6 @@ function Explanation({
     return "";
   }
 
-  console.log(mediaContext);
   ///even number details appear from right, odd number from left
   return (
     <div
@@ -735,7 +734,7 @@ function Explanation({
         }}
       >
         <Image
-          src={detail.image}
+          src={detail.image[language]}
           alt={`${detail.title[language]} image`}
           width={imageWidth}
           height={imageHeight}

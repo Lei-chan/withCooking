@@ -1249,7 +1249,6 @@ function BriefExplanationEdit({
                 ></Image>
               </div>
               <input
-                // key={nanoid()}
                 className={styles.input__brief_explanation}
                 style={{ width: "35%", fontSize }}
                 name="author"
@@ -3186,6 +3185,9 @@ function ImageTitleNoEdit({
             letterSpacing: "0.1vw",
             textAlign: "center",
             color: "rgb(60, 0, 116)",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
           }}
         >
           {title}
@@ -3387,6 +3389,9 @@ function BriefExplanationNoEdit({
             style={{
               width: mainOrRecipe === "main" ? "19%" : "25%",
               fontSize: fontSizeFinal,
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              textOverflow: "ellipsis",
             }}
           >
             {curRecipe?.author || ""}
@@ -4350,7 +4355,6 @@ export function RecipeLinkEdit({
           ? await uploadRecipeCreate(newRecipeFromLink, userContext)
           : await uploadRecipeUpdate(newRecipeFromLink, userContext);
 
-      console.log(recipeData);
       setIsPending(false);
       setMessage(
         language === "ja"
@@ -4597,7 +4601,7 @@ export function RecipeLinkNoEdit({
       ></iframe>
       <p style={{ width: recipeWidth, marginTop: "1%" }}>
         {language === "ja"
-          ? "レシピリンクのウェブサイトのセキュリティの問題により、ここにそのサイトを表示できない場合があります。その場合は、こちらのリンクから直接そのサイトにアクセスしてください。"
+          ? "登録されたレシピリンクのウェブサイトのセキュリティの問題により、ここにそのサイトを表示できない場合があります。その場合は、こちらのリンクから直接そのサイトにアクセスしてください。"
           : "For security reasons, the website linked in the recipe may not allow its page to be displayed here. If the page doesn't appear, please click this link to visit the website directly."}
       </p>
       <Link href={recipe.link}>

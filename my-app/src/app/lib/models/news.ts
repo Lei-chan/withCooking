@@ -1,37 +1,13 @@
 const news = [
   {
-    date: "2025-10-08T11:07:57.990Z",
+    date: "2025-11-16T08:13:30.680Z",
     title: {
       en: "withCooking is now released!",
       ja: "withCooking(ウィズ・クッキング)がリリースされました！",
     },
     content: {
-      en: "withCooking is now released!",
-      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
-    },
-  },
-  {
-    date: "2025-10-08T11:07:57.990Z",
-    title: {
-      en: "withCooking is now released!",
-      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
-    },
-    content: {
-      en: "withCooking is now released!",
-      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
-    },
-  },
-  {
-    date: "2025-10-08T11:34:29.072Z",
-    title: { en: "withCooking!", ja: "withCooking(ウィズ・クッキング)" },
-    content: { en: "withCooking!", ja: "withCooking(ウィズ・クッキング)!" },
-  },
-  {
-    date: "2025-10-25T11:34:29.072Z",
-    title: { en: "withCooking!", ja: "withCooking(ウィズ・クッキング)!" },
-    content: {
-      en: "withCooking is now released!",
-      ja: "withCooking(ウィズ・クッキング)がリリースされました！",
+      en: "withCooking is now released! You can use lots of useful cooking features here -- all for free! I hope you'll find your way of using the website and enjoy it :)",
+      ja: "withCooking(ウィズ・クッキング)がリリースされました！ここではクッキングに便利な機能をたくさん提供しています！無料で使用できますのでいろいろ試して、自分に合う使い方で楽しんでください😊",
     },
   },
 ];

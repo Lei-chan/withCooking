@@ -46,15 +46,16 @@ export default function HowToUse() {
   const mainRef = useRef<HTMLDivElement>(null);
   const mainSetRecipeRef = useRef<HTMLDivElement>(null);
   const mainAdjustRef = useRef<HTMLDivElement>(null);
-  const mainTimersRef = useRef<HTMLDivElement>(null);
-  const mainNotesRef = useRef<HTMLDivElement>(null);
-  const mainDropdownRef = useRef<HTMLDivElement>(null);
-  const mainLogoutRef = useRef<HTMLDivElement>(null);
+  const timersRef = useRef<HTMLDivElement>(null);
+  const memosRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const logoutRef = useRef<HTMLDivElement>(null);
   const recipesRef = useRef<HTMLDivElement>(null);
   const createRecipeRef = useRef<HTMLDivElement>(null);
   const editRecipeRef = useRef<HTMLDivElement>(null);
   const deleteRecipeRef = useRef<HTMLDivElement>(null);
   const shareRecipeRef = useRef<HTMLDivElement>(null);
+  const cannotViewRecipeLinkRef = useRef<HTMLDivElement>(null);
   const moreAboutRecipeRef = useRef<HTMLDivElement>(null);
   const converterRef = useRef<HTMLDivElement>(null);
   const converterDetailsRef = useRef<HTMLDivElement>(null);
@@ -74,15 +75,16 @@ export default function HowToUse() {
     mainRef,
     mainSetRecipeRef,
     mainAdjustRef,
-    mainTimersRef,
-    mainNotesRef,
-    mainDropdownRef,
-    mainLogoutRef,
+    timersRef,
+    memosRef,
+    dropdownRef,
+    logoutRef,
     recipesRef,
     createRecipeRef,
     editRecipeRef,
     deleteRecipeRef,
     shareRecipeRef,
+    cannotViewRecipeLinkRef,
     moreAboutRecipeRef,
     converterRef,
     converterDetailsRef,
@@ -143,6 +145,10 @@ export default function HowToUse() {
     language === "ja"
       ? "どのようにレシピをシェアすることができますか？"
       : "How can I share a recipe?";
+  const cannotViewRecipeLinkTitle =
+    language === "ja"
+      ? "外部リンクから作成したレシピを見ることができません"
+      : "I cannot view the recipe created from an external link";
   const moreAboutRecipeTitle =
     language === "ja"
       ? "レシピでできることをもっと詳しく教えてください！"
@@ -224,33 +230,33 @@ export default function HowToUse() {
       });
   }
 
-  function handleClickMainTimers() {
-    if (mainTimersRef?.current)
-      mainTimersRef.current.scrollIntoView({
+  function handleClickTimers() {
+    if (timersRef?.current)
+      timersRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
   }
 
-  function handleClickMainNotes() {
-    if (mainNotesRef?.current)
-      mainNotesRef.current.scrollIntoView({
+  function handleClickMemos() {
+    if (memosRef?.current)
+      memosRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
   }
 
-  function handleClickMainDropdown() {
-    if (mainDropdownRef?.current)
-      mainDropdownRef.current.scrollIntoView({
+  function handleClickDropdown() {
+    if (dropdownRef?.current)
+      dropdownRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
   }
 
-  function handleClickMainLogout() {
-    if (mainLogoutRef?.current)
-      mainLogoutRef.current.scrollIntoView({
+  function handleClickLogout() {
+    if (logoutRef?.current)
+      logoutRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -288,6 +294,14 @@ export default function HowToUse() {
   function handleClickShareRecipe() {
     if (shareRecipeRef?.current)
       shareRecipeRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+  }
+
+  function handleClickCannotViewRecipeLink() {
+    if (cannotViewRecipeLinkRef?.current)
+      cannotViewRecipeLinkRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -450,7 +464,6 @@ export default function HowToUse() {
     setNumberOfResults(results);
   }, [keyword]);
 
-  console.log(mediaContext, language);
   return (
     <div
       style={{
@@ -645,16 +658,16 @@ export default function HowToUse() {
           <a className={styles.a} onClick={handleClickMainAdjust}>
             {mainResizeTitle}
           </a>
-          <a className={styles.a} onClick={handleClickMainTimers}>
+          <a className={styles.a} onClick={handleClickTimers}>
             {mainTimersTitle}
           </a>
-          <a className={styles.a} onClick={handleClickMainNotes}>
+          <a className={styles.a} onClick={handleClickMemos}>
             {mainMemosTitle}
           </a>
-          <a className={styles.a} onClick={handleClickMainDropdown}>
+          <a className={styles.a} onClick={handleClickDropdown}>
             {mainDropdownTitle}
           </a>
-          <a className={styles.a} onClick={handleClickMainLogout}>
+          <a className={styles.a} onClick={handleClickLogout}>
             {mainLogoutTitle}
           </a>
           <a
@@ -675,6 +688,9 @@ export default function HowToUse() {
           </a>
           <a className={styles.a} onClick={handleClickShareRecipe}>
             {shareRecipeTitle}
+          </a>
+          <a className={styles.a} onClick={handleClickCannotViewRecipeLink}>
+            {cannotViewRecipeLinkTitle}
           </a>
           <a className={styles.a} onClick={handleClickMoreAboutRecipe}>
             {moreAboutRecipeTitle}
@@ -743,7 +759,7 @@ export default function HowToUse() {
           {mainTitle}
         </h3>
         <Image
-          src="/how-to-use/main.webp"
+          src={`/how-to-use/${language}/main-explanation.webp`}
           alt={language === "ja" ? "メインページ画像" : "Main page image"}
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
@@ -758,13 +774,13 @@ export default function HowToUse() {
             {mainSetRecipeTitle}
           </p>
           <Image
-            src="/how-to-use/main-search.webp"
+            src={`/how-to-use/${language}/main-search-explanation.webp`}
             alt={language === "ja" ? "検索メニュー画像" : "Search menu image"}
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
           <Image
-            src="/how-to-use/main-search-details.webp"
+            src={`/how-to-use/${language}/main-search-details.webp`}
             alt={
               language === "ja"
                 ? "検索メニュー詳細画像"
@@ -805,7 +821,7 @@ export default function HowToUse() {
             This feature is available only when using a device larger than tablet size(${MIN_TABLET}px).`}
           </p>
         </div>
-        <div className={styles.container__answer} ref={mainTimersRef}>
+        <div className={styles.container__answer} ref={timersRef}>
           <p
             className={styles.p__question}
             style={{
@@ -815,7 +831,7 @@ export default function HowToUse() {
             {mainTimersTitle}
           </p>
           <Image
-            src="/how-to-use/main-timers.webp"
+            src={`/how-to-use/${language}/timers-details.webp`}
             alt={language === "ja" ? "タイマー画像" : "Timers image"}
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.5}
@@ -829,7 +845,7 @@ export default function HowToUse() {
               : "Enter the numbers in the h (hours), min (minutes), and sec (seconds) fields, then click Start. The maximum allowed time is 23h 59m 59s. When a timer finishes, an alarm will sound. 🍳 To pause a timer : Click Pause 🍳 To restart a timer : Click Start 🍳 To stop the alarm : Click Stop 🍳 To reset a timer : Clic reset 🍳 To change  a timer's title : Edit the name in the top input field 🍳 To add a timer : Click +Add (up to 10 timers at total) 🍳 To delete a  timer : Click the x button in the top right"}
           </p>
         </div>
-        <div className={styles.container__answer} ref={mainNotesRef}>
+        <div className={styles.container__answer} ref={memosRef}>
           <p
             className={styles.p__question}
             style={{
@@ -839,7 +855,7 @@ export default function HowToUse() {
             {mainMemosTitle}
           </p>
           <Image
-            src="/how-to-use/main-notes.webp"
+            src={`/how-to-use/${language}/memos.webp`}
             alt={language === "ja" ? "メモ画像" : "Memos image"}
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
@@ -850,7 +866,7 @@ export default function HowToUse() {
               : "You can write anything you want here. Your memos will disappear when you reload the page or navigate away."}
           </p>
         </div>
-        <div className={styles.container__answer} ref={mainDropdownRef}>
+        <div className={styles.container__answer} ref={dropdownRef}>
           <p
             className={styles.p__question}
             style={{
@@ -860,7 +876,7 @@ export default function HowToUse() {
             {mainDropdownTitle}
           </p>
           <Image
-            src="/how-to-use/main-dropdown.webp"
+            src={`/how-to-use/${language}/dropdown.webp`}
             alt={
               language === "ja"
                 ? "ドロップダウンメニュー画像"
@@ -875,18 +891,18 @@ export default function HowToUse() {
               : "Click the three-line button in the top right. Then select the page you want to go to."}
           </p>
         </div>
-        <div className={styles.container__answer} ref={mainLogoutRef}>
+        <div className={styles.container__answer} ref={logoutRef}>
           <p
             className={styles.p__question}
             style={{
               fontSize: fontHeaderSize,
             }}
-            ref={mainLogoutRef}
+            ref={logoutRef}
           >
             {mainLogoutTitle}
           </p>
           <Image
-            src="/how-to-use/others-logout.webp"
+            src={`/how-to-use/${language}/logout.webp`}
             alt={language === "ja" ? "ログアウト画像" : "Logout image"}
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.6}
@@ -905,7 +921,7 @@ export default function HowToUse() {
           {recipesTitle}
         </h3>
         <Image
-          src="/how-to-use/recipes.webp"
+          src={`/how-to-use/${language}/recipes-explanation.webp`}
           alt={
             language === "ja" ? "レシピまとめページ画像" : "Recipes page image"
           }
@@ -918,35 +934,52 @@ export default function HowToUse() {
         >
           {language === "ja" ? "レシピまとめページ画像" : "Recipes page image"}
         </p>
+        <p
+          className={styles.p__answer}
+          style={{
+            fontSize: fontSizeFinal,
+            marginTop: "1%",
+            color: "rgb(180, 108, 0)",
+            fontWeight: "bold",
+          }}
+        >
+          {language === "ja" ? "レシピページ画像" : "Recipe page image"}
+        </p>
         <Image
-          src="/how-to-use/recipe-no-edit.webp"
+          src={`/how-to-use/${language}/recipe-noedit-explanation.webp`}
           alt={
             language === "ja"
-              ? "レシピ画像（編集でない）"
-              : "Recipe image (no edit)"
+              ? "はじめから作成されたレシピ画像"
+              : "Recipe created from scratch image"
           }
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
         ></Image>
         <p
           className={styles.p__answer}
-          style={{ fontSize: fontSizeFinal, marginTop: "1%" }}
+          style={{ fontSize: `calc(${fontSizeFinal} * 0.9)`, marginTop: "1%" }}
         >
-          {language === "ja" ? "レシピページ画像" : "Recipe page image"}
+          {language === "ja"
+            ? "はじめから作成されたレシピ"
+            : "Recipe created from scratch"}
         </p>
         <Image
-          src="/how-to-use/recipe-edit.webp"
-          alt={language === "ja" ? "レシピ画像（編集）" : "Recipe image (edit)"}
+          src={`/how-to-use/${language}/recipe-link-noedit.webp`}
+          alt={
+            language === "ja"
+              ? "外部リンクから作成されたレシピ画像"
+              : "Recipe created from an external link image"
+          }
           width={imageSizeNormalWidth}
-          height={imageSizeNormalHeight * 1.7}
+          height={imageSizeNormalHeight}
         ></Image>
         <p
           className={styles.p__answer}
-          style={{ fontSize: fontSizeFinal, marginTop: "1%" }}
+          style={{ fontSize: `calc(${fontSizeFinal} * 0.9)`, marginTop: "1%" }}
         >
           {language === "ja"
-            ? "レシピページ画像（編集）"
-            : "Recipe page (edit) image"}
+            ? "リンクから作成されたレシピ"
+            : "Recipe created from a link"}
         </p>
         <div className={styles.container__answer} ref={createRecipeRef}>
           <p
@@ -959,25 +992,79 @@ export default function HowToUse() {
           </p>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
-              ? "レシピまとめページの右上にある新規作成ボタンを押し、レシピ作成ページに移動します。はじめからというボタンと外部のリンクからというボタンができます。一からオリジナルのレシピを作りたいという場合は「はじめから」、別のサイトからお気に入りのレシピを登録したいという場合は「外部のリンクから」を選択します。その後、フォームを入力しアップロードを押してください。"
-              : `Click the create button in the top right of the Recipes page to go to the recipe creation screen. Two buttons will appear: From Scratch and From an External Link. Select From Scratch when you want to create your own original recipe, and select From an External Link when you want to register your favorite recipe from another website. Then fill out the form and click Upload.`}
+              ? "レシピまとめページの右上にある新規作成ボタンを押し、レシピ作成ページに移動します"
+              : `Click the create button in the top right of the Recipes page to go to the recipe creation screen.`}
           </p>
           <Image
-            src="/how-to-use/recipe-create1.webp"
+            src={`/how-to-use/${language}/create-from.webp`}
             alt={
-              language === "ja" ? "レシピ作成画像１" : "Create recipe image1"
+              language === "ja"
+                ? "レシピ作成方法選択画像"
+                : "Select the way of recipe creation image"
+            }
+            width={imageSizeNormalWidth}
+            height={imageSizeNormalHeight}
+          ></Image>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
+            {language === "ja"
+              ? "はじめからというボタンと外部のリンクからというボタンができます。一からオリジナルのレシピを作りたいという場合は「はじめから」、別のサイトからお気に入りのレシピを登録したいという場合は「外部のリンクから」を選択します。"
+              : "Two buttons will appear: From Scratch and From an External Link. Select From Scratch when you want to create your own original recipe, and select From an External Link when you want to register your favorite recipe from another website. "}
+          </p>
+          <Image
+            src={`/how-to-use/${language}/create1.webp`}
+            alt={
+              language === "ja"
+                ? "レシピ作成（はじめから）画像１"
+                : "Create recipe from scratch image1"
             }
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.8}
           ></Image>
           <Image
-            src="/how-to-use/recipe-create2.webp"
+            src={`/how-to-use/${language}/create2.webp`}
             alt={
-              language === "ja" ? "レシピ作成画像２" : "Create recipe image2"
+              language === "ja"
+                ? "レシピ作成（はじめから）画像２"
+                : "Create recipe from scratch image2"
             }
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.5}
           ></Image>
+          <p
+            className={styles.p__answer}
+            style={{
+              fontSize: `calc(${fontSizeFinal} * 0.9)`,
+              marginTop: "1%",
+            }}
+          >
+            {language === "ja" ? "はじめから作成する" : "Create from scratch"}
+          </p>
+          <Image
+            src={`/how-to-use/${language}/create-recipe-link.webp`}
+            alt={
+              language === "ja"
+                ? "レシピ外部リンクから作成画像"
+                : "Create recipe from an external link image"
+            }
+            width={imageSizeNormalWidth}
+            height={imageSizeNormalHeight}
+          ></Image>
+          <p
+            className={styles.p__answer}
+            style={{
+              fontSize: `calc(${fontSizeFinal} * 0.9)`,
+              marginTop: "1%",
+            }}
+          >
+            {language === "ja"
+              ? "外部リンクから作成する"
+              : "Create from an external link"}
+          </p>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
+            {language === "ja"
+              ? "その後、フォームを入力しアップロードを押してください。"
+              : "Then fill out the form and click Upload."}
+          </p>
         </div>
         <div className={styles.container__answer} ref={editRecipeRef}>
           <p
@@ -994,7 +1081,7 @@ export default function HowToUse() {
               : "Click the recipe you want to edit on the Recipes page to open its Recipe page."}
           </p>
           <Image
-            src="/how-to-use/recipe-no-edit.webp"
+            src={`/how-to-use/${language}/recipe-noedit-explanation.webp`}
             alt={
               language === "ja"
                 ? "レシピ画像（編集でない）"
@@ -1003,19 +1090,73 @@ export default function HowToUse() {
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
           ></Image>
+          <p
+            className={styles.p__answer}
+            style={{ fontSize: `calc(${fontSizeFinal} * 0.9)` }}
+          >
+            {language === "ja"
+              ? "はじめから作成されたレシピ"
+              : "Recipe created from scratch"}
+          </p>
+          <Image
+            src={`/how-to-use/${language}/recipe-link-noedit.webp`}
+            alt={
+              language === "ja"
+                ? "リンクから作成されたレシピ画像（編集でない）"
+                : "Recipe created from an external link image (no edit)"
+            }
+            width={imageSizeNormalWidth}
+            height={imageSizeNormalHeight}
+          ></Image>
+          <p
+            className={styles.p__answer}
+            style={{ fontSize: `calc(${fontSizeFinal} * 0.9)` }}
+          >
+            {language === "ja"
+              ? "リンクから作成されたレシピ"
+              : "Recipe created from a link"}
+          </p>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "右上にある編集と書いてあるボタンを押してください。"
               : "Click Edit in the top right."}
           </p>
           <Image
-            src="/how-to-use/recipe-edit.webp"
+            src={`/how-to-use/${language}/recipe-edit.webp`}
             alt={
-              language === "ja" ? "レシピ画像（編集）" : "Recipe image (edit)"
+              language === "ja"
+                ? "はじめから作成されたレシピ画像（編集）"
+                : "Recipe created from scratch image (edit)"
             }
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.7}
           ></Image>
+          <p
+            className={styles.p__answer}
+            style={{ fontSize: `calc(${fontSizeFinal} * 0.9)` }}
+          >
+            {language === "ja"
+              ? "はじめから作成されたレシピ（編集）"
+              : "Recipe created from scratch (edit)"}
+          </p>
+          <Image
+            src={`/how-to-use/${language}/recipe-link-edit.webp`}
+            alt={
+              language === "ja"
+                ? "リンクから作成されたレシピ画像（編集）"
+                : "Recipe created from an external link image (edit)"
+            }
+            width={imageSizeNormalWidth}
+            height={imageSizeNormalHeight}
+          ></Image>
+          <p
+            className={styles.p__answer}
+            style={{ fontSize: `calc(${fontSizeFinal} * 0.9)` }}
+          >
+            {language === "ja"
+              ? "リンクから作成されたレシピ（編集）"
+              : "Recipe created from a link (edit)"}
+          </p>
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "フォームにある内容を変更して、アップロードボタンを押してください。"
@@ -1037,7 +1178,7 @@ export default function HowToUse() {
               : "Click the Select Recipe button on the Recipes page."}
           </p>
           <Image
-            src="/how-to-use/recipes-select.webp"
+            src={`/how-to-use/${language}/recipes-select.webp`}
             alt={language === "ja" ? "レシピ選択画像" : "Select recipe image"}
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight}
@@ -1045,7 +1186,7 @@ export default function HowToUse() {
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "削除したいレシピの横にあるチェックボックスをチェックしてください。ページをまたいでの選択はできません。ゴミ箱のボタンを押しレシピを削除してください。削除をせずにレシピ選択をやめたい場合は、選択を終了ボタンを押してください。"
-              : "Click the checkboxes next to the recipes you want to delete.(You cannot select recipes across multiple pages.) Then click the trash can icon to delete them. If you want to stop selecting recipes without deleting them, click the Stop Selecting button."}
+              : "Click the checkboxes next to the recipes you want to delete. (You cannot select recipes across multiple pages.) Then click the trash can icon to delete them. If you want to stop selecting recipes without deleting them, click the Stop Selecting button."}
           </p>
         </div>
         <div className={styles.container__answer} ref={shareRecipeRef}>
@@ -1063,6 +1204,31 @@ export default function HowToUse() {
               : "Click the recipe you want to share on the Recipes page to open its Recipe page. Then copy the link and share it with anyone."}
           </p>
         </div>
+        <div className={styles.container__answer} ref={cannotViewRecipeLinkRef}>
+          <p
+            className={styles.p__question}
+            style={{
+              fontSize: fontHeaderSize,
+            }}
+          >
+            {cannotViewRecipeLinkTitle}
+          </p>
+          <Image
+            src={`/how-to-use/${language}/recipe-link-refuse.webp`}
+            alt={
+              language === "ja"
+                ? "外部リンクから作成されたレシピ見えない画像"
+                : "Cannot view recipe created from an external link image"
+            }
+            width={imageSizeNormalWidth}
+            height={imageSizeNormalHeight}
+          ></Image>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
+            {language === "ja"
+              ? "登録されたリンクのウェブサイトのセキュリティの問題により、そのサイトのレシピを表示できない場合があります。その場合は、そのレシピの一番下に添付してあるリンクから直接そのサイトにアクセスしてください。"
+              : "For security reasons, the website linked in the recipe may not allow its page to be displayed. If the page doesn't appear, please click the link in the bottom of the recipe page to visit the website directly."}
+          </p>
+        </div>
         <div className={styles.container__answer} ref={moreAboutRecipeRef}>
           <p
             className={styles.p__question}
@@ -1073,7 +1239,7 @@ export default function HowToUse() {
             {moreAboutRecipeTitle}
           </p>
           <Image
-            src="/how-to-use/brief-explanation.webp"
+            src={`/how-to-use/${language}/brief-explanation-details.webp`}
             alt={
               language === "ja"
                 ? "レシピ分量、単位システム、温度単位の変更画像"
@@ -1088,7 +1254,7 @@ export default function HowToUse() {
               : "You can adjust the number of servings, choose your preferred unit system, and switch temperature units. This website will instantly calculate and display the converted ingredient amounts and temperatures."}
           </p>
           <Image
-            src="/how-to-use/recipe-ing.webp"
+            src={`/how-to-use/${language}/recipe-ing.webp`}
             alt={
               language === "ja"
                 ? "レシピ材料チェックリスト画像"
@@ -1111,7 +1277,7 @@ export default function HowToUse() {
           {converterTitle}
         </h3>
         <Image
-          src="/how-to-use/converter.webp"
+          src={`/how-to-use/${language}/converter.webp`}
           alt={
             language === "ja" ? "単位変換ページ画像" : "Converter page image"
           }
@@ -1133,7 +1299,7 @@ export default function HowToUse() {
               : "You can convert ingredient units (e.g., grams, oz), temperature units (℉/℃), and length units (e.g., cm, inches)."}
           </p>
           <Image
-            src="/how-to-use/converter-ing.webp"
+            src={`/how-to-use/${language}/converter-ing.webp`}
             alt={
               language === "ja"
                 ? "材料単位の変換画像"
@@ -1143,7 +1309,7 @@ export default function HowToUse() {
             height={imageSizeNormalHeight * 0.8}
           ></Image>
           <Image
-            src="/how-to-use/converter-others.webp"
+            src={`/how-to-use/${language}/converter-others.webp`}
             alt={
               language === "ja"
                 ? "温度と長さ単位の変換画像"
@@ -1161,7 +1327,7 @@ export default function HowToUse() {
           {feedbackTitle}
         </h3>
         <Image
-          src="/how-to-use/feedback.webp"
+          src={`/how-to-use/${language}/feedback.webp`}
           alt={
             language === "ja"
               ? "フィードバックページ画像"
@@ -1179,7 +1345,6 @@ export default function HowToUse() {
           >
             {feedbackDetailsTitle}
           </p>
-          {/* from here! */}
           <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
             {language === "ja"
               ? "このウェブサイトに対するご意見・ご感想を送ることができます。このサイトについてどう思うのか、またバグを見つけた際にフィードバックを送っていただけると非常に助かります！"
@@ -1194,7 +1359,7 @@ export default function HowToUse() {
           {newsTitle}
         </h3>
         <Image
-          src="/how-to-use/news.webp"
+          src={`/how-to-use/${language}/news.webp`}
           alt={language === "ja" ? "ニュースページ画像" : "News page image"}
           width={imageSizeNormalWidth}
           height={imageSizeNormalHeight}
@@ -1222,7 +1387,7 @@ export default function HowToUse() {
           {accountTitle}
         </h3>
         <Image
-          src="/how-to-use/account.webp"
+          src={`/how-to-use/${language}/account.webp`}
           alt={
             language === "ja" ? "アカウントページ画像" : "Account page image"
           }
@@ -1254,7 +1419,7 @@ export default function HowToUse() {
             {changeAccountTitle}
           </p>
           <Image
-            src="/how-to-use/account-email.webp"
+            src={`/how-to-use/${language}/email.webp`}
             alt={
               language === "ja"
                 ? "メールアドレス変更画像"
@@ -1269,7 +1434,7 @@ export default function HowToUse() {
               : "Enter new email in the input field and click Submit on the Account page."}
           </p>
           <Image
-            src="/how-to-use/account-password.webp"
+            src={`/how-to-use/${language}/password.webp`}
             alt={
               language === "ja" ? "パスワード変更画像" : "Change password image"
             }
@@ -1292,8 +1457,8 @@ export default function HowToUse() {
             {closeAccountTitle}
           </p>
           <Image
-            src="/how-to-use/account-close.webp"
-            alt={language === "ja" ? "退会画像" : "Close account image"}
+            src={`/how-to-use/${language}/close-account.webp`}
+            alt={language === "ja" ? "退会手続き画像" : "Close account image"}
             width={imageSizeNormalWidth}
             height={imageSizeNormalHeight * 1.1}
           ></Image>

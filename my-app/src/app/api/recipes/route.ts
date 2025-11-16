@@ -18,6 +18,7 @@ import {
 import { authenticateToken, refreshAccessToken } from "@/app/lib/auth";
 //general methods
 import { downloadFile, getId } from "@/app/lib/helpers/api";
+import { success } from "zod";
 
 function uploadFile(bucket: any, file: TYPE_FILE, metadata: any) {
   return new Promise((resolve, reject) => {
