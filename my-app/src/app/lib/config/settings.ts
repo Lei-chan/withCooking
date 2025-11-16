@@ -1,3 +1,4 @@
+export const WEBSITE_URL = "https://with-cooking.vercel.app/";
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MIN_EACH = 1;
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;

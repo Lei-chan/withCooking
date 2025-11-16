@@ -44,6 +44,7 @@ import {
 } from "@/app/lib/helpers/recipes";
 //library
 import { nanoid } from "nanoid";
+import { WEBSITE_URL } from "../lib/config/settings";
 
 export default function MAIN() {
   const searchRef = useRef(null);
@@ -743,10 +744,7 @@ function DropdownMenu({
           opacity: !isDropdownVisible ? 0 : 1,
         }}
       >
-        <Link
-          className={styles.link__dropdown}
-          href="http://localhost:3000/recipes"
-        >
+        <Link className={styles.link__dropdown} href={`${WEBSITE_URL}/recipes`}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/recipes.svg"}
@@ -759,7 +757,7 @@ function DropdownMenu({
         </Link>
         <Link
           className={styles.link__dropdown}
-          href="http://localhost:3000/converter"
+          href={`${WEBSITE_URL}/converter`}
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
@@ -771,10 +769,7 @@ function DropdownMenu({
             <span>{language === "ja" ? "単位変換" : "Converter"}</span>
           </li>
         </Link>
-        <Link
-          className={styles.link__dropdown}
-          href="http://localhost:3000/account"
-        >
+        <Link className={styles.link__dropdown} href="${WEBSITE_URL}/account">
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/account.svg"}
@@ -785,10 +780,7 @@ function DropdownMenu({
             <span>{language === "ja" ? "アカウント" : "Account"}</span>
           </li>
         </Link>
-        <Link
-          className={styles.link__dropdown}
-          href="http://localhost:3000/news"
-        >
+        <Link className={styles.link__dropdown} href="${WEBSITE_URL}/news">
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/news.svg"}
@@ -811,7 +803,7 @@ function DropdownMenu({
         </Link>
         <Link
           className={styles.link__dropdown}
-          href="http://localhost:3000/how-to-use"
+          href="${WEBSITE_URL}/how-to-use"
         >
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
@@ -823,10 +815,7 @@ function DropdownMenu({
             <span>{language === "ja" ? "使い方" : "How To Use"}</span>
           </li>
         </Link>
-        <Link
-          className={styles.link__dropdown}
-          href="http://localhost:3000/feedback"
-        >
+        <Link className={styles.link__dropdown} href="${WEBSITE_URL}/feedback">
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/feedback.svg"}
