@@ -79,10 +79,31 @@ export default function MAIN() {
       setWindowWidth(window.innerWidth);
       setWindowHeight(window.innerHeight);
     };
+
+    handleResize();
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const recipeWid =
+      mediaContext === "mobile"
+        ? windowWidth + "px"
+        : mediaContext === "tablet"
+        ? windowWidth * 0.65 + "px"
+        : windowWidth * 0.55 + "px";
+    setRecipeWidth(recipeWid);
+    setTimerMemoWidth(
+      mediaContext === "mobile"
+        ? windowWidth + "px"
+        : windowWidth - parseFloat(recipeWid) + "px"
+    );
+  }, [mediaContext, windowWidth]);
+
+  useEffect(() => {
+    setTimerHeight(windowHeight * 0.65 + "px");
+  }, [windowHeight]);
 
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
