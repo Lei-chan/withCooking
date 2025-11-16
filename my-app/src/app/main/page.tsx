@@ -45,8 +45,10 @@ import {
 //library
 import { nanoid } from "nanoid";
 import { WEBSITE_URL } from "../lib/config/settings";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 export default function MAIN() {
+  const router = useRouter();
   const searchRef = useRef(null);
   const userContext = useContext(UserContext);
 
@@ -209,6 +211,7 @@ export default function MAIN() {
         <DropdownMenu
           mediaContext={mediaContext}
           language={language}
+          router={router}
           isDropdownVisible={isDropdownVisible}
           onClickDropdown={handleToggleDropdown}
           onClickLogout={handleToggleLogout}
@@ -230,6 +233,7 @@ export default function MAIN() {
             mediaContext={mediaContext}
             language={language}
             userContext={userContext}
+            router={router}
             recipeWidth={recipeWidth}
             innerHeight={windowHeight}
           />
@@ -280,17 +284,17 @@ function Recipe({
   mediaContext,
   language,
   userContext,
+  router,
   recipeWidth,
   innerHeight,
 }: {
   mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
+  router: AppRouterInstance;
   recipeWidth: string;
   innerHeight: number;
 }) {
-  const router = useRouter();
-
   const [recipe, setRecipe] = useState<TYPE_RECIPE | TYPE_RECIPE_LINK | null>(
     null
   );
@@ -665,12 +669,14 @@ function Search({
 function DropdownMenu({
   mediaContext,
   language,
+  router,
   isDropdownVisible,
   onClickDropdown,
   onClickLogout,
 }: {
   mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
+  router: AppRouterInstance;
   isDropdownVisible: boolean;
   onClickDropdown: () => void;
   onClickLogout: () => void;
@@ -685,6 +691,30 @@ function DropdownMenu({
 
   //check if news has new info
   const isNewsNew = useMemo(() => news.some((news) => news.new), [news]);
+
+  function handleClickRecipes() {
+    router.push("/recipes");
+  }
+
+  function handleClickConverter() {
+    router.push("/converter");
+  }
+
+  function handleClickAccount() {
+    router.push("/account");
+  }
+
+  function handleClickNews() {
+    router.push("/news");
+  }
+
+  function handleClickHowToUse() {
+    router.push("/how-to-use");
+  }
+
+  function handleClickFeedback() {
+    router.push("/feedback");
+  }
 
   return (
     <div
@@ -744,7 +774,7 @@ function DropdownMenu({
           opacity: !isDropdownVisible ? 0 : 1,
         }}
       >
-        <Link className={styles.link__dropdown} href={`${WEBSITE_URL}/recipes`}>
+        <div className={styles.link__dropdown} onClick={handleClickRecipes}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/recipes.svg"}
@@ -754,11 +784,8 @@ function DropdownMenu({
             ></Image>
             <span>{language === "ja" ? "レシピ" : "Recipes"}</span>
           </li>
-        </Link>
-        <Link
-          className={styles.link__dropdown}
-          href={`${WEBSITE_URL}/converter`}
-        >
+        </div>
+        <div className={styles.link__dropdown} onClick={handleClickConverter}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/convert.svg"}
@@ -768,8 +795,8 @@ function DropdownMenu({
             ></Image>
             <span>{language === "ja" ? "単位変換" : "Converter"}</span>
           </li>
-        </Link>
-        <Link className={styles.link__dropdown} href={`${WEBSITE_URL}/account`}>
+        </div>
+        <div className={styles.link__dropdown} onClick={handleClickAccount}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/account.svg"}
@@ -779,8 +806,8 @@ function DropdownMenu({
             ></Image>
             <span>{language === "ja" ? "アカウント" : "Account"}</span>
           </li>
-        </Link>
-        <Link className={styles.link__dropdown} href={`${WEBSITE_URL}/news`}>
+        </div>
+        <div className={styles.link__dropdown} onClick={handleClickNews}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/news.svg"}
@@ -800,11 +827,8 @@ function DropdownMenu({
               </span>
             )}
           </li>
-        </Link>
-        <Link
-          className={styles.link__dropdown}
-          href={`${WEBSITE_URL}/how-to-use`}
-        >
+        </div>
+        <div className={styles.link__dropdown} onClick={handleClickHowToUse}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/howtouse.svg"}
@@ -814,11 +838,8 @@ function DropdownMenu({
             ></Image>
             <span>{language === "ja" ? "使い方" : "How To Use"}</span>
           </li>
-        </Link>
-        <Link
-          className={styles.link__dropdown}
-          href={`${WEBSITE_URL}/feedback`}
-        >
+        </div>
+        <div className={styles.link__dropdown} onClick={handleClickFeedback}>
           <li className={styles.list} style={{ gap: "8%" }}>
             <Image
               src={"/icons/feedback.svg"}
@@ -830,7 +851,7 @@ function DropdownMenu({
             ></Image>
             <span>{language === "ja" ? "フィードバック" : "Feedback"}</span>
           </li>
-        </Link>
+        </div>
         <li
           className={styles.list}
           style={{ gap: "8%" }}

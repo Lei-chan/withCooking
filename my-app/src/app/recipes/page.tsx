@@ -87,7 +87,7 @@ export default function Recipes() {
 
   //don't modify numberOfTotle recipes
   const numbreOfTotalRecipes = userContext?.numberOfRecipes || 0;
-  console.log(numbreOfTotalRecipes);
+  // console.log(numbreOfTotalRecipes);
 
   const [numberOfPages, setNumberOfPages] = useState<number>(
     calcNumberOfPages(numbreOfTotalRecipes, recipesPerPage)
@@ -260,6 +260,12 @@ function SearchSection({
   numberOfCurRecipes: number;
   onSubmitSearch: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
+  const router = useRouter();
+
+  function handleClickCreate() {
+    router.push("/recipes/create");
+  }
+
   return (
     <div
       style={{
@@ -354,17 +360,16 @@ function SearchSection({
           {language === "ja" ? "検索" : "Search"}
         </button>
       </form>
-      <Link href={`${WEBSITE_URL}/recipes/create`}>
-        <button
-          className={styles.btn__create}
-          style={{
-            fontSize: `calc(${fontSize} * 0.9)`,
-          }}
-          type="button"
-        >
-          {language === "ja" ? "新規作成" : "Create"}
-        </button>
-      </Link>
+      <button
+        className={styles.btn__create}
+        style={{
+          fontSize: `calc(${fontSize} * 0.9)`,
+        }}
+        type="button"
+        onClick={handleClickCreate}
+      >
+        {language === "ja" ? "新規作成" : "Create"}
+      </button>
     </div>
   );
 }
