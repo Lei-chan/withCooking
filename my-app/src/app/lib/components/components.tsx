@@ -2814,7 +2814,7 @@ export function RecipeNoEdit({
     setFontSizeFinal(fontSizeFin);
 
     setHeaderSize(parseFloat(fontSizeFinal) * 1.1 + "px");
-  }, [mediaContext, language, windowWidth]);
+  }, [recipeWidth, mediaContext, language, windowWidth]);
 
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE | null>(userRecipe);
