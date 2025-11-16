@@ -305,7 +305,7 @@ function Recipe({
     window.addEventListener("hashchange", handleHashChange);
 
     return () => window.removeEventListener("hashchange", handleHashChange);
-  }, [language]);
+  }, []);
 
   async function handleHashChange() {
     const id = window.location.hash.slice(1);
