@@ -1,13 +1,25 @@
-import { NextRequest } from "next/server";
-import { TYPE_RECIPE, TYPE_RECIPE_LINK } from "../config/type";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  MyError,
+  TYPE_CONVERTED_FILE,
+  TYPE_RECIPE,
+  TYPE_RECIPE_LINK,
+} from "../config/type";
 import mongoose from "mongoose";
+import { GridFSBucket } from "mongodb";
+
+export const returnNonApiErrorResponse = () =>
+  NextResponse.json(
+    { success: false, error: "Unkown error occured" },
+    { status: 500 }
+  );
 
 export function getId(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const id = searchParams.get("id");
 
   if (!mongoose.isValidObjectId(id)) {
-    const err: any = new Error("Invalid Id provided");
+    const err = new Error("Invalid Id provided") as MyError;
     err.statusCode = 400;
     throw err;
   }
@@ -15,7 +27,7 @@ export function getId(req: NextRequest) {
   return id;
 }
 
-export function downloadFile(bucket: any, file: any) {
+export function downloadFile(bucket: GridFSBucket, file: TYPE_CONVERTED_FILE) {
   return new Promise((resolve, reject) => {
     const downloadStream = bucket.openDownloadStream(
       file.fileId instanceof mongoose.Types.ObjectId
@@ -23,8 +35,8 @@ export function downloadFile(bucket: any, file: any) {
         : new mongoose.Types.ObjectId(file.fileId)
     );
 
-    const chunks: any[] = [];
-    downloadStream.on("data", (chunk: any) => chunks.push(chunk));
+    const chunks: Buffer[] = [];
+    downloadStream.on("data", (chunk: Buffer) => chunks.push(chunk));
 
     downloadStream.on("end", () => {
       const buffer = Buffer.concat(chunks);

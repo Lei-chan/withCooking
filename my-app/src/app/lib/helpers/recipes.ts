@@ -7,6 +7,11 @@ import {
   TYPE_RECIPE_LINK,
   TYPE_REGION_UNIT,
   TYPE_SERVINGS_UNIT,
+  TYPE_USER_CONTEXT,
+  TYPE_USER_RECIPE,
+  TYPE_USER_RECIPE_DATABASE,
+  TYPE_USER_RECIPE_LINK,
+  TYPE_USER_RECIPE_LINK_DATABASE,
 } from "../config/type";
 import { convertIngUnits, convertTempUnits } from "./converter";
 import { getData } from "./other";
@@ -14,7 +19,7 @@ import { getData } from "./other";
 //create recipe
 export const uploadRecipeCreate = async (
   recipe: TYPE_RECIPE | TYPE_RECIPE_LINK,
-  userContext: any
+  userContext: TYPE_USER_CONTEXT
 ) => {
   try {
     ///store new recipe in recipes database and user info database
@@ -52,7 +57,7 @@ export const uploadRecipeCreate = async (
 //update recipe
 export const uploadRecipeUpdate = async (
   recipe: TYPE_RECIPE | TYPE_RECIPE_LINK,
-  userContext: any
+  userContext: TYPE_USER_CONTEXT
 ) => {
   try {
     //remove _id to avoid trying to update immutable field
@@ -153,7 +158,7 @@ export const getTranslatedIngredientsUnit = (
 //returns recipe with updated convertion
 export const updateConvertion = (recipe: TYPE_RECIPE) => {
   const newRecipe = { ...recipe };
-  const newIngs = recipe.ingredients.map((ing: any) => {
+  const newIngs = recipe.ingredients.map((ing: TYPE_INGREDIENT) => {
     const newIng = { ...ing };
     newIng.convertion = convertIngUnits(ing.amount, ing.unit);
     return newIng;
@@ -241,7 +246,7 @@ export const calcTransitionXSlider = (index: number, curSlide: number) => {
   return `translateX(${translateX}%)`;
 };
 
-export const getImageFileData = (file: File, uri: any) => {
+export const getImageFileData = (file: File, uri: string) => {
   return {
     data: uri,
     contentType: "WEBP",
@@ -252,7 +257,7 @@ export const getImageFileData = (file: File, uri: any) => {
 
 //recipes page
 export const getUserRecipes = async (
-  accessToken: any,
+  accessToken: string | undefined,
   startIndex: number,
   recipesPerRequest: number,
   keyword: string = ""
@@ -280,7 +285,12 @@ export const calcNumberOfPages = (
 ) => Math.ceil(recipeLength / recipesPerPage);
 
 export const getRecipesPerPage = (
-  filteredRecipes: TYPE_RECIPE[],
+  filteredRecipes: (
+    | TYPE_RECIPE
+    | TYPE_RECIPE_LINK
+    | TYPE_USER_RECIPE
+    | TYPE_USER_RECIPE_LINK
+  )[],
   numberRecipesPerPage: number,
   curPage: number
 ) => {
@@ -291,23 +301,35 @@ export const getRecipesPerPage = (
   return recipesPerPage ? recipesPerPage : [];
 };
 
-export const getOrderedRecipes = (recipes: any[]) =>
+export const getOrderedRecipes = (
+  recipes: (TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE)[] | []
+) =>
   recipes
-    .toSorted((a: any, b: any) => {
-      const titleA = a.title.toLowerCase();
-      const titleB = b.title.toLowerCase();
+    .toSorted(
+      (
+        a: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
+        b: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+      ) => {
+        const titleA = a.title.toLowerCase();
+        const titleB = b.title.toLowerCase();
 
-      if (titleA < titleB) return -1;
-      if (titleA > titleB) return 1;
+        if (titleA < titleB) return -1;
+        if (titleA > titleB) return 1;
 
-      return 0;
-    })
-    .toSorted((a: any, b: any) => {
-      if (a.favorite && !b.favorite) return -1;
-      if (!a.favorite && b.favorite) return 1;
+        return 0;
+      }
+    )
+    .toSorted(
+      (
+        a: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
+        b: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+      ) => {
+        if (a.favorite && !b.favorite) return -1;
+        if (!a.favorite && b.favorite) return 1;
 
-      return 0;
-    });
+        return 0;
+      }
+    );
 
 export const createMessage = (
   language: TYPE_LANGUAGE,

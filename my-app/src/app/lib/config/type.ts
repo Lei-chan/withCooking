@@ -16,6 +16,18 @@ export type TYPE_USER_CONTEXT = {
   reduceNumberOfRecipes: (deletedNumberOfRecipes: number) => void;
 } | null;
 
+export interface MyError extends Error {
+  // message: string;
+  statusCode: number;
+}
+
+export type TYPE_GRIDFS_METADATA = {
+  userId: string;
+  recipeTitle: string;
+  section: string;
+  index?: number;
+};
+
 export type TYPE_RECIPE = {
   _id?: string;
   favorite: boolean;
@@ -27,15 +39,17 @@ export type TYPE_RECIPE = {
   temperatures: { temperatures: number[]; unit: "℉" | "℃" };
   ingredients: TYPE_INGREDIENTS;
   preparation: string;
-  instructions: {
-    instruction: string;
-    image: TYPE_FILE | undefined;
-  }[];
+  instructions:
+    | {
+        instruction: string;
+        image: TYPE_FILE | undefined;
+      }[]
+    | [];
   description: string;
   memoryImages: TYPE_FILE[] | [];
   comments: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TYPE_RECIPE_LINK = {
@@ -43,8 +57,48 @@ export type TYPE_RECIPE_LINK = {
   title: string;
   favorite: boolean;
   link: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TYPE_USER_RECIPE = {
+  _id: string;
+  mainImagePreview: TYPE_FILE | undefined;
+  title: string;
+  author: string;
+  favorite: boolean;
+  ingredients: TYPE_INGREDIENTS;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TYPE_USER_RECIPE_LINK = {
+  _id: string;
+  title: string;
+  favorite: boolean;
+  link: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TYPE_USER_RECIPE_DATABASE = {
+  recipeId: string;
+  mainImagePreview: TYPE_CONVERTED_FILE | undefined;
+  title: string;
+  author: string;
+  favorite: boolean;
+  ingredients: TYPE_INGREDIENTS;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TYPE_USER_RECIPE_LINK_DATABASE = {
+  recipeId: string;
+  title: string;
+  favorite: boolean;
+  link: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type TYPE_INSTRUCTION = {

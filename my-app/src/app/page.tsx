@@ -15,7 +15,12 @@ import homeDetails from "./lib/models/homeDetails";
 //component
 import { LanguageSelect } from "./lib/components/components";
 //type
-import { TYPE_LANGUAGE, TYPE_MEDIA } from "./lib/config/type";
+import {
+  MyError,
+  TYPE_LANGUAGE,
+  TYPE_MEDIA,
+  TYPE_USER_CONTEXT,
+} from "./lib/config/type";
 //settings
 import { PASSWORD_MIN_EACH, PASSWORD_MIN_LENGTH } from "./lib/config/settings";
 //general methods
@@ -23,6 +28,7 @@ import {
   generateErrorMessage,
   getData,
   getFontSizeForLanguage,
+  isApiError,
 } from "@/app/lib/helpers/other";
 
 export default function Home() {
@@ -78,7 +84,7 @@ export default function Home() {
 
   //Add escape key event listener
   useEffect(() => {
-    const handleKeyDownEscape = function (e: any) {
+    const handleKeyDownEscape = function (e: KeyboardEvent) {
       if (e.key !== "Escape" || (!showLogin && !showSignup)) return;
 
       showLogin ? handleToggleLogin() : handleToggleSignup();
@@ -613,7 +619,7 @@ function Explanation({
     setTransform(nextTransform);
   }, [inView, isEven]);
 
-  function getTransform(inView: any, isEven: boolean) {
+  function getTransform(inView: boolean, isEven: boolean) {
     if (!inView && isEven) return "translateX(98%)";
     if (!inView && !isEven) return "translateX(-98%)";
     if (inView && isEven) {
@@ -780,7 +786,7 @@ function OverlayLogin({
 }: {
   mediaContext: string;
   language: TYPE_LANGUAGE;
-  userContext: any;
+  userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   warningFontSize: string;
   inputWrapperWidth: string;
@@ -847,10 +853,13 @@ function OverlayLogin({
 
       //go to main
       router.push("/main");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return console.error("Error while loging in", String(err), 500);
+
       console.error(
         "Error while loging in",
-        err.message,
+        err instanceof Error && err.message,
         err.statusCode || 500
       );
 
@@ -1019,7 +1028,7 @@ function OverlayCreateAccount({
 }: {
   mediaContext: string;
   language: TYPE_LANGUAGE;
-  userContext: any;
+  userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   warningFontSize: string;
   inputWrapperWidth: string;
@@ -1089,7 +1098,10 @@ function OverlayCreateAccount({
       await createAccount({ email: trimmedEmail, password: trimmedPassword });
 
       router.push("/main");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return console.error("error while creating account", String(err), 500);
+
       console.error(
         "error while creating account",
         err.message,
@@ -1122,7 +1134,7 @@ function OverlayCreateAccount({
       });
 
       userContext?.firstLogin(data.accessToken, data.data.numberOfRecipes);
-    } catch (err: any) {
+    } catch (err: unknown) {
       throw err;
     }
   }

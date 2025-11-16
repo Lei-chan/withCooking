@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import { MyError } from "./config/type";
 
 //type
 interface MyJwtPayload extends jwt.JwtPayload {
@@ -69,7 +70,7 @@ export async function refreshAccessToken() {
 
     const decodedRefresh = refreshToken && verifyRefreshToken(refreshToken);
     if (!decodedRefresh) {
-      const err: any = new Error("Invalid token");
+      const err = new Error("Invalid token") as MyError;
       err.statusCode = 401;
       throw err;
     }

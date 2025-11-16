@@ -5,13 +5,23 @@ import connectDB from "@/app/lib/mongoDB";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
 //schema
 import User from "@/app/lib/modelSchemas/User";
+//type
+import {
+  MyError,
+  TYPE_INGREDIENT,
+  TYPE_USER_RECIPE_DATABASE,
+  TYPE_USER_RECIPE_LINK_DATABASE,
+} from "@/app/lib/config/type";
 //method for file downloading
-import { downloadFile } from "@/app/lib/helpers/api";
+import { downloadFile, returnNonApiErrorResponse } from "@/app/lib/helpers/api";
 //methods for authentication
 import { refreshAccessToken, authenticateToken } from "@/app/lib/auth";
 //methods for recipes
 import { getOrderedRecipes } from "@/app/lib/helpers/recipes";
+//method for api
 import { convertRecipeToUserRecipe } from "@/app/lib/helpers/api";
+//general method
+import { isApiError } from "@/app/lib/helpers/other";
 
 //_id in Recipe is recipeId in User recipes
 
@@ -27,7 +37,7 @@ export async function GET(req: NextRequest) {
     const keyword = searchParams.get("keyword");
 
     if (!startIndex || !endIndex) {
-      const err: any = new Error("startIndex and endIndex are required");
+      const err = new Error("startIndex and endIndex are required") as MyError;
       err.statusCode = 500;
       throw err;
     }
@@ -48,17 +58,22 @@ export async function GET(req: NextRequest) {
 
     const filteredRecipes =
       keyword && recipes.length
-        ? recipes.filter((recipe: any) => {
-            const structuredKeyword = keyword.trim().toLowerCase();
+        ? recipes.filter(
+            (
+              recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+            ) => {
+              const structuredKeyword = keyword.trim().toLowerCase();
 
-            return (
-              recipe.title.toLowerCase().includes(structuredKeyword) ||
-              (recipe.ingredients &&
-                recipe.ingredients.find((ing: any) =>
-                  ing.ingredient.toLowerCase().includes(structuredKeyword)
-                ))
-            );
-          })
+              return (
+                recipe.title.toLowerCase().includes(structuredKeyword) ||
+                ("ingredients" in recipe &&
+                  recipe.ingredients.length &&
+                  recipe.ingredients.find((ing: TYPE_INGREDIENT) =>
+                    ing.ingredient.toLowerCase().includes(structuredKeyword)
+                  ))
+              );
+            }
+          )
         : recipes;
 
     const slicedRecipes = filteredRecipes.slice(
@@ -68,25 +83,40 @@ export async function GET(req: NextRequest) {
 
     const mainImagePreviews = slicedRecipes.length
       ? await Promise.all(
-          slicedRecipes.map((recipe: any) =>
-            recipe.mainImagePreview
-              ? downloadFile(bucket, recipe.mainImagePreview)
-              : Promise.resolve(undefined)
+          slicedRecipes.map(
+            (
+              recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+            ) =>
+              "mainImagePreview" in recipe && recipe.mainImagePreview
+                ? downloadFile(bucket, recipe.mainImagePreview)
+                : Promise.resolve(undefined)
           )
         )
       : [];
 
     //use _id and send mainImagePreview data for frontend
     const recipesForPreview = slicedRecipes.length
-      ? slicedRecipes.map((recipe: any, i: number) => {
-          const { recipeId, mainImagePreview, ...others } = recipe;
-          const newRecipe = {
-            _id: recipeId,
-            mainImagePreview: mainImagePreviews[i],
-            ...others,
-          };
-          return newRecipe;
-        })
+      ? slicedRecipes.map(
+          (
+            recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
+            i: number
+          ) => {
+            if ("mainImagePreview" in recipe) {
+              const { recipeId, mainImagePreview, ...others } = recipe;
+              return {
+                _id: recipeId,
+                mainImagePreview: mainImagePreviews[i],
+                ...others,
+              };
+            } else {
+              const { recipeId, ...others } = recipe;
+              return {
+                _id: recipeId,
+                ...others,
+              };
+            }
+          }
+        )
       : [];
 
     return NextResponse.json(
@@ -98,7 +128,9 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -137,13 +169,17 @@ export async function POST(req: NextRequest) {
     //change recipeId to _id for frontend
     const structuredRecipes = updatedUser
       .toObject()
-      .recipes.map((recipe: any) => {
-        const { recipeId, ...others } = recipe;
-        return {
-          _id: recipeId,
-          ...others,
-        };
-      });
+      .recipes.map(
+        (
+          recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+        ) => {
+          const { recipeId, ...others } = recipe;
+          return {
+            _id: recipeId,
+            ...others,
+          };
+        }
+      );
 
     return NextResponse.json(
       {
@@ -154,7 +190,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -183,7 +221,11 @@ export async function PUT(req: NextRequest) {
 
     //filter out updated recipe and add again
     const recipesForNotUpdate = recipes.length
-      ? recipes.filter((recipe: any) => recipe.recipeId !== newBody.recipeId)
+      ? recipes.filter(
+          (
+            recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+          ) => recipe.recipeId !== newBody.recipeId
+        )
       : [];
     const newRecipes = [...recipesForNotUpdate, newBody];
 
@@ -196,13 +238,17 @@ export async function PUT(req: NextRequest) {
     //change recipeId to _id for frontend
     const structuredRecipes = updatedUser
       .toObject()
-      .recipes.map((recipe: any) => {
-        const { recipeId, ...others } = recipe;
-        return {
-          _id: recipeId,
-          ...others,
-        };
-      });
+      .recipes.map(
+        (
+          recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+        ) => {
+          const { recipeId, ...others } = recipe;
+          return {
+            _id: recipeId,
+            ...others,
+          };
+        }
+      );
 
     return NextResponse.json(
       {
@@ -213,7 +259,9 @@ export async function PUT(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -240,11 +288,14 @@ export async function DELETE(req: NextRequest) {
     const recipes = user.toObject().recipes;
 
     const deletedIndexes = recipeIdsArr.map((id) =>
-      recipes.findIndex((recipe: any) => recipe.recipeId === id)
+      recipes.findIndex(
+        (recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE) =>
+          recipe.recipeId === id
+      )
     );
 
     if (deletedIndexes.includes(-1)) {
-      const err: any = new Error("Recipe not found");
+      const err = new Error("Recipe not found") as MyError;
       err.statusCode = 404;
       throw err;
     }
@@ -270,7 +321,9 @@ export async function DELETE(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }

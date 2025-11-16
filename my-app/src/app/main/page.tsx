@@ -33,6 +33,8 @@ import {
   getData,
   getFontSizeForLanguage,
   getSize,
+  isApiError,
+  logNonApiError,
 } from "@/app/lib/helpers/other";
 //methods for recipes
 import {
@@ -326,8 +328,12 @@ function Recipe({
 
       setRecipe(recipeData.data);
       setIsLoading(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsLoading(false);
+
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while loading recipe");
+
       console.error(
         "Error while loading recipe",
         err.message,
@@ -402,7 +408,7 @@ function Search({
   userContext: TYPE_USER_CONTEXT;
   innerWidth: number;
   isSearchVisible: boolean;
-  searchRef: any;
+  searchRef: React.RefObject<null>;
   onClickSearch: () => void;
 }) {
   const router = useRouter();
@@ -431,7 +437,9 @@ function Search({
     language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
   const mainImageSize = parseFloat(searchMenuSize) * 0.2 + "px";
 
-  const [recipes, setRecipes] = useState<TYPE_RECIPE[] | []>([]);
+  const [recipes, setRecipes] = useState<
+    (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | []
+  >([]);
   //don't modify originalNumberOfRecipes
   const originalNumberOfRecipes = userContext?.numberOfRecipes || 0;
   const [numberOfPages, setNumberOfPages] = useState<number>(
@@ -481,8 +489,15 @@ function Search({
       );
 
       data.newAccessToken && userContext?.login(data.newAccessToken);
-    } catch (err: any) {
-      console.error("Error while getting recipes", err.message);
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while getting recipes");
+
+      console.error(
+        "Error while getting recipes",
+        err.message,
+        err.statusCode || 500
+      );
 
       const errorMessage = generateErrorMessage(language, err, "recipe");
 
@@ -529,8 +544,8 @@ function Search({
       : setCurPage((prev) => prev + 1);
   }
 
-  function handleClickPreview(recipe: any) {
-    window.location.hash = recipe._id;
+  function handleClickPreview(recipe: TYPE_RECIPE | TYPE_RECIPE_LINK) {
+    router.push(`/main#${recipe._id}`);
   }
 
   useEffect(() => {
@@ -597,7 +612,8 @@ function Search({
                 className={styles.recipe_preview}
                 onClick={() => handleClickPreview(recipe)}
               >
-                {recipe.mainImagePreview?.data ? (
+                {"mainImagePreview" in recipe &&
+                recipe.mainImagePreview?.data ? (
                   <Image
                     style={{ borderRadius: "50%", maxHeight: "95%" }}
                     src={recipe.mainImagePreview.data}

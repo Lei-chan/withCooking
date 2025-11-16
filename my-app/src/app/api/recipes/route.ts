@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import connectDB from "../../lib/mongoDB";
 import { getGridFSBucket } from "@/app/lib/mongoDB";
+import { GridFSBucket } from "mongodb";
 //schema
 import Recipe from "@/app/lib/modelSchemas/Recipes";
 //zod validation
@@ -13,14 +14,24 @@ import {
   TYPE_FILE,
   TYPE_INSTRUCTION,
   TYPE_CONVERTED_FILE,
+  MyError,
+  TYPE_GRIDFS_METADATA,
 } from "@/app/lib/config/type";
 //methods for authentication
 import { authenticateToken, refreshAccessToken } from "@/app/lib/auth";
 //general methods
-import { downloadFile, getId } from "@/app/lib/helpers/api";
-import { success } from "zod";
+import {
+  downloadFile,
+  getId,
+  returnNonApiErrorResponse,
+} from "@/app/lib/helpers/api";
+import { isApiError } from "@/app/lib/helpers/other";
 
-function uploadFile(bucket: any, file: TYPE_FILE, metadata: any) {
+function uploadFile(
+  bucket: GridFSBucket,
+  file: TYPE_FILE,
+  metadata: TYPE_GRIDFS_METADATA
+) {
   return new Promise((resolve, reject) => {
     const jsonBuffer = Buffer.from(JSON.stringify(file));
 
@@ -48,9 +59,9 @@ function uploadFile(bucket: any, file: TYPE_FILE, metadata: any) {
 }
 
 function uploadInstructionImages(
-  bucket: any,
+  bucket: GridFSBucket,
   instructions: TYPE_INSTRUCTION[],
-  metadata: any
+  metadata: TYPE_GRIDFS_METADATA
 ) {
   return Promise.all(
     instructions.map((inst: TYPE_INSTRUCTION, i: number) =>
@@ -65,9 +76,9 @@ function uploadInstructionImages(
 }
 
 function uploadMemoryImages(
-  bucket: any,
+  bucket: GridFSBucket,
   memoryImages: TYPE_FILE[],
-  metadata: any
+  metadata: TYPE_GRIDFS_METADATA
 ) {
   return Promise.all(
     memoryImages.map((image: TYPE_FILE, i: number) =>
@@ -96,9 +107,9 @@ export async function POST(req: NextRequest) {
     const result = recipeSchema.safeParse(body);
     if (!result.success) {
       const errTarget = result.error.issues[0];
-      const err: any = new Error(
+      const err = new Error(
         `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
-      );
+      ) as MyError;
       err.statusCode = 400;
 
       throw err;
@@ -159,7 +170,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -176,13 +189,19 @@ export async function PUT(req: NextRequest) {
     const id = getId(req);
     const body = await req.json();
 
+    if (!id) {
+      const err = new Error("Id is required!") as MyError;
+      err.statusCode = 400;
+      throw err;
+    }
+
     const result = recipeSchema.safeParse(body);
 
     if (!result.success) {
       const errTarget = result.error.issues[0];
-      const err: any = new Error(
+      const err = new Error(
         `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
-      );
+      ) as MyError;
       err.statusCode = 400;
 
       throw err;
@@ -190,7 +209,7 @@ export async function PUT(req: NextRequest) {
 
     const recipe = await Recipe.findById(id);
     if (!recipe) {
-      const err: any = new Error("Recipe not found");
+      const err = new Error("Recipe not found") as MyError;
       err.statusCode = 404;
       throw err;
     }
@@ -201,11 +220,8 @@ export async function PUT(req: NextRequest) {
         await bucket.delete(
           new mongoose.Types.ObjectId(recipe.mainImage.fileId)
         );
-      } catch (err: any) {
-        throw new Error(
-          "Error while deleting mainImage from bucket",
-          err.message
-        );
+      } catch (err: unknown) {
+        throw new Error("Error while deleting mainImage from bucket");
       }
     }
 
@@ -225,11 +241,8 @@ export async function PUT(req: NextRequest) {
         await bucket.delete(
           new mongoose.Types.ObjectId(recipe.mainImagePreview.fileId)
         );
-      } catch (err: any) {
-        throw new Error(
-          "Error while deleting mainImagePreview from bucket",
-          err.message
-        );
+      } catch (err: unknown) {
+        throw new Error("Error while deleting mainImagePreview from bucket");
       }
     }
 
@@ -263,11 +276,8 @@ export async function PUT(req: NextRequest) {
             }
           )
         );
-      } catch (err: any) {
-        throw new Error(
-          "Error while deleting instruction images from bucket",
-          err.message
-        );
+      } catch (err: unknown) {
+        throw new Error("Error while deleting instruction images from bucket");
       }
     }
 
@@ -288,11 +298,8 @@ export async function PUT(req: NextRequest) {
             bucket.delete(new mongoose.Types.ObjectId(image.fileId))
           )
         );
-      } catch (err: any) {
-        throw new Error(
-          "Error while deleting memoryImages from bucket",
-          err.message
-        );
+      } catch (err: unknown) {
+        throw new Error("Error while deleting memoryImages from bucket");
       }
     }
 
@@ -335,7 +342,9 @@ export async function PUT(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -353,7 +362,7 @@ export async function GET(req: NextRequest) {
     const recipe = await Recipe.findById(id).select("-__v");
 
     if (!recipe) {
-      const err: any = new Error("Recipe not found");
+      const err = new Error("Recipe not found") as MyError;
       err.statusCode = 404;
       throw err;
     }
@@ -410,7 +419,9 @@ export async function GET(req: NextRequest) {
       { success: true, data: newRecipe },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -488,7 +499,9 @@ export async function DELETE(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }

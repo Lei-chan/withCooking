@@ -25,6 +25,7 @@ import {
   TYPE_SERVINGS_UNIT,
   TYPE_USER_CONTEXT,
   TYPE_RECIPE_LINK,
+  MyError,
 } from "../config/type";
 //settings
 import {
@@ -55,11 +56,14 @@ import {
   generateErrorMessage,
   getFontSizeForLanguage,
   getSize,
+  isApiError,
+  logNonApiError,
   wait,
 } from "../helpers/other";
 //libraries
 import fracty from "fracty";
 import { nanoid } from "nanoid";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 export function LanguageSelect({
   mediaContext,
@@ -71,7 +75,7 @@ export function LanguageSelect({
 }: {
   mediaContext: TYPE_MEDIA;
   fontSize: string;
-  position: any;
+  position: "static" | "relative" | "absolute" | "sticky" | "fixed";
   minWidth: string;
   backgroundColor: string;
   color: string;
@@ -320,7 +324,7 @@ export function PaginationButtons({
   language: TYPE_LANGUAGE;
   mediaContext: TYPE_MEDIA;
   fontSize: string;
-  styles: any;
+  styles: { readonly [key: string]: string };
   curPage: number;
   numberOfPages: number;
   isPending: boolean;
@@ -624,11 +628,11 @@ export function RecipeEdit({
       setCurRecipe(newRecipe);
 
       if (!isRecipeAllowed(newRecipe)) {
-        const err: any = new Error(
+        const err = new Error(
           language === "ja"
             ? "一つ以上の欄を入力してください"
             : "Please fill more than one input field"
-        );
+        ) as MyError;
         err.statusCode = 400;
         throw err;
       }
@@ -656,8 +660,12 @@ export function RecipeEdit({
 
       if (createOrUpdate === "create")
         router.push(`/recipes/${recipeData._id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsPending(false);
+
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while creating recipe");
+
       console.error(
         "Error while creating recipe",
         err.message,
@@ -934,7 +942,7 @@ function ImageTitleEdit({
           "WEBP",
           100,
           0,
-          (uri) => resolve(getImageFileData(files[0], uri)),
+          (uri) => resolve(getImageFileData(files[0], uri as string)),
           "base64"
         )
       )) as TYPE_FILE;
@@ -947,18 +955,14 @@ function ImageTitleEdit({
           "WEBP",
           100,
           0,
-          (uri) => resolve(getImageFileData(files[0], uri)),
+          (uri) => resolve(getImageFileData(files[0], uri as string)),
           "base64"
         )
       )) as TYPE_FILE;
 
       onChangeImage(mainImageFile, mainImagePreviewFile);
-    } catch (err: any) {
-      console.error(
-        "Error while resizing main image",
-        err.message,
-        err.statusCode || 500
-      );
+    } catch (err: unknown) {
+      console.error("Error while resizing main image", 500);
       displayError(
         language === "ja"
           ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
@@ -1615,7 +1619,7 @@ function IngredientsEdit({
   regionUnit: TYPE_REGION_UNIT;
 }) {
   const [numberOfLines, setNumberOfLines] = useState(ingredients.length);
-  const [lines, setLines] = useState<any[]>(
+  const [lines, setLines] = useState<{ id: string }[] | []>(
     ingredients.map(() => {
       return { id: nanoid() };
     })
@@ -1775,9 +1779,8 @@ function IngLineEdit({
     "slice",
   ];
 
-  function isTypeIngUnit(unit: any) {
-    return typeIngArr.includes(unit);
-  }
+  const isTypeIngUnit = (unit: string) =>
+    typeIngArr.includes(unit as TYPE_INGREDIENT_UNIT);
 
   const [line, setLine] = useState({
     ingredient: ingredient.ingredient,
@@ -2187,17 +2190,13 @@ function InstructionEdit({
         100,
         0,
         (uri) => {
-          const fileData = getImageFileData(files[0], uri);
+          const fileData = getImageFileData(files[0], uri as string);
           onChangeImage(fileData, i);
         },
         "base64"
       );
-    } catch (err: any) {
-      console.error(
-        "Error while resizing instruction image",
-        err.message,
-        err.statusCode || 500
-      );
+    } catch (err: unknown) {
+      console.error("Error while resizing instruction image", 500);
       displayError(
         language === "ja"
           ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
@@ -2450,7 +2449,7 @@ function MemoriesEdit({
               "WEBP",
               100,
               0,
-              (uri) => resolve(getImageFileData(file, uri)),
+              (uri) => resolve(getImageFileData(file, uri as string)),
               "base64"
             )
           )
@@ -2458,12 +2457,8 @@ function MemoriesEdit({
       const imageFiles = (await Promise.all(promiseArr)) as TYPE_FILE[];
 
       onChangeImages(imageFiles);
-    } catch (err: any) {
-      console.error(
-        "Error while resizing memory images",
-        err.message,
-        err.statusCode || 500
-      );
+    } catch (err: unknown) {
+      console.error("Error while resizing memory images", 500);
       displayError(
         language === "ja"
           ? "画像のアップロード中にサーバーエラーが発生しました🙇‍♂️もう一度お試しください"
@@ -2811,7 +2806,7 @@ export function RecipeNoEdit({
     setServingsValue(newValue);
 
     if (!recipe) return;
-    setCurRecipe((prev: any) => {
+    setCurRecipe((prev) => {
       const newRecipe = { ...recipe };
       newRecipe.ingredients = updateIngsForServings(newValue, recipe);
       //update convertion for updated ing amount
@@ -2851,8 +2846,12 @@ export function RecipeNoEdit({
       );
       await wait();
       setSuccessMessage("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setSuccessMessage("");
+
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while updating recipe");
+
       console.error(
         "Error while updating recipe",
         err.message,
@@ -3095,7 +3094,7 @@ function ButtonEditMain({
   );
 }
 
-function handleClickEdit(router: any) {
+function handleClickEdit(router: AppRouterInstance) {
   const id = window.location.hash.slice(1);
   if (!id) return;
 
@@ -4366,8 +4365,17 @@ export function RecipeLinkEdit({
       createOrEdit === "edit" && handleChangeEdit && handleChangeEdit();
 
       createOrEdit === "create" && router.push(`/recipes/${recipeData._id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsPending(false);
+
+      if (!isApiError(err))
+        return logNonApiError(
+          err,
+          `Error while ${
+            createOrEdit === "create" ? "creating" : "updating"
+          } recipe`
+        );
+
       console.error(
         `Error while ${
           createOrEdit === "create" ? "creating" : "updating"

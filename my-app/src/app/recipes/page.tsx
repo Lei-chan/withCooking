@@ -21,6 +21,8 @@ import {
   TYPE_RECIPE,
   TYPE_RECIPE_LINK,
   TYPE_USER_CONTEXT,
+  TYPE_USER_RECIPE,
+  TYPE_USER_RECIPE_LINK,
 } from "../lib/config/type";
 //general methods
 import {
@@ -28,6 +30,8 @@ import {
   generateErrorMessage,
   getData,
   getFontSizeForLanguage,
+  isApiError,
+  logNonApiError,
   wait,
 } from "@/app/lib/helpers/other";
 //methods for recipes
@@ -88,7 +92,7 @@ export default function Recipes() {
   );
 
   const [recipes, setRecipes] = useState<
-    (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | []
+    (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[] | []
   >([]);
   const [curPage, setCurPage] = useState<number>(1);
   const [keyword, setKeyword] = useState("");
@@ -130,7 +134,10 @@ export default function Recipes() {
       setNumberOfPages(calcNumberOfPages(data.numberOfRecipes, recipesPerPage));
 
       data.newAccessToken && userContext?.login(data.newAccessToken);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while getting recipes");
+
       console.error(
         "Error while getting recipes",
         err.message,
@@ -379,7 +386,7 @@ function RecipeContainer({
   fontSize: string;
   isPending: boolean;
   numberOfTotalRecipes: number;
-  recipes: any[] | [];
+  recipes: (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[] | [];
   error: string;
   displayPending: (pendingOrNot: boolean) => void;
   displayError: (message: string) => void;
@@ -401,9 +408,9 @@ function RecipeContainer({
 
   //set recipes
   const RECIPES_PER_COLUMN = 6;
-  const [recipesPerColumn, setRecipesPerColumn] = useState<any[]>(
-    new Array(numberOfColumns).fill([])
-  );
+  const [recipesPerColumn, setRecipesPerColumn] = useState<
+    (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[][] | [][] | []
+  >(new Array(numberOfColumns).fill([]));
 
   //recipes for each column array[];
   const getRecipesPerColumn = useMemo(() => {
@@ -415,7 +422,9 @@ function RecipeContainer({
   }, [recipes, numberOfColumns, RECIPES_PER_COLUMN]);
 
   useEffect(() => {
-    setRecipesPerColumn(getRecipesPerColumn);
+    setRecipesPerColumn(
+      getRecipesPerColumn as (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[][]
+    );
   }, [recipes]);
 
   //select recipe
@@ -498,7 +507,10 @@ function RecipeContainer({
       );
       await wait();
       setSuccessMessage("");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while deleting recipe");
+
       console.error(
         "Error while deleting recipe",
         err.message,
@@ -618,46 +630,48 @@ function RecipeContainer({
               overflow: "hidden",
             }}
           >
-            {recipes.map((recipe: TYPE_RECIPE, i: number) => {
-              return (
-                <div
-                  key={i}
-                  style={{
-                    width: "100%",
-                    height: "15%",
-                    display: "flex",
-                    flexDirection: "row",
-                    gap: "3%",
-                    marginTop: "2%",
-                  }}
-                >
-                  {isSelecting && (
-                    <input
-                      style={{
-                        width:
-                          mediaContext === "mobile"
-                            ? "7%"
-                            : mediaContext === "tablet"
-                            ? "8%"
-                            : "10%",
-                      }}
-                      type="checkbox"
-                      name="checkbox"
-                      value={recipe._id}
-                      onChange={addSelectedRecipe}
-                    ></input>
-                  )}
-                  <RecipePreview
+            {recipes.map(
+              (recipe: TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK, i: number) => {
+                return (
+                  <div
                     key={i}
-                    mediaContext={mediaContext}
-                    language={language}
-                    fontSize={fontSize}
-                    recipe={recipe}
-                    isSelecting={isSelecting}
-                  />
-                </div>
-              );
-            })}
+                    style={{
+                      width: "100%",
+                      height: "15%",
+                      display: "flex",
+                      flexDirection: "row",
+                      gap: "3%",
+                      marginTop: "2%",
+                    }}
+                  >
+                    {isSelecting && (
+                      <input
+                        style={{
+                          width:
+                            mediaContext === "mobile"
+                              ? "7%"
+                              : mediaContext === "tablet"
+                              ? "8%"
+                              : "10%",
+                        }}
+                        type="checkbox"
+                        name="checkbox"
+                        value={recipe._id}
+                        onChange={addSelectedRecipe}
+                      ></input>
+                    )}
+                    <RecipePreview
+                      key={i}
+                      mediaContext={mediaContext}
+                      language={language}
+                      fontSize={fontSize}
+                      recipe={recipe}
+                      isSelecting={isSelecting}
+                    />
+                  </div>
+                );
+              }
+            )}
           </ul>
         ))
       ) : (
@@ -714,7 +728,7 @@ function RecipePreview({
   mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
   fontSize: string;
-  recipe: any;
+  recipe: TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK;
   isSelecting: boolean;
 }) {
   const router = useRouter();
@@ -742,7 +756,7 @@ function RecipePreview({
       id={recipe._id}
       onClick={handleClickPreview}
     >
-      {recipe.mainImagePreview?.data ? (
+      {"mainImagePreview" in recipe && recipe.mainImagePreview?.data ? (
         <Image
           style={{ borderRadius: "50%" }}
           src={recipe.mainImagePreview.data}

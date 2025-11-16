@@ -11,7 +11,9 @@ import { recipeLinkSchema } from "@/app/lib/validation";
 //methods for authentication
 import { authenticateToken, refreshAccessToken } from "@/app/lib/auth";
 //general method
-import { getId } from "@/app/lib/helpers/api";
+import { getId, returnNonApiErrorResponse } from "@/app/lib/helpers/api";
+import { isApiError } from "@/app/lib/helpers/other";
+import { MyError } from "@/app/lib/config/type";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,9 +33,9 @@ export async function POST(req: NextRequest) {
     const result = recipeLinkSchema.safeParse(body);
     if (!result.success) {
       const errTarget = result.error.issues[0];
-      const err: any = new Error(
+      const err = new Error(
         `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
-      );
+      ) as MyError;
       err.statusCode = 400;
 
       throw err;
@@ -50,7 +52,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -69,9 +73,9 @@ export async function PUT(req: NextRequest) {
 
     if (!result.success) {
       const errTarget = result.error.issues[0];
-      const err: any = new Error(
+      const err = new Error(
         `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
-      );
+      ) as MyError;
       err.statusCode = 400;
 
       throw err;
@@ -79,7 +83,7 @@ export async function PUT(req: NextRequest) {
 
     const recipe = await Recipe.findById(id);
     if (!recipe) {
-      const err: any = new Error("Recipe not found");
+      const err = new Error("Recipe not found") as MyError;
       err.statusCode = 404;
       throw err;
     }
@@ -96,7 +100,9 @@ export async function PUT(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }

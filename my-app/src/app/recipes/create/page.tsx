@@ -168,6 +168,8 @@ export default function CreateRecipe() {
             description: "",
             memoryImages: [],
             comments: "",
+            createdAt: "",
+            updatedAt: "",
           }}
           error=""
           createOrUpdate="create"
@@ -177,7 +179,13 @@ export default function CreateRecipe() {
         <RecipeLinkEdit
           language={language}
           mediaContext={mediaContext}
-          recipe={{ title: "", favorite: false, link: "" }}
+          recipe={{
+            title: "",
+            favorite: false,
+            link: "",
+            createdAt: "",
+            updatedAt: "",
+          }}
           createOrEdit="create"
         />
       )}

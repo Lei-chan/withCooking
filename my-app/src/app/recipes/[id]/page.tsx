@@ -32,6 +32,8 @@ import {
   generateErrorMessage,
   getData,
   getSize,
+  isApiError,
+  logNonApiError,
 } from "@/app/lib/helpers/other";
 import { handler } from "next/dist/build/templates/app-route";
 
@@ -92,7 +94,10 @@ export default function Recipe() {
       const data = await getData(`/api/recipes?id=${id}`, { method: "GET" });
 
       setRecipe(data.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while loading recipe");
+
       console.error(
         "Error while loading recipe",
         err.message,

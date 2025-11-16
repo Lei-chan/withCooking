@@ -1,5 +1,9 @@
+//next.js
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+//type
+import { MyError, TYPE_LANGUAGE } from "../config/type";
+//settings
 import { MESSAGE_TIMEOUT, PASSWORD_REGEX } from "../config/settings";
-import { TYPE_LANGUAGE } from "../config/type";
 
 export function wait(second: number = MESSAGE_TIMEOUT) {
   return new Promise((resolve) => {
@@ -13,9 +17,9 @@ export const getData = async (path: string, option: object) => {
     const data = await res.json();
 
     if (!res.ok) {
-      const err: any = new Error(data.error);
+      const err = new Error(data.error) as MyError;
       err.statusCode = res.status;
-      err.name = data.name;
+      err.name = data.name || "";
       throw err;
     }
 
@@ -24,6 +28,12 @@ export const getData = async (path: string, option: object) => {
     throw err;
   }
 };
+
+export const isApiError = (err: unknown): err is MyError =>
+  err instanceof Error;
+
+export const logNonApiError = (err: unknown, message: string) =>
+  console.error(message, String(err), 500);
 
 export function getSize(width: string, ratio: number, defaultRatio: string) {
   return width.includes("px") ? `${parseInt(width) * ratio}px` : defaultRatio;
@@ -46,7 +56,7 @@ export const getFontSizeForLanguage = (
 //error
 export const generateErrorMessage = (
   language: TYPE_LANGUAGE,
-  error: any,
+  error: MyError,
   recipeOrUser: "recipe" | "user"
 ) => {
   if (error.statusCode === 404)
@@ -80,7 +90,10 @@ export const generateErrorMessage = (
   return undefined;
 };
 
-export const authErrorRedirect = async (router: any, statusCode: number) => {
+export const authErrorRedirect = async (
+  router: AppRouterInstance,
+  statusCode: number
+) => {
   if (statusCode !== 401) return;
 
   await wait();

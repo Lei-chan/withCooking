@@ -4,6 +4,7 @@ import { useEffect, useState, useContext } from "react";
 import clsx from "clsx";
 //next.js
 import { useRouter } from "next/navigation";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 //css
 import styles from "./page.module.css";
 //context
@@ -11,7 +12,12 @@ import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //component
 import { OverlayMessage } from "../lib/components/components";
 //type
-import { TYPE_LANGUAGE, TYPE_USER_CONTEXT } from "@/app/lib/config/type";
+import {
+  TYPE_LANGUAGE,
+  TYPE_RECIPE,
+  TYPE_RECIPE_LINK,
+  TYPE_USER_CONTEXT,
+} from "@/app/lib/config/type";
 //settings
 import { PASSWORD_MIN_LENGTH, PASSWORD_MIN_EACH } from "../lib/config/settings";
 //general methods
@@ -20,6 +26,8 @@ import {
   generateErrorMessage,
   getData,
   getFontSizeForLanguage,
+  isApiError,
+  logNonApiError,
   wait,
 } from "@/app/lib/helpers/other";
 
@@ -57,7 +65,7 @@ export default function Account() {
   const userContext = useContext(UserContext);
   const [user, setUser] = useState<{
     email: string;
-    recipes: any[] | [];
+    recipes: (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | [];
     createdAt: string;
   }>();
 
@@ -78,7 +86,10 @@ export default function Account() {
 
       //set newAccessToken for context when it's refreshed
       data.newAccessToken && userContext?.login(data.newAccessToken);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while getting user information");
+
       console.error(
         "Error while getting user information",
         err.message,
@@ -238,7 +249,7 @@ function Email({
   email,
   displayMessage,
 }: {
-  router: any;
+  router: AppRouterInstance;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
@@ -279,12 +290,11 @@ function Email({
           ? "メールアドレスが更新されました！"
           : "Email updated successfully!"
       );
-    } catch (err: any) {
-      console.error(
-        "Error while updating email",
-        err.message,
-        err.statusCode || ""
-      );
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while updating email");
+
+      console.error("Error while updating email", err.message, err.statusCode);
 
       const errorMessage = generateErrorMessage(language, err, "user");
 
@@ -389,7 +399,7 @@ function Password({
   btnSize,
   displayMessage,
 }: {
-  router: any;
+  router: AppRouterInstance;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
@@ -451,11 +461,14 @@ function Password({
           ? "パスワードが更新されました！"
           : "Password updated successfully!"
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while updating password");
+
       console.error(
         "Error while updating password",
         err.message,
-        err.statusCode || ""
+        err.statusCode
       );
 
       const errorMessage = generateErrorMessage(language, err, "user");
@@ -663,13 +676,13 @@ function CloseAccount({
   recipes,
   toggleMessageVisible,
 }: {
-  router: any;
+  router: AppRouterInstance;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
   smallHeaderSize: string;
   btnSize: string;
-  recipes: any[] | [];
+  recipes: (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | [];
   toggleMessageVisible: () => void;
 }) {
   const [close, setClose] = useState(false);
@@ -691,7 +704,10 @@ function CloseAccount({
 
       //go to home page
       router.push("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while closing account");
+
       console.error(
         "Error while closing account",
         err.message,

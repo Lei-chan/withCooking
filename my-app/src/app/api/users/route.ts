@@ -19,6 +19,16 @@ import {
   refreshAccessToken,
   hashPassword,
 } from "@/app/lib/auth";
+//type
+import {
+  MyError,
+  TYPE_USER_RECIPE_DATABASE,
+  TYPE_USER_RECIPE_LINK_DATABASE,
+} from "@/app/lib/config/type";
+//method for api
+import { returnNonApiErrorResponse } from "@/app/lib/helpers/api";
+//general method
+import { isApiError } from "@/app/lib/helpers/other";
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,7 +45,7 @@ export async function POST(req: NextRequest) {
       const existingUser = await User.findOne({ email });
 
       if (existingUser) {
-        const err: any = new Error("This email already exists");
+        const err = new Error("This email already exists") as MyError;
         err.statusCode = 400;
         err.name = "EmailDuplicationError";
         throw err;
@@ -66,14 +76,14 @@ export async function POST(req: NextRequest) {
     if (create === "false") {
       user = await User.findOne({ email }).select("+password");
       if (!user) {
-        const err: any = new Error("User not found");
+        const err = new Error("User not found") as MyError;
         err.statusCode = 404;
         throw err;
       }
 
       const isValidPassword = await user.comparePassword(password);
       if (!isValidPassword) {
-        const err: any = new Error("Invalid password is provided");
+        const err = new Error("Invalid password is provided") as MyError;
         err.statusCode = 401;
         err.name = "ValidationError";
         throw err;
@@ -109,7 +119,9 @@ export async function POST(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -133,7 +145,7 @@ export async function GET(req: NextRequest) {
     const user = await User.findById(id).select("-password");
 
     if (!user) {
-      const err: any = new Error("User not found");
+      const err = new Error("User not found") as MyError;
       err.statusCode = 404;
       throw err;
     }
@@ -142,13 +154,17 @@ export async function GET(req: NextRequest) {
     const { recipes, ...others } = user.toObject();
 
     const structuredRecipes = recipes.length
-      ? recipes.map((recipe: any) => {
-          const { recipeId, ...others } = recipe;
-          return {
-            _id: recipeId,
-            ...others,
-          };
-        })
+      ? recipes.map(
+          (
+            recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+          ) => {
+            const { recipeId, ...others } = recipe;
+            return {
+              _id: recipeId,
+              ...others,
+            };
+          }
+        )
       : [];
 
     return NextResponse.json(
@@ -159,7 +175,9 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -191,9 +209,9 @@ export async function PATCH(req: NextRequest) {
 
       if (!result.success) {
         const errTarget = result.error.issues[0];
-        const err: any = new Error(
+        const err = new Error(
           `<Error field: New password> ${errTarget.message}`
-        );
+        ) as MyError;
         err.statusCode = 400;
 
         throw err;
@@ -201,14 +219,14 @@ export async function PATCH(req: NextRequest) {
 
       const user = await User.findById(id).select("+password");
       if (!user) {
-        const err: any = new Error("User not found");
+        const err = new Error("User not found") as MyError;
         err.statusCode = 404;
         throw err;
       }
 
       const isValidPassword = await user.comparePassword(curPassword);
       if (!isValidPassword) {
-        const err: any = new Error("Invalid password is provided");
+        const err = new Error("Invalid password is provided") as MyError;
         err.statusCode = 401;
         err.name = "ValidationError";
         throw err;
@@ -230,7 +248,7 @@ export async function PATCH(req: NextRequest) {
       const existingUser = await User.findOne({ email });
 
       if (existingUser) {
-        const err: any = new Error("This email already exists");
+        const err = new Error("This email already exists") as MyError;
         err.statusCode = 400;
         err.name = "EmailDuplicationError";
         throw err;
@@ -240,9 +258,9 @@ export async function PATCH(req: NextRequest) {
 
       if (!result.success) {
         const errTarget = result.error.issues[0];
-        const err: any = new Error(
+        const err = new Error(
           `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
-        );
+        ) as MyError;
         err.statusCode = 400;
 
         throw err;
@@ -263,7 +281,9 @@ export async function PATCH(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
@@ -287,7 +307,7 @@ export async function DELETE(req: NextRequest) {
     const user = await User.findById(id);
 
     if (!user) {
-      const err: any = new Error("User not found");
+      const err = new Error("User not found") as MyError;
       err.statusCode = 404;
       throw err;
     }
@@ -298,7 +318,9 @@ export async function DELETE(req: NextRequest) {
       { success: true, message: "User deleted successfully" },
       { status: 200 }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    if (!isApiError(err)) return returnNonApiErrorResponse();
+
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
       { status: err.statusCode || 500 }
