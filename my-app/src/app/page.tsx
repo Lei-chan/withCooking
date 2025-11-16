@@ -718,6 +718,7 @@ function Explanation({
               : mediaContext === "desktop"
               ? "3vw"
               : "2.6vw",
+          zIndex: "5",
         }}
       >
         {detail.title[language]}
