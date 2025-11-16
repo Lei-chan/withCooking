@@ -112,6 +112,8 @@ export function LanguageSelect({
         top: "1.5%",
         left: "2.5%",
         textAlign: "center",
+        WebkitAppearance: "none",
+        appearance: "none",
         padding:
           mediaContext === "mobile" || mediaContext === "tablet"
             ? "1% 2% 1% 5%"

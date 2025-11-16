@@ -9,19 +9,14 @@ const playfairDisplay = Playfair_Display({
   fallback: ["Noto Serif JP", "serif"],
 });
 
-// const notoSerifJp = Noto_Serif_JP({
-//   weight: "400",
-//   fallback: ["serif"],
-// });
-
-// const playfair = Playfair({
-//   subsets: ["latin"],
-//   fallback: ["serif"],
-// });
-
 export const metadata: Metadata = {
   title: "withCooking",
   description: "Application where users can use many useful tools for cooking!",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({
