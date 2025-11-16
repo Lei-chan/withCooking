@@ -12,11 +12,6 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "withCooking",
   description: "Application where users can use many useful tools for cooking!",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
 };
 
 export default function RootLayout({

@@ -2816,6 +2816,8 @@ export function RecipeNoEdit({
     setHeaderSize(parseFloat(fontSizeFinal) * 1.1 + "px");
   }, [recipeWidth, mediaContext, language, windowWidth]);
 
+  console.log(recipeWidth);
+
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE | null>(userRecipe);
   //use curRecipe to modify the recipe value
@@ -4628,7 +4630,7 @@ export function RecipeLinkNoEdit({
   return (
     <div
       style={{
-        width: "100%",
+        width: "100vw",
         height: "100%",
         display: "flex",
         flexDirection: "column",

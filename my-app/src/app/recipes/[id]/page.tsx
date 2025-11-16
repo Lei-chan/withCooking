@@ -35,7 +35,6 @@ import {
   isApiError,
   logNonApiError,
 } from "@/app/lib/helpers/other";
-import { handler } from "next/dist/build/templates/app-route";
 
 export default function Recipe() {
   const params = useParams<{ id: string }>();
@@ -49,35 +48,57 @@ export default function Recipe() {
   const mediaContext = useContext(MediaContext);
   const [windowWidth, setWindowWidth] = useState(1220);
   const [windowHeight, setWindowHeight] = useState(600);
-  const recipeWidth =
+  const [recipeWidth, setRecipeWidth] = useState(
     windowWidth *
       (mediaContext === "mobile"
         ? 0.9
         : mediaContext === "tablet"
         ? 0.7
         : 0.5) +
-    "px";
-  const iframeHeight = windowHeight * 0.8;
-  const fontSizeEn =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.045, "4.5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.034, "2.7vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
-      ? getSize(recipeWidth, 0.031, "1.5vw")
-      : getSize(recipeWidth, 0.028, "1.3vw");
-  const fontSizeFinal =
-    language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
+      "px"
+  );
+  const [iframeHeight, setIframeHeight] = useState(windowHeight * 0.8);
+  const [fontSizeFinal, setFontSizeFinal] = useState("1.5vw");
 
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
       setWindowHeight(window.innerHeight);
     };
+    handleResize();
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const recipeWid =
+      windowWidth *
+        (mediaContext === "mobile"
+          ? 0.9
+          : mediaContext === "tablet"
+          ? 0.7
+          : 0.5) +
+      "px";
+    setRecipeWidth(recipeWid);
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(recipeWid, 0.045, "4.5vw")
+        : mediaContext === "tablet"
+        ? getSize(recipeWid, 0.034, "2.7vw")
+        : mediaContext === "desktop" && windowWidth <= 1100
+        ? getSize(recipeWid, 0.031, "1.5vw")
+        : getSize(recipeWid, 0.028, "1.3vw");
+
+    setFontSizeFinal(
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn
+    );
+  }, [mediaContext, language, windowWidth]);
+
+  useEffect(() => {
+    setIframeHeight(windowHeight * 0.8);
+  }, [windowHeight]);
 
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE | TYPE_RECIPE_LINK>();
