@@ -28,18 +28,8 @@ export const convertIngUnits = function (
 
   ///For converter page toFixed(3)
   let g;
-  let kg;
   let oz;
-  let lb;
   let ml;
-  let L;
-  let usCup;
-  let japaneseCup;
-  let imperialCup;
-  let riceCup;
-  let tsp;
-  let tbsp;
-  let australianTbsp;
 
   if (unitFrom === "g") {
     metric = { amount, unit: unitFrom };
@@ -162,22 +152,25 @@ export const convertIngUnits = function (
     ml = { amount: +(amount * 20).toFixed(3), unit: "ml" };
   }
 
-  kg = g && { amount: +(g.amount / 1000).toFixed(3), unit: "kg" };
-  lb = oz && { amount: +(oz.amount / 16).toFixed(3), unit: "lb" };
-  L = ml && { amount: +(ml.amount / 1000).toFixed(3), unit: "L" };
-  usCup = ml && { amount: +(ml.amount / 240).toFixed(3), unit: "usCup" };
-  japaneseCup = ml && {
+  const kg = g && { amount: +(g.amount / 1000).toFixed(3), unit: "kg" };
+  const lb = oz && { amount: +(oz.amount / 16).toFixed(3), unit: "lb" };
+  const L = ml && { amount: +(ml.amount / 1000).toFixed(3), unit: "L" };
+  const usCup = ml && { amount: +(ml.amount / 240).toFixed(3), unit: "usCup" };
+  const japaneseCup = ml && {
     amount: +(ml.amount / 200).toFixed(3),
     unit: "japaneseCup",
   };
-  imperialCup = ml && {
+  const imperialCup = ml && {
     amount: +(ml.amount / 250).toFixed(3),
     unit: "imperialCup",
   };
-  riceCup = ml && { amount: +(ml.amount / 180).toFixed(3), unit: "riceCup" };
-  tsp = ml && { amount: +(ml.amount / 5).toFixed(3), unit: "tsp" };
-  tbsp = ml && { amount: +(ml.amount / 15).toFixed(3), unit: "tbsp" };
-  australianTbsp = ml && {
+  const riceCup = ml && {
+    amount: +(ml.amount / 180).toFixed(3),
+    unit: "riceCup",
+  };
+  const tsp = ml && { amount: +(ml.amount / 5).toFixed(3), unit: "tsp" };
+  const tbsp = ml && { amount: +(ml.amount / 15).toFixed(3), unit: "tbsp" };
+  const australianTbsp = ml && {
     amount: +(ml.amount / 20).toFixed(3),
     unit: "australianTbsp",
   };
@@ -210,11 +203,7 @@ export const convertLengthUnits = function (
   unitFrom: "mm" | "cm" | "m" | "inch" | "foot" | "yard"
 ) {
   let mm;
-  let cm;
-  let m;
   let inch;
-  let foot;
-  let yard;
 
   if (unitFrom === "mm") {
     mm = { length, unit: unitFrom };
@@ -246,10 +235,10 @@ export const convertLengthUnits = function (
     inch = { length: length * 36, unit: "inch" };
   }
 
-  cm = mm && { length: +(mm.length / 10).toFixed(3), unit: "cm" };
-  m = cm && { length: +(cm.length / 100).toFixed(3), unit: "m" };
-  foot = inch && { length: +(inch.length / 12).toFixed(3), unit: "foot" };
-  yard = foot && { length: +(foot.length / 3).toFixed(3), unit: "yard" };
+  const cm = mm && { length: +(mm.length / 10).toFixed(3), unit: "cm" };
+  const m = cm && { length: +(cm.length / 100).toFixed(3), unit: "m" };
+  const foot = inch && { length: +(inch.length / 12).toFixed(3), unit: "foot" };
+  const yard = foot && { length: +(foot.length / 3).toFixed(3), unit: "yard" };
 
   return { mm, cm, m, inch, foot, yard };
 };

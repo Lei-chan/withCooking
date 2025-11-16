@@ -794,7 +794,7 @@ function OverlayLogin({
   headerSize: string;
   eyeOnWidth: string;
   eyeOffWidth: string;
-  show: Boolean;
+  show: boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {
@@ -1036,7 +1036,7 @@ function OverlayCreateAccount({
   headerSize: string;
   eyeOnWidth: string;
   eyeOffWidth: string;
-  show: Boolean;
+  show: boolean;
   onClickX: () => void;
   onClickOutside: () => void;
 }) {

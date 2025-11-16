@@ -180,7 +180,7 @@ export type TYPE_FILE = {
 };
 
 export type TYPE_CONVERTED_FILE = {
-  fileId: any;
+  fileId: string;
   filename: string;
   contentType: string;
   fileSize: number;
