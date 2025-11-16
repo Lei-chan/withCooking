@@ -4708,7 +4708,7 @@ export function Loading({
         </p>
         <Image
           className={styles.img__uploading}
-          src="/loading.png"
+          src="/icons/loading.png"
           alt={language === "ja" ? "アイコンロード中" : "loading icon"}
           width={imageSize}
           height={imageSize}
