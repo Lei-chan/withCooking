@@ -87,6 +87,7 @@ export default function Recipes() {
 
   //don't modify numberOfTotle recipes
   const numbreOfTotalRecipes = userContext?.numberOfRecipes || 0;
+  console.log(numbreOfTotalRecipes);
 
   const [numberOfPages, setNumberOfPages] = useState<number>(
     calcNumberOfPages(numbreOfTotalRecipes, recipesPerPage)

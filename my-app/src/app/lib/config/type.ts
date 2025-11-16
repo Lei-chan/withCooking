@@ -19,7 +19,6 @@ export type TYPE_USER_CONTEXT = {
 } | null;
 
 export interface MyError extends Error {
-  // message: string;
   statusCode: number;
 }
 

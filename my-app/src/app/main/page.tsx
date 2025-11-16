@@ -546,7 +546,6 @@ function Search({
   }
 
   function handleClickPreview(recipe: TYPE_RECIPE | TYPE_RECIPE_LINK) {
-    // router.push(`/main#${recipe._id}`);
     if (recipe._id) window.location.hash = recipe._id;
   }
 
