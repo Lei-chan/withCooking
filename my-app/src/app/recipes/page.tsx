@@ -52,7 +52,7 @@ export default function Recipes() {
 
   //design
   const mediaContext = useContext(MediaContext);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowWidth, setWindowWidth] = useState(1220);
   const fontSizeEn =
     mediaContext === "mobile"
       ? "4.5vw"

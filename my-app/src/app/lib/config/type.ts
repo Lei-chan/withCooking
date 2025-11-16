@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export type TYPE_MEDIA = "mobile" | "tablet" | "desktop" | "big";
 export type TYPE_LANGUAGE = "en" | "ja";
 export type TYPE_LANGUAGE_CONTEXT = {
@@ -180,7 +182,7 @@ export type TYPE_FILE = {
 };
 
 export type TYPE_CONVERTED_FILE = {
-  fileId: string;
+  fileId: string | mongoose.Types.ObjectId;
   filename: string;
   contentType: string;
   fileSize: number;

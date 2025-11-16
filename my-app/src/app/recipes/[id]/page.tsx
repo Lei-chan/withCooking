@@ -47,8 +47,8 @@ export default function Recipe() {
 
   //design
   const mediaContext = useContext(MediaContext);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+  const [windowWidth, setWindowWidth] = useState(1220);
+  const [windowHeight, setWindowHeight] = useState(600);
   const recipeWidth =
     windowWidth *
       (mediaContext === "mobile"

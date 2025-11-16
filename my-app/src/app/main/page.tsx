@@ -56,8 +56,8 @@ export default function MAIN() {
   //design
   const mediaContext = useContext(MediaContext);
 
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+  const [windowWidth, setWindowWidth] = useState(1220);
+  const [windowHeight, setWindowHeight] = useState(600);
   const [recipeWidth, setRecipeWidth] = useState(
     mediaContext === "mobile"
       ? windowWidth + "px"

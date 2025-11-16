@@ -714,11 +714,7 @@ function CloseAccount({
         err.statusCode || 500
       );
 
-      const errorMessage = generateErrorMessage(
-        language,
-        err.statusCode,
-        "user"
-      );
+      const errorMessage = generateErrorMessage(language, err, "user");
 
       setError(
         errorMessage ||

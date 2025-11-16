@@ -398,7 +398,7 @@ export function RecipeEdit({
   const userContext = useContext(UserContext);
 
   //design
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowWidth, setWindowWidth] = useState(1220);
   const recipeWidth =
     windowWidth *
       (mediaContext === "mobile"
@@ -2752,7 +2752,7 @@ export function RecipeNoEdit({
   const router = useRouter();
 
   ///design
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [windowWidth, setWindowWidth] = useState(1220);
   const fontSizeEn =
     mediaContext === "mobile"
       ? getSize(recipeWidth, 0.045, "4.5vw")
