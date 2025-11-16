@@ -155,9 +155,9 @@ export function MessageContainer({
         padding: "3% 5% 0 5%",
         textAlign: "center",
         justifyContent: "center",
-        fontSize: fontSize,
-        letterSpacing: letterSpacing,
-        wordSpacing: wordSpacing,
+        fontSize,
+        letterSpacing,
+        wordSpacing,
         color: "rgb(190, 124, 0)",
         zIndex: "0",
       }}
@@ -403,33 +403,60 @@ export function RecipeEdit({
 
   //design
   const [windowWidth, setWindowWidth] = useState(1220);
-  const recipeWidth =
+  const [recipeWidth, setRecipeWidth] = useState(
     windowWidth *
       (mediaContext === "mobile"
         ? 0.9
         : mediaContext === "tablet"
         ? 0.7
         : 0.5) +
-    "px";
-  const fontSizeEn =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.045, "4.5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.034, "2.7vw")
-      : mediaContext === "desktop" && windowWidth <= 1100
-      ? getSize(recipeWidth, 0.031, "1.5vw")
-      : getSize(recipeWidth, 0.028, "1.3vw");
-  const fontSizeFinal =
-    language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
-  const headerSize = parseFloat(fontSizeFinal) * 1.1 + "px";
-  const marginTop = getSize(recipeWidth, 0.11, "30px");
+      "px"
+  );
+  const [fontSizeFinal, setFontSizeFinal] = useState("1.5vw");
+  const [headerSize, setHeaderSize] = useState(
+    parseFloat(fontSizeFinal) * 1.1 + "px"
+  );
+  const [marginTop, setMarginTop] = useState(
+    getSize(recipeWidth, 0.11, "30px")
+  );
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
+
+    handleResize();
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const recipeWid =
+      windowWidth *
+        (mediaContext === "mobile"
+          ? 0.9
+          : mediaContext === "tablet"
+          ? 0.7
+          : 0.5) +
+      "px";
+    setRecipeWidth(recipeWid);
+
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(recipeWid, 0.045, "4.5vw")
+        : mediaContext === "tablet"
+        ? getSize(recipeWid, 0.034, "2.7vw")
+        : mediaContext === "desktop" && windowWidth <= 1100
+        ? getSize(recipeWid, 0.031, "1.5vw")
+        : getSize(recipeWid, 0.028, "1.3vw");
+
+    const fontSizeFin =
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
+    setFontSizeFinal(fontSizeFin);
+
+    setHeaderSize(parseFloat(fontSizeFin) * 1.1 + "px");
+
+    setMarginTop(getSize(recipeWid, 0.11, "30px"));
+  }, [mediaContext, language, windowWidth]);
 
   //recipe
   //set favorite and images when user change them and set other fields when user submits the recipe
@@ -2757,26 +2784,37 @@ export function RecipeNoEdit({
 
   ///design
   const [windowWidth, setWindowWidth] = useState(1220);
-  const fontSizeEn =
-    mediaContext === "mobile"
-      ? getSize(recipeWidth, 0.045, "4.5vw")
-      : mediaContext === "tablet"
-      ? getSize(recipeWidth, 0.035, "2.7vw")
-      : mediaContext === "desktop" && windowWidth <= 1100
-      ? getSize(recipeWidth, 0.031, "1.5vw")
-      : getSize(recipeWidth, 0.028, "1.3vw");
-  const fontSizeFinal =
-    language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
-  const headerSize = parseFloat(fontSizeFinal) * 1.1 + "px";
+  const [fontSizeFinal, setFontSizeFinal] = useState("1.5vw");
+  const [headerSize, setHeaderSize] = useState(
+    parseFloat(fontSizeFinal) * 1.1 + "px"
+  );
   const marginTop = getSize(recipeWidth, 0.11, "30px");
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
 
+    handleResize();
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const fontSizeEn =
+      mediaContext === "mobile"
+        ? getSize(recipeWidth, 0.045, "4.5vw")
+        : mediaContext === "tablet"
+        ? getSize(recipeWidth, 0.035, "2.7vw")
+        : mediaContext === "desktop" && windowWidth <= 1100
+        ? getSize(recipeWidth, 0.031, "1.5vw")
+        : getSize(recipeWidth, 0.028, "1.3vw");
+
+    const fontSizeFin =
+      language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
+    setFontSizeFinal(fontSizeFin);
+
+    setHeaderSize(parseFloat(fontSizeFinal) * 1.1 + "px");
+  }, [mediaContext, language, windowWidth]);
 
   //don't modify recipe value unless the recipe is changed
   const [recipe, setRecipe] = useState<TYPE_RECIPE | null>(userRecipe);
