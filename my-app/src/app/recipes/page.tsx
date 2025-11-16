@@ -41,6 +41,7 @@ import {
   getUserRecipes,
   createMessage,
 } from "@/app/lib/helpers/recipes";
+import { WEBSITE_URL } from "../lib/config/settings";
 
 export default function Recipes() {
   const router = useRouter();
@@ -352,7 +353,7 @@ function SearchSection({
           {language === "ja" ? "検索" : "Search"}
         </button>
       </form>
-      <Link href={"http://localhost:3000/recipes/create"}>
+      <Link href={`${WEBSITE_URL}/recipes/create`}>
         <button
           className={styles.btn__create}
           style={{
