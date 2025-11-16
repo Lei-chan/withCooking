@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState, useContext, useMemo } from "react";
 //next.js
 import Image from "next/image";
-import styles from "./page.module.css";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+//css
+import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //model
@@ -44,8 +45,6 @@ import {
 } from "@/app/lib/helpers/recipes";
 //library
 import { nanoid } from "nanoid";
-import { WEBSITE_URL } from "../lib/config/settings";
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 export default function MAIN() {
   const router = useRouter();
@@ -774,84 +773,94 @@ function DropdownMenu({
           opacity: !isDropdownVisible ? 0 : 1,
         }}
       >
-        <div className={styles.link__dropdown} onClick={handleClickRecipes}>
-          <li className={styles.list} style={{ gap: "8%" }}>
-            <Image
-              src={"/icons/recipes.svg"}
-              alt={language === "ja" ? "アイコンレシピ" : "recipe icon"}
-              width={25}
-              height={25}
-            ></Image>
-            <span>{language === "ja" ? "レシピ" : "Recipes"}</span>
-          </li>
-        </div>
-        <div className={styles.link__dropdown} onClick={handleClickConverter}>
-          <li className={styles.list} style={{ gap: "8%" }}>
-            <Image
-              src={"/icons/convert.svg"}
-              alt={language === "ja" ? "アイコン単位変換" : "converter icon"}
-              width={25}
-              height={25}
-            ></Image>
-            <span>{language === "ja" ? "単位変換" : "Converter"}</span>
-          </li>
-        </div>
-        <div className={styles.link__dropdown} onClick={handleClickAccount}>
-          <li className={styles.list} style={{ gap: "8%" }}>
-            <Image
-              src={"/icons/account.svg"}
-              alt={language === "ja" ? "アイコンアカウント" : "account icon"}
-              width={25}
-              height={25}
-            ></Image>
-            <span>{language === "ja" ? "アカウント" : "Account"}</span>
-          </li>
-        </div>
-        <div className={styles.link__dropdown} onClick={handleClickNews}>
-          <li className={styles.list} style={{ gap: "8%" }}>
-            <Image
-              src={"/icons/news.svg"}
-              alt={language === "ja" ? "アイコンニュース" : "news icon"}
-              width={25}
-              height={25}
-            ></Image>
-            <span>{language === "ja" ? "ニュース" : "News"}</span>
-            {isNewsNew && (
-              <span
-                style={{
-                  fontSize: `calc(${fontSizeFinal} * 0.9)`,
-                  color: "orangered",
-                }}
-              >
-                new!
-              </span>
-            )}
-          </li>
-        </div>
-        <div className={styles.link__dropdown} onClick={handleClickHowToUse}>
-          <li className={styles.list} style={{ gap: "8%" }}>
-            <Image
-              src={"/icons/howtouse.svg"}
-              alt={language === "ja" ? "アイコン使い方" : "how to use icon"}
-              width={25}
-              height={25}
-            ></Image>
-            <span>{language === "ja" ? "使い方" : "How To Use"}</span>
-          </li>
-        </div>
-        <div className={styles.link__dropdown} onClick={handleClickFeedback}>
-          <li className={styles.list} style={{ gap: "8%" }}>
-            <Image
-              src={"/icons/feedback.svg"}
-              alt={
-                language === "ja" ? "アイコンフィードバック" : "feedback icon"
-              }
-              width={25}
-              height={25}
-            ></Image>
-            <span>{language === "ja" ? "フィードバック" : "Feedback"}</span>
-          </li>
-        </div>
+        <li
+          className={styles.list}
+          style={{ gap: "8%" }}
+          onClick={handleClickRecipes}
+        >
+          <Image
+            src={"/icons/recipes.svg"}
+            alt={language === "ja" ? "アイコンレシピ" : "recipe icon"}
+            width={25}
+            height={25}
+          ></Image>
+          <span>{language === "ja" ? "レシピ" : "Recipes"}</span>
+        </li>
+        <li
+          className={styles.list}
+          style={{ gap: "8%" }}
+          onClick={handleClickConverter}
+        >
+          <Image
+            src={"/icons/convert.svg"}
+            alt={language === "ja" ? "アイコン単位変換" : "converter icon"}
+            width={25}
+            height={25}
+          ></Image>
+          <span>{language === "ja" ? "単位変換" : "Converter"}</span>
+        </li>
+        <li
+          className={styles.list}
+          style={{ gap: "8%" }}
+          onClick={handleClickAccount}
+        >
+          <Image
+            src={"/icons/account.svg"}
+            alt={language === "ja" ? "アイコンアカウント" : "account icon"}
+            width={25}
+            height={25}
+          ></Image>
+          <span>{language === "ja" ? "アカウント" : "Account"}</span>
+        </li>
+        <li
+          className={styles.list}
+          style={{ gap: "8%" }}
+          onClick={handleClickNews}
+        >
+          <Image
+            src={"/icons/news.svg"}
+            alt={language === "ja" ? "アイコンニュース" : "news icon"}
+            width={25}
+            height={25}
+          ></Image>
+          <span>{language === "ja" ? "ニュース" : "News"}</span>
+          {isNewsNew && (
+            <span
+              style={{
+                fontSize: `calc(${fontSizeFinal} * 0.9)`,
+                color: "orangered",
+              }}
+            >
+              new!
+            </span>
+          )}
+        </li>
+        <li
+          className={styles.list}
+          style={{ gap: "8%" }}
+          onClick={handleClickHowToUse}
+        >
+          <Image
+            src={"/icons/howtouse.svg"}
+            alt={language === "ja" ? "アイコン使い方" : "how to use icon"}
+            width={25}
+            height={25}
+          ></Image>
+          <span>{language === "ja" ? "使い方" : "How To Use"}</span>
+        </li>
+        <li
+          className={styles.list}
+          style={{ gap: "8%" }}
+          onClick={handleClickFeedback}
+        >
+          <Image
+            src={"/icons/feedback.svg"}
+            alt={language === "ja" ? "アイコンフィードバック" : "feedback icon"}
+            width={25}
+            height={25}
+          ></Image>
+          <span>{language === "ja" ? "フィードバック" : "Feedback"}</span>
+        </li>
         <li
           className={styles.list}
           style={{ gap: "8%" }}

@@ -3,7 +3,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 //next.js
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 //css
 import styles from "./page.module.css";
@@ -18,8 +17,6 @@ import {
 import {
   TYPE_LANGUAGE,
   TYPE_MEDIA,
-  TYPE_RECIPE,
-  TYPE_RECIPE_LINK,
   TYPE_USER_CONTEXT,
   TYPE_USER_RECIPE,
   TYPE_USER_RECIPE_LINK,
@@ -41,7 +38,6 @@ import {
   getUserRecipes,
   createMessage,
 } from "@/app/lib/helpers/recipes";
-import { WEBSITE_URL } from "../lib/config/settings";
 
 export default function Recipes() {
   const router = useRouter();

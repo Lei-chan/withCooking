@@ -137,10 +137,6 @@
   right: 2%;
 }
 
-.link__dropdown {
-  text-decoration: none;
-}
-
 .list {
   display: flex;
   flex-direction: row;
