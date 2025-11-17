@@ -18,7 +18,12 @@ export const viewport: Viewport = {
 const playfairDisplay = Playfair_Display({
   weight: "400",
   subsets: ["latin"],
-  fallback: ["Noto Serif JP", "serif"],
+  variable: "--font-playfair",
+});
+
+const notoSerifJp = Noto_Serif_JP({
+  weight: "400",
+  variable: "--font-noto-serif",
 });
 
 export default function RootLayout({
@@ -27,8 +32,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-gramm="false" data-gramm_editor="false">
-      <body className={playfairDisplay.className}>
+    <html
+      lang="en"
+      className={`${playfairDisplay.className}  ${notoSerifJp.className}`}
+    >
+      <body
+        style={{
+          fontFamily: "var(--font-playfair), var(--font-noto-serif), serif",
+        }}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

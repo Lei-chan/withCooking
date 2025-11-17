@@ -1,14 +1,12 @@
 "use client";
 //react
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 //css
 import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext } from "@/app/lib/providers";
 //componets
 import { RecipeEdit, RecipeLinkEdit } from "@/app/lib/components/components";
-//type
-import { TYPE_LANGUAGE } from "@/app/lib/config/type";
 //general method
 import { getFontSizeForLanguage } from "@/app/lib/helpers/other";
 
@@ -55,10 +53,9 @@ export default function CreateRecipe() {
         textAlign: "center",
         backgroundImage:
           "linear-gradient(rgba(255, 241, 117, 1), rgba(255, 190, 117, 1))",
-        width: "100vw",
-        minHeight: "100vh",
-        maxHeight: "fit-content",
-        padding: "2% 0",
+        width: "100%",
+        // minHeight: "100dvh",
+        height: "100%",
       }}
     >
       {!createFrom && (
@@ -68,7 +65,7 @@ export default function CreateRecipe() {
             flexDirection: "column",
             justifyContent: "center",
             width: "100%",
-            height: "100vh",
+            height: "100dvh",
             padding: "0 5%",
             gap:
               mediaContext === "mobile" || mediaContext === "tablet"

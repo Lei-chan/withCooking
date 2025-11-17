@@ -100,9 +100,8 @@ export default function Home() {
   return (
     <div
       style={{
-        width: "100vw",
+        width: "100%",
         height: "100%",
-        // height: "fit-content",
         display: "flex",
         flexDirection: "column",
         textAlign: "center",
@@ -325,7 +324,13 @@ function BottomHalf({
 
   return (
     <div
-      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+      style={{
+        width: "100%",
+        height: "fit-content",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
     >
       <Details
         mediaContext={mediaContext}
@@ -362,7 +367,7 @@ function BottomHalf({
       </h3>
       <footer
         style={{
-          width: "100vw",
+          width: "100%",
           padding:
             mediaContext === "mobile"
               ? "3% 0 1% 0"

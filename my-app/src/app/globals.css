@@ -10,6 +10,11 @@ textarea {
   font-family: "Playfair Display", "Noto Serif JP", Serif;
 }
 
+input,
+textarea {
+  color: black;
+}
+
 button,
 li {
   cursor: pointer;

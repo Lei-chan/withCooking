@@ -22,11 +22,7 @@ import {
   RecipeNoEdit,
 } from "@/app/lib/components/components";
 //type
-import {
-  TYPE_LANGUAGE,
-  TYPE_RECIPE,
-  TYPE_RECIPE_LINK,
-} from "@/app/lib/config/type";
+import { TYPE_RECIPE, TYPE_RECIPE_LINK } from "@/app/lib/config/type";
 //general methods
 import {
   generateErrorMessage,
@@ -46,24 +42,16 @@ export default function Recipe() {
 
   //design
   const mediaContext = useContext(MediaContext);
-  const [windowWidth, setWindowWidth] = useState(1220);
-  const [windowHeight, setWindowHeight] = useState(600);
-  const [recipeWidth, setRecipeWidth] = useState(
-    windowWidth *
-      (mediaContext === "mobile"
-        ? 0.9
-        : mediaContext === "tablet"
-        ? 0.7
-        : 0.5) +
-      "px"
-  );
-  const [iframeHeight, setIframeHeight] = useState(windowHeight * 0.8);
+  const [windowWidth, setWindowWidth] = useState<null | number>(null);
+  const [windowHeight, setWindowHeight] = useState<null | number>(null);
+  const [recipeWidth, setRecipeWidth] = useState<null | string>(null);
+  const [iframeHeight, setIframeHeight] = useState<null | number>(null);
   const [fontSizeFinal, setFontSizeFinal] = useState("1.5vw");
 
   useEffect(() => {
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setWindowHeight(window.innerHeight);
+      setWindowWidth(document.documentElement.clientWidth);
+      setWindowHeight(document.documentElement.clientHeight);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -72,6 +60,8 @@ export default function Recipe() {
   }, []);
 
   useEffect(() => {
+    if (!windowWidth) return;
+
     const recipeWid =
       windowWidth *
         (mediaContext === "mobile"
@@ -97,6 +87,8 @@ export default function Recipe() {
   }, [mediaContext, language, windowWidth]);
 
   useEffect(() => {
+    if (!windowHeight) return;
+
     setIframeHeight(windowHeight * 0.8);
   }, [windowHeight]);
 
@@ -151,9 +143,9 @@ export default function Recipe() {
         textAlign: "center",
         backgroundImage:
           "linear-gradient(rgba(255, 253, 117, 1), rgba(225, 255, 117, 1))",
-        width: "100vw",
-        minHeight: "100vh",
-        maxHeight: "fit-content",
+        width: "100%",
+        minHeight: "100dvh",
+        maxHeight: "100%",
         padding:
           mediaContext === "mobile"
             ? "15% 0 5% 0"
@@ -162,133 +154,134 @@ export default function Recipe() {
             : "2% 0",
       }}
     >
-      {!recipe && !error && (
-        <LoadingRecipe mediaContext={mediaContext} recipeWidth={recipeWidth} />
-      )}
-      {!recipe && error && (
-        <div>
-          <h1
-            className={styles.no_content}
-            style={{
-              fontSize: `calc(${fontSizeFinal} * 2.5)`,
-            }}
-          >
-            {error}
-          </h1>
-          <Link href="/recipes">
-            {language === "ja"
-              ? "レシピまとめページに戻る"
-              : "Return Recipes Page"}
-          </Link>
-        </div>
-      )}
-      {recipe && edit && (
-        <>
-          <button
-            className={clsx(styles.btn__img, styles.btn__edit)}
-            style={{
-              color: "blueviolet",
-              backgroundImage: "url(/icons/recipes.svg)",
-              width:
-                mediaContext === "mobile"
-                  ? "30%"
-                  : mediaContext === "tablet"
-                  ? "17%"
-                  : mediaContext === "desktop"
-                  ? "11.5%"
-                  : "10.5%",
-              top:
-                mediaContext === "mobile" || mediaContext === "tablet"
-                  ? "1%"
-                  : "2%",
-              right:
-                mediaContext === "mobile"
-                  ? "7%"
-                  : mediaContext === "tablet"
-                  ? "15%"
-                  : "7%",
-              fontSize: `calc(${fontSizeFinal} * ${
-                mediaContext === "mobile" ? 1.4 : 1.3
-              })`,
-            }}
-            onClick={handleToggleEdit}
-          >
-            {language === "ja" ? "レシピ" : "Recipe"}
-          </button>
-          {"link" in recipe ? (
-            <RecipeLinkEdit
-              language={language}
-              mediaContext={mediaContext}
-              recipe={recipe}
-              createOrEdit="edit"
-              handleChangeEdit={handleToggleEdit}
-            />
-          ) : (
-            <RecipeEdit
-              language={language}
-              mediaContext={mediaContext}
-              recipe={recipe}
-              error={error}
-              createOrUpdate="update"
-              handleChangeEdit={handleToggleEdit}
-            />
-          )}
-        </>
-      )}
-      {recipe && !edit && (
-        <>
-          <button
-            className={clsx(styles.btn__img, styles.btn__edit)}
-            style={{
-              color: "blueviolet",
-              backgroundImage: "url(/icons/pencile.svg)",
-              width:
-                mediaContext === "mobile"
-                  ? "20%"
-                  : mediaContext === "tablet"
-                  ? "13%"
-                  : "10%",
-              top:
-                mediaContext === "mobile" || mediaContext === "tablet"
-                  ? "1%"
-                  : "2%",
-              right:
-                mediaContext === "mobile"
-                  ? "10%"
-                  : mediaContext === "tablet"
-                  ? "15%"
-                  : "10%",
-              fontSize: `calc(${fontSizeFinal} * ${
-                mediaContext === "mobile" ? 1.5 : 1.4
-              })`,
-            }}
-            type="button"
-            onClick={handleToggleEdit}
-          >
-            {language === "ja" ? "編集" : "Edit"}
-          </button>
-          {"link" in recipe ? (
-            <RecipeLinkNoEdit
-              language={language}
-              mediaContext={mediaContext}
-              recipeWidth={parseFloat(recipeWidth)}
-              recipeHeight={iframeHeight}
-              recipe={recipe}
-              mainOrRecipe="recipe"
-            />
-          ) : (
-            <RecipeNoEdit
-              language={language}
-              mediaContext={mediaContext}
-              userContext={userContext}
-              recipeWidth={recipeWidth}
-              error={error}
-              mainOrRecipe="recipe"
-              userRecipe={recipe}
-            />
-          )}
-        </>
-      )}
+      {((!recipe && !error) ||
+        !windowWidth ||
+        !windowHeight ||
+        !recipeWidth ||
+        !iframeHeight) && <LoadingRecipe mediaContext={mediaContext} />}
+      {!recipe &&
+        error &&
+        windowWidth &&
+        windowHeight &&
+        recipeWidth &&
+        iframeHeight && (
+          <div>
+            <h1
+              className={styles.no_content}
+              style={{
+                fontSize: `calc(${fontSizeFinal} * 2.5)`,
+              }}
+            >
+              {error}
+            </h1>
+            <Link href="/recipes">
+              {language === "ja"
+                ? "レシピまとめページに戻る"
+                : "Return Recipes Page"}
+            </Link>
+          </div>
+        )}
+      {recipe &&
+        edit &&
+        windowWidth &&
+        windowHeight &&
+        recipeWidth &&
+        iframeHeight && (
+          <>
+            <button
+              className={clsx(styles.btn__img, styles.btn__edit)}
+              style={{
+                color: "blueviolet",
+                backgroundImage: "url(/icons/recipes.svg)",
+                width:
+                  mediaContext === "mobile"
+                    ? "30%"
+                    : mediaContext === "tablet"
+                    ? "17%"
+                    : mediaContext === "desktop"
+                    ? "11.5%"
+                    : "10.5%",
+                top: "link" in recipe ? "2%" : "1%",
+                right: "7%",
+                fontSize: `calc(${fontSizeFinal} * ${
+                  mediaContext === "mobile" ? 1.4 : 1.3
+                })`,
+              }}
+              onClick={handleToggleEdit}
+            >
+              {language === "ja" ? "レシピ" : "Recipe"}
+            </button>
+            {"link" in recipe ? (
+              <RecipeLinkEdit
+                language={language}
+                mediaContext={mediaContext}
+                recipe={recipe}
+                createOrEdit="edit"
+                handleChangeEdit={handleToggleEdit}
+              />
+            ) : (
+              <RecipeEdit
+                language={language}
+                mediaContext={mediaContext}
+                recipe={recipe}
+                error={error}
+                createOrUpdate="update"
+                handleChangeEdit={handleToggleEdit}
+              />
+            )}
+          </>
+        )}
+      {recipe &&
+        !edit &&
+        windowWidth &&
+        windowHeight &&
+        recipeWidth &&
+        iframeHeight && (
+          <>
+            <button
+              className={clsx(styles.btn__img, styles.btn__edit)}
+              style={{
+                color: "blueviolet",
+                backgroundImage: "url(/icons/pencile.svg)",
+                width:
+                  mediaContext === "mobile"
+                    ? "20%"
+                    : mediaContext === "tablet"
+                    ? "13%"
+                    : "10%",
+                top: "link" in recipe ? "2%" : "1%",
+                right: "10%",
+                fontSize: `calc(${fontSizeFinal} * ${
+                  mediaContext === "mobile" ? 1.5 : 1.4
+                })`,
+              }}
+              type="button"
+              onClick={handleToggleEdit}
+            >
+              {language === "ja" ? "編集" : "Edit"}
+            </button>
+            {"link" in recipe ? (
+              <RecipeLinkNoEdit
+                language={language}
+                mediaContext={mediaContext}
+                recipeWidth={parseFloat(recipeWidth)}
+                recipeHeight={iframeHeight}
+                recipe={recipe}
+                mainOrRecipe="recipe"
+              />
+            ) : (
+              <RecipeNoEdit
+                language={language}
+                mediaContext={mediaContext}
+                userContext={userContext}
+                recipeWidth={recipeWidth}
+                error={error}
+                mainOrRecipe="recipe"
+                userRecipe={recipe}
+              />
+            )}
+          </>
+        )}
     </div>
   );
 }

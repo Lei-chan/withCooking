@@ -58,26 +58,16 @@ export default function MAIN() {
   //design
   const mediaContext = useContext(MediaContext);
 
-  const [windowWidth, setWindowWidth] = useState(1220);
-  const [windowHeight, setWindowHeight] = useState(600);
-  const [recipeWidth, setRecipeWidth] = useState(
-    mediaContext === "mobile"
-      ? windowWidth + "px"
-      : mediaContext === "tablet"
-      ? windowWidth * 0.65 + "px"
-      : windowWidth * 0.55 + "px"
-  );
-  const [timerMemoWidth, setTimerMemoWidth] = useState(
-    mediaContext === "mobile"
-      ? windowWidth + "px"
-      : windowWidth - parseFloat(recipeWidth) + "px"
-  );
-  const [timerHeight, setTimerHeight] = useState(windowHeight * 0.65 + "px");
+  const [windowWidth, setWindowWidth] = useState<null | number>(null);
+  const [windowHeight, setWindowHeight] = useState<null | number>(null);
+  const [recipeWidth, setRecipeWidth] = useState<null | string>(null);
+  const [timerMemoWidth, setTimerMemoWidth] = useState<null | string>(null);
+  const [timerHeight, setTimerHeight] = useState<null | string>(null);
 
   useEffect(() => {
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setWindowHeight(window.innerHeight);
+      setWindowWidth(document.documentElement.clientWidth);
+      setWindowHeight(document.documentElement.clientHeight);
     };
 
     handleResize();
@@ -87,6 +77,8 @@ export default function MAIN() {
   }, []);
 
   useEffect(() => {
+    if (!windowWidth) return;
+
     const recipeWid =
       mediaContext === "mobile"
         ? windowWidth + "px"
@@ -94,6 +86,7 @@ export default function MAIN() {
         ? windowWidth * 0.65 + "px"
         : windowWidth * 0.55 + "px";
     setRecipeWidth(recipeWid);
+
     setTimerMemoWidth(
       mediaContext === "mobile"
         ? windowWidth + "px"
@@ -102,6 +95,8 @@ export default function MAIN() {
   }, [mediaContext, windowWidth]);
 
   useEffect(() => {
+    if (!windowHeight) return;
+
     setTimerHeight(windowHeight * 0.65 + "px");
   }, [windowHeight]);
 
@@ -127,7 +122,7 @@ export default function MAIN() {
   }
 
   function handleMouseMoveRecipe(e: React.MouseEvent<HTMLDivElement>) {
-    if (isDraggingX) {
+    if (isDraggingX && windowWidth) {
       const positioX = e.clientX;
       setRecipeWidth(`${positioX}px`);
       setTimerMemoWidth(windowWidth - positioX + "px");
@@ -171,11 +166,32 @@ export default function MAIN() {
 
   return (
     <div
-      style={{ width: "100vw", height: "100vh" }}
+      style={{ width: "100%", height: "100dvh" }}
       onClick={handleCloseDropdownSearch}
       onMouseUp={handleMouseUp}
       onMouseMove={handleMouseMoveRecipe}
     >
+      {(!windowWidth ||
+        !windowHeight ||
+        !recipeWidth ||
+        !timerMemoWidth ||
+        !timerHeight) && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            textAlign: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            backgroundImage:
+              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+            color: "brown",
+          }}
+        >
+          <h2>{language === "ja" ? "ロード中…" : "Loading..."}</h2>
+        </div>
+      )}
       {userContext?.isMessageVisible && (
         <OverlayMessage
           language={language}
@@ -193,109 +209,115 @@ export default function MAIN() {
           toggleLogout={handleToggleLogout}
         />
       )}
-      <div
-        style={
-          mediaContext === "mobile"
-            ? { width: "100%", height: "100%" }
-            : {
-                display: "flex",
-                flexDirection: "row",
-                width: "100%",
-                height: "100%",
-              }
-        }
-      >
-        <Search
-          searchRef={searchRef}
-          mediaContext={mediaContext}
-          language={language}
-          userContext={userContext}
-          innerWidth={windowWidth}
-          isSearchVisible={isSearchVisible}
-          onClickSearch={handleToggleSearch}
-        />
-        {mediaContext !== "mobile" && (
+      {windowWidth &&
+        windowHeight &&
+        recipeWidth &&
+        timerMemoWidth &&
+        timerHeight && (
           <div
-            style={{
-              position: "absolute",
-              top: "0",
-              left: `calc(${recipeWidth} - 1.5%)`,
-              width: "2%",
-              height: "100%",
-              cursor: "ew-resize",
-              zIndex: "5",
-            }}
-            onMouseDown={handleMouseDownX}
-          ></div>
-        )}
-        <DropdownMenu
-          mediaContext={mediaContext}
-          language={language}
-          router={router}
-          isDropdownVisible={isDropdownVisible}
-          onClickDropdown={handleToggleDropdown}
-          onClickLogout={handleToggleLogout}
-        />
-
-        <section
-          style={{
-            position: "relative",
-            textAlign: "center",
-            backgroundImage:
-              "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-            width: recipeWidth,
-            height: "100%",
-            overflowY: "auto",
-            scrollbarColor: "rgb(255, 255, 232) rgb(253, 231, 157)",
-          }}
-        >
-          <Recipe
-            mediaContext={mediaContext}
-            language={language}
-            userContext={userContext}
-            router={router}
-            recipeWidth={recipeWidth}
-            innerHeight={windowHeight}
-          />
-        </section>
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateRows: `${timerHeight} calc(100% - ${timerHeight})`,
-            width:
+            style={
               mediaContext === "mobile"
-                ? "100%"
-                : `calc(100% - ${recipeWidth})`,
-            height: "100%",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: `calc(${timerHeight} - 2%)`,
-              right: "0",
-              width: `calc(100% - ${recipeWidth})`,
-              height: "2%",
-              cursor: "ns-resize",
-              zIndex: "5",
-            }}
-            onMouseDown={handleMouseDownY}
-          ></div>
-          <Timers
-            mediaContext={mediaContext}
-            language={language}
-            innerWidth={windowWidth}
-            timerWidth={timerMemoWidth}
-          />
-          <Memos
-            mediaContext={mediaContext}
-            language={language}
-            innerWidth={windowWidth}
-            memoWidth={timerMemoWidth}
-          />
-        </section>
-      </div>
+                ? { width: "100%", height: "100%" }
+                : {
+                    display: "flex",
+                    flexDirection: "row",
+                    width: "100%",
+                    height: "100%",
+                  }
+            }
+          >
+            <Search
+              searchRef={searchRef}
+              mediaContext={mediaContext}
+              language={language}
+              userContext={userContext}
+              innerWidth={windowWidth}
+              isSearchVisible={isSearchVisible}
+              onClickSearch={handleToggleSearch}
+            />
+            {mediaContext !== "mobile" && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "0",
+                  left: `calc(${recipeWidth} - 1.5%)`,
+                  width: "2%",
+                  height: "100%",
+                  cursor: "ew-resize",
+                  zIndex: "5",
+                }}
+                onMouseDown={handleMouseDownX}
+              ></div>
+            )}
+            <DropdownMenu
+              mediaContext={mediaContext}
+              language={language}
+              router={router}
+              isDropdownVisible={isDropdownVisible}
+              onClickDropdown={handleToggleDropdown}
+              onClickLogout={handleToggleLogout}
+            />
+
+            <section
+              style={{
+                position: "relative",
+                textAlign: "center",
+                backgroundImage:
+                  "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
+                width: recipeWidth,
+                height: "100%",
+                overflowY: "auto",
+                scrollbarColor: "rgb(255, 255, 232) rgb(253, 231, 157)",
+              }}
+            >
+              <Recipe
+                mediaContext={mediaContext}
+                language={language}
+                userContext={userContext}
+                router={router}
+                recipeWidth={recipeWidth}
+                innerHeight={windowHeight}
+              />
+            </section>
+
+            <section
+              style={{
+                display: "grid",
+                gridTemplateRows: `${timerHeight} calc(100% - ${timerHeight})`,
+                width:
+                  mediaContext === "mobile"
+                    ? "100%"
+                    : `calc(100% - ${recipeWidth})`,
+                height: "100%",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: `calc(${timerHeight} - 2%)`,
+                  right: "0",
+                  width: `calc(100% - ${recipeWidth})`,
+                  height: "2%",
+                  cursor: "ns-resize",
+                  zIndex: "5",
+                }}
+                onMouseDown={handleMouseDownY}
+              ></div>
+              <Timers
+                mediaContext={mediaContext}
+                language={language}
+                innerWidth={windowWidth}
+                timerWidth={timerMemoWidth}
+              />
+              <Memos
+                mediaContext={mediaContext}
+                language={language}
+                innerWidth={windowWidth}
+                memoWidth={timerMemoWidth}
+              />
+            </section>
+          </div>
+        )}
     </div>
   );
 }
@@ -401,7 +423,7 @@ function Recipe({
       <RecipeLinkNoEdit
         language={language}
         mediaContext={mediaContext}
-        recipeWidth={parseFloat(recipeWidth)}
+        recipeWidth={parseFloat(recipeWidth) * 0.9}
         recipeHeight={innerHeight}
         recipe={recipe}
         mainOrRecipe="main"

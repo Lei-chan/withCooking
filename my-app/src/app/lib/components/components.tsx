@@ -402,26 +402,17 @@ export function RecipeEdit({
   const userContext = useContext(UserContext);
 
   //design
-  const [windowWidth, setWindowWidth] = useState(1220);
-  const [recipeWidth, setRecipeWidth] = useState(
-    windowWidth *
-      (mediaContext === "mobile"
-        ? 0.9
-        : mediaContext === "tablet"
-        ? 0.7
-        : 0.5) +
-      "px"
-  );
+  const [windowWidth, setWindowWidth] = useState<null | number>(null);
+  const [recipeWidth, setRecipeWidth] = useState<null | string>(null);
   const [fontSizeFinal, setFontSizeFinal] = useState("1.5vw");
   const [headerSize, setHeaderSize] = useState(
     parseFloat(fontSizeFinal) * 1.1 + "px"
   );
-  const [marginTop, setMarginTop] = useState(
-    getSize(recipeWidth, 0.11, "30px")
-  );
+  const [marginTop, setMarginTop] = useState("30px");
 
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+    const handleResize = () =>
+      setWindowWidth(document.documentElement.clientWidth);
 
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -430,6 +421,8 @@ export function RecipeEdit({
   }, []);
 
   useEffect(() => {
+    if (!windowWidth) return;
+
     const recipeWid =
       windowWidth *
         (mediaContext === "mobile"
@@ -728,8 +721,8 @@ export function RecipeEdit({
         />
       )}
 
-      {!curRecipe ? (
-        <LoadingRecipe mediaContext={mediaContext} recipeWidth={recipeWidth} />
+      {!curRecipe || !windowWidth || !recipeWidth ? (
+        <LoadingRecipe mediaContext={mediaContext} />
       ) : (
         <form
           style={{
@@ -738,7 +731,7 @@ export function RecipeEdit({
             backgroundImage:
               "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
             width: recipeWidth,
-            height: "100%",
+            height: "fit-content",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -746,6 +739,10 @@ export function RecipeEdit({
             color: "rgb(60, 0, 116)",
             boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
             borderRadius: mediaContext === "mobile" ? "5px" : "10px",
+            margin:
+              mediaContext === "mobile" || mediaContext === "tablet"
+                ? "4% 0"
+                : "2% 0",
           }}
           onSubmit={handleSubmit}
         >
@@ -2783,7 +2780,7 @@ export function RecipeNoEdit({
   const router = useRouter();
 
   ///design
-  const [windowWidth, setWindowWidth] = useState(1220);
+  const [windowWidth, setWindowWidth] = useState<null | number>(null);
   const [fontSizeFinal, setFontSizeFinal] = useState("1.5vw");
   const [headerSize, setHeaderSize] = useState(
     parseFloat(fontSizeFinal) * 1.1 + "px"
@@ -2791,7 +2788,8 @@ export function RecipeNoEdit({
   const marginTop = getSize(recipeWidth, 0.11, "30px");
 
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+    const handleResize = () =>
+      setWindowWidth(document.documentElement.clientWidth);
 
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -2800,6 +2798,8 @@ export function RecipeNoEdit({
   }, []);
 
   useEffect(() => {
+    if (!windowWidth) return;
+
     const fontSizeEn =
       mediaContext === "mobile"
         ? getSize(recipeWidth, 0.045, "4.5vw")
@@ -2813,7 +2813,7 @@ export function RecipeNoEdit({
       language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
     setFontSizeFinal(fontSizeFin);
 
-    setHeaderSize(parseFloat(fontSizeFinal) * 1.1 + "px");
+    setHeaderSize(parseFloat(fontSizeFin) * 1.1 + "px");
   }, [recipeWidth, mediaContext, language, windowWidth]);
 
   //don't modify recipe value unless the recipe is changed
@@ -3114,6 +3114,7 @@ function ButtonEditMain({
 }) {
   const router = useRouter();
 
+  console.log(fontSize);
   return (
     <button
       className={clsx(styles.btn__img, styles.btn__edit)}
@@ -3124,6 +3125,7 @@ function ButtonEditMain({
           mediaContext === "mobile" || mediaContext === "tablet"
             ? "20%"
             : "15%",
+        height: "fit-content",
         top: mediaContext === "mobile" ? "0.2%" : "0.4%",
         right: mediaContext === "mobile" ? "10%" : "5%",
         fontSize,
@@ -4451,7 +4453,7 @@ export function RecipeLinkEdit({
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
-        height: "100vh",
+        height: "100dvh",
       }}
     >
       {(error || message || isPending) && (
@@ -4633,6 +4635,7 @@ export function RecipeLinkNoEdit({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        padding: "2%",
       }}
     >
       {mainOrRecipe === "main" && (
@@ -4649,7 +4652,7 @@ export function RecipeLinkNoEdit({
         src={recipe.link}
         loading="lazy"
       ></iframe>
-      <p style={{ width: recipeWidth, marginTop: "1%" }}>
+      <p style={{ width: recipeWidth, marginTop: "2%" }}>
         {language === "ja"
           ? "登録されたレシピリンクのウェブサイトのセキュリティの問題により、ここにそのサイトを表示できない場合があります。その場合は、こちらのリンクから直接そのサイトにアクセスしてください。"
           : "For security reasons, the website linked in the recipe may not allow its page to be displayed here. If the page doesn't appear, please click this link to visit the website directly."}
@@ -4663,20 +4666,19 @@ export function RecipeLinkNoEdit({
   );
 }
 
-export function LoadingRecipe({
-  mediaContext,
-  recipeWidth,
-}: {
-  mediaContext: TYPE_MEDIA;
-  recipeWidth: string;
-}) {
+export function LoadingRecipe({ mediaContext }: { mediaContext: TYPE_MEDIA }) {
   return (
     <form
       className={styles.loading}
       style={{
         backgroundImage:
           "linear-gradient(rgb(253, 255, 219), rgb(255, 254, 179))",
-        width: recipeWidth,
+        width:
+          mediaContext === "mobile"
+            ? "90dvw"
+            : mediaContext === "tablet"
+            ? "70dvw"
+            : "50dvw",
         aspectRatio: "1/1.5",
         boxShadow: "rgba(0, 0, 0, 0.32) 5px 5px 10px",
         borderRadius: mediaContext === "mobile" ? "5px" : "10px",
