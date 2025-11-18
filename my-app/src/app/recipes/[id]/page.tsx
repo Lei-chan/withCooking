@@ -14,13 +14,11 @@ import {
   UserContext,
 } from "@/app/lib/providers";
 //components
-import {
-  LoadingRecipe,
-  RecipeEdit,
-  RecipeLinkEdit,
-  RecipeLinkNoEdit,
-  RecipeNoEdit,
-} from "@/app/lib/components/components";
+import RecipeNoEdit from "@/app/lib/components/RecipeNoEdit/RecipeNoEdit";
+import RecipeEdit from "@/app/lib/components/RecipeEdit/RecipeEdit";
+import RecipeLinkNoEdit from "@/app/lib/components/RecipeLinkNoEdit/RecipeLinkNoEdit";
+import RecipeLinkEdit from "@/app/lib/components/RecipeLinkEdit/RecipeLinkEdit";
+import { LoadingRecipe } from "@/app/lib/components/recipeCommon/recipeCommon";
 //type
 import { TYPE_RECIPE, TYPE_RECIPE_LINK } from "@/app/lib/config/type";
 //general methods

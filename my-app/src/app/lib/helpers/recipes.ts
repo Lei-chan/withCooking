@@ -1,3 +1,5 @@
+//type
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import {
   TYPE_INGREDIENT,
   TYPE_INGREDIENTS,
@@ -13,8 +15,17 @@ import {
   TYPE_USER_RECIPE_LINK,
   TYPE_USER_RECIPE_LINK_DATABASE,
 } from "../config/type";
+//methods for convertion
 import { convertIngUnits, convertTempUnits } from "./converter";
+//general methods
 import { getData } from "./other";
+
+export const handleClickEdit = (router: AppRouterInstance) => {
+  const id = window.location.hash.slice(1);
+  if (!id) return;
+
+  router.push(`/recipes/${id}`);
+};
 
 //create recipe
 export const uploadRecipeCreate = async (

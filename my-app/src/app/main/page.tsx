@@ -11,14 +11,12 @@ import styles from "./page.module.css";
 import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //model
 import news from "@/app/lib/models/news";
+import LanguageSelect from "../lib/components/LanguageSelect/LanguageSelect";
 //components
-import {
-  LanguageSelect,
-  OverlayMessage,
-  PaginationButtons,
-  RecipeLinkNoEdit,
-  RecipeNoEdit,
-} from "../lib/components/components";
+import OverlayMessage from "../lib/components/OverlayMessage/OverlayMessage";
+import PaginationButtons from "../lib/components/PaginationButtons/PaginationButtons";
+import RecipeNoEdit from "../lib/components/RecipeNoEdit/RecipeNoEdit";
+import RecipeLinkNoEdit from "../lib/components/RecipeLinkNoEdit/RecipeLinkNoEdit";
 //type
 import {
   TYPE_USER_CONTEXT,

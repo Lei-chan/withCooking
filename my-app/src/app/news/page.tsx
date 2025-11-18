@@ -2,11 +2,12 @@
 //react
 import { useContext, useEffect, useState } from "react";
 //type
-import { TYPE_LANGUAGE, TYPE_MEDIA } from "../lib/config/type";
+import { TYPE_LANGUAGE } from "../lib/config/type";
 //context
 import { LanguageContext, MediaContext } from "../lib/providers";
-//model for news
+//model
 import news from "../lib/models/news";
+//general method
 import { getFontSizeForLanguage } from "../lib/helpers/other";
 
 export default function News() {

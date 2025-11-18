@@ -1,10 +1,16 @@
 "use client";
+//react
 import { useContext, useEffect, useRef, useState } from "react";
-import Image from "next/image";
-import styles from "./page.module.css";
-import { LanguageContext, MediaContext } from "../lib/providers";
 import clsx from "clsx";
+//next.js
+import Image from "next/image";
+//css
+import styles from "./page.module.css";
+//context
+import { LanguageContext, MediaContext } from "../lib/providers";
+//media
 import { MIN_TABLET } from "../lib/config/media";
+//general method
 import { getFontSizeForLanguage } from "../lib/helpers/other";
 
 export default function HowToUse() {

@@ -9,10 +9,8 @@ import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //components
-import {
-  MessageContainer,
-  PaginationButtons,
-} from "@/app/lib/components/components";
+import MessageContainer from "../lib/components/MessageContainer/MessageContainer";
+import PaginationButtons from "../lib/components/PaginationButtons/PaginationButtons";
 //type
 import {
   TYPE_LANGUAGE,
@@ -21,6 +19,13 @@ import {
   TYPE_USER_RECIPE,
   TYPE_USER_RECIPE_LINK,
 } from "../lib/config/type";
+//methods for recipes
+import {
+  getRecipesPerPage,
+  calcNumberOfPages,
+  getUserRecipes,
+  createMessage,
+} from "@/app/lib/helpers/recipes";
 //general methods
 import {
   authErrorRedirect,
@@ -31,13 +36,6 @@ import {
   logNonApiError,
   wait,
 } from "@/app/lib/helpers/other";
-//methods for recipes
-import {
-  getRecipesPerPage,
-  calcNumberOfPages,
-  getUserRecipes,
-  createMessage,
-} from "@/app/lib/helpers/recipes";
 
 export default function Recipes() {
   const router = useRouter();
@@ -359,13 +357,11 @@ function SearchSection({
         />
         <button
           style={{
-            // minHeight: "50%",
             height: "fit-content",
             border: "none",
             backgroundColor: "rgb(255, 231, 126)",
             letterSpacing: "0.05vw",
             width: "fit-content",
-            // height: "fit-content",
             padding: "0.9% 1.4%",
             borderRadius: "30% / 50%",
             fontSize: `calc(${fontSize} * 0.85)`,

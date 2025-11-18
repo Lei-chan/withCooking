@@ -5,8 +5,10 @@ import { useContext, useEffect, useState } from "react";
 import Link from "next/link";
 //context
 import { LanguageContext, MediaContext } from "../lib/providers";
-import { getFontSizeForLanguage } from "../lib/helpers/other";
+//type
 import { TYPE_LANGUAGE } from "../lib/config/type";
+//general method
+import { getFontSizeForLanguage } from "../lib/helpers/other";
 
 export default function Feedback() {
   //language

@@ -1,0 +1,29 @@
+.btn__x {
+  position: absolute;
+  background: none;
+  width: 7%;
+  border: none;
+  top: 2%;
+  right: 1%;
+  font-weight: bold;
+  color: navy;
+}
+
+.btn__x:hover {
+  color: orange;
+}
+
+.btn__question {
+  position: relative;
+  bottom: -18%;
+  width: fit-content;
+  background-color: orange;
+  border: none;
+  padding: 0.6% 1%;
+  border-radius: 6%/15%;
+  transition: all 0.2s;
+}
+
+.btn__question:hover {
+  background-color: rgb(255, 102, 0);
+}

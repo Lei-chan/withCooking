@@ -13,10 +13,9 @@ import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
 //model
 import homeDetails from "./lib/models/homeDetails";
 //component
-import { LanguageSelect } from "./lib/components/components";
+import LanguageSelect from "./lib/components/LanguageSelect/LanguageSelect";
 //type
 import {
-  MyError,
   TYPE_LANGUAGE,
   TYPE_MEDIA,
   TYPE_USER_CONTEXT,

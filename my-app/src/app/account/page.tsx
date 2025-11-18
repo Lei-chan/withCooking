@@ -10,7 +10,7 @@ import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //component
-import { OverlayMessage } from "../lib/components/components";
+import OverlayMessage from "../lib/components/OverlayMessage/OverlayMessage";
 //type
 import {
   TYPE_LANGUAGE,

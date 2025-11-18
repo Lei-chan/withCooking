@@ -6,7 +6,8 @@ import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext } from "@/app/lib/providers";
 //componets
-import { RecipeEdit, RecipeLinkEdit } from "@/app/lib/components/components";
+import RecipeEdit from "@/app/lib/components/RecipeEdit/RecipeEdit";
+import RecipeLinkEdit from "@/app/lib/components/RecipeLinkEdit/RecipeLinkEdit";
 //general method
 import { getFontSizeForLanguage } from "@/app/lib/helpers/other";
 
