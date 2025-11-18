@@ -136,7 +136,7 @@ export default function OverlayMessage({
         {content !== "close" && (
           <button
             className={styles.btn__x}
-            style={{ fontSize: fontSizeFinal }}
+            style={{ fontSize: `calc(${fontSizeFinal} * 1.5)` }}
             onClick={() => {
               content === "welcome" && handleClose();
               content === "logout" && toggleLogout && toggleLogout();
@@ -149,7 +149,7 @@ export default function OverlayMessage({
         {option === "question" && (
           <button
             className={styles.btn__question}
-            style={{ fontSize: `calc(${fontSizeFinal} * 0.75)` }}
+            style={{ fontSize: fontSizeFinal }}
             onClick={handleLogout}
           >
             {language === "ja" ? "はい" : "I'm Sure"}

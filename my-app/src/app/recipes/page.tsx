@@ -15,6 +15,8 @@ import PaginationButtons from "../lib/components/PaginationButtons/PaginationBut
 import {
   TYPE_LANGUAGE,
   TYPE_MEDIA,
+  TYPE_RECIPE,
+  TYPE_RECIPE_LINK,
   TYPE_USER_CONTEXT,
   TYPE_USER_RECIPE,
   TYPE_USER_RECIPE_LINK,
@@ -36,6 +38,8 @@ import {
   logNonApiError,
   wait,
 } from "@/app/lib/helpers/other";
+import SearchBar from "../lib/components/SearchBar/SearchBar";
+import RecipePreview from "../lib/components/RecipePreview/RecipePreview";
 
 export default function Recipes() {
   const router = useRouter();
@@ -179,16 +183,12 @@ export default function Recipes() {
     setError(message);
   }
 
-  async function handleSearchRecipes(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  function handleSetKeyword(keyword: string) {
+    setKeyword(keyword);
+  }
 
-    const keywordData = new FormData(e.currentTarget).get("keyword");
-    if (!keywordData && keywordData !== "") return;
-
-    const structuredKeyword = String(keywordData).trim().toLowerCase();
-
-    setKeyword(structuredKeyword);
-    setCurPage(1);
+  function handleSetCurPage(page: number) {
+    setCurPage(page);
   }
 
   function handlePagination(e: React.MouseEvent<HTMLButtonElement>) {
@@ -225,7 +225,8 @@ export default function Recipes() {
             curPage={curPage}
             numberOfPages={numberOfPages || 0}
             numberOfCurRecipes={recipes?.length || 0}
-            onSubmitSearch={handleSearchRecipes}
+            handleSetKeyword={handleSetKeyword}
+            handleSetCurPage={handleSetCurPage}
           />
           <RecipeContainer
             mediaContext={mediaContext}
@@ -244,7 +245,7 @@ export default function Recipes() {
             mediaContext={mediaContext}
             language={language}
             fontSize={fontSizeFinal}
-            styles={styles}
+            height="10%"
             curPage={curPage}
             numberOfPages={numberOfPages || 0}
             isPending={isPending}
@@ -263,7 +264,8 @@ function SearchSection({
   curPage,
   numberOfPages,
   numberOfCurRecipes,
-  onSubmitSearch,
+  handleSetKeyword,
+  handleSetCurPage,
 }: {
   mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
@@ -271,7 +273,8 @@ function SearchSection({
   curPage: number;
   numberOfPages: number;
   numberOfCurRecipes: number;
-  onSubmitSearch: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleSetKeyword: (keyword: string) => void;
+  handleSetCurPage: (page: number) => void;
 }) {
   const router = useRouter();
 
@@ -320,62 +323,24 @@ function SearchSection({
       } (${numberOfCurRecipes} ${
         language === "ja" ? "レシピ" : "recipes"
       })`}</p>
-      <form
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "blueviolet",
-          width:
-            mediaContext === "mobile" || mediaContext === "tablet"
-              ? "77%"
-              : "60%",
-          height: "68%",
-          borderRadius: mediaContext === "mobile" ? "5px" : "7px",
-          gap: "3%",
-          boxShadow: "rgba(0, 0, 0, 0.31) 3px 3px 3px",
-        }}
-        onSubmit={onSubmitSearch}
-      >
-        <input
-          style={{
-            textAlign: "center",
-            borderColor: "#ffa600ab",
-            height: "55%",
-            letterSpacing: "0.05vw",
-            wordSpacing: "0.2vw",
-            width: mediaContext === "mobile" ? "70%" : "55%",
-            borderRadius: mediaContext === "mobile" ? "10% / 50%" : "1% / 10%",
-            fontSize,
-          }}
-          type="search"
-          name="keyword"
-          placeholder={
-            language === "ja" ? "レシピを検索" : "search your recipes"
-          }
-        />
-        <button
-          style={{
-            height: "fit-content",
-            border: "none",
-            backgroundColor: "rgb(255, 231, 126)",
-            letterSpacing: "0.05vw",
-            width: "fit-content",
-            padding: "0.9% 1.4%",
-            borderRadius: "30% / 50%",
-            fontSize: `calc(${fontSize} * 0.85)`,
-            color: "black",
-          }}
-          type="submit"
-        >
-          {language === "ja" ? "検索" : "Search"}
-        </button>
-      </form>
+      <SearchBar
+        language={language}
+        mediaContext={mediaContext}
+        fontSize={fontSize}
+        width={
+          mediaContext === "mobile" || mediaContext === "tablet" ? "77%" : "60%"
+        }
+        height="68%"
+        borderRadius={mediaContext === "mobile" ? "5px" : "7px"}
+        boxShadow="rgba(0, 0, 0, 0.31) 3px 3px 3px"
+        inputWidth={mediaContext === "mobile" ? "70%" : "55%"}
+        handleSetKeyword={handleSetKeyword}
+        handleSetCurPage={handleSetCurPage}
+      />
       <button
         className={styles.btn__create}
         style={{
-          fontSize: `calc(${fontSize} * 0.9)`,
+          fontSize: `calc(${fontSize} * 0.75)`,
         }}
         type="button"
         onClick={handleClickCreate}
@@ -424,6 +389,7 @@ function RecipeContainer({
       : mediaContext === "tablet" && 650 > window.innerWidth
       ? 4
       : 5;
+  const mainImageSize = mediaContext === "mobile" ? 50 : 46;
 
   //set recipes
   const RECIPES_PER_COLUMN = 6;
@@ -549,6 +515,12 @@ function RecipeContainer({
     }
   }
 
+  function handleClickPreview(
+    recipe: TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK
+  ) {
+    if (recipe._id) router.push(`/recipes/${recipe._id}`);
+  }
+
   return (
     <form
       style={{
@@ -556,9 +528,13 @@ function RecipeContainer({
         display: "grid",
         gridTemplateColumns: `repeat(${numberOfColumns}, 1fr)`,
         width: mediaContext === "mobile" ? "100%" : "90%",
-        height: "73%",
+        height: "75%",
         paddingTop:
-          mediaContext === "mobile" || mediaContext === "tablet" ? "10%" : "3%",
+          mediaContext === "mobile"
+            ? "7%"
+            : mediaContext === "tablet"
+            ? "5%"
+            : "3%",
         justifyItems: "center",
       }}
       onSubmit={handleSubmitDeleteRecipe}
@@ -656,7 +632,7 @@ function RecipeContainer({
                     key={i}
                     style={{
                       width: "100%",
-                      height: "15%",
+                      height: "14.6%",
                       display: "flex",
                       flexDirection: "row",
                       gap: "3%",
@@ -680,12 +656,22 @@ function RecipeContainer({
                       ></input>
                     )}
                     <RecipePreview
-                      key={i}
-                      mediaContext={mediaContext}
                       language={language}
-                      fontSize={fontSize}
+                      mediaContext={mediaContext}
                       recipe={recipe}
-                      isSelecting={isSelecting}
+                      width={
+                        !isSelecting
+                          ? "100%"
+                          : mediaContext === "mobile"
+                          ? "90%"
+                          : "80%"
+                      }
+                      height="100%"
+                      imageSize={mainImageSize}
+                      fontSize={fontSize}
+                      borderRadius="1% / 4%"
+                      borderBottom="none"
+                      onClickPreview={handleClickPreview}
                     />
                   </div>
                 );
@@ -734,82 +720,5 @@ function RecipeContainer({
         </div>
       )}
     </form>
-  );
-}
-
-function RecipePreview({
-  mediaContext,
-  language,
-  fontSize,
-  recipe,
-  isSelecting,
-}: {
-  mediaContext: TYPE_MEDIA;
-  language: TYPE_LANGUAGE;
-  fontSize: string;
-  recipe: TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK;
-  isSelecting: boolean;
-}) {
-  const router = useRouter();
-
-  //design
-  const mainImageSize = mediaContext === "mobile" ? "50px" : "46px";
-
-  function handleClickPreview(e: React.MouseEvent<HTMLElement>) {
-    const id = e.currentTarget.id;
-
-    router.push(`/recipes/${id}`);
-  }
-
-  return (
-    <li
-      className={styles.recipe_preview}
-      style={{
-        width: !isSelecting
-          ? "100%"
-          : mediaContext === "mobile"
-          ? "90%"
-          : "80%",
-        height: "100%",
-      }}
-      id={recipe._id}
-      onClick={handleClickPreview}
-    >
-      {"mainImagePreview" in recipe && recipe.mainImagePreview?.data ? (
-        <Image
-          style={{ borderRadius: "50%" }}
-          src={recipe.mainImagePreview.data}
-          alt={language === "ja" ? "メイン画像" : "main image"}
-          width={parseFloat(mainImageSize)}
-          height={parseFloat(mainImageSize)}
-        ></Image>
-      ) : (
-        <div
-          style={{
-            borderRadius: "50%",
-            width: mainImageSize,
-            height: mainImageSize,
-            backgroundColor: "grey",
-          }}
-        ></div>
-      )}
-      <p
-        className={styles.title}
-        style={{
-          fontSize:
-            mediaContext === "mobile" ? `calc(${fontSize} * 1.1)` : fontSize,
-        }}
-      >
-        {recipe.title}
-      </p>
-      {recipe.favorite && (
-        <Image
-          src="/icons/star-on.png"
-          alt={language === "ja" ? "アイコンお気に入り" : "favorite icon"}
-          width={parseFloat(mainImageSize) / 3}
-          height={parseFloat(mainImageSize) / 3}
-        ></Image>
-      )}
-    </li>
   );
 }

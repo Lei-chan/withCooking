@@ -1,0 +1,8 @@
+.container__search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: blueviolet;
+  gap: 3%;
+}

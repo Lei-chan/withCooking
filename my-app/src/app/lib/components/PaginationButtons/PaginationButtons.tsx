@@ -1,5 +1,5 @@
-//react
-import clsx from "clsx";
+//css
+import styles from "./paginationButtons.module.css";
 //type
 import { TYPE_LANGUAGE, TYPE_MEDIA } from "../../config/type";
 
@@ -7,7 +7,7 @@ export default function PaginationButtons({
   language,
   mediaContext,
   fontSize,
-  styles,
+  height,
   curPage,
   numberOfPages,
   isPending,
@@ -16,7 +16,7 @@ export default function PaginationButtons({
   language: TYPE_LANGUAGE;
   mediaContext: TYPE_MEDIA;
   fontSize: string;
-  styles: { readonly [key: string]: string };
+  height: string;
   curPage: number;
   numberOfPages: number;
   isPending: boolean;
@@ -24,10 +24,10 @@ export default function PaginationButtons({
 }) {
   const fontSizePagination =
     mediaContext === "mobile"
-      ? fontSize
-      : mediaContext === "tablet"
       ? `calc(${fontSize} * 0.9)`
-      : `calc(${fontSize} * 0.8)`;
+      : mediaContext === "tablet"
+      ? `calc(${fontSize} * 0.8)`
+      : `calc(${fontSize} * 0.7)`;
   const padding =
     mediaContext === "mobile"
       ? "1% 2%"
@@ -38,15 +38,25 @@ export default function PaginationButtons({
       : "0.8%";
 
   return (
-    <div className={styles.container__pagination}>
+    <div
+      style={{
+        position: "relative",
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        height,
+      }}
+    >
       {!isPending && curPage > 1 && (
         <button
-          className={clsx(styles.btn__pagination, styles.btn__pagination_left)}
-          style={{ fontSize: fontSizePagination, padding }}
+          className={styles.btn__pagination}
+          style={{ left: "2%", fontSize: fontSizePagination, padding }}
           value="decrease"
           onClick={onClickPagination}
         >
-          {mediaContext === "mobile" || mediaContext === "tablet"
+          {mediaContext === "mobile"
             ? `${curPage - 1}`
             : `${language === "ja" ? "ページ" : "Page"} ${curPage - 1}`}
           <br />
@@ -55,12 +65,12 @@ export default function PaginationButtons({
       )}
       {!isPending && numberOfPages > curPage && (
         <button
-          className={clsx(styles.btn__pagination, styles.btn__pagination_right)}
-          style={{ fontSize: fontSizePagination, padding }}
+          className={styles.btn__pagination}
+          style={{ right: "2%", fontSize: fontSizePagination, padding }}
           value="increase"
           onClick={onClickPagination}
         >
-          {mediaContext === "mobile" || mediaContext === "tablet"
+          {mediaContext === "mobile"
             ? `${curPage + 1}`
             : `${language === "ja" ? "ページ" : "Page"} ${curPage + 1}`}
           <br />

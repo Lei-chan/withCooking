@@ -55,7 +55,6 @@ export default function CreateRecipe() {
         backgroundImage:
           "linear-gradient(rgba(255, 241, 117, 1), rgba(255, 190, 117, 1))",
         width: "100%",
-        // minHeight: "100dvh",
         height: "100%",
       }}
     >

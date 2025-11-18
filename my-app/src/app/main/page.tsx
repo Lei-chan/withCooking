@@ -24,6 +24,8 @@ import {
   TYPE_RECIPE,
   TYPE_LANGUAGE,
   TYPE_RECIPE_LINK,
+  TYPE_USER_RECIPE,
+  TYPE_USER_RECIPE_LINK,
 } from "../lib/config/type";
 //general methods
 import {
@@ -43,6 +45,8 @@ import {
 } from "@/app/lib/helpers/recipes";
 //library
 import { nanoid } from "nanoid";
+import SearchBar from "../lib/components/SearchBar/SearchBar";
+import RecipePreview from "../lib/components/RecipePreview/RecipePreview";
 
 export default function MAIN() {
   const router = useRouter();
@@ -480,10 +484,10 @@ function Search({
     "px";
   const fontSizeFinal =
     language === "ja" ? parseFloat(fontSizeEn) * 0.9 + "px" : fontSizeEn;
-  const mainImageSize = parseFloat(searchMenuSize) * 0.2 + "px";
+  const mainImageSize = parseFloat(searchMenuSize) * 0.2;
 
   const [recipes, setRecipes] = useState<
-    (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | []
+    (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[] | []
   >([]);
   //don't modify originalNumberOfRecipes
   const originalNumberOfRecipes = userContext?.numberOfRecipes || 0;
@@ -512,6 +516,14 @@ function Search({
       setIsPending(false);
     })();
   }, [originalNumberOfRecipes]);
+
+  function handleSetKeyword(keyword: string) {
+    setKeyword(keyword);
+  }
+
+  function handleSetCurPage(page: number) {
+    setCurPage(page);
+  }
 
   //6 recipes per fetch
   async function setUserRecipes(key: string = "") {
@@ -568,16 +580,10 @@ function Search({
     })();
   }, [curPage, keyword, originalNumberOfRecipes]);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const keywordData = new FormData(e.currentTarget).get("keyword");
-    if (!keywordData && keywordData !== "") return;
-
-    const structuredKeyword = String(keywordData).trim().toLowerCase();
-
-    setKeyword(structuredKeyword);
-    setCurPage(1);
+  function handleClickPreview(
+    recipe: TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK
+  ) {
+    if (recipe._id) window.location.hash = recipe._id;
   }
 
   //I'm gonna make it work for arrow keydown event later too!
@@ -587,10 +593,6 @@ function Search({
     target.value === "decrease"
       ? setCurPage((prev) => prev - 1)
       : setCurPage((prev) => prev + 1);
-  }
-
-  function handleClickPreview(recipe: TYPE_RECIPE | TYPE_RECIPE_LINK) {
-    if (recipe._id) window.location.hash = recipe._id;
   }
 
   useEffect(() => {
@@ -624,24 +626,18 @@ function Search({
         onClick={onClickSearch}
       ></button>
       <div className={styles.search_menu} ref={searchRef}>
-        <form className={styles.container__search} onSubmit={handleSubmit}>
-          <input
-            id={styles.input__search}
-            style={{ fontSize: `calc(${fontSizeFinal} * 0.9)` }}
-            name="keyword"
-            type="search"
-            placeholder={
-              language === "ja" ? "レシピを検索" : "Search your recipe"
-            }
-          ></input>
-          <button
-            className={styles.btn__search}
-            style={{ fontSize: `calc(${fontSizeFinal} * 0.7)` }}
-            type="submit"
-          >
-            {language === "ja" ? "検索" : "Search"}
-          </button>
-        </form>
+        <SearchBar
+          language={language}
+          mediaContext={mediaContext}
+          fontSize={fontSizeFinal}
+          width="100%"
+          height="11%"
+          borderRadius="0px"
+          boxShadow="none"
+          inputWidth="75%"
+          handleSetKeyword={handleSetKeyword}
+          handleSetCurPage={handleSetCurPage}
+        />
         <ul className={styles.search_results}>
           {message ? (
             <p
@@ -652,42 +648,19 @@ function Search({
             </p>
           ) : (
             recipes.map((recipe, i) => (
-              <li
+              <RecipePreview
                 key={i}
-                className={styles.recipe_preview}
-                onClick={() => handleClickPreview(recipe)}
-              >
-                {"mainImagePreview" in recipe &&
-                recipe.mainImagePreview?.data ? (
-                  <Image
-                    style={{ borderRadius: "50%", maxHeight: "95%" }}
-                    src={recipe.mainImagePreview.data}
-                    alt={language === "ja" ? "メイン画像" : "main image"}
-                    width={parseFloat(mainImageSize)}
-                    height={parseFloat(mainImageSize)}
-                  ></Image>
-                ) : (
-                  <div
-                    style={{
-                      backgroundColor: "grey",
-                      width: mainImageSize,
-                      height: mainImageSize,
-                      borderRadius: "50%",
-                    }}
-                  ></div>
-                )}
-                <p className={styles.title}>{recipe.title}</p>
-                {recipe.favorite && (
-                  <Image
-                    src="/icons/star-on.png"
-                    alt={
-                      language === "ja" ? "アイコンお気に入り" : "favorite icon"
-                    }
-                    width={parseFloat(mainImageSize) * 0.3}
-                    height={parseFloat(mainImageSize) * 0.3}
-                  ></Image>
-                )}
-              </li>
+                language={language}
+                mediaContext={mediaContext}
+                recipe={recipe}
+                width="100%"
+                height="17%"
+                imageSize={mainImageSize}
+                fontSize={fontSizeFinal}
+                borderRadius="0%"
+                borderBottom="thin solid rgba(228, 149, 2, 0.76)"
+                onClickPreview={handleClickPreview}
+              />
             ))
           )}
         </ul>
@@ -695,7 +668,7 @@ function Search({
           mediaContext={mediaContext}
           language={language}
           fontSize={fontSizeFinal}
-          styles={styles}
+          height="9%"
           curPage={curPage}
           numberOfPages={numberOfPages}
           isPending={isPending}

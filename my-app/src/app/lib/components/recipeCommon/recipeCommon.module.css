@@ -24,6 +24,13 @@
   animation: uploading 0.8s infinite;
 }
 
+.btn__img {
+  background: transparent;
+  background-size: contain;
+  background-repeat: no-repeat;
+  border: none;
+}
+
 .btn__edit {
   position: absolute;
   padding: 0.3% 1%;

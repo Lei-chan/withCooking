@@ -1,0 +1,15 @@
+.recipe_preview {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  text-align: left;
+  align-items: center;
+  background-image: linear-gradient(rgb(255, 255, 232), rgb(255, 252, 205));
+  padding: 0 3%;
+  gap: 5%;
+  letter-spacing: 0.05vw;
+}
+
+.recipe_preview:hover {
+  background-image: linear-gradient(rgb(233, 233, 194), rgb(226, 222, 177));
+}
