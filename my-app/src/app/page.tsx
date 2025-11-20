@@ -292,7 +292,7 @@ function Buttons({
         }}
         onClick={onLoginClick}
       >
-        {language === "en" ? "Login" : "ログイン"}
+        {language === "en" ? "Log in" : "ログイン"}
       </button>
       <button
         className={styles.btn__signup}
@@ -301,7 +301,7 @@ function Buttons({
         }}
         onClick={onSignupClick}
       >
-        {language === "en" ? "Sign-up" : "登録"}
+        {language === "en" ? "Sign up" : "登録"}
       </button>
     </div>
   );
