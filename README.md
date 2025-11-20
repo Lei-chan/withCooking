@@ -1,9 +1,10 @@
-<div align='center'>
 # withCooking
 
+<div align='center'>
   <img src='./public-readme/home.gif' alt='withCooking home gif' width='70%' />
-
-This website offers lots of useful cooking features :) Create your own recipes, register your favorite recipes by their links, use multiple timers or memos while following a recipe, easily search your recipes by title or ingredient, convert commonly used cooking units, manage your recipe collection, and more!
+  <description>
+  This website offers lots of useful cooking features :) Create your own recipes, register your favorite recipes by their links, use multiple timers or memos while following a recipe, easily search your recipes by title or ingredient, convert commonly used cooking units, manage your recipe collection, and more!
+  </description>
 
   <h2>Create Recipes</h2>
   <p>There're two ways to create recipes.</p>
