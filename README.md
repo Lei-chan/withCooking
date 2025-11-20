@@ -10,14 +10,14 @@
   <h2>Create Recipes</h2>
   <p>There're two ways to create recipes.</p>
   <h3>1. Create Your Original Recipes from Scratch</h3>
-  <div display='flex' flex-direction='row' align-items='start'>
+  <div display='flex' flex-direction='row' align-items='flex-start'>
     <img src="./my-app/public/home/en/create.webp" 
     alt="Create recipe image" width='30%' />
     <img src='./public-readme/recipe.png' alt="Recipe create from scratch image" width='30%' />
   </div>
   <p>You can easily create a recipe using a clean, well-organized form!</p>
   <h3>2. Register Your Favorite Recipes by Their Links</h3>
-  <div  display='flex' flex-direction='row' align-items='start'>
+  <div  display='flex' flex-direction='row' align-items='flex-start'>
     <img src='./public-readme/create-recipe-link.png' alt='Create recipe from a link image' width='30%' />
     <img src='./public-readme/recipe-link.png' alt='Recipe registered by an external link image' width='30%' />
   </div>
@@ -55,5 +55,5 @@
 <div align='center'>
   <h2>Other Features</h2>
   <img src='./public-readme/other.png' alt='Dropdown menu image' width='50%' />
-  <p>There're more other useful features!</p>
+  <p>There're more things you can do :)</p>
 </div>
