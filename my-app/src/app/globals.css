@@ -8,11 +8,13 @@ button,
 input,
 textarea {
   font-family: "Playfair Display", "Noto Serif JP", Serif;
+  color: black;
 }
 
 input,
-textarea {
-  color: black;
+textarea,
+select {
+  background-color: white;
 }
 
 button,
