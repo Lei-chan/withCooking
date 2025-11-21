@@ -55,17 +55,20 @@
   flex-direction: column;
   text-align: center;
   align-items: center;
-  justify-content: center;
-  padding: 1% 0;
+  padding: 8% 0 4% 0;
   transition: all 0.5s;
+}
+
+.overlay__login {
+  justify-content: center;
 }
 
 .warning {
   letter-spacing: 0.1vw;
   padding: 0.6%;
-  border-radius: 1% / 12%;
+  border-radius: 3px;
   color: rgb(240, 255, 246);
-  margin-bottom: 1%;
+  margin: 1% 0;
 }
 
 .btn__x {

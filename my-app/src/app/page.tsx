@@ -1,6 +1,6 @@
 "use client";
 //react
-import { useEffect, useState, useContext, useMemo } from "react";
+import { useEffect, useState, useContext, useMemo, useRef } from "react";
 import { useInView } from "react-intersection-observer";
 //next.js
 import Image from "next/image";
@@ -29,6 +29,7 @@ import {
   getFontSizeForLanguage,
   isApiError,
 } from "@/app/lib/helpers/other";
+import Agreement from "./lib/components/Agreement/Agreement";
 
 export default function Home() {
   const userContext = useContext(UserContext);
@@ -94,6 +95,11 @@ export default function Home() {
     return () => {
       window.removeEventListener("keydown", handleKeyDownEscape);
     };
+  }, [showLogin, showSignup]);
+
+  useEffect(() => {
+    document.body.style.overflow =
+      showLogin || showSignup ? "hidden" : "scroll";
   }, [showLogin, showSignup]);
 
   return (
@@ -789,7 +795,7 @@ function OverlayLogin({
   onClickX,
   onClickOutside,
 }: {
-  mediaContext: string;
+  mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
@@ -1031,7 +1037,7 @@ function OverlayCreateAccount({
   onClickX,
   onClickOutside,
 }: {
-  mediaContext: string;
+  mediaContext: TYPE_MEDIA;
   language: TYPE_LANGUAGE;
   userContext: TYPE_USER_CONTEXT;
   fontSize: string;
@@ -1046,6 +1052,7 @@ function OverlayCreateAccount({
   onClickOutside: () => void;
 }) {
   const router = useRouter();
+  const overlayRef = useRef<null | HTMLDivElement>(null);
 
   //design
   const formWidth =
@@ -1066,12 +1073,22 @@ function OverlayCreateAccount({
     letterSpacing: "0.08vw",
   };
 
+  const [isAgreementVisible, setIsAgreementVisible] = useState(false);
+
   const [isPasswordVisible, setPasswordIsVisible] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
   const [errorFields, setErrorFields] = useState<
     "email" | "password" | "both"
   >();
+
+  function handleToggleAgreement() {
+    setIsAgreementVisible(!isAgreementVisible);
+
+    //make the scroll on the overlay top so the agreement component's overlay can be displayed without being cut off
+    if (!overlayRef?.current) return;
+    overlayRef.current.scrollTop = 0;
+  }
 
   const handleTogglePassword = function () {
     setPasswordIsVisible(!isPasswordVisible);
@@ -1146,10 +1163,12 @@ function OverlayCreateAccount({
 
   return (
     <div
+      ref={overlayRef}
       className={styles.overlay__create_account}
       style={{
         opacity: !show ? "0" : "1",
         pointerEvents: !show ? "none" : "all",
+        overflowY: !isAgreementVisible ? "auto" : "hidden",
       }}
       tabIndex={-1}
       onClick={(e) => {
@@ -1157,6 +1176,13 @@ function OverlayCreateAccount({
         if (e.currentTarget === target) onClickOutside();
       }}
     >
+      {isAgreementVisible && (
+        <Agreement
+          language={language}
+          mediaContext={mediaContext}
+          onClickOutsideAgreement={handleToggleAgreement}
+        />
+      )}
       <p
         className={styles.warning}
         style={{
@@ -1291,6 +1317,31 @@ function OverlayCreateAccount({
             type="button"
             onClick={handleTogglePassword}
           ></button>
+        </div>
+        <div style={{ fontSize, padding: "1% 2% 3% 2%" }}>
+          <p>
+            {language === "ja"
+              ? "私たちはユーザーに合ったサイトを提供するため、クッキーとローカルストレージを使用します。"
+              : "This site will use cookies and local storage to improve your experience."}
+          </p>
+          <button
+            style={{
+              fontSize,
+              textDecoration: "solid thin underline",
+              background: "none",
+              border: "none",
+              color: "purple",
+            }}
+            type="button"
+            onClick={handleToggleAgreement}
+          >
+            {language === "ja" ? "詳しくはこちら" : "Learn More"}
+          </button>
+          <p>
+            {language === "ja"
+              ? "このウェブサイトに登録することで、私たちがこれらのテクノロジーを使用することに同意したものとみなします。"
+              : "By continuing to use this site, you accept our use of these technologies."}
+          </p>
         </div>
         <button
           className={styles.btn__signup_submit}
