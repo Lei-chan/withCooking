@@ -1,3 +1,4 @@
+//component
 import ButtonOpenAgreement from "../components/ButtonOpenAgreement/ButtonOpenAgreement";
 
 const news = [
@@ -11,8 +12,8 @@ const news = [
       en: (
         <p>
           withCooking is now released! You can use lots of useful cooking
-          features here -- all for free! I hope you'll find your way of using
-          the website and enjoy it :)
+          features here - all for free! I hope you&apos;ll find your way of
+          using the website and enjoy it :)
         </p>
       ),
       ja: (

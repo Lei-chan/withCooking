@@ -32,7 +32,7 @@ export type TYPE_GRIDFS_METADATA = {
 export type TYPE_USER = {
   email: string;
   recipes: (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[] | [];
-  messageDisplay: Boolean;
+  messageDisplay: boolean;
   createdAt: string;
 };
 
