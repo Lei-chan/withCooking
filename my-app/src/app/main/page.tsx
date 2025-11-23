@@ -59,7 +59,6 @@ export default function MAIN() {
   const language = languageContext?.language || "en";
 
   //design
-  document.body.style.overflow = "scroll";
   const mediaContext = useContext(MediaContext);
 
   const [windowWidth, setWindowWidth] = useState<null | number>(null);
@@ -69,6 +68,9 @@ export default function MAIN() {
   const [timerHeight, setTimerHeight] = useState<null | string>(null);
 
   useEffect(() => {
+    //get the normal body overflow state changed on the home page back
+    document.body.style.overflow = "scroll";
+
     const handleResize = () => {
       setWindowWidth(document.documentElement.clientWidth);
       setWindowHeight(document.documentElement.clientHeight);
