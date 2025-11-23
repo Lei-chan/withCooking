@@ -51,15 +51,12 @@ export default function OverlayMessage({
 
   async function handleChangeCheckbox(e: React.ChangeEvent<HTMLInputElement>) {
     try {
-      console.log(e.currentTarget.checked);
-      const data = await getData("/api/users", {
+      await getData("/api/users", {
         method: "PATCH",
         headers: { "Context-Type": "application/json" },
         authorization: `Bearer ${userContext?.accessToken}`,
         body: JSON.stringify({ displayMessage: !e.currentTarget.checked }),
       });
-
-      console.log(data);
     } catch (err: unknown) {
       if (!isApiError(err))
         return logNonApiError(

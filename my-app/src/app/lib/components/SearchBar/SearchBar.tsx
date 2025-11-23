@@ -63,7 +63,7 @@ export default function SearchBar({
         style={{
           height: "fit-content",
           borderRadius: "39% / 50%",
-          padding: "3px 6px",
+          padding: language === "ja" ? "3px 6px" : "3px 4px",
           border: "none",
           backgroundColor: "rgb(255, 231, 126)",
           color: "black",
