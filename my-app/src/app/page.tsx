@@ -1179,7 +1179,6 @@ function OverlayCreateAccount({
       {isAgreementVisible && (
         <Agreement
           language={language}
-          mediaContext={mediaContext}
           onClickOutsideAgreement={handleToggleAgreement}
         />
       )}
