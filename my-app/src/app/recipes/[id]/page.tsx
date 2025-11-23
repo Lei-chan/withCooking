@@ -142,7 +142,7 @@ export default function Recipe() {
         backgroundImage:
           "linear-gradient(rgba(255, 253, 117, 1), rgba(225, 255, 117, 1))",
         width: "100%",
-        minHeight: "100vh",
+        minHeight: "100dvh",
         maxHeight: "100%",
         padding:
           mediaContext === "mobile"

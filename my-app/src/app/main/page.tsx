@@ -59,6 +59,7 @@ export default function MAIN() {
   const language = languageContext?.language || "en";
 
   //design
+  document.body.style.overflow = "scroll";
   const mediaContext = useContext(MediaContext);
 
   const [windowWidth, setWindowWidth] = useState<null | number>(null);
