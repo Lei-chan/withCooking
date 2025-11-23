@@ -201,7 +201,7 @@ export async function PATCH(req: NextRequest) {
     let updatedUser;
 
     const body = await req.json();
-    const { curPassword, newPassword, email } = body;
+    const { curPassword, newPassword, email, displayMessage } = body;
 
     //when user updates password
     if (curPassword) {
@@ -244,26 +244,28 @@ export async function PATCH(req: NextRequest) {
     }
 
     //when user updates fields that is not password
-    if (!curPassword && email) {
-      const existingUser = await User.findOne({ email });
+    if (!curPassword) {
+      if (email) {
+        const existingUser = await User.findOne({ email });
 
-      if (existingUser) {
-        const err = new Error("This email already exists") as MyError;
-        err.statusCode = 400;
-        err.name = "EmailDuplicationError";
-        throw err;
-      }
+        if (existingUser) {
+          const err = new Error("This email already exists") as MyError;
+          err.statusCode = 400;
+          err.name = "EmailDuplicationError";
+          throw err;
+        }
 
-      const result = userOtherUpdateSchema.safeParse(body);
+        const result = userOtherUpdateSchema.safeParse(body);
 
-      if (!result.success) {
-        const errTarget = result.error.issues[0];
-        const err = new Error(
-          `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
-        ) as MyError;
-        err.statusCode = 400;
+        if (!result.success) {
+          const errTarget = result.error.issues[0];
+          const err = new Error(
+            `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+          ) as MyError;
+          err.statusCode = 400;
 
-        throw err;
+          throw err;
+        }
       }
 
       updatedUser = await User.findByIdAndUpdate(id, body, {

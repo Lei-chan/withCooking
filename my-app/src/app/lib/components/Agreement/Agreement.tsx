@@ -1,17 +1,19 @@
 //css
 import styles from "./agreement.module.css";
 //type
-import { TYPE_LANGUAGE, TYPE_MEDIA } from "../../config/type";
+import { TYPE_LANGUAGE } from "../../config/type";
+import { useContext } from "react";
+import { MediaContext } from "../../providers";
 
 export default function Agreement({
   language,
-  mediaContext,
   onClickOutsideAgreement,
 }: {
   language: TYPE_LANGUAGE;
-  mediaContext: TYPE_MEDIA;
   onClickOutsideAgreement: () => void;
 }) {
+  const mediaContext = useContext(MediaContext);
+
   return (
     <div
       style={{
@@ -43,7 +45,7 @@ export default function Agreement({
           backgroundColor: "rgba(255, 252, 229, 1)",
           textAlign: "left",
           padding: "5%",
-          overflow: "scroll",
+          overflowY: "scroll",
           borderRadius: "5px",
         }}
       >

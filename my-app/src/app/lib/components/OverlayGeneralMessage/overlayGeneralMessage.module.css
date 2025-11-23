@@ -22,6 +22,7 @@
   padding: 0.6% 1%;
   border-radius: 6%/15%;
   transition: all 0.2s;
+  color: navy;
 }
 
 .btn__question:hover {

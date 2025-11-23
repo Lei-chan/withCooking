@@ -13,10 +13,12 @@ import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 import news from "@/app/lib/models/news";
 import LanguageSelect from "../lib/components/LanguageSelect/LanguageSelect";
 //components
-import OverlayMessage from "../lib/components/OverlayMessage/OverlayMessage";
 import PaginationButtons from "../lib/components/PaginationButtons/PaginationButtons";
 import RecipeNoEdit from "../lib/components/RecipeNoEdit/RecipeNoEdit";
 import RecipeLinkNoEdit from "../lib/components/RecipeLinkNoEdit/RecipeLinkNoEdit";
+import SearchBar from "../lib/components/SearchBar/SearchBar";
+import RecipePreview from "../lib/components/RecipePreview/RecipePreview";
+import OverlayGeneralMessage from "../lib/components/OverlayGeneralMessage/OverlayGeneralMessage";
 //type
 import {
   TYPE_USER_CONTEXT,
@@ -45,8 +47,7 @@ import {
 } from "@/app/lib/helpers/recipes";
 //library
 import { nanoid } from "nanoid";
-import SearchBar from "../lib/components/SearchBar/SearchBar";
-import RecipePreview from "../lib/components/RecipePreview/RecipePreview";
+import OverlayMessage from "../lib/components/OverlayMessage/OverlayMessage";
 
 export default function MAIN() {
   const router = useRouter();
@@ -105,6 +106,7 @@ export default function MAIN() {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isMessageVisible, setIsMessageVisible] = useState(false);
+  const [isLogoutMessageVisible, setIsLogoutMessageVisible] = useState(false);
 
   const [isDraggingX, setIsDraggingX] = useState(false);
   const [isDraggingY, setIsDraggingY] = useState(false);
@@ -136,6 +138,7 @@ export default function MAIN() {
     }
   }
 
+  //dropdown and search
   const handleToggleDropdown = function () {
     setIsDropdownVisible(!isDropdownVisible);
   };
@@ -162,8 +165,44 @@ export default function MAIN() {
     setIsSearchVisible(false);
   };
 
+  //message
+  useEffect(() => {
+    (async () => await setMessageVisibility())();
+  }, []);
+
+  async function setMessageVisibility() {
+    try {
+      const data = await getData("/api/users", {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${userContext?.accessToken}`,
+        },
+      });
+
+      setIsMessageVisible(
+        typeof data.data.displayMessage === "boolean"
+          ? data.data.displayMessage
+          : true
+      );
+
+      //set newAccessToken for context when it's refreshed
+      data.newAccessToken && userContext?.login(data.newAccessToken);
+    } catch (err: unknown) {
+      setIsMessageVisible(true);
+
+      if (!isApiError(err))
+        return logNonApiError(err, "Error while getting user information");
+
+      console.error(
+        "Error while getting user information",
+        err.message,
+        err.statusCode || 500
+      );
+    }
+  }
+
   function handleToggleLogout() {
-    setIsMessageVisible(!isMessageVisible);
+    setIsLogoutMessageVisible(!isLogoutMessageVisible);
   }
 
   return (
@@ -195,7 +234,7 @@ export default function MAIN() {
         </div>
       )}
       {userContext?.isMessageVisible && (
-        <OverlayMessage
+        <OverlayGeneralMessage
           language={language}
           mediaContext={mediaContext}
           option="message"
@@ -203,7 +242,10 @@ export default function MAIN() {
         />
       )}
       {isMessageVisible && (
-        <OverlayMessage
+        <OverlayMessage language={language} mediaContext={mediaContext} />
+      )}
+      {isLogoutMessageVisible && (
+        <OverlayGeneralMessage
           language={language}
           mediaContext={mediaContext}
           option="question"
@@ -913,7 +955,7 @@ function DropdownMenu({
           <p
             style={{ fontSize: `calc(${fontSizeFinal} * 0.8)`, color: "brown" }}
           >
-            Ver 1.0.0
+            Ver 1.1.0
           </p>
         </div>
       </ul>

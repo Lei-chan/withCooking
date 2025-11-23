@@ -46,7 +46,7 @@ export default function Home() {
       : mediaContext === "tablet"
       ? "2.5vw"
       : mediaContext === "desktop"
-      ? "1.7vw"
+      ? "1.6vw"
       : "1.4vw";
   const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
   const headerSize = `calc(${fontSizeFinal} * 1.5)`;

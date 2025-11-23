@@ -1,6 +1,6 @@
 "use client";
 //react
-import { useContext, useEffect, useState } from "react";
+import { JSX, useContext, useEffect, useState } from "react";
 //type
 import { TYPE_LANGUAGE } from "../lib/config/type";
 //context
@@ -105,7 +105,7 @@ function List({
   news: {
     date: string;
     title: { en: string; ja: string };
-    content: { en: string; ja: string };
+    content: { en: JSX.Element; ja: JSX.Element };
     new: boolean;
   };
 }) {
@@ -182,7 +182,7 @@ function List({
           {news.title[language]}
         </h4>
       </div>
-      <p
+      <div
         style={{
           width: "90%",
           height: "fit-content",
@@ -194,7 +194,7 @@ function List({
         }}
       >
         {news.content[language]}
-      </p>
+      </div>
     </li>
   );
 }

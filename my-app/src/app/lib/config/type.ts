@@ -29,6 +29,13 @@ export type TYPE_GRIDFS_METADATA = {
   index?: number;
 };
 
+export type TYPE_USER = {
+  email: string;
+  recipes: (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[] | [];
+  messageDisplay: Boolean;
+  createdAt: string;
+};
+
 export type TYPE_RECIPE = {
   _id?: string;
   favorite: boolean;

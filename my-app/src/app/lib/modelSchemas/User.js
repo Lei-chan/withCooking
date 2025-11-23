@@ -16,6 +16,7 @@ const UserSchema = new mongoose.Schema(
       select: false,
     },
     recipes: Array,
+    displayMessage: Boolean,
   },
   { timestamps: true }
 );

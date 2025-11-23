@@ -10,13 +10,14 @@ import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //component
-import OverlayMessage from "../lib/components/OverlayMessage/OverlayMessage";
+import OverlayMessage from "../lib/components/OverlayGeneralMessage/OverlayGeneralMessage";
 //type
 import {
   TYPE_LANGUAGE,
-  TYPE_RECIPE,
-  TYPE_RECIPE_LINK,
+  TYPE_USER,
   TYPE_USER_CONTEXT,
+  TYPE_USER_RECIPE,
+  TYPE_USER_RECIPE_LINK,
 } from "@/app/lib/config/type";
 //settings
 import { PASSWORD_MIN_LENGTH, PASSWORD_MIN_EACH } from "../lib/config/settings";
@@ -36,7 +37,6 @@ export default function Account() {
 
   //language
   const languageContext = useContext(LanguageContext);
-
   const language = languageContext?.language || "en";
 
   //design
@@ -63,11 +63,7 @@ export default function Account() {
 
   //user
   const userContext = useContext(UserContext);
-  const [user, setUser] = useState<{
-    email: string;
-    recipes: (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | [];
-    createdAt: string;
-  }>();
+  const [user, setUser] = useState<TYPE_USER>();
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -682,7 +678,7 @@ function CloseAccount({
   fontSize: string;
   smallHeaderSize: string;
   btnSize: string;
-  recipes: (TYPE_RECIPE | TYPE_RECIPE_LINK)[] | [];
+  recipes: (TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK)[] | [];
   toggleMessageVisible: () => void;
 }) {
   const [close, setClose] = useState(false);
