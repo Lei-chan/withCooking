@@ -99,8 +99,7 @@ export default function Home() {
   }, [showLogin, showSignup]);
 
   useEffect(() => {
-    document.body.style.overflow =
-      showLogin || showSignup ? "hidden" : "scroll";
+    document.body.style.overflow = showLogin || showSignup ? "hidden" : "auto";
   }, [showLogin, showSignup]);
 
   return (

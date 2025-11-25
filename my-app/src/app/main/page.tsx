@@ -70,7 +70,7 @@ export default function MAIN() {
 
   useEffect(() => {
     //get the normal body overflow state changed on the home page back
-    document.body.style.overflow = "scroll";
+    document.body.style.overflow = "auto";
 
     const handleResize = () => {
       setWindowWidth(document.documentElement.clientWidth);
