@@ -11,6 +11,7 @@ import styles from "./page.module.css";
 //context
 import { UserContext, MediaContext, LanguageContext } from "./lib/providers";
 //model
+import { version } from "../../package.json";
 import homeDetails from "./lib/models/homeDetails";
 //component
 import LanguageSelect from "./lib/components/LanguageSelect/LanguageSelect";
@@ -482,6 +483,11 @@ function BottomHalf({
         >
           © 2025 Lei-chan
         </p>
+        <p
+          style={{
+            fontSize: `calc(${fontSize} * 0.9)`,
+          }}
+        >{`Ver ${version}`}</p>
       </footer>
     </div>
   );

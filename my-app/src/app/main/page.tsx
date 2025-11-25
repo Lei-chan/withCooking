@@ -10,6 +10,7 @@ import styles from "./page.module.css";
 //context
 import { LanguageContext, MediaContext, UserContext } from "../lib/providers";
 //model
+import { version } from "../../../package.json";
 import news from "@/app/lib/models/news";
 import LanguageSelect from "../lib/components/LanguageSelect/LanguageSelect";
 //components
@@ -958,7 +959,7 @@ function DropdownMenu({
           <p
             style={{ fontSize: `calc(${fontSizeFinal} * 0.8)`, color: "brown" }}
           >
-            Ver 1.1.0
+            {`Ver ${version}`}
           </p>
         </div>
       </ul>
