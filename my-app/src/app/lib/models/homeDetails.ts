@@ -3,8 +3,8 @@ const homeDetails = [
     title: { en: "Cook with Recipe", ja: "レシピを使って料理をする" },
     image: { en: "/home/en/main.webp", ja: "/home/ja/main.webp" },
     explanation: {
-      en: "Useful cooking tools are all packed into this website! You can check your recipes, set multiple timers, and leave memo right here! No need to open another app just to set a timer anymore :) When you only want to use a specific feature, you can resize or minimize the other sections to make cooking even eaiser! (This feature is available when using devices larger than a mobile) ",
-      ja: "このサイトにはクッキングに便利な機能が詰まっています！あなたがレシピをチェックしたり、複数のタイマーをセットしたり、メモを残したり…。もうタイマーをセットするのに他のアプリに頼る必要もありません！ある部分の機能のみを使用したい時などは、他の部分を小さくして、自分が料理しやすいように各セクションの大きさの調整もできます！（この機能はモバイル以外からのみ利用可能です）",
+      en: "Useful cooking tools are all packed into this website! You can check your recipes, set multiple timers, and leave memo right here! No need to open another app just to set a timer anymore :) When you only want to use a specific feature, you can resize or minimize the other sections to make cooking even eaiser! (This feature is available only from laptops) ",
+      ja: "このサイトにはクッキングに便利な機能が詰まっています！あなたがレシピをチェックしたり、複数のタイマーをセットしたり、メモを残したり…。もうタイマーをセットするのに他のアプリに頼る必要もありません！ある部分の機能のみを使用したい時などは、他の部分を小さくして、自分が料理しやすいように各セクションの大きさの調整もできます！（この機能はパソコンからのみ利用可能です）",
     },
     heightRatio: 0.5,
   },
@@ -45,8 +45,8 @@ const homeDetails = [
     title: { en: "Create your recipe", ja: "自分のレシピを作る" },
     image: { en: "/home/en/create.webp", ja: "/home/ja/create.webp" },
     explanation: {
-      en: "You can easily create a recipe using a clean, well-organized form! There're two ways to create a recipe: you can start from scratch or import one from an external link. So whether you want to build your own recipes or simply organize your favorites, this website has you covered!",
-      ja: "わかりやすいフォームで、簡単にレシピの作成ができます！レシピは、はじめから作る方法と外部のリンクからインポートする方法があるので、自分のオリジナルのレシピを作りたい場合でも、シンプルに好きなレシピをまとめたい場合でも、このサイトがあなたの両方の希望を叶えます！",
+      en: "You can easily create a recipe using a clean, well-organized form! (Free for creating up to 100 recipes.) There're two ways to create a recipe: you can start from scratch or import one from an external link. So whether you want to build your own recipes or simply organize your favorites, this website has you covered!",
+      ja: "わかりやすいフォームで、簡単にレシピの作成ができます！（100レシピまで無料で作成できます。）レシピは、はじめから作る方法と外部のリンクからインポートする方法があるので、自分のオリジナルのレシピを作りたい場合でも、シンプルに好きなレシピをまとめたい場合でも、このサイトがあなたの両方の希望を叶えます！",
     },
     heightRatio: 0.7,
   },

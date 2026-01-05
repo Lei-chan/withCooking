@@ -57,6 +57,7 @@ export default function HowToUse() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const logoutRef = useRef<HTMLDivElement>(null);
   const recipesRef = useRef<HTMLDivElement>(null);
+  const recipeLimitRef = useRef<HTMLDivElement>(null);
   const createRecipeRef = useRef<HTMLDivElement>(null);
   const editRecipeRef = useRef<HTMLDivElement>(null);
   const deleteRecipeRef = useRef<HTMLDivElement>(null);
@@ -86,6 +87,7 @@ export default function HowToUse() {
     dropdownRef,
     logoutRef,
     recipesRef,
+    recipeLimitRef,
     createRecipeRef,
     editRecipeRef,
     deleteRecipeRef,
@@ -135,6 +137,10 @@ export default function HowToUse() {
     language === "ja"
       ? "レシピまとめ、レシピ作成、レシピページ"
       : "Recipes, Create Recipe, Recipe Page";
+  const recipeLimitTitle =
+    language === "ja"
+      ? "レシピは何個まで作成できますか？"
+      : "How many recipes can I create?";
   const createRecipeTitle =
     language === "ja"
       ? "どのようにレシピを作ることができますか？"
@@ -271,6 +277,14 @@ export default function HowToUse() {
   function handleClickRecipes() {
     if (recipesRef?.current)
       recipesRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function handleClickRecipeLimit() {
+    if (recipeLimitRef?.current)
+      recipeLimitRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
   }
 
   function handleClickCreateRecipe() {
@@ -683,6 +697,9 @@ export default function HowToUse() {
           >
             {recipesTitle}
           </a>
+          <a className={styles.a} onClick={handleClickRecipeLimit}>
+            {recipeLimitTitle}
+          </a>
           <a className={styles.a} onClick={handleClickCreateRecipe}>
             {createRecipeTitle}
           </a>
@@ -987,6 +1004,21 @@ export default function HowToUse() {
             ? "リンクから作成されたレシピ"
             : "Recipe created from a link"}
         </p>
+        <div className={styles.container__answer} ref={recipeLimitRef}>
+          <p
+            className={styles.p__question}
+            style={{
+              fontSize: fontHeaderSize,
+            }}
+          >
+            {recipeLimitTitle}
+          </p>
+          <p className={styles.p__answer} style={{ fontSize: fontSizeFinal }}>
+            {language === "ja"
+              ? "はじめから作成されたレシピ・外部リンクから作成されたレシピ合わせて100レシピまで無料で作成いただけます。"
+              : "You can create up to 100 recipes for free, including both original recipes and those created from external links."}
+          </p>
+        </div>
         <div className={styles.container__answer} ref={createRecipeRef}>
           <p
             className={styles.p__question}

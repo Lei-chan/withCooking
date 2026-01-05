@@ -4,17 +4,26 @@ import React, { useContext, useState } from "react";
 //css
 import styles from "./page.module.css";
 //context
-import { LanguageContext, MediaContext } from "@/app/lib/providers";
+import {
+  LanguageContext,
+  MediaContext,
+  UserContext,
+} from "@/app/lib/providers";
 //componets
 import RecipeEdit from "@/app/lib/components/RecipeEdit/RecipeEdit";
 import RecipeLinkEdit from "@/app/lib/components/RecipeLinkEdit/RecipeLinkEdit";
 //general method
 import { getFontSizeForLanguage } from "@/app/lib/helpers/other";
+import { MAX_RECIPES } from "@/app/lib/config/settings";
 
 export default function CreateRecipe() {
   //language
   const languageContext = useContext(LanguageContext);
   const language = languageContext?.language || "en";
+
+  //context
+  const userContext = useContext(UserContext);
+  const numbreOfTotalRecipes = userContext?.numberOfRecipes || 0;
 
   //design
   const mediaContext = useContext(MediaContext);
@@ -58,7 +67,33 @@ export default function CreateRecipe() {
         height: "100%",
       }}
     >
-      {!createFrom && (
+      {numbreOfTotalRecipes >= MAX_RECIPES && (
+        <p
+          style={{
+            width: "100%",
+            height: "100dvh",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            padding: "0 5%",
+          }}
+        >
+          {language === "ja" ? (
+            <>
+              {`レシピの上限（${MAX_RECIPES}個）に達しました。`}
+              <br />
+              新たにレシピを登録するため、別のレシピを消去し、もう一度お試し下さい。
+            </>
+          ) : (
+            <>
+              {`You have reached the recipe limit (${MAX_RECIPES} recipes).`}{" "}
+              <br />
+              Please delete another recipe to register a new one and try again.
+            </>
+          )}
+        </p>
+      )}
+      {!createFrom && !(numbreOfTotalRecipes >= MAX_RECIPES) && (
         <div
           style={{
             display: "flex",

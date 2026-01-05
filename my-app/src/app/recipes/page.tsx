@@ -55,7 +55,6 @@ export default function Recipes() {
   const [recipesPerPage, setRecipesPerPage] = useState<null | number>(null);
   const [fontSizeFinal, setFontSizeFinal] = useState("1.5vw");
 
-  //don't modify numberOfTotle recipes
   const numbreOfTotalRecipes = userContext?.numberOfRecipes || 0;
   const [numberOfPages, setNumberOfPages] = useState<null | number>(null);
 
