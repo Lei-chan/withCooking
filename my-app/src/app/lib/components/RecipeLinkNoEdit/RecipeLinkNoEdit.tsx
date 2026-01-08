@@ -42,7 +42,14 @@ export default function RecipeLinkNoEdit({
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        padding: "2%",
+        marginTop:
+          mediaContext === "mobile"
+            ? "30px"
+            : mediaContext === "tablet"
+            ? "35px"
+            : mediaContext === "desktop"
+            ? "45px"
+            : "55px",
       }}
     >
       {mainOrRecipe === "main" && (
@@ -58,13 +65,58 @@ export default function RecipeLinkNoEdit({
         height={recipeHeight}
         src={recipe.link}
         loading="lazy"
+        style={{ flexShrink: "0" }}
       ></iframe>
-      <p style={{ width: recipeWidth, marginTop: "2%" }}>
+      {recipe.comments && (
+        <div style={{ margin: "30px 0" }}>
+          <h5
+            style={{
+              fontSize: `calc(${fontSizeFinal} * 1.2)`,
+              color: "rgba(8, 0, 116, 1)",
+            }}
+          >
+            {language === "ja" ? "コメント" : "Comments"}
+          </h5>
+          <div
+            style={{
+              fontSize: fontSizeFinal,
+              width: `calc(${recipeWidth}px * 0.85)`,
+              aspectRatio: "1/0.5",
+              marginTop: "10px",
+              backgroundColor:
+                mainOrRecipe === "main"
+                  ? "rgba(255, 254, 229, 1)"
+                  : "rgba(255, 253, 193, 1)",
+              borderRadius: "5px",
+              padding:
+                mediaContext === "mobile"
+                  ? "4px 5px"
+                  : mediaContext === "tablet"
+                  ? "6px"
+                  : mediaContext === "desktop"
+                  ? "8px"
+                  : "10px",
+              boxShadow: "3px 3px 10px rgba(0, 0, 0, 0.26)",
+            }}
+          >
+            {recipe.comments}
+          </div>
+        </div>
+      )}
+      <p
+        style={{ width: recipeWidth, marginTop: "2%", fontSize: fontSizeFinal }}
+      >
         {language === "ja"
           ? "登録されたレシピリンクのウェブサイトのセキュリティの問題により、ここにそのサイトを表示できない場合があります。その場合は、こちらのリンクから直接そのサイトにアクセスしてください。"
           : "For security reasons, the website linked in the recipe may not allow its page to be displayed here. If the page doesn't appear, please click this link to visit the website directly."}
       </p>
-      <Link href={recipe.link}>
+      <Link
+        href={recipe.link}
+        style={{
+          fontSize: fontSizeFinal,
+          paddingBottom: "30px",
+        }}
+      >
         {language === "ja"
           ? `${recipe.title}のリンク`
           : `Link of ${recipe.title}`}

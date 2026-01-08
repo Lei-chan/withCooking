@@ -45,10 +45,18 @@ export default function RecipeLinkEdit({
       : "1.3vw";
   const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
   const smallHeaderSize = `calc(${fontSizeFinal} * 1.2)`;
+  const linkNameInputStyle = {
+    fontSize: fontSizeFinal,
+    marginBottom: smallHeaderSize,
+    width: "70%",
+    padding: "2px 5px",
+    letterSpacing: language !== "ja" ? "0.5px" : "0",
+  };
 
   const [link, setLink] = useState(recipe.link);
   const [title, setTitle] = useState(recipe.title);
   const [favorite, setFavorite] = useState(recipe.favorite);
+  const [comments, setComments] = useState(recipe.comments || "");
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -60,6 +68,10 @@ export default function RecipeLinkEdit({
     if (target.name === "title") setTitle(target.value);
     if (target.name === "link") setLink(target.value);
     if (target.name === "favorite") setFavorite(target.checked);
+  }
+
+  function handleChangeTextarea(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setComments(e.currentTarget.value);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -98,6 +110,7 @@ export default function RecipeLinkEdit({
         title,
         link,
         favorite: favorite === "on" ? true : false,
+        comments,
         createdAt:
           createOrEdit === "create"
             ? new Date().toISOString()
@@ -166,7 +179,10 @@ export default function RecipeLinkEdit({
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
-        height: "100dvh",
+        minHeight: "100dvh",
+        maxHeight: "100%",
+        padding: "10% 0",
+        overflowY: "scroll",
       }}
     >
       {(error || message || isPending) && (
@@ -208,15 +224,18 @@ export default function RecipeLinkEdit({
             mediaContext === "mobile"
               ? "90%"
               : mediaContext === "tablet"
-              ? "70%"
+              ? "65%"
               : mediaContext === "desktop"
-              ? "50%"
-              : "40%",
+              ? "45%"
+              : "35%",
           height: "fit-content",
           backgroundColor: "rgba(250, 255, 207, 1)",
           borderRadius: "5px",
           boxShadow: "rgba(0, 0, 0, 0.29) 3px 3px 10px",
-          padding: `${smallHeaderSize} 2%`,
+          padding:
+            mediaContext === "mobile" || mediaContext === "tablet"
+              ? "5% 2%"
+              : "3% 2%",
           letterSpacing: language !== "ja" ? "1px" : "0",
         }}
         onSubmit={handleSubmit}
@@ -233,13 +252,7 @@ export default function RecipeLinkEdit({
               : "Enter recipe link"}
           </h5>
           <input
-            style={{
-              fontSize: fontSizeFinal,
-              marginBottom: smallHeaderSize,
-              width: "70%",
-              padding: "0.5%",
-              letterSpacing: language !== "ja" ? "0.5px" : "0",
-            }}
+            style={linkNameInputStyle}
             type="url"
             name="link"
             placeholder={language === "ja" ? "レシピのリンク" : "recipe link"}
@@ -260,19 +273,40 @@ export default function RecipeLinkEdit({
               : "Enter recipe name"}
           </h5>
           <input
-            style={{
-              fontSize: fontSizeFinal,
-              marginBottom: smallHeaderSize,
-              width: "70%",
-              padding: "0.5%",
-              letterSpacing: language !== "ja" ? "0.5px" : "0",
-            }}
+            style={linkNameInputStyle}
             name="title"
             placeholder={language === "ja" ? "レシピの名前" : "recipe title"}
             required
             value={title}
             onChange={handleChangeInput}
           ></input>
+        </div>
+        <div>
+          <h5
+            style={{
+              fontSize: smallHeaderSize,
+              marginBottom: fontSizeFinal,
+            }}
+          >
+            {language === "ja" ? "コメント" : "Comments"}
+          </h5>
+          <textarea
+            style={{
+              fontSize: fontSizeFinal,
+              marginBottom: smallHeaderSize,
+              width: "70%",
+              aspectRatio: "1/0.5",
+              padding: "3px 5px",
+              resize: "none",
+            }}
+            placeholder={
+              language === "ja"
+                ? "例）レシピの変更点など"
+                : "ex) the parts of the recipe you always change"
+            }
+            value={comments}
+            onChange={handleChangeTextarea}
+          ></textarea>
         </div>
         <div
           style={{
@@ -294,7 +328,7 @@ export default function RecipeLinkEdit({
             style={{ width: smallHeaderSize, height: smallHeaderSize }}
             type="checkbox"
             name="favorite"
-            value={favorite ? "on" : ""}
+            checked={favorite}
             onChange={handleChangeInput}
           ></input>
         </div>

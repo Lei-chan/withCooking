@@ -175,7 +175,7 @@ export default function Recipe() {
             <Link href="/recipes">
               {language === "ja"
                 ? "レシピまとめページに戻る"
-                : "Return Recipes Page"}
+                : "Return to the Recipes Page"}
             </Link>
           </div>
         )}

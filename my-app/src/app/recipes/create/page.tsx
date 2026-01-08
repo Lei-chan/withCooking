@@ -215,6 +215,7 @@ export default function CreateRecipe() {
             title: "",
             favorite: false,
             link: "",
+            comments: "",
             createdAt: "",
             updatedAt: "",
           }}

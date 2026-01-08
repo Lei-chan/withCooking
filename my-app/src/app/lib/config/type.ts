@@ -36,6 +36,7 @@ export type TYPE_USER = {
   createdAt: string;
 };
 
+//recipes
 export type TYPE_RECIPE = {
   _id?: string;
   favorite: boolean;
@@ -65,6 +66,7 @@ export type TYPE_RECIPE_LINK = {
   title: string;
   favorite: boolean;
   link: string;
+  comments?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -105,6 +107,7 @@ export type TYPE_USER_RECIPE_LINK_DATABASE = {
   title: string;
   favorite: boolean;
   link: string;
+  comments?: string;
   createdAt: string;
   updatedAt: string;
 };

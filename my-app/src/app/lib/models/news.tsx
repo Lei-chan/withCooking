@@ -70,6 +70,27 @@ const news = [
       ),
     },
   },
+  {
+    date: "2026-01-08T08:13:30.680Z",
+    title: {
+      ja: "リンクから作成するレシピに、コメントを付けらるようになりました！",
+      en: "You can now add comments for recipes created from external links!",
+    },
+    content: {
+      ja: (
+        <p>
+          リンクから作成するレシピに、コメントを付けらるようになりました！レシピで毎回変える箇所や、オリジナルのトッピングなどを入力すると便利です！
+        </p>
+      ),
+      en: (
+        <p>
+          You can now add comments for recipes created from external links! It's
+          useful to input the parts of the recipes you always change or your
+          original toppings!
+        </p>
+      ),
+    },
+  },
 ];
 
 const newsWithNew = news.map((news) => {
