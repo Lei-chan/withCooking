@@ -84,9 +84,9 @@ const news = [
       ),
       en: (
         <p>
-          You can now add comments for recipes created from external links! It's
-          useful to input the parts of the recipes you always change or your
-          original toppings!
+          You can now add comments for recipes created from external links!
+          It&apos;s useful to input the parts of the recipes you always change
+          or your original toppings!
         </p>
       ),
     },
