@@ -66,7 +66,7 @@ export type TYPE_RECIPE_LINK = {
   title: string;
   favorite: boolean;
   link: string;
-  comments?: string;
+  comments?: string | string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -107,7 +107,7 @@ export type TYPE_USER_RECIPE_LINK_DATABASE = {
   title: string;
   favorite: boolean;
   link: string;
-  comments?: string;
+  comments?: string | string[];
   createdAt: string;
   updatedAt: string;
 };

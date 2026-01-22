@@ -16,7 +16,11 @@ import {
   isApiError,
   logNonApiError,
 } from "../../helpers/other";
-import { uploadRecipeCreate, uploadRecipeUpdate } from "../../helpers/recipes";
+import {
+  getRecipeLinkComments,
+  uploadRecipeCreate,
+  uploadRecipeUpdate,
+} from "../../helpers/recipes";
 
 export default function RecipeLinkEdit({
   language,
@@ -39,10 +43,10 @@ export default function RecipeLinkEdit({
     mediaContext === "mobile"
       ? "4.7vw"
       : mediaContext === "tablet"
-      ? "2.7vw"
-      : mediaContext === "desktop"
-      ? "1.5vw"
-      : "1.3vw";
+        ? "2.7vw"
+        : mediaContext === "desktop"
+          ? "1.5vw"
+          : "1.3vw";
   const fontSizeFinal = getFontSizeForLanguage(language, fontSizeEn);
   const smallHeaderSize = `calc(${fontSizeFinal} * 1.2)`;
   const linkNameInputStyle = {
@@ -56,7 +60,13 @@ export default function RecipeLinkEdit({
   const [link, setLink] = useState(recipe.link);
   const [title, setTitle] = useState(recipe.title);
   const [favorite, setFavorite] = useState(recipe.favorite);
-  const [comments, setComments] = useState(recipe.comments || "");
+  const [comments, setComments] = useState(
+    typeof recipe.comments === "string"
+      ? recipe.comments
+      : Array.isArray(recipe.comments)
+        ? recipe.comments.join("\n")
+        : "",
+  );
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -86,6 +96,7 @@ export default function RecipeLinkEdit({
 
       const link = String(formData.get("link")).trim();
       const title = String(formData.get("title")).trim();
+      const newComments = String(formData.get("comments")).trim().split("\n");
       const favorite = formData.get("favorite");
 
       //validate link
@@ -95,14 +106,14 @@ export default function RecipeLinkEdit({
         return setError(
           language === "ja"
             ? "有効なリンクを入力して下さい"
-            : "Please enter valid link"
+            : "Please enter valid link",
         );
 
       if (!title)
         return setError(
           language === "ja"
             ? "レシピの名前を入力してください"
-            : "Please enter the recipe name"
+            : "Please enter the recipe name",
         );
 
       const newRecipeFromLink = {
@@ -110,7 +121,7 @@ export default function RecipeLinkEdit({
         title,
         link,
         favorite: favorite === "on" ? true : false,
-        comments,
+        comments: newComments,
         createdAt:
           createOrEdit === "create"
             ? new Date().toISOString()
@@ -130,7 +141,7 @@ export default function RecipeLinkEdit({
           ? `レシピが${createOrEdit === "create" ? "作成" : "更新"}されました！`
           : `Recipe ${
               createOrEdit === "create" ? "created" : "updated"
-            } successfully!`
+            } successfully!`,
       );
       createOrEdit === "edit" && handleChangeEdit && handleChangeEdit();
 
@@ -143,7 +154,7 @@ export default function RecipeLinkEdit({
           err,
           `Error while ${
             createOrEdit === "create" ? "creating" : "updating"
-          } recipe`
+          } recipe`,
         );
 
       console.error(
@@ -151,7 +162,7 @@ export default function RecipeLinkEdit({
           createOrEdit === "create" ? "creating" : "updating"
         } recipe`,
         err.message,
-        err.statusCode || 500
+        err.statusCode || 500,
       );
 
       const errorMessage = generateErrorMessage(language, err, "recipe");
@@ -164,7 +175,7 @@ export default function RecipeLinkEdit({
               }中にサーバーエラーが発生しました🙇‍♂️もう一度お試し下さい`
             : `Server error while ${
                 createOrEdit === "create" ? "creating" : "updating"
-              } recipe 🙇‍♂️ Please try again`)
+              } recipe 🙇‍♂️ Please try again`),
       );
 
       await authErrorRedirect(router, err.statusCode);
@@ -192,8 +203,8 @@ export default function RecipeLinkEdit({
             backgroundColor: error
               ? "orangered"
               : message
-              ? "rgba(10, 231, 39, 1)"
-              : "rgba(109, 221, 127, 1)",
+                ? "rgba(10, 231, 39, 1)"
+                : "rgba(109, 221, 127, 1)",
             color: "white",
             borderRadius: "5px",
             padding: "1% 2%",
@@ -201,16 +212,16 @@ export default function RecipeLinkEdit({
               mediaContext === "mobile"
                 ? "90%"
                 : mediaContext === "tablet"
-                ? "70%"
-                : mediaContext === "desktop"
-                ? "50%"
-                : "40%",
+                  ? "70%"
+                  : mediaContext === "desktop"
+                    ? "50%"
+                    : "40%",
             marginBottom:
               mediaContext === "mobile"
                 ? "3%"
                 : mediaContext === "tablet"
-                ? "2%"
-                : "1%",
+                  ? "2%"
+                  : "1%",
           }}
         >
           {error ||
@@ -224,10 +235,10 @@ export default function RecipeLinkEdit({
             mediaContext === "mobile"
               ? "90%"
               : mediaContext === "tablet"
-              ? "65%"
-              : mediaContext === "desktop"
-              ? "45%"
-              : "35%",
+                ? "65%"
+                : mediaContext === "desktop"
+                  ? "45%"
+                  : "35%",
           height: "fit-content",
           backgroundColor: "rgba(250, 255, 207, 1)",
           borderRadius: "5px",
@@ -299,6 +310,7 @@ export default function RecipeLinkEdit({
               padding: "3px 5px",
               resize: "none",
             }}
+            name="comments"
             placeholder={
               language === "ja"
                 ? "例）レシピの変更点など"

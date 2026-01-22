@@ -30,7 +30,7 @@ export const handleClickEdit = (router: AppRouterInstance) => {
 //create recipe
 export const uploadRecipeCreate = async (
   recipe: TYPE_RECIPE | TYPE_RECIPE_LINK,
-  userContext: TYPE_USER_CONTEXT
+  userContext: TYPE_USER_CONTEXT,
 ) => {
   try {
     ///store new recipe in recipes database and user info database
@@ -40,7 +40,7 @@ export const uploadRecipeCreate = async (
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(recipe),
-      }
+      },
     );
 
     recipeData.newAccessToken && userContext?.login(recipeData.newAccessToken);
@@ -68,7 +68,7 @@ export const uploadRecipeCreate = async (
 //update recipe
 export const uploadRecipeUpdate = async (
   recipe: TYPE_RECIPE | TYPE_RECIPE_LINK,
-  userContext: TYPE_USER_CONTEXT
+  userContext: TYPE_USER_CONTEXT,
 ) => {
   try {
     //remove _id to avoid trying to update immutable field
@@ -81,7 +81,7 @@ export const uploadRecipeUpdate = async (
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(others),
-      }
+      },
     );
     recipeData.newAccessToken && userContext?.login(recipeData.newAccessToken);
 
@@ -122,7 +122,7 @@ export const isRecipeAllowed = (recipe: TYPE_RECIPE) =>
 //translation
 export const getTranslatedServingsUnit = (
   language: TYPE_LANGUAGE,
-  unit: TYPE_SERVINGS_UNIT
+  unit: TYPE_SERVINGS_UNIT,
 ) => {
   if (language === "ja") {
     if (unit === "people") return "人分";
@@ -138,7 +138,7 @@ export const getTranslatedServingsUnit = (
 
 export const getTranslatedIngredientsUnit = (
   language: TYPE_LANGUAGE,
-  unit: string
+  unit: string,
 ) => {
   if (language === "ja") {
     if (unit === "usCup") return "カップ（アメリカ）";
@@ -182,7 +182,7 @@ export const updateConvertion = (recipe: TYPE_RECIPE) => {
 export const getTemperatures = (
   temperatures: number[],
   originalUnit: "℉" | "℃",
-  newUnit: "℉" | "℃"
+  newUnit: "℉" | "℃",
 ) => {
   const newTemps =
     originalUnit === newUnit
@@ -197,7 +197,7 @@ export const getIngGridTemplateColumnsStyle = (
   ingredients: TYPE_INGREDIENTS,
   regionUnit: TYPE_REGION_UNIT,
   mediaContext: TYPE_MEDIA,
-  edit: boolean
+  edit: boolean,
 ) => {
   const isLongIngName = ingredients
     .map((ing: TYPE_INGREDIENT) => ing.ingredient)
@@ -225,7 +225,7 @@ export const getIngGridTemplateColumnsStyle = (
 
 export const updateIngsForServings = (
   servings: number,
-  recipe: TYPE_RECIPE
+  recipe: TYPE_RECIPE,
 ) => {
   const newIngs = recipe.ingredients.map((ing: TYPE_INGREDIENT) => {
     if (!ing || !ing?.amount) return ing;
@@ -266,12 +266,25 @@ export const getImageFileData = (file: File, uri: string) => {
   };
 };
 
+export const getRecipeLinkComments = (
+  comments: string | string[] | undefined,
+) => {
+  if (typeof comments === "string") return comments;
+
+  if (Array.isArray(comments))
+    return comments.map((com, i) =>
+      com ? <p key={i}>{com}</p> : <br key={i} />,
+    );
+
+  return "";
+};
+
 //recipes page
 export const getUserRecipes = async (
   accessToken: string | undefined,
   startIndex: number,
   recipesPerRequest: number,
-  keyword: string = ""
+  keyword: string = "",
 ) => {
   try {
     const data = await getData(
@@ -281,7 +294,7 @@ export const getUserRecipes = async (
       {
         method: "GET",
         headers: { authorization: `Bearer ${accessToken}` },
-      }
+      },
     );
 
     return data;
@@ -292,7 +305,7 @@ export const getUserRecipes = async (
 
 export const calcNumberOfPages = (
   recipeLength: number,
-  recipesPerPage: number
+  recipesPerPage: number,
 ) => Math.ceil(recipeLength / recipesPerPage);
 
 export const getRecipesPerPage = (
@@ -303,7 +316,7 @@ export const getRecipesPerPage = (
     | TYPE_USER_RECIPE_LINK
   )[],
   numberRecipesPerPage: number,
-  curPage: number
+  curPage: number,
 ) => {
   const startIndex = (curPage - 1) * numberRecipesPerPage;
   const endIndex = startIndex + numberRecipesPerPage;
@@ -313,13 +326,13 @@ export const getRecipesPerPage = (
 };
 
 export const getOrderedRecipes = (
-  recipes: (TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE)[] | []
+  recipes: (TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE)[] | [],
 ) =>
   recipes
     .toSorted(
       (
         a: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
-        b: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+        b: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
       ) => {
         const titleA = a.title.toLowerCase();
         const titleB = b.title.toLowerCase();
@@ -328,18 +341,18 @@ export const getOrderedRecipes = (
         if (titleA > titleB) return 1;
 
         return 0;
-      }
+      },
     )
     .toSorted(
       (
         a: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
-        b: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+        b: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
       ) => {
         if (a.favorite && !b.favorite) return -1;
         if (!a.favorite && b.favorite) return 1;
 
         return 0;
-      }
+      },
     );
 
 export const createMessage = (
@@ -347,7 +360,7 @@ export const createMessage = (
   error: string,
   isPending: boolean,
   numberOfRecipes: number | null,
-  recipeLength: number
+  recipeLength: number,
 ) => {
   if (error) return error;
 

@@ -6,6 +6,7 @@ import { ButtonEditMain } from "../recipeCommon/recipeCommon";
 import { TYPE_LANGUAGE, TYPE_MEDIA, TYPE_RECIPE_LINK } from "../../config/type";
 //general method
 import { getSize } from "../../helpers/other";
+import { getRecipeLinkComments } from "../../helpers/recipes";
 
 export default function RecipeLinkNoEdit({
   language,
@@ -27,12 +28,14 @@ export default function RecipeLinkNoEdit({
     mediaContext === "mobile"
       ? getSize(recipeWidth + "px", 0.046, "4.5vw")
       : mediaContext === "tablet"
-      ? getSize(recipeWidth + "px", 0.036, "2.7vw")
-      : mediaContext === "desktop" && window.innerWidth <= 1100
-      ? getSize(recipeWidth + "px", 0.032, "1.5vw")
-      : getSize(recipeWidth + "px", 0.03, "1.3vw");
+        ? getSize(recipeWidth + "px", 0.036, "2.7vw")
+        : mediaContext === "desktop" && window.innerWidth <= 1100
+          ? getSize(recipeWidth + "px", 0.032, "1.5vw")
+          : getSize(recipeWidth + "px", 0.03, "1.3vw");
   const fontSizeFinal =
     language === "ja" ? `calc(${fontSizeEn} * 0.9)` : fontSizeEn;
+
+  console.log(getRecipeLinkComments(recipe.comments));
 
   return (
     <div
@@ -46,10 +49,10 @@ export default function RecipeLinkNoEdit({
           mediaContext === "mobile"
             ? "30px"
             : mediaContext === "tablet"
-            ? "35px"
-            : mediaContext === "desktop"
-            ? "45px"
-            : "55px",
+              ? "35px"
+              : mediaContext === "desktop"
+                ? "45px"
+                : "55px",
       }}
     >
       {mainOrRecipe === "main" && (
@@ -92,14 +95,14 @@ export default function RecipeLinkNoEdit({
                 mediaContext === "mobile"
                   ? "4px 5px"
                   : mediaContext === "tablet"
-                  ? "6px"
-                  : mediaContext === "desktop"
-                  ? "8px"
-                  : "10px",
+                    ? "6px"
+                    : mediaContext === "desktop"
+                      ? "8px"
+                      : "10px",
               boxShadow: "3px 3px 10px rgba(0, 0, 0, 0.26)",
             }}
           >
-            {recipe.comments}
+            {getRecipeLinkComments(recipe.comments)}
           </div>
         </div>
       )}
