@@ -1,6 +1,5 @@
 //component
-import { ja } from "zod/locales";
-import ButtonOpenAgreement from "../components/ButtonOpenAgreement/ButtonOpenAgreement";
+import ButtonOpenAgreement from "@/app/[locale]/components/ButtonOpenAgreement/ButtonOpenAgreement";
 
 const news = [
   {
@@ -95,7 +94,7 @@ const news = [
 
 const newsWithNew = news.map((news) => {
   const daysPassed = Math.floor(
-    (Date.now() - new Date(news.date).getTime()) / (1000 * 60 * 60 * 24)
+    (Date.now() - new Date(news.date).getTime()) / (1000 * 60 * 60 * 24),
   );
 
   return daysPassed < 7 ? { ...news, new: true } : { ...news, new: false };
