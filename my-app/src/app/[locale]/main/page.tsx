@@ -750,27 +750,27 @@ function DropdownMenu({
   const isNewsNew = useMemo(() => news.some((news) => news.new), [news]);
 
   function handleClickRecipes() {
-    router.push("/recipes");
+    router.push(`/${language}/recipes`);
   }
 
   function handleClickConverter() {
-    router.push("/converter");
+    router.push(`/${language}/converter`);
   }
 
   function handleClickAccount() {
-    router.push("/account");
+    router.push(`/${language}/account`);
   }
 
   function handleClickNews() {
-    router.push("/news");
+    router.push(`/${language}/news`);
   }
 
   function handleClickHowToUse() {
-    router.push("/how-to-use");
+    router.push(`/${language}/how-to-use`);
   }
 
   function handleClickFeedback() {
-    router.push("/feedback");
+    router.push(`/${language}/feedback`);
   }
 
   return (

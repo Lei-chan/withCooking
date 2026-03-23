@@ -149,7 +149,8 @@ export default function RecipeLinkEdit({
       );
       createOrEdit === "edit" && handleChangeEdit && handleChangeEdit();
 
-      createOrEdit === "create" && router.push(`/recipes/${recipeData._id}`);
+      createOrEdit === "create" &&
+        router.push(`/${language}/recipes/${recipeData._id}`);
     } catch (err: unknown) {
       setIsPending(false);
 

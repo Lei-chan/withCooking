@@ -272,7 +272,7 @@ function SearchSection({
   const router = useRouter();
 
   function handleClickCreate() {
-    router.push("/recipes/create");
+    router.push(`/${language}/recipes/create`);
   }
 
   return (
@@ -511,7 +511,7 @@ function RecipeContainer({
   function handleClickPreview(
     recipe: TYPE_USER_RECIPE | TYPE_USER_RECIPE_LINK,
   ) {
-    if (recipe._id) router.push(`/recipes/${recipe._id}`);
+    if (recipe._id) router.push(`/${language}/recipes/${recipe._id}`);
   }
 
   return (

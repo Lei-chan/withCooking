@@ -865,7 +865,7 @@ function OverlayLogin({
       });
 
       //go to main
-      router.push("/main");
+      router.push(`/${language}/main`);
     } catch (err: unknown) {
       if (!isApiError(err))
         return console.error("Error while loging in", String(err), 500);
@@ -1121,7 +1121,7 @@ function OverlayCreateAccount({
 
       await createAccount({ email: trimmedEmail, password: trimmedPassword });
 
-      router.push("/main");
+      router.push(`/${language}/main`);
     } catch (err: unknown) {
       if (!isApiError(err))
         return console.error("error while creating account", String(err), 500);

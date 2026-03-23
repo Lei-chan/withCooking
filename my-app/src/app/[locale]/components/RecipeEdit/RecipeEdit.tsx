@@ -359,7 +359,7 @@ export default function RecipeEdit({
       }
 
       if (createOrUpdate === "create")
-        router.push(`/recipes/${recipeData._id}`);
+        router.push(`/${language}/recipes/${recipeData._id}`);
     } catch (err: unknown) {
       setIsPending(false);
 
