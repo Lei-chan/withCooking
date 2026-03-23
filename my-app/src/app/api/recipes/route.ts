@@ -30,14 +30,14 @@ import { isApiError } from "@/app/lib/helpers/other";
 function uploadFile(
   bucket: GridFSBucket,
   file: TYPE_FILE,
-  metadata: TYPE_GRIDFS_METADATA
+  metadata: TYPE_GRIDFS_METADATA,
 ) {
   return new Promise((resolve, reject) => {
     const jsonBuffer = Buffer.from(JSON.stringify(file));
 
     const uploadStream = bucket.openUploadStream(
       file.filename || "unnamed-file.json",
-      { contentType: "application/json", metadata: { ...metadata } }
+      { contentType: "application/json", metadata: { ...metadata } },
     );
 
     uploadStream.end(jsonBuffer);
@@ -53,7 +53,7 @@ function uploadFile(
     });
 
     uploadStream.on("error", () =>
-      reject(new Error("Error while uploading file"))
+      reject(new Error("Error while uploading file")),
     );
   });
 }
@@ -61,7 +61,7 @@ function uploadFile(
 function uploadInstructionImages(
   bucket: GridFSBucket,
   instructions: TYPE_INSTRUCTION[],
-  metadata: TYPE_GRIDFS_METADATA
+  metadata: TYPE_GRIDFS_METADATA,
 ) {
   return Promise.all(
     instructions.map((inst: TYPE_INSTRUCTION, i: number) =>
@@ -70,20 +70,20 @@ function uploadInstructionImages(
             ...metadata,
             index: i,
           })
-        : Promise.resolve(undefined)
-    )
+        : Promise.resolve(undefined),
+    ),
   );
 }
 
 function uploadMemoryImages(
   bucket: GridFSBucket,
   memoryImages: TYPE_FILE[],
-  metadata: TYPE_GRIDFS_METADATA
+  metadata: TYPE_GRIDFS_METADATA,
 ) {
   return Promise.all(
     memoryImages.map((image: TYPE_FILE, i: number) =>
-      uploadFile(bucket, image, { ...metadata, index: i })
-    )
+      uploadFile(bucket, image, { ...metadata, index: i }),
+    ),
   );
 }
 
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     if (!result.success) {
       const errTarget = result.error.issues[0];
       const err = new Error(
-        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`,
       ) as MyError;
       err.statusCode = 400;
 
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
     const instructionImages = await uploadInstructionImages(
       bucket,
       body.instructions,
-      { userId: id, recipeTitle: body.title, section: "instructionImage" }
+      { userId: id, recipeTitle: body.title, section: "instructionImage" },
     );
 
     //upload memoryImages
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
     newBody.instructions = body.instructions.map(
       (inst: TYPE_INSTRUCTION, i: number) => {
         return { instruction: inst.instruction, image: instructionImages[i] };
-      }
+      },
     );
     newBody.memoryImages = memoryImages;
 
@@ -168,14 +168,14 @@ export async function POST(req: NextRequest) {
         data: recipe,
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -200,7 +200,7 @@ export async function PUT(req: NextRequest) {
     if (!result.success) {
       const errTarget = result.error.issues[0];
       const err = new Error(
-        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`,
       ) as MyError;
       err.statusCode = 400;
 
@@ -218,7 +218,7 @@ export async function PUT(req: NextRequest) {
     if (recipe.mainImage?.data) {
       try {
         await bucket.delete(
-          new mongoose.Types.ObjectId(recipe.mainImage.fileId)
+          new mongoose.Types.ObjectId(recipe.mainImage.fileId),
         );
       } catch (err: unknown) {
         throw new Error("Error while deleting mainImage from bucket");
@@ -239,7 +239,7 @@ export async function PUT(req: NextRequest) {
     if (recipe.mainImagePreview && bodyMainImagePreview.data) {
       try {
         await bucket.delete(
-          new mongoose.Types.ObjectId(recipe.mainImagePreview.fileId)
+          new mongoose.Types.ObjectId(recipe.mainImagePreview.fileId),
         );
       } catch (err: unknown) {
         throw new Error("Error while deleting mainImagePreview from bucket");
@@ -273,8 +273,8 @@ export async function PUT(req: NextRequest) {
               inst.image
                 ? bucket.delete(new mongoose.Types.ObjectId(inst.image.fileId))
                 : Promise.resolve(undefined);
-            }
-          )
+            },
+          ),
         );
       } catch (err: unknown) {
         throw new Error("Error while deleting instruction images from bucket");
@@ -295,8 +295,8 @@ export async function PUT(req: NextRequest) {
       try {
         await Promise.all(
           recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-            bucket.delete(new mongoose.Types.ObjectId(image.fileId))
-          )
+            bucket.delete(new mongoose.Types.ObjectId(image.fileId)),
+          ),
         );
       } catch (err: unknown) {
         throw new Error("Error while deleting memoryImages from bucket");
@@ -319,7 +319,7 @@ export async function PUT(req: NextRequest) {
     newBody.instructions = body.instructions.map(
       (inst: TYPE_INSTRUCTION, i: number) => {
         return { instruction: inst.instruction, image: instructionImages[i] };
-      }
+      },
     );
     newBody.memoryImages = memoryImages;
 
@@ -340,14 +340,14 @@ export async function PUT(req: NextRequest) {
         message: "Recipe updated successfully",
         data: structuredRecipe,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -388,16 +388,16 @@ export async function GET(req: NextRequest) {
               }) =>
                 inst.image
                   ? downloadFile(bucket, inst.image)
-                  : Promise.resolve(undefined)
-            )
+                  : Promise.resolve(undefined),
+            ),
           )
         : [];
 
       const memoryImages = recipe.memoryImages.length
         ? await Promise.all(
             recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-              downloadFile(bucket, image)
-            )
+              downloadFile(bucket, image),
+            ),
           )
         : [];
 
@@ -407,24 +407,24 @@ export async function GET(req: NextRequest) {
       newRecipe.instructions = recipeObj.instructions.map(
         (
           inst: { instruction: string; image: TYPE_CONVERTED_FILE | undefined },
-          i: number
+          i: number,
         ) => {
           return { instruction: inst.instruction, image: instructionImages[i] };
-        }
+        },
       );
       newRecipe.memoryImages = memoryImages;
     }
 
     return NextResponse.json(
       { success: true, data: newRecipe },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -446,7 +446,7 @@ export async function DELETE(req: NextRequest) {
     const promiseDeleteMainImage = recipes.map((recipe) =>
       recipe.mainImage
         ? bucket.delete(new mongoose.Types.ObjectId(recipe.mainImage.fileId))
-        : Promise.resolve(undefined)
+        : Promise.resolve(undefined),
     );
     await Promise.all(promiseDeleteMainImage);
 
@@ -454,9 +454,9 @@ export async function DELETE(req: NextRequest) {
     const promiseDeleteMainImagePreview = recipes.map((recipe) =>
       recipe.mainImagePreview
         ? bucket.delete(
-            new mongoose.Types.ObjectId(recipe.mainImagePreview.fileId)
+            new mongoose.Types.ObjectId(recipe.mainImagePreview.fileId),
           )
-        : Promise.resolve(undefined)
+        : Promise.resolve(undefined),
     );
     await Promise.all(promiseDeleteMainImagePreview);
 
@@ -470,9 +470,9 @@ export async function DELETE(req: NextRequest) {
             }) =>
               inst.image
                 ? bucket.delete(new mongoose.Types.ObjectId(inst.image.fileId))
-                : Promise.resolve(undefined)
+                : Promise.resolve(undefined),
           )
-        : Promise.resolve(undefined)
+        : Promise.resolve(undefined),
     );
     await Promise.all(promiseDeleteInstructionImages);
 
@@ -480,14 +480,14 @@ export async function DELETE(req: NextRequest) {
     const promiseDeleteMemoryImages = recipes.flatMap((recipe) =>
       recipe.memoryImages?.length
         ? recipe.memoryImages.map((image: TYPE_CONVERTED_FILE) =>
-            bucket.delete(new mongoose.Types.ObjectId(image.fileId))
+            bucket.delete(new mongoose.Types.ObjectId(image.fileId)),
           )
-        : Promise.resolve(undefined)
+        : Promise.resolve(undefined),
     );
     await Promise.all(promiseDeleteMemoryImages);
 
     const promiseDeleteRecipes = recipeIdArr.map((id) =>
-      Recipe.findByIdAndDelete(id)
+      Recipe.findByIdAndDelete(id),
     );
     const deletedRecipes = await Promise.all(promiseDeleteRecipes);
 
@@ -497,14 +497,14 @@ export async function DELETE(req: NextRequest) {
         message: "Recipe deleted successfully",
         data: deletedRecipes,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }

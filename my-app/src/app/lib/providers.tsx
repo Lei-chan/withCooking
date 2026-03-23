@@ -14,19 +14,12 @@ import {
   MIN_DESKTOP,
   MIN_TABLET,
 } from "./config/media";
-import {
-  TYPE_MEDIA,
-  TYPE_LANGUAGE,
-  TYPE_USER_CONTEXT,
-  TYPE_LANGUAGE_CONTEXT,
-} from "./config/type";
+import { TYPE_MEDIA, TYPE_USER_CONTEXT } from "./config/type";
 import { MESSAGE_TIMEOUT } from "./config/settings";
 import { wait } from "./helpers/other";
 
 //mediaContext
 export const MediaContext = createContext<TYPE_MEDIA>("desktop");
-
-export const LanguageContext = createContext<TYPE_LANGUAGE_CONTEXT>(null);
 
 //userContext
 export const UserContext = createContext<TYPE_USER_CONTEXT>(null);
@@ -34,8 +27,6 @@ export const UserContext = createContext<TYPE_USER_CONTEXT>(null);
 export function Providers({ children }: { children: React.ReactNode }) {
   //media
   const [media, setMedia] = useState<TYPE_MEDIA>("desktop");
-  //language
-  const [language, setLanguage] = useState<TYPE_LANGUAGE>("en");
   //user context
   const [accessToken, setAccessToken] = useState("");
   const [numberOfRecipes, setNumberOfRecipes] = useState(0);
@@ -71,25 +62,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", updateMedia);
   }, []);
 
-  //language
-  const updateLanguage = useCallback((nav: string) => {
-    nav.slice(0, 2) === "ja" ? setLanguage("ja") : setLanguage("en");
-
-    localStorage.setItem("language", nav);
-  }, []);
-
-  //set language data in localStorage when user reloads page
-  useEffect(() => {
-    const languageInStorage = localStorage.getItem("language");
-
-    updateLanguage(languageInStorage || navigator.language);
-  }, []);
-
-  const languageContextValue = useMemo(
-    () => ({ language, updateLanguage }),
-    [language, updateLanguage]
-  );
-
   //user context
   const firstLogin = useCallback(
     async (accessToken: string, numberOfRecipes: number) => {
@@ -100,7 +72,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       localStorage.setItem("numberOfRecipes", numberOfRecipes + "");
       await showMessage();
     },
-    []
+    [],
   );
 
   //set numberOfRecipes stored in localStorage to state when user reloads page
@@ -139,12 +111,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       setNumberOfRecipes((prev) => {
         localStorage.setItem(
           "numberOfRecipes",
-          prev - deletedNumberOfRecipes + ""
+          prev - deletedNumberOfRecipes + "",
         );
         return prev - deletedNumberOfRecipes;
       });
     },
-    []
+    [],
   );
 
   const userContextValue = useMemo(
@@ -167,14 +139,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       logout,
       addNumberOfRecipes,
       reduceNumberOfRecipes,
-    ]
+    ],
   );
 
   return (
     <MediaContext value={media}>
-      <LanguageContext value={languageContextValue}>
-        <UserContext value={userContextValue}>{children} </UserContext>
-      </LanguageContext>
+      <UserContext value={userContextValue}>{children} </UserContext>
     </MediaContext>
   );
 }

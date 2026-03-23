@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
               errTarget.message
             }`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -117,14 +117,14 @@ export async function POST(req: NextRequest) {
         },
         accessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -156,14 +156,14 @@ export async function GET(req: NextRequest) {
     const structuredRecipes = recipes.length
       ? recipes.map(
           (
-            recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+            recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
           ) => {
             const { recipeId, ...others } = recipe;
             return {
               _id: recipeId,
               ...others,
             };
-          }
+          },
         )
       : [];
 
@@ -173,14 +173,14 @@ export async function GET(req: NextRequest) {
         data: { recipes: structuredRecipes, ...others },
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -210,7 +210,7 @@ export async function PATCH(req: NextRequest) {
       if (!result.success) {
         const errTarget = result.error.issues[0];
         const err = new Error(
-          `<Error field: New password> ${errTarget.message}`
+          `<Error field: New password> ${errTarget.message}`,
         ) as MyError;
         err.statusCode = 400;
 
@@ -239,7 +239,7 @@ export async function PATCH(req: NextRequest) {
         {
           password: hashedPassword,
         },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true },
       ).select("-password");
     }
 
@@ -260,7 +260,7 @@ export async function PATCH(req: NextRequest) {
         if (!result.success) {
           const errTarget = result.error.issues[0];
           const err = new Error(
-            `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+            `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`,
           ) as MyError;
           err.statusCode = 400;
 
@@ -281,14 +281,14 @@ export async function PATCH(req: NextRequest) {
         data: updatedUser,
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -318,14 +318,14 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json(
       { success: true, message: "User deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }

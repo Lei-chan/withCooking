@@ -60,7 +60,9 @@ export async function GET(req: NextRequest) {
       keyword && recipes.length
         ? recipes.filter(
             (
-              recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+              recipe:
+                | TYPE_USER_RECIPE_DATABASE
+                | TYPE_USER_RECIPE_LINK_DATABASE,
             ) => {
               const structuredKeyword = keyword.trim().toLowerCase();
 
@@ -69,28 +71,30 @@ export async function GET(req: NextRequest) {
                 ("ingredients" in recipe &&
                   recipe.ingredients.length &&
                   recipe.ingredients.find((ing: TYPE_INGREDIENT) =>
-                    ing.ingredient.toLowerCase().includes(structuredKeyword)
+                    ing.ingredient.toLowerCase().includes(structuredKeyword),
                   ))
               );
-            }
+            },
           )
         : recipes;
 
     const slicedRecipes = filteredRecipes.slice(
       parseInt(startIndex),
-      parseInt(endIndex)
+      parseInt(endIndex),
     );
 
     const mainImagePreviews = slicedRecipes.length
       ? await Promise.all(
           slicedRecipes.map(
             (
-              recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+              recipe:
+                | TYPE_USER_RECIPE_DATABASE
+                | TYPE_USER_RECIPE_LINK_DATABASE,
             ) =>
               "mainImagePreview" in recipe && recipe.mainImagePreview
                 ? downloadFile(bucket, recipe.mainImagePreview)
-                : Promise.resolve(undefined)
-          )
+                : Promise.resolve(undefined),
+          ),
         )
       : [];
 
@@ -99,7 +103,7 @@ export async function GET(req: NextRequest) {
       ? slicedRecipes.map(
           (
             recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
-            i: number
+            i: number,
           ) => {
             if ("mainImagePreview" in recipe) {
               const { recipeId, mainImagePreview, ...others } = recipe;
@@ -115,7 +119,7 @@ export async function GET(req: NextRequest) {
                 ...others,
               };
             }
-          }
+          },
         )
       : [];
 
@@ -126,14 +130,14 @@ export async function GET(req: NextRequest) {
         numberOfRecipes: filteredRecipes.length,
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -163,7 +167,7 @@ export async function POST(req: NextRequest) {
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { recipes: newRecipes },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     //change recipeId to _id for frontend
@@ -171,14 +175,14 @@ export async function POST(req: NextRequest) {
       .toObject()
       .recipes.map(
         (
-          recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+          recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
         ) => {
           const { recipeId, ...others } = recipe;
           return {
             _id: recipeId,
             ...others,
           };
-        }
+        },
       );
 
     return NextResponse.json(
@@ -188,14 +192,14 @@ export async function POST(req: NextRequest) {
         data: structuredRecipes,
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -223,8 +227,8 @@ export async function PUT(req: NextRequest) {
     const recipesForNotUpdate = recipes.length
       ? recipes.filter(
           (
-            recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
-          ) => recipe.recipeId !== newBody.recipeId
+            recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
+          ) => recipe.recipeId !== newBody.recipeId,
         )
       : [];
     const newRecipes = [...recipesForNotUpdate, newBody];
@@ -232,7 +236,7 @@ export async function PUT(req: NextRequest) {
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { recipes: newRecipes },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     //change recipeId to _id for frontend
@@ -240,14 +244,14 @@ export async function PUT(req: NextRequest) {
       .toObject()
       .recipes.map(
         (
-          recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE
+          recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE,
         ) => {
           const { recipeId, ...others } = recipe;
           return {
             _id: recipeId,
             ...others,
           };
-        }
+        },
       );
 
     return NextResponse.json(
@@ -257,14 +261,14 @@ export async function PUT(req: NextRequest) {
         data: structuredRecipes,
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -290,8 +294,8 @@ export async function DELETE(req: NextRequest) {
     const deletedIndexes = recipeIdsArr.map((id) =>
       recipes.findIndex(
         (recipe: TYPE_USER_RECIPE_DATABASE | TYPE_USER_RECIPE_LINK_DATABASE) =>
-          recipe.recipeId === id
-      )
+          recipe.recipeId === id,
+      ),
     );
 
     if (deletedIndexes.includes(-1)) {
@@ -309,7 +313,7 @@ export async function DELETE(req: NextRequest) {
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { recipes: newRecipes },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     return NextResponse.json(
@@ -319,14 +323,14 @@ export async function DELETE(req: NextRequest) {
         data: updatedUser.recipes,
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }

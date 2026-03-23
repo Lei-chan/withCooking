@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (!result.success) {
       const errTarget = result.error.issues[0];
       const err = new Error(
-        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`,
       ) as MyError;
       err.statusCode = 400;
 
@@ -50,14 +50,14 @@ export async function POST(req: NextRequest) {
         data: recipe,
         newAccessToken,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }
@@ -74,7 +74,7 @@ export async function PUT(req: NextRequest) {
     if (!result.success) {
       const errTarget = result.error.issues[0];
       const err = new Error(
-        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`
+        `<Error field: ${String(errTarget.path[0])}> ${errTarget.message}`,
       ) as MyError;
       err.statusCode = 400;
 
@@ -98,14 +98,14 @@ export async function PUT(req: NextRequest) {
         message: "Recipe updated successfully",
         data: newRecipe,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err: unknown) {
     if (!isApiError(err)) return returnNonApiErrorResponse();
 
     return NextResponse.json(
       { success: false, error: err.message, name: err.name },
-      { status: err.statusCode || 500 }
+      { status: err.statusCode || 500 },
     );
   }
 }

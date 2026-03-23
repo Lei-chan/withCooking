@@ -1,15 +1,7 @@
-import type { Metadata } from "next";
 import type { Viewport } from "next";
 import { Playfair_Display, Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./lib/providers";
-import { WEBSITE_URL } from "./lib/config/settings";
-
-export const metadata: Metadata = {
-  title: "withCooking",
-  description: "Application where users can use many useful tools for cooking!",
-  metadataBase: new URL(WEBSITE_URL),
-};
 
 export const viewport: Viewport = {
   width: "device-width",
