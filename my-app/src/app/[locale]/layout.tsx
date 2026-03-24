@@ -3,14 +3,16 @@ import { WEBSITE_URL } from "../lib/config/settings";
 export async function generateMetadata({
   params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = params;
+  const { locale } = await params;
 
   return {
-    title: "withCooking",
+    title: locale === "en" ? "withCooking" : "withCooking(ウィズクッキング)",
     description:
-      "Application where users can use many useful tools for cooking!",
+      locale === "en"
+        ? "Website where users can use many useful tools for cooking!"
+        : "クッキングに便利なツールがたくさん詰まっているウェブサイトです！",
     metadataBase: new URL(WEBSITE_URL),
     alternates: {
       canonical: `/${locale}`,
