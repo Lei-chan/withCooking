@@ -15,8 +15,6 @@ export async function generateMetadata({
       ? "Website where users can use many useful tools for cooking!"
       : "クッキングに便利なツールがたくさん詰まっているウェブサイトです！";
   const metadataBase = new URL(WEBSITE_URL);
-  // later
-  // const image = new URL('/', metadataBase).toString();
 
   return {
     title,
@@ -36,10 +34,10 @@ export async function generateMetadata({
       "料理",
     ],
     alternates: {
-      canonical: new URL(`/${locale}`, metadataBase).toString(),
+      canonical: "/",
       languages: {
-        en: new URL("/en", metadataBase).toString(),
-        ja: new URL("/ja", metadataBase).toString(),
+        en: "/en",
+        ja: "/ja",
       },
     },
     openGraph: {
