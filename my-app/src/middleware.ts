@@ -14,7 +14,9 @@ export default function middleware(req: NextRequest) {
   const locale = acceptLanguage.includes("ja") ? "ja" : "en";
 
   //Redirect root to locale
-  return NextResponse.redirect(new URL(`/${locale}${pathname}`, req.url));
+  return NextResponse.redirect(
+    new URL(`/${locale}${pathname === "/" ? "" : pathname}`, req.url),
+  );
 }
 
 // Routes Proxy should not run on

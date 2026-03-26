@@ -34,7 +34,7 @@ export async function generateMetadata({
       "料理",
     ],
     alternates: {
-      canonical: "/",
+      canonical: `/${locale}`,
       languages: {
         en: "/en",
         ja: "/ja",
