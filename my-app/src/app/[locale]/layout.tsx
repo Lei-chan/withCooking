@@ -1,5 +1,9 @@
 import { Metadata } from "next";
-import { WEBSITE_URL } from "../lib/config/settings";
+import {
+  APP_DESCRIPTION,
+  APP_NAME,
+  METADATA_BASE,
+} from "../lib/config/settings";
 
 export async function generateMetadata({
   params,
@@ -8,18 +12,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
 
-  const title =
-    locale === "en" ? "withCooking" : "withCooking(ウィズクッキング)";
+  const title = locale === "en" ? APP_NAME : "withCooking(ウィズクッキング)";
   const description =
     locale === "en"
-      ? "Website where users can use many useful tools for cooking!"
+      ? APP_DESCRIPTION
       : "クッキングに便利なツールがたくさん詰まっているウェブサイトです！";
-  const metadataBase = new URL(WEBSITE_URL);
 
   return {
     title,
     description,
-    metadataBase,
+    metadataBase: METADATA_BASE,
     keywords: [
       "withCooking",
       "withcooking",
@@ -42,7 +44,7 @@ export async function generateMetadata({
     },
     openGraph: {
       siteName: title,
-      url: metadataBase,
+      url: `/${locale}`,
       //for later
       // images: [
       //   {

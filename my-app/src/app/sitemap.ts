@@ -4,6 +4,18 @@ import { WEBSITE_URL } from "./lib/config/settings";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
+      url: WEBSITE_URL,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 1,
+      alternates: {
+        languages: {
+          ja: `${WEBSITE_URL}/ja`,
+          en: `${WEBSITE_URL}/en`,
+        },
+      },
+    },
+    {
       url: `${WEBSITE_URL}/en`,
       lastModified: new Date(),
       changeFrequency: "yearly",

@@ -1,4 +1,9 @@
 export const WEBSITE_URL = "https://withcooking.lei-chan.website";
+export const METADATA_BASE = new URL(WEBSITE_URL);
+export const APP_NAME = "withCooking";
+export const APP_DESCRIPTION =
+  "Website where users can use many useful tools for cooking!";
+
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MIN_EACH = 1;
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
